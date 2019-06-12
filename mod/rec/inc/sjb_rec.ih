@@ -1,0 +1,17 @@
+#pragma pack(push, 4)
+
+#define GSF_REC_CH_NUM 2
+
+STRUCT(gsf_rch_t)
+{
+  FIELD(int, en);
+};
+
+
+STRUCT(gsf_rec_parm_t)
+{
+  ARRAY(gsf_rch_t,  rch,  GSF_REC_CH_NUM);
+};
+
+
+#pragma pack(pop)

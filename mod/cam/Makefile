@@ -1,0 +1,40 @@
+
+HOME := $(shell echo ${GSF_HOME})
+CC := $(shell echo ${GSF_CC})
+AR := $(shell echo ${GSF_AR})
+CFLAGS := $(shell echo ${GSF_CFLAGS})
+LDFLAGS := -g
+TARG := bin/cam.exe
+
+#============================================================= 
+
+INCS := -I$(HOME) -Isrc -Iinc \
+        -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc \
+        -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/common \
+        -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/hisisdk \
+        -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/scene_auto
+        
+#SRCS := $(shell ls src/*.c)
+SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
+OBJS := $(patsubst %.c, %.o, $(SRCS))
+
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lmpp -lnm -lcjson -lm
+         
+ifneq ($(GSF_CPU_ARCH), x86)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog -l_iniparser \
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
+endif
+
+$(TARG): SJB $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	cp $(TARG) $(HOME)/bin/$(GSF_CPU_ARCH)/ -v
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
+
+SJB:
+	touch src/sjb_cam.c;touch src/cfg.c
+  
+.Phony: clean
+clean:
+	-rm $(TARG) $(OBJS) src/*.bak -rf

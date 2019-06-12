@@ -1,0 +1,16 @@
+export GSF_CPU_ARCH=3559a
+
+export GSF_HOME=`pwd`
+export GSF_CC="aarch64-himix100-linux-gcc"
+export GSF_AR=aarch64-himix100-linux-ar
+export GSF_CFLAGS="-g -fstack-protector -fPIC"
+
+if [ ! -d ${GSF_HOME}/lib/${GSF_CPU_ARCH} ]
+then
+	mkdir -p ${GSF_HOME}/lib/${GSF_CPU_ARCH}
+fi
+
+if [ ! -d ${GSF_HOME}/bin/${GSF_CPU_ARCH} ]
+then
+	mkdir -p ${GSF_HOME}/bin/${GSF_CPU_ARCH}
+fi

@@ -1,0 +1,29 @@
+{
+	"board":	{
+		"model":	"IPCXXX",
+		"sn":	"123456",
+		"type":	"HI3519_E_4_2",
+		"snscnt":	2,
+		"sensor":	["BT1120_R", "BT1120_R", "", "", "", "", "", ""],
+		"caps":	"ffffffff"
+	},
+	"eth":	{
+		"dhcp":	0,
+		"ipv6":	0,
+		"ipaddr":	"192.168.1.66",
+		"netmask":	"255.255.255.0",
+		"gateway":	"192.168.1.1",
+		"dns1":	"",
+		"dns2":	""
+	},
+	"wifi":	{
+		"en":	0,
+		"ap":	0,
+		"ssid":	"",
+		"pwd":	""
+	},
+	"admin":	{
+		"name":	"admin",
+		"pwd":	""
+	}
+}

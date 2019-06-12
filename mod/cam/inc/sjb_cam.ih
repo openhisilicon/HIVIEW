@@ -1,0 +1,17 @@
+#pragma pack(push, 4)
+
+#define GSF_CAM_SNS_NUM 2
+
+STRUCT(gsf_sp_t)
+{
+  FIELD(int, level);
+};
+
+
+STRUCT(gsf_cam_parm_t)
+{
+  ARRAY(gsf_sp_t,    sp,  GSF_CAM_SNS_NUM);
+};
+
+
+#pragma pack(pop)

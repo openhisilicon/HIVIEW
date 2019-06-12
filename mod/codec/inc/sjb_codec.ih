@@ -1,0 +1,58 @@
+#pragma pack(push, 4)
+
+#define GSF_CODEC_VENC_NUM 2
+#define GSF_CODEC_AENC_NUM 1
+#define GSF_CODEC_ST_NUM   3
+#define GSF_CODEC_OSD_NUM  8
+#define GSF_CODEC_VMASK_NUM 8
+
+STRUCT(gsf_vst_t)
+{
+  FIELD(int, type);
+  FIELD(int, width);
+  FIELD(int, height);
+  FIELD(int, gop);
+  FIELD(int, flow);
+  FIELD(int, bitrate);
+  FIELD(int, profile);
+  FIELD(int, qp);
+};
+
+STRUCT(gsf_venc_t)
+{
+  ARRAY(gsf_vst_t, vst, GSF_CODEC_ST_NUM);
+};
+
+
+STRUCT(gsf_aenc_t)
+{
+  FIELD(int, en);
+  FIELD(int, type);
+  FIELD(int, sprate);
+  FIELD(int, vol);
+};
+
+STRUCT(gsf_osd_t)
+{
+  FIELD(int, en);
+  FIELD(int, type);
+  STRING(text, 4096);
+};
+
+STRUCT(gsf_vmask_t)
+{
+  FIELD(int, en);
+  ARRAY(int, rect, 4);
+  FIELD(int, color);
+};
+
+STRUCT(gsf_codec_parm_t)
+{
+  ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
+  ARRAY(gsf_aenc_t,  aenc,  GSF_CODEC_AENC_NUM);
+  ARRAY(gsf_osd_t,   osd,   GSF_CODEC_OSD_NUM);
+  ARRAY(gsf_vmask_t, vmask, GSF_CODEC_VMASK_NUM);
+};
+
+
+#pragma pack(pop)
