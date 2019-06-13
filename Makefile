@@ -10,7 +10,8 @@ SUB_DIRS := \
             mod/mpp/${GSF_CPU_ARCH} \
             mod/cam \
             mod/codec \
-            mod/rec/lib/tindex mod/rec/lib/libmov  mod/rec
+            mod/rec/lib/tindex mod/rec/lib/libmov  mod/rec \
+			mod/webs
 
 CLEAN_DIRS := $(addprefix _cls_, $(SUB_DIRS))
 

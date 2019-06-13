@@ -68,7 +68,7 @@
   
 // compile:  
   
-source build/3516a  
+source build/x86   
 make  
   
   
