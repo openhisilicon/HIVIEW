@@ -79,5 +79,11 @@ export LD_LIBRARY_PATH=./lib/x86
   
 export LD_LIBRARY_PATH=./lib/x86  
 ./bin/x86/cam.exe  cam_parm.json  
-  
+
+export LD_LIBRARY_PATH=./lib/x86  
+./bin/x86/codec.exe codec_parm.json
+
+export LD_LIBRARY_PATH=./lib/x86  
+./bin/x86/webs.exe
+
 <end.>  
