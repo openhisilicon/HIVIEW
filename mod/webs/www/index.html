@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+  <div class='res'><subr></subr></div>
+
+<textarea id="req" style="width:600px;height:300px;">
+modid:1
+msgid:1
+channel:0
+gset:0
+data:{}
+</textarea>
+  
+  <button>send</button>
+  
+  <textarea id="rsp" style="width:600px;height:300px;"></textarea>
+
+  <script src="nanomsg.js" charset="utf-8"></script>
+  <script type="text/javascript">
+  // Milliseconds between reconnects.
+  nanomsg.reconnectTime = 10 * 1000;
+  // Show some debug logging in the console.
+  nanomsg.debug = true;
+  // Receives ArrayBuffer objects instead of strings. Default is `false`.
+  nanomsg.receiveArrayBuffer = false;
+  </script>
+
+  
+  <script charset="utf-8">
+
+    const sub = new nanomsg.Socket(nanomsg.SUB);
+    sub.connect('ws://192.168.1.60:7789');
+
+    sub.on('data', (msg) => {
+      //console.log('got =>', msg);
+      document
+        .querySelector('subr')
+        .textContent = msg /* <-- an improvement from FileReader :) */
+    });
+
+    const sock = new nanomsg.Socket(nanomsg.REQ);
+    // const sock = new nanomsg.Socket(nanomsg.PAIR);
+    sock.connect('ws://192.168.1.60:7790')
+    // old school more streamy approach
+
+    sock.on('data', (msg) => {
+      //console.log('got =>', msg);
+      document.getElementById('rsp').value = msg /* <-- an improvement from FileReader :) */
+    });
+
+    /* send websocket msgs w/ input button */
+    //var input = document.querySelector('textarea')
+    var input = document.getElementById('req')
+    document
+      .querySelector('button')
+      .addEventListener('click', send)
+
+    function send( e ){
+      sock.send(input.value)
+      //input.value = ''
+    }
+ 
+  </script>
+</body>
+</html>

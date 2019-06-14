@@ -24,13 +24,12 @@ enum {
 
 //mod id defined
 enum {
-    GSF_MOD_ID_SYS   = 0,
+    GSF_MOD_ID_BSP   = 0,
     GSF_MOD_ID_CODEC = 1,
     GSF_MOD_ID_CAM   = 2,
     GSF_MOD_ID_REC   = 3,
     GSF_MOD_ID_JOINT = 4,
-    GSF_MOD_ID_USER  = 16,
-    GSF_MOD_ID_END   = 32
+    GSF_MOD_ID_END   = 15
 };
 
 //mod register

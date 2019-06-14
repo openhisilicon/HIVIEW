@@ -5,12 +5,19 @@
 
 //mod
 #include "codec.h"
+#include "cfg.h"
 
 //myself
 #include "msg_func.h"
 
 static void msg_func_venc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
+  gsf_venc_t *venc = (gsf_venc_t*)rsp->buf;
+  
+  *venc = codec_parm.venc[0];
+
+  rsp->err  = 0;
+  rsp->size = sizeof(gsf_venc_t);
 }
 
 static void msg_func_aenc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)

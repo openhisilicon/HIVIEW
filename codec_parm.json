@@ -2,13 +2,13 @@
 	"venc":	[{
 			"vst":	[{
 					"type":	0,
-					"width":	0,
-					"height":	0,
-					"gop":	0,
-					"flow":	0,
-					"bitrate":	0,
+					"width":	1920,
+					"height":	1080,
+					"gop":	50,
+					"flow":	1,
+					"bitrate":	4000,
 					"profile":	0,
-					"qp":	0
+					"qp":	51
 				}, {
 					"type":	0,
 					"width":	0,
