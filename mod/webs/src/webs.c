@@ -23,9 +23,11 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
   int ret = 0;
   int modid = -1, msgid = -1, channel = -1, gset = -1;
   
-  char *p = calloc(1, isize+1);
-  memcpy(p, in, isize);
+  char *pin = (char*)malloc(isize+1);
+  memcpy(pin, in, isize);
+  pin[isize] = '\0';
   
+  char *p = pin;
   p = strstr(p, "modid:");
   if(p)modid = (p+strlen("modid:"))?atoi(p+strlen("modid:")):-1;
   if(modid == -1)
@@ -44,8 +46,7 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
       goto __err;
 
   p = strstr(p, "data:");
-  if(p != NULL)
-    p+=strlen("data:");
+  if(p)p+=strlen("data:");
   
   printf("parse => modid:%d, msgid:%d, channel:%d, gset:%d, data:\n%s\n"
         , modid, msgid, channel, gset, p);
@@ -79,12 +80,13 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
     cJSON* json2 = cJSON_CreateObject();
     sjb_maps[modid<<8|msgid].serialize(json2, 0, __pmsg->buf, 0, 0);
     char *rsp = cJSON_Print(json2);
-    strcat(out, rsp);
+    strncat(out, rsp, *osize-strlen(out)-1);
     free(rsp);
     cJSON_Delete(json2);
   }
   printf("rsp => \n%s\n", out);
   *osize = strlen(out);
+  free(pin);
   return 0;
   
 __err:
@@ -92,6 +94,7 @@ __err:
         , modid, msgid, channel, gset, p);
   sprintf(out, "code:-2[input parm err.]\r\n");
   *osize = strlen(out);
+  free(pin);
   return 0;
 }
 
