@@ -1,0 +1,28 @@
+#!/bin/sh
+
+if [ $# -gt 2 ];then
+	echo "wrong input"
+exit
+fi
+
+if [ $1 -le 100 ];then
+echo "iso = 100"
+#./iqdebug ...
+exit
+
+elif [ $1 -le 250 ];then
+echo "iso = 250"
+#./iqdebug ...
+exit
+
+elif [ $1 -le 600 ];then
+echo "iso = 600"
+#./iqdebug ...
+exit
+
+else
+echo "iso = 280000"
+#./iqdebug ...
+exit
+
+fi

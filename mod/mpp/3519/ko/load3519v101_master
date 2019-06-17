@@ -1,0 +1,651 @@
+#!/bin/sh
+# Useage: ./load3519v101 [ -r|-i|-a ] [ sensor ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+#
+
+
+#sensor0: left sensor, mn34220, imx290, imx226, ov4689, imx274,imx117,mn34120
+#sensor1: right sensor,ov4689,imx290
+
+####################Variables Definition##########################
+
+
+SNS_TYPE0=imx274;           	# sensor type
+SNS_TYPE1=NULL;            	# sensor type
+WORK_MODE=single_pipe;		#stitching,single_pipe,double_pipe
+
+mem_total=1024;              # 512M, total mem
+mem_start=0x80000000;       # phy mem start
+
+os_mem_size=64;             # 64M, os mem
+mmz_start=0x84000000;       # mmz start addr
+mmz_size=960M;              # 128M, mmz size
+
+##################################################################
+
+report_error()
+{
+	echo "******* Error: There's something wrong, please check! *****"
+	exit 1
+}
+
+insert_audio()
+{
+	insmod hi3519v101_aio.ko
+	insmod hi3519v101_ai.ko
+	insmod hi3519v101_ao.ko
+	insmod hi3519v101_aenc.ko
+	insmod hi3519v101_adec.ko
+	insmod hi_acodec.ko
+	#insmod extdrv/hi_tlv320aic31.ko 
+}
+
+remove_audio()
+{
+	rmmod hi_acodec
+	#rmmod hi_tlv320aic31
+	rmmod hi3519v101_adec
+	rmmod hi3519v101_aenc
+	rmmod hi3519v101_ao
+	rmmod hi3519v101_ai
+	rmmod hi3519v101_aio
+}
+
+spi0_4wire_pin_mux()
+{
+    #pinmux
+    himm 0x1204018c 0x1;  #SPI0_SCLK
+    himm 0x12040190 0x1;  #SPI0_SD0
+    himm 0x12040194 0x1;  #SPI0_SDI
+    himm 0x12040198 0x1;  #SPI0_CSN
+    
+    #drive capability   
+    himm 0x12040998 0x150;  #SPI0_SCLK
+    himm 0x1204099c 0x160;  #SPI0_SD0
+    himm 0x120409a0 0x160;  #SPI0_SDI
+    himm 0x120409a4 0x160;  #SPI0_CSN
+}
+spi1_4wire_pin_mux()
+{
+    #pinmux
+    himm 0x12040018 0x1; #SPI1_SCLK
+    himm 0x1204001c 0x1; #SPI1_SD0
+    himm 0x12040020 0x1; #SPI1_SDI
+    himm 0x12040024 0x1; #SPI1_CSN
+    
+    #drive capability   
+    himm 0x12040818 0x150; #SPI1_SCLK
+    himm 0x1204081C 0x160; #SPI1_SD0
+    himm 0x12040820 0x160; #SPI1_SDI
+    himm 0x12040824 0x160; #SPI1_CSN
+}
+spi0_3wire_pin_mux()
+{
+    #pinmux
+    himm 0x1204018c 0x3;    #SPI0_3WIRE_CLK
+    himm 0x12040190 0x3;    #SPI0_3WIRE_DATA
+    himm 0x12040198 0x3;    #SPI0_3WIRE_CSN
+
+    #drive capability   
+    himm 0x12040998 0x150;  #SPI0_3WIRE_CLK
+    himm 0x1204099c 0x160;  #SPI0_3WIRE_DATA
+    himm 0x120409a4 0x160;  #SPI0_3WIRE_CSN
+}
+i2c0_pin_mux()
+{
+    #pinmux
+    himm 0x12040190 0x2;  #I2C0_SDA
+    himm 0x1204018c 0x2;  #I2C0_SCL
+    
+    #drive capability
+    himm 0x1204099c 0x120; #I2C0_SDA
+    himm 0x12040998 0x120; #I2C0_SCL    
+}
+i2c1_pin_mux()
+{
+    #pinmux
+    himm 0x1204001c 0x2;  #I2C1_SDA
+    himm 0x12040018 0x2;  #I2C1_SCL
+    
+    #drive capability
+    himm 0x1204081c 0x120;  #I2C1_SDA
+    himm 0x12040818 0x120;  #I2C1_SCL       
+}
+
+insert_sns()
+{
+	local tmp=0;
+	local tmp1;
+	local tmp2;
+if [ ${SNS_TYPE0} != "NULL" ] ; then		
+		case $SNS_TYPE0 in
+        imx226)
+            tmp=0x11;
+            himm 0x12010040 0x11;           # sensor0 clk_en, 72MHz
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#imx226: viu0:600M,isp0:600M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c23;
+			himm 0x12010054 0x00024041;
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;
+        imx274)
+            tmp=0x11;
+            himm 0x12010040 0x11;           # sensor0 clk_en, 72MHz
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#imx274:viu0: 600M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c23;
+			himm 0x12010054 0x0004041;
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;
+        imx274_mipi)
+            tmp=0x14;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x14;           # sensor0 clk_en, 24MHz
+            i2c0_pin_mux;
+            ;;
+        imx117)
+            tmp=0x11;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x11;           # sensor0 clk_en, 72MHz
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;	
+        imx377)
+            tmp=0x14;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#viu0:600M,isp0:600M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c23;
+			himm 0x12010054 0x00024041;
+            himm 0x12010040 0x14; # sensor0 clk_en, 24MHz 
+            i2c0_pin_mux;
+            ;;   	
+        imx317)
+            tmp=0x11;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x11;           # sensor0 clk_en, 72MHz
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;
+        imx290)
+            tmp=0x18;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#imx290:viu0:340M,isp0:214M, viu1:340M,isp1:214M
+			himm 0x1201004c 0x00094c24;
+			himm 0x12010054 0x0004;
+            himm 0x12010040 0x18;           # sensor0 clk_en, 37.125MHz
+            i2c0_pin_mux;
+            ;;
+        mn34220)
+            tmp=0x18;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x18;           # sensor0 clk_en, 37.125MHz
+            i2c0_pin_mux;
+            ;;
+        mn34120)
+            tmp=0x12;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x12;           # sensor0 clk_en, 54MHz
+            spi0_3wire_pin_mux;
+            insmod extdrv/hi_ssp_3wire.ko;
+            ;;
+        ov4689)
+            tmp=0x14;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#ov4689:	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x14;           # sensor0 clk_en, 24MHz
+            i2c0_pin_mux;
+            ;;
+        imx185)
+            tmp=0x18;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x18;           # sensor0 clk_en, 37.125MHz
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;                   
+        bt1120)
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x113c6200 0x0;  #disable dehaze
+            himm 0x113d1400 0x0;  #disable acm
+            himm 0x113c5200 0x0;  #disable sharpen
+            #himm 0x20670000 0x0;
+            ;;
+        *)
+            echo "xxxx Invalid sensor type $SNS_TYPE0 xxxx"
+            report_error;;
+    esac
+fi
+
+if [ ${SNS_TYPE1} != "NULL" ] ; then	
+	case $SNS_TYPE1 in       
+        imx290)
+            tmp1=0x1800;
+            tmp2=$((tmp+tmp1));
+            himm 0x12010040 $tmp2;           # sensor0 clk_en, 37.125MHz
+            i2c1_pin_mux;
+            ;;
+        ov4689)
+            tmp1=0x1400;
+            tmp2=$((tmp+tmp1));
+            himm 0x12010040 $tmp2;           # sensor0 clk_en, 24MHz
+            i2c1_pin_mux;
+            ;;
+       imx377)
+            tmp1=0x1400;
+            tmp2=$((tmp+tmp1));
+            himm 0x12010040 $tmp2;           # sensor0 clk_en, 24MHz
+            i2c1_pin_mux;
+            ;;
+        imx185)
+            tmp1=0x1800;
+            tmp2=$((tmp+tmp1));
+            himm 0x12010040 $tmp2;           # sensor0 clk_en, 37.125MHz
+            spi1_4wire_pin_mux;            
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;            
+        bt1120)
+            himm 0x114c6200 0x0;  #disable dehaze
+            himm 0x114d1400 0x0;  #disable acm
+            himm 0x114c5200 0x0;  #disable sharpen
+            #himm 0x20670000 0x0;
+            ;;
+	    *)
+            echo "xxxx Invalid sensor type $SNS_TYPE1 xxxx"
+            report_error;;
+    esac			
+fi
+
+if [ ${WORK_MODE} != "NULL" ] ; then	
+	case $WORK_MODE in       
+        stitching)
+            himm 0x12040184 0x1;    # SENSOR0 HS from VI0 HS
+            himm 0x12040188 0x1;    # SENSOR0 VS from VI0 VS
+            himm 0x12040010 0x1;    # SENSOR1 HS from VI0 HS
+            himm 0x12040014 0x1;    # SENSOR1 VS from VI0 VS
+            ;;     
+         single_pipe)
+            himm 0x12040184 0x1;    # SENSOR0 HS from VI0 HS
+            himm 0x12040188 0x1;    # SENSOR0 VS from VI0 VS
+            himm 0x12040010 0x2;    # SENSOR1 HS from VI1 HS
+            himm 0x12040014 0x2;    # SENSOR1 VS from VI1 VS
+            ;;     
+        double_pipe)
+            tmp1=$((tmp<<8))
+            tmp2=$((tmp+tmp1))
+            himm 0x12010040 $tmp2;  # sensor0 clk + sensor1 clk
+            himm 0x12040184 0x2;    # SENSOR0 HS from VI1 HS
+            himm 0x12040188 0x2;    # SENSOR0 VS from VI1 VS
+            #himm 0x12040010 0x1;    # SENSOR1 HS from VI0 HS
+            #himm 0x12040014 0x1;    # SENSOR1 VS from VI0 VS
+			himm 0x1201004c 0x00094c21; #double pipe,VI0,ISP0:300M,if inapposite,change it.
+			himm 0x12010054 0x0004041;  #double pipe,VI1,ISP1:300M
+            ;;
+        *)
+            echo "xxxx Invalid work mode $WORK_MODE xxxx"
+            report_error;;
+    esac			
+fi			
+}
+
+remove_sns()
+{
+	rmmod hi_ssp_sony &> /dev/null
+	rmmod hi_sensor_spi &> /dev/null
+}
+
+insert_isp()
+{
+    case $SNS_TYPE0 in
+        imx117)
+            insmod hi3519v101_isp.ko update_pos=1 proc_param=30;
+            ;;
+        *)
+            insmod hi3519v101_isp.ko proc_param=30;
+            ;;
+    esac
+}
+
+vicap1_pwrdn()
+{
+	himm 0x1201003c 0x333303ff;  
+	himm 0x120a012c 0x3; 
+	himd.l 0x120a012c;
+	himm 0x120a012c 0x2;
+	himm 0x1201003c 0x120003ff;  
+}
+sys_config()
+{
+	# pinmux configuration
+	sh ./pinmux.sh -net -vi > /dev/null
+
+	if [ ${SNS_TYPE1} != "NULL" ] ; then	
+	vicap1_pwrdn > /dev/null
+	fi
+	if [ ${WORK_MODE} == "double_pipe" ] ; then	
+	vicap1_pwrdn > /dev/null
+	fi
+	#vicap1_pwrdn;
+	#vicap1_pwrdn > /dev/null
+	
+	# clock configuration
+	sh clkcfg.sh > /dev/null
+	# system configuration
+	sh sysctl.sh $b_arg_online  > /dev/null
+}
+
+insert_pci()
+{
+    insmod pcie/hi35xx_dev_host.ko
+    insmod pcie/pcit_dma_host.ko
+    insmod pcie/mcc_drv_host.ko
+    insmod pcie/mcc_usrdev_host.ko
+    
+    insmod hi3519v101_pciv_fmw.ko
+    insmod hi3519v101_pciv.ko
+}
+
+remove_pci()
+{
+	rmmod hi3519v101_pciv.ko
+    rmmod hi3519v101_pciv_fmw.ko
+	
+    rmmod mcc_usrdev_host.ko
+    rmmod mcc_drv_host.ko
+    rmmod pcit_dma_host.ko
+    rmmod hi35xx_dev_host.ko 
+}
+
+insert_ko()
+{
+	# sys config
+	sys_config;
+
+	# driver load
+	insmod hi_osal.ko mmz=anonymous,0,$mmz_start,$mmz_size anony=1 || report_error
+	insmod hi3519v101_base.ko
+
+	insmod hi3519v101_sys.ko vi_vpss_online=$b_arg_online sensor=$SNS_TYPE0,$SNS_TYPE1 mem_total=$mem_total
+
+	insmod hi3519v101_tde.ko
+	insmod hi3519v101_region.ko
+	insmod hi3519v101_fisheye.ko
+	insmod hi3519v101_vgs.ko
+
+	insert_isp;
+	insmod hi3519v101_viu.ko detect_err_frame=10;
+	insmod hi3519v101_vpss.ko 
+	insmod hi3519v101_vou.ko
+	#insmod hi3519v101_vou.ko detectCycle=0 #close dac detect
+	#insmod hi3519v101_vou.ko transparentTransmit=1 #enable transparentTransmit
+	insmod hifb.ko video="hifb:vram0_size:1620"     # default pal
+
+	insmod hi3519v101_rc.ko
+	insmod hi3519v101_venc.ko
+	insmod hi3519v101_chnl.ko	
+	insmod hi3519v101_vedu.ko
+	insmod hi3519v101_h264e.ko
+	insmod hi3519v101_h265e.ko
+	insmod hi3519v101_jpege.ko
+	insmod hi3519v101_ive.ko save_power=1
+	#insmod hi3519v101_photo.ko
+	#
+	insmod extdrv/hi_sensor_i2c.ko
+	insmod extdrv/hi_pwm.ko
+	insmod extdrv/hi_piris.ko
+	#insmod extdrv/hi_sil9136.ko norm=12    #1080P@30fps
+	
+	#insmod extdrv/gyro_bosch.ko
+
+	insert_audio
+
+	insmod hi_mipi.ko
+	insmod hi_user.ko
+	#insert_sns > /dev/null
+	insert_sns 	
+	sh ./pinmux.sh -vo BT1120 > /dev/null
+	himm 0x12010044 0x4ff0;
+	#insmod extdrv/hi_sil9136.ko norm=12;    #1080P@30fps
+	#insmod extdrv/hi_sil9136.ko norm=13;   #4K@30fps
+	himm 0x12010044 0x4;	
+	echo "==== Your input Sensor0 type is $SNS_TYPE0 ===="
+	echo "==== Your input Sensor1 type is $SNS_TYPE1 ===="
+	
+	insert_pci
+}
+
+remove_ko()
+{
+	remove_pci
+	
+	remove_audio
+	remove_sns
+	rmmod hi_user
+	rmmod hi_sil9136 &> /dev/null
+	rmmod hi_pwm
+	rmmod hi_piris
+
+	#rmmod hi3519v101_photo
+	rmmod hi3519v101_fd
+	rmmod hi3519v101_ive
+
+	rmmod hi3519v101_rc
+	rmmod hi3519v101_jpege
+	rmmod hi3519v101_h264e
+	rmmod hi3519v101_h265e
+	rmmod hi3519v101_vedu
+	rmmod hi3519v101_chnl
+	rmmod hi3519v101_venc	
+
+	rmmod hifb
+	rmmod hi3519v101_vou
+	rmmod hi3519v101_vpss
+	rmmod hi3519v101_isp
+	rmmod hi3519v101_viu
+	rmmod hi_mipi
+	rmmod hi3519v101_fisheye	
+	
+	#rmmod hi_ssp_ad9020
+	rmmod hi3519v101_vgs
+	rmmod hi3519v101_region
+	rmmod hi3519v101_tde
+	
+	rmmod hi_sensor_i2c &> /dev/null
+	rmmod hi_ssp_3wire.ko &> /dev/null
+	
+	#rmmod gyro_bosch
+
+	rmmod hi3519v101_sys
+	rmmod hi3519v101_base
+	rmmod hi_osal
+}
+
+sys_restore()
+{
+	####################################################
+	clkcfg.sh > /dev/null
+
+	# system configuration
+	sysctl.sh $b_arg_online # > /dev/null
+	insert_sns;
+}
+
+load_usage()
+{
+	echo "Usage:  ./load3519v101 [-option] [sensor_name]"
+	echo "options:"
+	echo "    -i                       insert modules"
+	echo "    -r                       remove modules"
+	echo "    -a                       remove modules first, then insert modules"
+	echo "    -sensor sensor_name      config sensor type [default: ar0130]"
+	echo "    -osmem os_mem_size       config os mem size [unit: M, default: 64]"
+	echo "    -total_mem_size          config total mem size [unit: M, default: 512]"
+	echo "    -offline                 vi/vpss offline"
+	echo "    -h                       help information"
+	echo -e "Available sensors: imx274, imx226, imx290, mn34120 ,ov4689"
+	echo -e "workmode: stitching,single_pipe,double_pipe"
+	echo -e "notes: osmem option can't be used when mmz zone partition is enable\n\n"
+	echo -e "for example online:  ./load3519v101 -a -sensor0 ov4689 -sensor1 ov4689 -osmem 64 -total 512\n"
+	echo -e "            offline: ./load3519v101 -a -sensor0 imx274 -osmem 64 -total 512 -offline\n"
+}
+
+calc_mmz_info()
+{
+	mmz_start=`echo "$mem_start $os_mem_size" | 
+	awk 'BEGIN { temp = 0; }
+	{
+		temp = $1/1024/1024 + $2;
+	} 
+	END { printf("0x%x00000\n", temp); }'`
+
+	mmz_size=`echo "$mem_total $os_mem_size" | 
+	awk 'BEGIN { temp = 0; }
+	{
+		temp = $1 - $2;
+	} 
+	END { printf("%dM\n", temp); }'`
+	echo "mmz_start: $mmz_start, mmz_size: $mmz_size"
+}
+
+
+######################parse arg###################################
+b_arg_os_mem=0
+b_arg_sensor0=0
+b_arg_sensor1=0
+b_arg_insmod=0
+b_arg_remove=0
+b_arg_online=1
+b_arg_restore=0
+b_arg_mode=0
+b_arg_total_mem=0
+
+for arg in $@
+do
+	if [ $b_arg_total_mem -eq 1 ]; then
+		b_arg_total_mem=0;
+		mem_total=$arg;
+		if [ -z $mem_total ]; then
+			echo "[error] mem_total is null"
+			exit;
+		fi
+	fi
+	if [ $b_arg_os_mem -eq 1 ] ; then
+		b_arg_os_mem=0;
+		os_mem_size=$arg;
+
+		if [ -z $os_mem_size ]; then
+			echo "[error] os_mem_size is null"
+			exit;
+		fi
+
+		if [ $os_mem_size -ge $mem_total ] ; then
+			echo "[err] os_mem[$os_mem_size], over total_mem[$mem_total]"
+			exit;
+		fi
+	fi
+
+	if [ $b_arg_sensor0 -eq 1 ] ; then
+		b_arg_sensor0=0;
+		SNS_TYPE0=$arg;		
+	fi
+	if [ $b_arg_sensor1 -eq 1 ] ; then
+		b_arg_sensor1=0;
+		SNS_TYPE1=$arg;		
+	fi
+	if [ $b_arg_mode -eq 1 ] ; then
+		b_arg_mode=0;
+		WORK_MODE=$arg;		
+	fi
+
+	case $arg in
+		"-i")
+			b_arg_insmod=1;
+			;;
+		"-r")
+			b_arg_remove=1;
+			;;
+		"-a")			
+			b_arg_insmod=1;
+			b_arg_remove=1;
+			;;
+		"-h")
+			load_usage;
+			;;
+		"-sensor0")
+			b_arg_sensor0=1;
+			;;
+		"-sensor")
+			b_arg_sensor0=1;
+			;;
+		"-sensor1")
+			b_arg_sensor1=1;
+			;;
+		"-osmem")
+			b_arg_os_mem=1;
+			;;
+		"-total")
+			b_arg_total_mem=1;
+			;;
+		"-restore")
+			b_arg_restore=1;
+			;;
+		"-offline")
+			b_arg_online=0;
+			;;
+		"-workmode")
+			b_arg_mode=1;
+			;;
+	esac
+done
+#######################parse arg end########################
+
+if [ $os_mem_size -ge $mem_total ] ; then
+	echo "[err] os_mem[$os_mem_size], over total_mem[$mem_total]"
+	exit;
+fi
+
+calc_mmz_info;
+
+#######################Action###############################
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+if [ $b_arg_remove -eq 1 ]; then
+	remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+	insert_ko;
+fi
+
+if [ $b_arg_restore -eq 1 ]; then	
+	sys_restore;
+fi
