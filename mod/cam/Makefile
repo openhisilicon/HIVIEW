@@ -20,8 +20,11 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lmpp -lnm -lcjson -lm
          
-ifneq ($(GSF_CPU_ARCH), x86)
+ifeq ($(GSF_CPU_ARCH), 3516a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog -l_iniparser \
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
+else ifeq ($(GSF_CPU_ARCH), 3519)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
 endif
 

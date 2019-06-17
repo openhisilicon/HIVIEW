@@ -3,7 +3,7 @@ export GSF_CPU_ARCH=3516a
 export GSF_HOME=`pwd`
 export GSF_CC="arm-hisiv300-linux-gcc"
 export GSF_AR=arm-hisiv300-linux-ar
-export GSF_CFLAGS="-g -fstack-protector -fPIC"
+export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_CPU_ARCH=35161"
 
 if [ ! -d ${GSF_HOME}/lib/${GSF_CPU_ARCH} ]
 then

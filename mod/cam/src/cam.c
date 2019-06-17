@@ -9,6 +9,9 @@
 #include "mod/bsp/inc/bsp.h"
 #include "sample_comm.h"
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+#pragma message "<<<<<<<<<<<<<<<< GSF_CPU_ARCH: " STR(GSF_CPU_ARCH)  " >>>>>>>>>>>>>>>>>"
 
 GSF_LOG_GLOBAL_INIT("CAM", 8*1024);
 
@@ -45,15 +48,22 @@ int main(int argc, char *argv[])
     }
     info("parm.sp[0].level:%d\n", cam_parm.sp[0].level);
     
-    
-    
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_CAM, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
 
-
+    #if (GSF_CPU_ARCH == 35161)
     SAMPLE_MPP_CONFIG_S cfg = {.sensor_type = SONY_IMX185_MIPI_1080P_30FPS};
     SAMPLE_COMM_MPP_Cfg(&cfg);
     SAMPLE_COMM_ISP_Init(WDR_MODE_NONE);
+    #elif (GSF_CPU_ARCH == 3519)
+    SAMPLE_MPP_CONFIG_S cfg = {.sensor_type = SONY_IMX290_MIPI_1080P_30FPS};
+    SAMPLE_COMM_MPP_Cfg(&cfg);
+    SAMPLE_COMM_ISP_Init(0, WDR_MODE_NONE, SAMPLE_FRAMERATE_30FPS, SAMPLE_SENSOR_SINGLE);
+    #else
+    SAMPLE_MPP_CONFIG_S cfg = {.sensor_type = SONY_IMX185_MIPI_1080P_30FPS};
+    SAMPLE_COMM_MPP_Cfg(&cfg);
+    SAMPLE_COMM_ISP_Init(WDR_MODE_NONE);
+    #endif
 
     while(1)
     {
