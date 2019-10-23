@@ -301,7 +301,7 @@ typedef struct hiVO_QUERY_STATUS_S
     HI_U32 u32ChnBufUsed;       /* channel buffer that been occupied */
 } VO_QUERY_STATUS_S;
 
-typedef struct tagVO_SYNC_INFO_S
+typedef struct hiVO_SYNC_INFO_S
 {
     HI_BOOL  bSynm;     /* sync mode(0:timing,as BT.656; 1:signal,as LCD) */
     HI_BOOL  bIop;      /* interlaced or progressive display(0:i; 1:p) */

@@ -4,7 +4,7 @@ HOME := $(shell echo ${GSF_HOME})
 CC := $(shell echo ${GSF_CC})
 AR := $(shell echo ${GSF_AR})
 CFLAGS := $(shell echo ${GSF_CFLAGS})
-LDFLAGS := -shared -g
+LDFLAGS := -shared -g $(shell echo ${GSF_LDFLAGS})
 TARG := lib/libmpp.so
 
 #============================================================= 

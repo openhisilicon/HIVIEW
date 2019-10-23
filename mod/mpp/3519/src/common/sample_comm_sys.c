@@ -1,9 +1,9 @@
 /******************************************************************************
   Some simple Hisilicon Hi35xx system functions.
 
-  Copyright (C), 2010-2011, Hisilicon Tech. Co., Ltd.
+  Copyright (C), 2010-2018, Hisilicon Tech. Co., Ltd.
  ******************************************************************************
-    Modification:  2011-2 Created
+    Modification:  2017-2 Created
 ******************************************************************************/
 #ifdef __cplusplus
 #if __cplusplus
@@ -28,6 +28,43 @@ extern "C" {
 
 #include "sample_comm.h"
 
+HI_S32 SAMPLE_SYS_SetReg(HI_U32 u32Addr, HI_U32 u32Value)
+{
+    HI_U32 *pu32Addr = NULL;
+    HI_U32 u32MapLen = sizeof(u32Value);
+
+    pu32Addr = (HI_U32 *)HI_MPI_SYS_Mmap(u32Addr, u32MapLen);
+    if(NULL == pu32Addr)
+    {
+        return HI_FAILURE;
+    }
+
+    *pu32Addr = u32Value;
+
+    return HI_MPI_SYS_Munmap(pu32Addr, u32MapLen);
+}
+
+HI_S32 SAMPLE_SYS_GetReg(HI_U32 u32Addr, HI_U32 *pu32Value)
+{
+    HI_U32 *pu32Addr = NULL;
+    HI_U32 u32MapLen;
+
+    if (NULL == pu32Value)
+    {
+        return HI_ERR_SYS_NULL_PTR;
+    }
+
+    u32MapLen = sizeof(*pu32Value);
+    pu32Addr = (HI_U32 *)HI_MPI_SYS_Mmap(u32Addr, u32MapLen);
+    if(NULL == pu32Addr)
+    {
+        return HI_FAILURE;
+    }
+
+    *pu32Value = *pu32Addr;
+
+    return HI_MPI_SYS_Munmap(pu32Addr, u32MapLen);
+}
 /******************************************************************************
 * function : get picture size(w*h), according Norm and enPicSize
 ******************************************************************************/

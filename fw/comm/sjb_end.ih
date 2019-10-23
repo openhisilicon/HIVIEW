@@ -10,6 +10,7 @@
 #undef uint32
 #undef uint16
 #undef uint8
+#undef bool
 #undef UNION_B
 #undef UNION_C
 #undef UNION_S

@@ -1,9 +1,9 @@
 /******************************************************************************
   Some simple Hisilicon Hi35xx isp functions.
 
-  Copyright (C), 2010-2011, Hisilicon Tech. Co., Ltd.
+  Copyright (C), 2010-2018, Hisilicon Tech. Co., Ltd.
  ******************************************************************************
-    Modification:  2011-2 Created
+    Modification:  2018-2 Created
 ******************************************************************************/
 
 #ifdef __cplusplus
@@ -49,11 +49,11 @@ const ISP_SNS_OBJ_S *g_pstSnsObj[MAX_SENSOR_NUM] =
 #elif defined(SNS_MN34220_SINGLE)
     &stSnsMn34220Obj, HI_NULL
 #elif defined(SNS_MN34220_MIPI)
-    &stSnsMn34220MipiObj, HI_NULL  
+    &stSnsMn34220MipiObj, HI_NULL
 #elif defined(SNS_OV4689_1080P_SINGLE)||defined(SNS_OV4689_4M_SINGLE)
-    &stSnsOv4689SlaveObj, HI_NULL  
+    &stSnsOv4689SlaveObj, HI_NULL
 #elif defined(SNS_OV4689_1080P_DOUBLE)||defined(SNS_OV4689_4M_DOUBLE)
-    &stSnsOv4689SlaveObj, &stSnsOv4689SlaveObj  
+    &stSnsOv4689SlaveObj, &stSnsOv4689SlaveObj
 #elif defined(SNS_IMX226_8M_SINGLE)|| defined(SNS_IMX226_9M_SINGLE) || defined(SNS_IMX226_12M_SINGLE)
     &stSnsImx226Obj, HI_NULL
 #elif defined(SNS_IMX117_8M_SINGLE) || defined(SNS_IMX117_1080P_SINGLE) || defined(SNS_IMX117_720P_SINGLE) || defined(SNS_IMX117_12M_SINGLE)
@@ -62,13 +62,15 @@ const ISP_SNS_OBJ_S *g_pstSnsObj[MAX_SENSOR_NUM] =
     &stSnsImx274Obj, HI_NULL
 #elif defined(SNS_MN34120_16M_SINGLE) ||defined(SNS_MN34120_8M_SINGLE) || defined(SNS_MN34120_1080P_SINGLE)
     &stSnsMn34120Obj, HI_NULL
-#elif defined(SNS_IMX377_8M30_10BIT_SINGLE) || defined(SNS_IMX377_8M60_10BIT_SINGLE)  || defined(SNS_IMX377_1080P120_12BIT_SINGLE)  || defined(SNS_IMX377_720P240_10BIT_SINGLE)|| defined(SNS_IMX377_12M30_12BIT_SINGLE) || defined(SNS_IMX377_8M30_12BIT_SINGLE) 
+#elif defined(SNS_IMX377_8M30_10BIT_SINGLE) || defined(SNS_IMX377_8M60_10BIT_SINGLE)  || defined(SNS_IMX377_1080P120_12BIT_SINGLE)  || defined(SNS_IMX377_720P240_10BIT_SINGLE)|| defined(SNS_IMX377_12M30_12BIT_SINGLE) || defined(SNS_IMX377_8M30_12BIT_SINGLE)
     &stSnsImx377Obj, HI_NULL
 #elif defined(SNS_IMX326_5M_SINGLE)
     &stSnsImx326Obj,HI_NULL
 #elif defined(SNS_OS05A_5M_SINGLE)
     &stSnsOs05aObj,HI_NULL
-#endif 
+#elif defined(SNS_OS08A_8M_SINGLE)
+    &stSnsOs08a10Obj, HI_NULL
+#endif
 };
 #endif
 
@@ -76,7 +78,7 @@ static void* Test_ISP_Run(void* param)
 {
     ISP_DEV IspDev;
     IspDev = (ISP_DEV)param;
-    
+
     /* Run loop, exit until HI_MPI_ISP_Exit() been called! */
     printf("ISP Dev %d HI_MPI_ISP_Run\n", IspDev);
     HI_MPI_ISP_Run(IspDev);
@@ -93,7 +95,7 @@ HI_S32 SAMPLE_COMM_ISP_Aelib_Callback(ISP_DEV IspDev)
     ALG_LIB_S stAeLib;
 
     stAeLib.s32Id = IspDev;
-    strncpy(stAeLib.acLibName, HI_AE_LIB_NAME, sizeof(HI_AE_LIB_NAME));    
+    strncpy(stAeLib.acLibName, HI_AE_LIB_NAME, sizeof(HI_AE_LIB_NAME));
     CHECK_RET(HI_MPI_AE_Register(IspDev, &stAeLib),"aelib register call back");
     return HI_SUCCESS;
 }
@@ -103,7 +105,7 @@ HI_S32 SAMPLE_COMM_ISP_Aelib_UnCallback(ISP_DEV IspDev)
     ALG_LIB_S stAeLib;
 
     stAeLib.s32Id = IspDev;
-    strncpy(stAeLib.acLibName, HI_AE_LIB_NAME, sizeof(HI_AE_LIB_NAME));    
+    strncpy(stAeLib.acLibName, HI_AE_LIB_NAME, sizeof(HI_AE_LIB_NAME));
     CHECK_RET(HI_MPI_AE_UnRegister(IspDev, &stAeLib),"aelib unregister call back");
     return HI_SUCCESS;
 }
@@ -113,7 +115,7 @@ HI_S32 SAMPLE_COMM_ISP_Awblib_Callback(ISP_DEV IspDev)
     ALG_LIB_S stAwbLib;
 
     stAwbLib.s32Id = IspDev;
-    strncpy(stAwbLib.acLibName, HI_AWB_LIB_NAME, sizeof(HI_AWB_LIB_NAME));    
+    strncpy(stAwbLib.acLibName, HI_AWB_LIB_NAME, sizeof(HI_AWB_LIB_NAME));
     CHECK_RET(HI_MPI_AWB_Register(IspDev, &stAwbLib),"awblib register call back");
     return HI_SUCCESS;
 }
@@ -123,7 +125,7 @@ HI_S32 SAMPLE_COMM_ISP_Awblib_UnCallback(ISP_DEV IspDev)
     ALG_LIB_S stAwbLib;
 
     stAwbLib.s32Id = IspDev;
-    strncpy(stAwbLib.acLibName, HI_AWB_LIB_NAME, sizeof(HI_AWB_LIB_NAME));    
+    strncpy(stAwbLib.acLibName, HI_AWB_LIB_NAME, sizeof(HI_AWB_LIB_NAME));
     CHECK_RET(HI_MPI_AWB_UnRegister(IspDev, &stAwbLib),"awblib unregister call back");
     return HI_SUCCESS;
 }
@@ -133,7 +135,7 @@ HI_S32 SAMPLE_COMM_ISP_Aflib_Callback(ISP_DEV IspDev)
     ALG_LIB_S stAfLib;
 
     stAfLib.s32Id = IspDev;
-    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME));    
+    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME));
     CHECK_RET(HI_MPI_AF_Register(IspDev, &stAfLib),"aflib register call back");
     return HI_SUCCESS;
 }
@@ -143,7 +145,7 @@ HI_S32 SAMPLE_COMM_ISP_Aflib_UnCallback(ISP_DEV IspDev)
     ALG_LIB_S stAfLib;
 
     stAfLib.s32Id = IspDev;
-    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME));    
+    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME));
     CHECK_RET(HI_MPI_AF_UnRegister(IspDev, &stAfLib),"aflib unregister call back");
     return HI_SUCCESS;
 }
@@ -156,7 +158,7 @@ HI_S32 SAMPLE_COMM_ISP_Run(ISP_DEV IspDev)
 {
     HI_S32 s32Ret = 0;
     pthread_attr_t *pstAttr = NULL;
-    
+
 #if (HICHIP == HI3518E_V200)
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -170,7 +172,7 @@ HI_S32 SAMPLE_COMM_ISP_Run(ISP_DEV IspDev)
         printf("%s: create isp running thread failed!, error: %d, %s\r\n", __FUNCTION__, s32Ret, strerror(s32Ret));
         goto out;
     }
-    
+
 out:
     if (NULL != pstAttr)
     {
@@ -204,13 +206,13 @@ HI_S32 SAMPLE_COMM_ISP_Sensor_Regiter_callback(ISP_DEV IspDev, HI_U32 u32SnsId)
         printf("%s: sensor %d not exist!\n", __FUNCTION__, u32SnsId);
         return HI_FAILURE;
     }
-    
+
     stAeLib.s32Id = IspDev;
     stAwbLib.s32Id = IspDev;
     stAfLib.s32Id = IspDev;
     strncpy(stAeLib.acLibName, HI_AE_LIB_NAME, sizeof(HI_AE_LIB_NAME));
     strncpy(stAwbLib.acLibName, HI_AWB_LIB_NAME, sizeof(HI_AWB_LIB_NAME));
-    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME)); 
+    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME));
     if (pstSnsObj->pfnRegisterCallback != HI_NULL)
     {
         s32Ret = pstSnsObj->pfnRegisterCallback(IspDev, &stAeLib, &stAwbLib);
@@ -449,7 +451,7 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stSnsSize.u32Width    = 3850;
         stPubAttr.stSnsSize.u32Height   = 2160;
         break;
-        
+
     case SONY_IMX377_MIPI_8M_60FPS_10BIT:
         stPubAttr.enBayer				= BAYER_RGGB;
         stPubAttr.f32FrameRate          = 60;
@@ -534,7 +536,7 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stWndRect.u32Height   = 3000;
         stPubAttr.stSnsSize.u32Width    = 3000;
         stPubAttr.stSnsSize.u32Height   = 3000;
-        break;        
+        break;
 	 case SONY_IMX226_LVDS_12M_30FPS:
         stPubAttr.enBayer				= BAYER_RGGB;
         stPubAttr.f32FrameRate          = 30;
@@ -555,8 +557,8 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stWndRect.u32Height   = 2160;
         stPubAttr.stSnsSize.u32Width    = 3840;
         stPubAttr.stSnsSize.u32Height   = 2160;
-        break;  
-        
+        break;
+
     case PANASONIC_MN34120_LVDS_16M_16P25FPS:
         stPubAttr.enBayer               = BAYER_GRBG;
         stPubAttr.f32FrameRate          = 16.25;
@@ -565,9 +567,9 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stWndRect.u32Width    = 4608;
         stPubAttr.stWndRect.u32Height   = 3456;
         stPubAttr.stSnsSize.u32Width    = 4608;
-        stPubAttr.stSnsSize.u32Height   = 3456;        
+        stPubAttr.stSnsSize.u32Height   = 3456;
         break;
-        
+
     case PANASONIC_MN34120_LVDS_4K_30FPS:
         stPubAttr.enBayer               = BAYER_GRBG;
         stPubAttr.f32FrameRate          = 30;
@@ -578,7 +580,7 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stSnsSize.u32Width    = 3840;
         stPubAttr.stSnsSize.u32Height   = 2160;
         break;
-        
+
     case PANASONIC_MN34120_LVDS_1080P_60FPS:
         stPubAttr.enBayer               = BAYER_GRBG;
         stPubAttr.f32FrameRate          = 60;
@@ -588,7 +590,7 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stWndRect.u32Height   = 1080;
         stPubAttr.stSnsSize.u32Width    = 1920;
         stPubAttr.stSnsSize.u32Height   = 1080;
-        break;        
+        break;
 
     case APTINA_AR0230_HISPI_1080P_30FPS:
         stPubAttr.enBayer               = BAYER_GRBG;
@@ -622,6 +624,17 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
 		stPubAttr.stSnsSize.u32Height	= 1944;
 		break;
 
+    case OMNIVISION_OS08A_MIPI_4K_30FPS:
+        stPubAttr.enBayer				= BAYER_BGGR;
+		stPubAttr.f32FrameRate			= 30;
+		stPubAttr.stWndRect.s32X		= 0;
+		stPubAttr.stWndRect.s32Y		= 0;
+		stPubAttr.stWndRect.u32Width	= 3840;
+		stPubAttr.stWndRect.u32Height	= 2160;
+		stPubAttr.stSnsSize.u32Width	= 3840;
+		stPubAttr.stSnsSize.u32Height	= 2160;
+		break;
+
     default:
         stPubAttr.enBayer               = BAYER_GRBG;
         stPubAttr.f32FrameRate          = 30;
@@ -646,7 +659,7 @@ HI_S32 SAMPLE_COMM_ISP_Init(ISP_DEV IspDev, WDR_MODE_E  enWDRMode, SAMPLE_FRAMER
     //ALG_LIB_S stLib;
 	ISP_WDR_MODE_S stWdrMode;
     ISP_MODE_E enIspMode;
-	
+
 	stWdrMode.enWDRMode = enWDRMode;
 	pstPubAttr = &stPubAttr;
 
@@ -668,7 +681,7 @@ HI_S32 SAMPLE_COMM_ISP_Init(ISP_DEV IspDev, WDR_MODE_E  enWDRMode, SAMPLE_FRAMER
             goto fail1;
         }
     }
-    
+
     if (HI_SUCCESS != HI_MPI_ISP_SetWDRMode(IspDev, &stWdrMode))
     {
         printf("Func: %s, Line: %d, Set WDR Mode failed\n", __FUNCTION__, __LINE__);
@@ -688,7 +701,7 @@ HI_S32 SAMPLE_COMM_ISP_Init(ISP_DEV IspDev, WDR_MODE_E  enWDRMode, SAMPLE_FRAMER
         printf("Func: %s, Line: %d, SetPubAttr failed\n", __FUNCTION__, __LINE__);
         goto fail1;
     }
-    printf("stPubAttr (%d, %d, %d, %d, %f)\n", 
+    printf("stPubAttr (%d, %d, %d, %d, %f)\n",
             pstPubAttr->stWndRect.s32X, pstPubAttr->stWndRect.s32Y,
             pstPubAttr->stWndRect.u32Width, pstPubAttr->stWndRect.u32Height,
             pstPubAttr->f32FrameRate);
@@ -703,7 +716,7 @@ HI_S32 SAMPLE_COMM_ISP_Init(ISP_DEV IspDev, WDR_MODE_E  enWDRMode, SAMPLE_FRAMER
     g_bIspInit[IspDev] = HI_TRUE;
 
     return HI_SUCCESS;
-    
+
 fail1:
     HI_MPI_ISP_Exit(IspDev);
     return HI_FAILURE;
@@ -751,13 +764,13 @@ HI_S32 SAMPLE_COMM_Sensor_UnRegiter_callback(ISP_DEV IspDev)
         //printf("%s: sensor %d not exist!\n", __FUNCTION__, u32SnsId);
         return HI_FAILURE;
     }
-    
+
     stAeLib.s32Id = IspDev;
     stAwbLib.s32Id = IspDev;
     stAfLib.s32Id = IspDev;
     strncpy(stAeLib.acLibName, HI_AE_LIB_NAME, sizeof(HI_AE_LIB_NAME));
     strncpy(stAwbLib.acLibName, HI_AWB_LIB_NAME, sizeof(HI_AWB_LIB_NAME));
-    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME)); 
+    strncpy(stAfLib.acLibName, HI_AF_LIB_NAME, sizeof(HI_AF_LIB_NAME));
     if (pstSnsObj->pfnUnRegisterCallback != HI_NULL)
     {
         s32Ret = pstSnsObj->pfnUnRegisterCallback(IspDev, &stAeLib, &stAwbLib);
@@ -782,7 +795,7 @@ HI_VOID SAMPLE_COMM_ISP_Stop()
     ISP_DEV IspDev = 0;
 
 	for(IspDev = 0; IspDev < ISP_MAX_DEV_NUM; IspDev++)
-	{		
+	{
 	    if (g_IspPid[IspDev])
 	    {
 			HI_MPI_ISP_Exit(IspDev);
@@ -797,7 +810,7 @@ HI_VOID SAMPLE_COMM_ISP_Stop()
     return;
 }
 
-static ISP_SNS_TYPE_E GetSnsType(SAMPLE_VI_MODE_E enViMode)                                                                                            
+static ISP_SNS_TYPE_E GetSnsType(SAMPLE_VI_MODE_E enViMode)
 {
     ISP_SNS_TYPE_E enSnsType;
 
@@ -809,11 +822,11 @@ static ISP_SNS_TYPE_E GetSnsType(SAMPLE_VI_MODE_E enViMode)
     case SONY_IMX117_LVDS_720P_240FPS:
     case SONY_IMX226_LVDS_4K_30FPS:
 	case SONY_IMX226_LVDS_4K_60FPS:
-    case SONY_IMX226_LVDS_9M_30FPS:        
+    case SONY_IMX226_LVDS_9M_30FPS:
     case SONY_IMX274_LVDS_4K_30FPS:
     case PANASONIC_MN34120_LVDS_16M_16P25FPS:
     case PANASONIC_MN34120_LVDS_4K_30FPS:
-    case PANASONIC_MN34120_LVDS_1080P_60FPS:    
+    case PANASONIC_MN34120_LVDS_1080P_60FPS:
         enSnsType = ISP_SNS_SSP_TYPE;
         break;
     default:
@@ -852,7 +865,7 @@ HI_S32 SAMPLE_COMM_ISP_BindSns(ISP_DEV IspDev, HI_U32 u32SnsId, SAMPLE_VI_MODE_E
     enSnsType = GetSnsType(enViMode);
 
     if (ISP_SNS_I2C_TYPE == enSnsType)
-    {    
+    {
         uSnsBusInfo.s8I2cDev = s8SnsDev;
     }
     else
@@ -870,7 +883,7 @@ HI_S32 SAMPLE_COMM_ISP_BindSns(ISP_DEV IspDev, HI_U32 u32SnsId, SAMPLE_VI_MODE_E
             return s32Ret;
         }
     }
-    else 
+    else
     {
         SAMPLE_PRT("not support set sensor bus info!\n");
         return HI_FAILURE;

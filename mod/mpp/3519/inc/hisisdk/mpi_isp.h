@@ -176,6 +176,12 @@ HI_S32 HI_MPI_ISP_MeshShadingCalibration(HI_U16* pu16SrcRaw,
 
 HI_S32 HI_MPI_ISP_GetLightboxGain(ISP_DEV IspDev, ISP_AWB_Calibration_Gain_S *pstAWBCalibrationGain);
 
+HI_S32 HI_MPI_ISP_IrAutoRunOnce(ISP_DEV IspDev, ISP_IR_AUTO_ATTR_S *pstIrAttr);
+HI_S32 HI_MPI_ISP_GetDngImageStaticInfo(ISP_DEV IspDev, DNG_IMAGE_STATIC_INFO_S *pstDngImageStaticInfo);
+HI_S32 HI_MPI_ISP_SetDngColorParam(ISP_DEV IspDev, const ISP_DNG_COLORPARAM_S *pstDngColorParam);
+HI_S32 HI_MPI_ISP_GetDngColorParam(ISP_DEV IspDev, ISP_DNG_COLORPARAM_S *pstDngColorParam);
+
+
 #ifdef __cplusplus
 #if __cplusplus
 }

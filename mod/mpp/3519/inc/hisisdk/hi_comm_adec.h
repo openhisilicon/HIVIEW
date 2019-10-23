@@ -8,7 +8,7 @@
   Author         		: 	Hisilicon multimedia software group
   Created       		: 	2006/12/15
   Last Modified		    :
-  Description  		    : 
+  Description  		    :
   Function List 		:
   History       		:
   1.Date        		: 	2006/12/15
@@ -30,68 +30,68 @@
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
 typedef struct hiADEC_ATTR_G711_S
 {
-    HI_U32 resv; 
-}ADEC_ATTR_G711_S;
+    HI_U32 resv;
+} ADEC_ATTR_G711_S;
 
 typedef struct hiADEC_ATTR_G726_S
 {
-    G726_BPS_E enG726bps; 
-}ADEC_ATTR_G726_S;
+    G726_BPS_E enG726bps;
+} ADEC_ATTR_G726_S;
 
 typedef struct hiADEC_ATTR_ADPCM_S
 {
-    ADPCM_TYPE_E enADPCMType; 
-}ADEC_ATTR_ADPCM_S;
+    ADPCM_TYPE_E enADPCMType;
+} ADEC_ATTR_ADPCM_S;
 
 typedef struct hiADEC_ATTR_LPCM_S
 {
     HI_U32 resv;
-}ADEC_ATTR_LPCM_S;
+} ADEC_ATTR_LPCM_S;
 
 typedef enum hiADEC_MODE_E
 {
     ADEC_MODE_PACK = 0,/*require input is valid dec pack(a
                         complete frame encode result),
-                        e.g.the stream get from AENC is a 
+                        e.g.the stream get from AENC is a
                         valid dec pack, the stream know actually
                         pack len from file is also a dec pack.
                         this mode is high-performative*/
     ADEC_MODE_STREAM ,/*input is stream,low-performative,
                         if you couldn't find out whether a stream is
-                        vaild dec pack,you could use 
+                        vaild dec pack,you could use
                         this mode*/
     ADEC_MODE_BUTT
-}ADEC_MODE_E;
+} ADEC_MODE_E;
 
-typedef struct hiADEC_CH_ATTR_S 
-{ 
-    PAYLOAD_TYPE_E enType; 
+typedef struct hiADEC_CH_ATTR_S
+{
+    PAYLOAD_TYPE_E enType;
     HI_U32         u32BufSize;  /*buf size[2~MAX_AUDIO_FRAME_NUM]*/
     ADEC_MODE_E    enMode;      /*decode mode*/
-    HI_VOID       *pValue; 
-}ADEC_CHN_ATTR_S;
+    HI_VOID*       pValue;
+} ADEC_CHN_ATTR_S;
 
 typedef struct hiADEC_DECODER_S
 {
     PAYLOAD_TYPE_E  enType;
     HI_CHAR         aszName[16];
-    HI_S32          (*pfnOpenDecoder)(HI_VOID *pDecoderAttr, HI_VOID **ppDecoder); /*struct ppDecoder is packed by user,user malloc and free memory for this struct */
-    HI_S32          (*pfnDecodeFrm)(HI_VOID *pDecoder, HI_U8 **pu8Inbuf,HI_S32 *ps32LeftByte,
-                        HI_U16 *pu16Outbuf,HI_U32 *pu32OutLen,HI_U32 *pu32Chns);
-    HI_S32          (*pfnGetFrmInfo)(HI_VOID *pDecoder, HI_VOID *pInfo);
-    HI_S32          (*pfnCloseDecoder)(HI_VOID *pDecoder); 
-    HI_S32          (*pfnResetDecoder)(HI_VOID *pDecoder);
+    HI_S32          (*pfnOpenDecoder)(HI_VOID* pDecoderAttr, HI_VOID** ppDecoder); /*struct ppDecoder is packed by user,user malloc and free memory for this struct */
+    HI_S32          (*pfnDecodeFrm)(HI_VOID* pDecoder, HI_U8** pu8Inbuf, HI_S32* ps32LeftByte,
+                                    HI_U16* pu16Outbuf, HI_U32* pu32OutLen, HI_U32* pu32Chns);
+    HI_S32          (*pfnGetFrmInfo)(HI_VOID* pDecoder, HI_VOID* pInfo);
+    HI_S32          (*pfnCloseDecoder)(HI_VOID* pDecoder);
+    HI_S32          (*pfnResetDecoder)(HI_VOID* pDecoder);
 } ADEC_DECODER_S;
 
 typedef enum hiEN_ADEC_ERR_CODE_E
 {
-    ADEC_ERR_DECODER_ERR     = 64,   
+    ADEC_ERR_DECODER_ERR     = 64,
     ADEC_ERR_BUF_LACK,
 
 } EN_ADEC_ERR_CODE_E;
@@ -125,9 +125,9 @@ typedef enum hiEN_ADEC_ERR_CODE_E
 #define HI_ERR_ADEC_BUF_FULL          HI_DEF_ERR(HI_ID_ADEC, EN_ERR_LEVEL_ERROR, EN_ERR_BUF_FULL)
 /* system is not ready,had not initialed or loaded*/
 #define HI_ERR_ADEC_SYS_NOTREADY      HI_DEF_ERR(HI_ID_ADEC, EN_ERR_LEVEL_ERROR, EN_ERR_SYS_NOTREADY)
-/* decoder internal err */ 
+/* decoder internal err */
 #define HI_ERR_ADEC_DECODER_ERR       HI_DEF_ERR(HI_ID_ADEC, EN_ERR_LEVEL_ERROR, ADEC_ERR_DECODER_ERR)
-/* input buffer not enough to decode one frame */ 
+/* input buffer not enough to decode one frame */
 #define HI_ERR_ADEC_BUF_LACK          HI_DEF_ERR(HI_ID_ADEC, EN_ERR_LEVEL_ERROR, ADEC_ERR_BUF_LACK)
 
 

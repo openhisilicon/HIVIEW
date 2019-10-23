@@ -3,8 +3,8 @@
 		"model":	"IPCXXX",
 		"sn":	"123456",
 		"type":	"HI3519_E_4_2",
-		"snscnt":	2,
-		"sensor":	["BT1120_R", "BT1120_R", "", "", "", "", "", ""],
+		"snscnt":	1,
+		"sensor":	["imx335", "", "", "", "", "", "", ""],
 		"caps":	"ffffffff"
 	},
 	"eth":	{

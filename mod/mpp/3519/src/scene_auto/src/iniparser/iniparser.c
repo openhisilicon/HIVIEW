@@ -25,9 +25,9 @@ extern "C"{
 #endif /* __cplusplus */
 
 /*---------------------------- Defines -------------------------------------*/
-#define ASCIILINESZ         (8192)
+#define ASCIILINESZ         (4096)
 #define INI_INVALID_KEY     ((char*)-1)
-#define CNOSK               0xFFFF      
+#define CNOSK               0xFFFF
 
 /*---------------------------------------------------------------------------
                         Private to this module
@@ -104,7 +104,7 @@ char * strskp(char * s)
 	if (s==NULL) return NULL ;
     while (isspace((int)*skip) && *skip) skip++;
     return skip ;
-} 
+}
 
 
 /*-------------------------------------------------------------------------*/
@@ -265,7 +265,7 @@ void iniparser_dump(const dictionary * d, FILE * f)
 static unsigned char iniparser_save_comment(const dictionary * d, FILE * f, const unsigned int hash)
 {
     int     ci;
-    unsigned char flag = 0; 
+    unsigned char flag = 0;
 
     for(ci=0; ci < d->commSize; ci++)
     {
@@ -306,7 +306,7 @@ static unsigned char iniparser_save_comment(const dictionary * d, FILE * f, cons
                 }*/
                 default:
                     break;
-            }    
+            }
         }
     }
     return flag;
@@ -335,7 +335,7 @@ void iniparser_dump_ini(const dictionary * d, FILE * f)
         /* No section in file: dump all keys as they are */
         /*2006/03/13 blair add : save comment and space Line*/
         iniparser_save_comment(d, f, CNOSK);
-        
+
         for (i=0 ; i<d->size ; i++) {
             if (d->key[i]==NULL)
                 continue ;
@@ -349,10 +349,10 @@ void iniparser_dump_ini(const dictionary * d, FILE * f)
         }
         return ;
     }
-    
+
     /*2006/03/13 blair add : save comment and space Line*/
     iniparser_save_comment(d, f, CNOSK);
-    
+
     for (i=0 ; i<nsec ; i++) {
         secname = iniparser_getsecname(d, i) ;
         iniparser_dumpsection_ini(d, secname, f);
@@ -385,15 +385,15 @@ void iniparser_dumpsection_ini(const dictionary * d, const char * s, FILE * f)
 
     seclen  = (int)strlen(s);
     /*fprintf(f, "\n[%s]\n", s);*/
-    
+
     fprintf(f, "[%-48s\n", s);
 #if HI_OS_TYPE == HI_OS_WIN32
-    fseek(f, 0-(50-strlen(s)), SEEK_CUR); 
+    fseek(f, 0-(50-strlen(s)), SEEK_CUR);
 #elif HI_OS_TYPE == HI_OS_LINUX
     fseek(f, 0-(49-strlen(s)), SEEK_CUR);
 #endif
     fprintf(f, "%c", ']');
-    
+
     fseek(f, 0, SEEK_END);
     /*2006/03/13 blair add : save comment and space Line*/
     hash = dictionary_hash(s);
@@ -537,7 +537,7 @@ char * iniparser_getstring(const dictionary * d, const char * key, char * def)
 
     if (d==NULL || key==NULL)
         return def ;
-    
+
     /*lc_key = strlwc(key, tmp_str, sizeof(tmp_str));*/
     sval = dictionary_get(d, key, def);
     return sval ;
@@ -786,14 +786,14 @@ char* iniparser_open(const char * ininame)
     FILE* ini;
     long fsize;
     char* buf;
-    size_t result;  
+    size_t result;
     if ((ini=fopen(ininame, "rb"))==NULL) {
         return NULL ;
     }
 
-    fseek (ini,0,SEEK_END);  
+    fseek (ini,0,SEEK_END);
     fsize = ftell (ini);
-    rewind (ini);   
+    rewind (ini);
     buf = (char*)malloc(sizeof(char)*fsize+1);
     if(buf == NULL)
     {
@@ -856,7 +856,7 @@ dictionary * iniparser_load(const char * ininame)
     char tmp     [ASCIILINESZ + 1] ;
     char val     [ASCIILINESZ+1] ;
     char comment    [ASCIILINESZ+1];
-    
+
     int  len ;
     int  lineno=0 ;
     char * where ;
@@ -921,26 +921,28 @@ dictionary * iniparser_load(const char * ininame)
         }
 
 		/*2016/09/09 c0027017 modify: detect multi-line*/
-		/* Get rid of \n and spaces at end of line */        
-		while ((len>=0) &&                
-				((line[len]=='\n') || (line[len]=='\r'))) 
-		{            
-			line[len]=0 ;            
-			len-- ;        
-		}
-		/* Detect multi-line */  
-		//printf("len = %dict\n", len);
-		//printf("line[%dict] = %c, %dict\n", len, line[len], line[len]);
-		if (line[len]=='\\') 
-		{            
-			/* Multi-line value */            
-			last=len ;            
-			continue ;        
-		} else {            
-			last=0 ;        
+		/* Get rid of \n and spaces at end of line */
+		while ((len>=0) &&
+				((line[len]=='\n') || (line[len]=='\r')))
+		{
+			line[len]=0 ;
+			len-- ;
 		}
 
-        
+        len = (len < 0) ? 0 : len;
+		/* Detect multi-line */
+		//printf("len = %dict\n", len);
+		//printf("line[%dict] = %c, %dict\n", len, line[len], line[len]);
+		if (line[len]=='\\')
+		{
+			/* Multi-line value */
+			last=len ;
+			continue ;
+		} else {
+			last=0 ;
+		}
+
+
         /*2006/03/13 blair modify : save comment and space Line*/
         /*if (*where==';' || *where=='#' || *where==0)*/
         if (*where==';' || *where=='#')/*; comment*/
@@ -961,7 +963,7 @@ dictionary * iniparser_load(const char * ininame)
                 iniparser_add_comment(dict, section, key, comment, CL_CLINE);
 
                 last = 0;
-                
+
                 continue ; /* Comment lines */
             }
             else

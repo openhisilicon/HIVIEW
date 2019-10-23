@@ -13,11 +13,16 @@ extern "C" {
 #define GSF_IPC_CODEC      "ipc:///tmp/codec_rep"
 
 enum {
-    GSF_ID_CODEC_VENC     = 1,  // gsf_venc_t
-    GSF_ID_CODEC_AENC     = 2,  // gsf_aenc_t
-    GSF_ID_CODEC_STCTL    = 3,  // gsf_stctl_t
-    GSF_ID_CODEC_OSD      = 4,  // gsf_osd_t
-    GSF_ID_CODEC_VMASK    = 5,  // gsf_vmask_t
+    GSF_ID_CODEC_VENC     = 1,  // ch, sid, gsf_venc_t
+    GSF_ID_CODEC_AENC     = 2,  // ch, sid, gsf_aenc_t
+    GSF_ID_CODEC_SDP      = 3,  // ch, sid, gsf_sdp_t;
+    GSF_ID_CODEC_IDR      = 4,  // ch, sid, nil;
+    GSF_ID_CODEC_OSD      = 5,  // ch, sid, gsf_osd_t
+    GSF_ID_CODEC_VMASK    = 6,  // ch, sid, gsf_vmask_t
+    GSF_ID_CODEC_SRC      = 7,  // ch, sid, gsf_src_t
+    GSF_ID_CODEC_VORES    = 8,  // ch, sid, gsf_resolu_t;
+    GSF_ID_CODEC_VOSP     = 9,  // ch, sid, gsf_split_t;
+    GSF_ID_CODEC_VOMV     = 10, // ch, sdi, gsf_rect_t;
     GSF_ID_CODEC_END
 };
 
@@ -26,11 +31,24 @@ enum {
 };
 
 typedef struct {
-  int st;    // stream index;
-  int ops;   // 1: open, 0: close;
-  int shmid; // result;
-}gsf_stctl_t;
+  int size;
+  unsigned char data[128];
+}gsf_sdp_val_t;
 
+enum {
+  GSF_SDP_VAL_SPS  = 0,
+  GSF_SDP_VAL_PPS  = 1,
+  GSF_SDP_VAL_VPS  = 2,
+  GSF_SDP_VAL_SEI  = 3,
+};
+
+typedef struct {
+  int video_shmid;
+  int audio_shmid;
+  gsf_aenc_t aenc;
+  gsf_venc_t venc;
+  gsf_sdp_val_t val[4];
+}gsf_sdp_t;
 
 #ifdef __cplusplus
 }

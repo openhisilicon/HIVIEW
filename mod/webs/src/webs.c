@@ -1,10 +1,14 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <assert.h>
 #include "inc/gsf.h"
 
 #include "mod/bsp/inc/bsp.h"
 #include "mod/codec/inc/codec.h"
 
 GSF_LOG_GLOBAL_INIT("WEBS", 8*1024);
-
 
 typedef void (sjb_serialize_cb)(void *c, int m, void *stru, int r1, int r2);
 typedef struct {
@@ -59,7 +63,7 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
   if(p && sjb_maps[modid<<8|msgid].serialize)
   {
     cJSON* json = cJSON_Parse(p);
-    sjb_maps[modid<<8|msgid].serialize(json, 1, msg->buf, 0, 0);
+    sjb_maps[modid<<8|msgid].serialize(json, 1, msg->data, 0, 0);
     cJSON_Delete(json);
   }
   
@@ -69,16 +73,16 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
                         , sjb_maps[modid<<8|msgid].uri
                         , 2000);
 
-  printf("GSF_MSG_SENDTO => To:%s, ret:%d, err:%d, size:%d\n"
-        , sjb_maps[modid<<8|msgid].uri, ret, __pmsg->err, __pmsg->size);
+  printf("GSF_MSG_SENDTO => To:%s, ret:%d, size:%d\n"
+        , sjb_maps[modid<<8|msgid].uri, ret, __pmsg->size);
   
-  int code = ret?ret:__pmsg->err;
+  int code = ret;
   sprintf(out, "code:%d%s\r\n", code, code?"[GSF_MSG_SENDTO err.]":"");
       
   if(code == 0 && __pmsg->size > 0 && sjb_maps[modid<<8|msgid].serialize)
   {
     cJSON* json2 = cJSON_CreateObject();
-    sjb_maps[modid<<8|msgid].serialize(json2, 0, __pmsg->buf, 0, 0);
+    sjb_maps[modid<<8|msgid].serialize(json2, 0, __pmsg->data, 0, 0);
     char *rsp = cJSON_Print(json2);
     strncat(out, rsp, *osize-strlen(out)-1);
     free(rsp);
@@ -98,23 +102,71 @@ __err:
   return 0;
 }
 
-int main(void)
+
+void *web_pub, *web_req, *web_sub;
+int upg_stat = 0;
+
+int sbu_recv(char *msg, int size, int err)
 {
-  // You can use chrome to open index.html to test json sending and receiving;
-  void* pub = nm_pub_listen("ws://*:7789");
-  void* req = nm_rep_listen("ws://*:7790"
-                          , NM_REP_MAX_WORKERS
-                          , NM_REP_OSIZE_MAX
-                          , rep_recv);
-  while(1)
+  char msgstr[64];
+  gsf_msg_t *pmsg = (gsf_msg_t*)msg;
+
+  sprintf(msgstr, "progress:%d", pmsg->err);
+  nm_pub_send(web_pub, msgstr, strlen(msgstr));
+
+  if(pmsg->err < 0 || pmsg->err >= 100)
   {
-    static int cnt = 0;
-    char str[16];
-    sprintf(str, "PUB:%08d", cnt++);
-    nm_pub_send(pub, str, strlen(str));
-    usleep(100*1000);
+    upg_stat = 0;
   }
   
+  return 0;
+}
+
+int main(void)
+{
+  // You can use chrome to open index.html to test;
   
+  //nanomsg port;
+  web_pub  = nm_pub_listen("ws://*:7789");
+  web_req  = nm_rep_listen("ws://*:7790"
+                  , NM_REP_MAX_WORKERS
+                  , NM_REP_OSIZE_MAX
+                  , rep_recv); 
+  web_sub = nm_sub_conn("ipc:///tmp/bsp_pub"
+                  , sbu_recv);
+
+  while(1)
+  {
+    //register To;
+    GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
+    reg->mid = GSF_MOD_ID_WEBS;
+    strcpy(reg->uri, "");
+    int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
+    printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
+
+    static int cnt = 3;
+    if(ret == 0)
+      break;
+    if(cnt-- < 0)
+      return -1;
+    sleep(1);
+  }
+
+
+  // udpsend port;
+  //rawudp_open("192.168.1.104", 5555);
+
+  //libws port;
+  //ws_flv_open(7788);
+  
+  //mongoose http&ws port;
+  http_open(80);
+
+  while(1)
+  {
+    sleep(1);
+  }
+  
+__err:
   return 0;
 }

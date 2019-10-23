@@ -4,13 +4,17 @@ HOME := $(shell echo ${GSF_HOME})
 CC := $(shell echo ${GSF_CC})
 AR := $(shell echo ${GSF_AR})
 CFLAGS := $(shell echo ${GSF_CFLAGS})
-LDFLAGS := -shared -g
+LDFLAGS := -shared -g $(shell echo ${GSF_LDFLAGS})
 TARG := lib/libmpp.so
 
 #============================================================= 
 
-INCS := -I$(HOME) -Isrc -Iinc
-SRCS := $(shell ls src/*.c)
+INCS := -I$(HOME) -Isrc -Iinc -Iinc/hisisdk -Iinc/common -Iinc/scene_auto
+
+#SRCS := $(shell ls src/*.c)
+SUBDIRS=$(shell find ./src/ -maxdepth 7 -type d)
+SRCS:=$(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
+	  
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIBS += 
 DEP_OBJS := OBJS

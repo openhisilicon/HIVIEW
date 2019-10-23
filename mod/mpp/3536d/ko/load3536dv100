@@ -1,0 +1,244 @@
+#!/bin/sh
+# Useage: ./load3536c [ -r|-i|-a ] [ ad ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+#
+#sys module parameters:
+	#mode  - "demo" or "sck". used for pinmux and ddr priority configuration  demo: for demo board  sck: for socket board.
+	#codec - "inner" or "external". inner : use inner dac,external : use external acodec,like tlv320aic31.
+	
+
+####################Variables Definition##########################
+mem_total=512;		# total mem
+mem_start=0x80000000;	# phy mem start
+
+os_mem_size=64;		# os mem
+mmz_start=0x84000000;	# mmz start addr
+mmz_size=448M;		# mmz size
+board_mode="demo";		# demo or sck
+
+##################################################################
+b_arg_demb=1
+
+report_error()
+{
+	echo "******* Error: There's something wrong, please check! *****"
+	exit 1
+}
+
+insert_audio()
+{
+	insmod hi3536dv100_aio.ko
+	insmod hi3536dv100_ai.ko
+	insmod hi3536dv100_ao.ko
+	insmod hi3536dv100_aenc.ko
+	insmod hi3536dv100_adec.ko
+	#insmod extdrv/tlv_320aic31.ko
+	insmod hi_acodec.ko
+}
+
+remove_audio()
+{
+	rmmod hi_acodec.ko
+	#rmmod tlv_320aic31.ko
+	rmmod hi3536dv100_adec
+	rmmod hi3536dv100_aenc
+	rmmod hi3536dv100_ao
+	rmmod hi3536dv100_ai
+	rmmod hi3536dv100_aio
+}
+
+
+insert_ko()
+{
+	# sys_config(drv/sys_config): pinmux and ddr priority configuration
+	insmod sys_config.ko mode=$board_mode codec="inner" 
+	#echo $board_mode;
+	# osal load (contains mmz.ko/hiuser.ko/media.ko)
+	insmod hi_osal.ko mmz=anonymous,0,$mmz_start,$mmz_size anony=1 || report_error
+	#insmod mmz.ko mmz=anonymous,0,$mmz_start,$mmz_size anony=1 || report_error
+	#insmod hiuser.ko
+	#insmod hi_media.ko
+	insmod hi3536dv100_base.ko
+	insmod hi3536dv100_sys.ko mem_total=$mem_total
+	if [[ $? -ne 0 ]]; then
+		exit;
+	fi
+	
+	insmod hi3536dv100_vdec.ko
+	insmod hi3536dv100_vfmw.ko 
+	insmod hi3536dv100_jpegd.ko
+	insmod hi3536dv100_tde.ko
+	insmod hi3536dv100_region.ko
+	insmod hi3536dv100_vgs.ko
+	
+	insmod hi3536dv100_vpss.ko
+	insmod hi3536dv100_vou.ko
+	insmod hifb.ko  video="hifb:vram0_size:8100,vram1_size:128" softcursor="off"
+	insmod hi3536dv100_hdmi.ko
+
+	insmod hi3536dv100_venc.ko
+	insmod hi3536dv100_chnl.ko
+
+	insmod hi3536dv100_jpege.ko
+
+	insert_audio
+}
+
+remove_ko()
+{
+	remove_audio
+	
+	rmmod hi3536dv100_jpege
+
+	rmmod hi3536dv100_chnl
+	rmmod hi3536dv100_venc
+
+	rmmod hi3536dv100_hdmi
+	rmmod hifb
+	rmmod hi3536dv100_vou
+	rmmod hi3536dv100_vpss
+
+	rmmod hi3536dv100_vgs
+	rmmod hi3536dv100_region
+	rmmod hi3536dv100_tde
+
+	rmmod hi3536dv100_jpegd
+	rmmod hi3536dv100_vdec
+	rmmod hi3536dv100_vfmw
+	rmmod hi3536dv100_sys
+	rmmod hi3536dv100_base
+	#rmmod hi_media
+	#rmmod hiuser
+	#rmmod mmz
+	rmmod hi_osal
+	rmmod sys_config.ko
+}
+
+load_usage()
+{
+	echo "Usage:  ./load3536dv100 [-option]"
+	echo "options:"
+	echo "    -i                       insert modules"
+	echo "    -r                       remove modules"
+	echo "    -a                       remove modules first, then insert modules"
+	echo "    -total mem_size          config total mem size [unit: M, default: 2048]"
+	echo "    -osmem os_mem_size       config os mem size [unit: M, default: 64]"
+	echo "    -mode demo               config board type [demo or sck, default: demo]"
+	echo "    -h                       help information"
+	echo -e "notes: osmem option can't be used when mmz zone partition is enable\n\n"
+	echo -e "for example: ./load3536dv100 -a -total 512 -osmem 64\n"
+}
+
+calc_mmz_info()
+{
+	mmz_start=`echo "$mem_start $os_mem_size" | 
+	awk 'BEGIN { temp = 0; }
+	{
+		temp = $1/1024/1024 + $2;
+	} 
+	END { printf("0x%x00000\n", temp); }'`
+
+	mmz_size=`echo "$mem_total $os_mem_size" | 
+	awk 'BEGIN { temp = 0; }
+	{
+		temp = $1 - $2;
+	} 
+	END { printf("%dM\n", temp); }'`
+	echo "mmz_start: $mmz_start, mmz_size: $mmz_size"
+}
+
+
+######################parse arg###################################
+b_arg_os_mem=0
+b_arg_total_mem=0
+b_arg_insmod=0
+b_arg_remove=0
+b_arg_mode=0
+
+for arg in $@
+do
+	if [ $b_arg_total_mem -eq 1 ]; then
+		b_arg_total_mem=0;
+		mem_total=$arg;
+		
+		if [ -z $mem_total ]; then
+			echo "[error] mem_total is null"
+			exit;
+		fi
+	fi
+	
+	if [ $b_arg_mode -eq 1 ]; then
+		b_arg_mode=0;
+		board_mode=$arg;
+		
+		if [ -z $board_mode ]; then
+			echo "[error] board_mode is null"
+			exit;
+		fi
+	fi
+	
+	if [ $b_arg_os_mem -eq 1 ] ; then
+		b_arg_os_mem=0;
+		os_mem_size=$arg;
+
+		if [ -z $os_mem_size ]; then
+			echo "[error] os_mem_size is null"
+			exit;
+		fi
+	fi
+
+	case $arg in
+		"-i")
+			b_arg_insmod=1;
+			;;
+
+		"-r")
+			b_arg_remove=1;
+			;;
+		"-a")			
+			b_arg_insmod=1;
+			b_arg_remove=1;
+			;;
+
+		"-h")
+			load_usage;
+			;;
+
+		"-osmem")
+			b_arg_os_mem=1;
+			;;
+		"-total")
+			b_arg_total_mem=1;
+			;;
+		"-mode")
+			b_arg_mode=1;
+			;;			
+	esac
+	
+
+	
+done
+#######################parse arg end########################
+
+if [ $os_mem_size -ge $mem_total ] ; then
+	echo "[err] os_mem[$os_mem_size], over total_mem[$mem_total]"
+	exit;
+fi
+
+calc_mmz_info;
+
+#######################Action###############################
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+if [ $b_arg_remove -eq 1 ]; then
+	remove_ko;
+fi
+if [ $b_arg_insmod -eq 1 ]; then
+	insert_ko;
+fi

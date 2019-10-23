@@ -346,6 +346,46 @@ N/A
 HI_S32 HI_UNF_CIPHER_Encrypt(HI_HANDLE hCipher, HI_U32 u32SrcPhyAddr, HI_U32 u32DestPhyAddr, HI_U32 u32ByteLength);
 
 /**
+\brief Performs encryption.
+
+\attention \n
+This API is used to perform encryption by using the cipher module.
+The length of the encrypted data should be a multiple of 8 in TDES mode and 16 in AES mode. Besides, the length can not be bigger than 0xFFFFF.After this operation, the result will affect next operation.If you want to remove vector, you need to config IV(config pstCtrl->stChangeFlags.bit1IV with 1) by transfering HI_UNF_CIPHER_ConfigHandle.
+\param[in] hCipher Cipher handle                                                
+\param[in] pu8SrcData: buffer of the source data.              
+\param[in] pu8DestData: buffer of the target data                   
+\param[in] u32ByteLength   Length of the encrypted data                         
+\retval ::HI_SUCCESS  Call this API successful.                                 
+\retval ::HI_FAILURE  Call this API fails.                                      
+\retval ::HI_ERR_CIPHER_NOT_INIT  The cipher device is not initialized.         
+\retval ::HI_ERR_CIPHER_INVALID_PARA  The parameter is invalid.                 
+\retval ::HI_ERR_CIPHER_INVALID_HANDLE  The handle is invalid.                  
+\see \n
+N/A
+*/
+HI_S32 HI_UNF_CIPHER_EncryptVir(HI_HANDLE hCipher, HI_U8 *pu8SrcData, HI_U8 *pu8DestData, HI_U32 u32ByteLength);
+
+/**
+\brief Performs decryption.
+
+\attention \n
+This API is used to perform decryption by using the cipher module.
+The length of the decrypted data should be a multiple of 8 in TDES mode and 16 in AES mode. Besides, the length can not be bigger than 0xFFFFF.After this operation, the result will affect next operation.If you want to remove vector, you need to config IV(config pstCtrl->stChangeFlags.bit1IV with 1) by transfering HI_UNF_CIPHER_ConfigHandle.
+\param[in] hCipher Cipher handle.                                               
+\param[in] pu8SrcData: buffer of the source data.              
+\param[in] pu8DestData: buffer of the target data                    
+\param[in] u32ByteLength Length of the decrypted data                          
+\retval ::HI_SUCCESS Call this API successful.                                  
+\retval ::HI_FAILURE Call this API fails.                                       
+\retval ::HI_ERR_CIPHER_NOT_INIT  The cipher device is not initialized.        
+\retval ::HI_ERR_CIPHER_INVALID_PARA  The parameter is invalid.                 
+\retval ::HI_ERR_CIPHER_INVALID_HANDLE  The handle is invalid.                  
+\see \n
+N/A
+*/
+HI_S32 HI_UNF_CIPHER_DecryptVir(HI_HANDLE hCipher, HI_U8 *pu8SrcData, HI_U8 *pu8DestData, HI_U32 u32ByteLength);
+
+/**
 \brief Performs decryption.
 
 \attention \n
@@ -547,7 +587,26 @@ N/A
 \see \n
 N/A
 */
+HI_S32 HI_UNF_CIPHER_HashVir(HI_UNF_CIPHER_HASH_ATTS_S *pstHashAttr, HI_U8 *pu8InputData, HI_U32 u32ByteLength, HI_U8 *pu8OutputHash);
+
+/**
+\brief compute the hash module
+
+\attention \n
+N/A
+
+\param[in] pstHashAttr: The hash calculating structure input.              
+\param[in] pu8InputData:  The input data buffer.               
+\param[in] u32ByteLength:   The input data length                          
+\param[out] pu8OutputHash:  The final output hash value.                   
+\retval ::HI_SUCCESS  Call this API successful.                            
+\retval ::HI_FAILURE  Call this API fails.                                 
+
+\see \n
+N/A
+*/
 HI_S32 HI_UNF_CIPHER_Hash(HI_UNF_CIPHER_HASH_ATTS_S *pstHashAttr, HI_U32 u32DataPhyAddr, HI_U32 u32ByteLength, HI_U8 *pu8OutputHash);
+
 
 /**
 \brief RSA encryption a plaintext with a RSA public key.

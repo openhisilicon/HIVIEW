@@ -69,26 +69,26 @@ do \
 
 #define CHECK_SCENEAUTO_INIT()\
     do{\
-        pthread_mutex_lock(&g_stSceneautoLock);\
+        MUTEX_LOCK(g_stSceneautoLock);\
         if (HI_FALSE == g_stSceneautoState.bSceneautoInit)\
         {\
             printf("func:%s,line:%d, please init sceneauto first!\n",__FUNCTION__,__LINE__);\
-            pthread_mutex_unlock(&g_stSceneautoLock);\
+            MUTEX_UNLOCK(g_stSceneautoLock);\
             return HI_FAILURE;\
         }\
-        pthread_mutex_unlock(&g_stSceneautoLock);\
+        MUTEX_UNLOCK(g_stSceneautoLock);\
     }while(0);
 
-#define CHEKC_SCENEAUTO_START()\
+#define CHECK_SCENEAUTO_START()\
     do{\
-        pthread_mutex_lock(&g_stSceneautoLock);\
+        MUTEX_LOCK(g_stSceneautoLock);\
         if (HI_FALSE == g_stSceneautoState.bSceneautoStart)\
         {\
             printf("func:%s,line:%d, please start sceneauto first!\n",__FUNCTION__,__LINE__);\
-            pthread_mutex_unlock(&g_stSceneautoLock);\
+            MUTEX_UNLOCK(g_stSceneautoLock);\
             return HI_FAILURE;\
         }\
-        pthread_mutex_unlock(&g_stSceneautoLock);\
+        MUTEX_UNLOCK(g_stSceneautoLock);\
     }while(0);
 
 extern HI_S32 Sceneauto_SetNrS(VPSS_GRP VpssGrp, const HI_SCENEAUTO_3DNR_S *pst3Nrs);
@@ -96,20 +96,20 @@ extern HI_S32 Sceneauto_SetNrX(VPSS_GRP VpssGrp, const HI_SCENEAUTO_3DNR_X_S *ps
 
 static __inline int iClip2(int x, int b) {{ if (x < 0) x = 0; };{ if (x > b) x = b; }; return x; }
 static __inline int iMin2(int a, int b) {{ if (a > b) a = b; }; return a; }
-static __inline int iMax2(int a, int b) {{ if (a > b) b = a; }; return b; }  
+static __inline int iMax2(int a, int b) {{ if (a > b) b = a; }; return b; }
 
 static __inline HI_U32 MapISO(HI_U32 iso)
 {
   HI_U32   j,  i = (iso >= 200);
-  
-  if (iso < 72) return (HI_U32)iMax2(iso, -3); 
-  
+
+  if (iso < 72) return (HI_U32)iMax2(iso, -3);
+
   i += ( (iso >= (200 << 1)) + (iso >= (400 << 1)) + (iso >= (400 << 2)) + (iso >= (400 << 3)) + (iso >= (400 << 4)) );
   i += ( (iso >= (400 << 5)) + (iso >= (400 << 6)) + (iso >= (400 << 7)) + (iso >= (400 << 8)) + (iso >= (400 << 9)) );
   i += ( (iso >= (400 << 10))+ (iso >= (400 << 11))+ (iso >= (400 << 12))+ (iso >= (400 << 13))+ (iso >= (400 << 14))) ;
   j  = ( (iso >  (112 << i)) + (iso >  (125 << i)) + (iso >  (141 << i)) + (iso >  (158 << i)) + (iso >  (178 << i)) );
-  
-  return (i * 6 + j + (iso >= 80) + (iso >= 90) + (iso >= 100) - 3);  
+
+  return (i * 6 + j + (iso >= 80) + (iso >= 90) + (iso >= 100) - 3);
 }
 
 static __inline HI_U32 Interpulate(HI_U32 u32Mid,HI_U32 u32Left, HI_U32 u32LValue, HI_U32 u32Right, HI_U32 u32RValue)
@@ -127,8 +127,8 @@ static __inline HI_U32 Interpulate(HI_U32 u32Mid,HI_U32 u32Left, HI_U32 u32LValu
         u32Value = u32RValue;
         return u32Value;
     }
-    
-    k = (u32Right - u32Left); 
+
+    k = (u32Right - u32Left);
     u32Value = (((u32Right - u32Mid) * (HI_U64)u32LValue + (u32Mid - u32Left) * (HI_U64)u32RValue + (k >> 1))/ k);
 
     return u32Value;
@@ -187,13 +187,13 @@ static __inline HI_U32 GetLevelHtoL(HI_U32 u32Value, HI_U32 u32Level, HI_U32 u32
         u32Level = u32Level - 1;
     }
 
-    return u32Level;    
+    return u32Level;
 }
 
 HI_S32 Sceneauto_SetVpssParam(VPSS_GRP VpssGrp, HI_SCENEAUTO_3DNRPARAM_S st3dnrParam)
 {
 	HI_S32 s32Ret = HI_SUCCESS;
-	HI_S32 i;	
+	HI_S32 i;
 	VPSS_GRP_NRS_PARAM_S stVpssGrpNrS;
 
     //s32Ret = HI_MPI_VPSS_GetGrpNRSParam(VpssGrp, &stVpssGrpNrS);
@@ -209,14 +209,14 @@ HI_S32 Sceneauto_SetVpssParam(VPSS_GRP VpssGrp, HI_SCENEAUTO_3DNRPARAM_S st3dnrP
     CHECK_NULL_PTR(stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pau32ISO);
     stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam = (NRS_PARAM_V3_S *)malloc((st3dnrParam.u323DnrIsoCount) * sizeof(NRS_PARAM_V3_S));
     CHECK_NULL_PTR(stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam);
-     
+
 	for (i = 0; i < st3dnrParam.u323DnrIsoCount; i++)
 	{
         stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pau32ISO[i] = st3dnrParam.pu323DnrIsoThresh[i];
-        
+
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf0_bright = st3dnrParam.pst3dnrParam[i].sf0_bright;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf0_dark = st3dnrParam.pst3dnrParam[i].sf0_dark;
-		
+
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf1_bright = st3dnrParam.pst3dnrParam[i].sf1_bright;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf1_dark = st3dnrParam.pst3dnrParam[i].sf1_dark;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].tf1_md_thresh = st3dnrParam.pst3dnrParam[i].tf1_md_thresh;
@@ -224,7 +224,7 @@ HI_S32 Sceneauto_SetVpssParam(VPSS_GRP VpssGrp, HI_SCENEAUTO_3DNRPARAM_S st3dnrP
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf2_bright = st3dnrParam.pst3dnrParam[i].sf2_bright;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf2_dark = st3dnrParam.pst3dnrParam[i].sf2_dark;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].tf2_md_thresh = st3dnrParam.pst3dnrParam[i].tf2_md_thresh;
-		
+
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sfk_bright = st3dnrParam.pst3dnrParam[i].sfk_bright;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sfk_dark = st3dnrParam.pst3dnrParam[i].sfk_dark;
 		stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam[i].sf_ed_thresh = st3dnrParam.pst3dnrParam[i].sf_ed_thresh;
@@ -261,7 +261,7 @@ HI_S32 Sceneauto_SetVpssParam(VPSS_GRP VpssGrp, HI_SCENEAUTO_3DNRPARAM_S st3dnrP
 
     FREE_PTR(stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pastNRSParam);
     FREE_PTR(stVpssGrpNrS.stNRSParam_V4.stVideoNrAuto.pau32ISO);
-    
+
 	return HI_SUCCESS;
 }
 
@@ -273,9 +273,9 @@ HI_S32 Sceneauto_SetTrafficIspParam(ISP_DEV IspDev)
 	ISP_WDR_EXPOSURE_ATTR_S stIspWdrExposureAttr;
 	ISP_GAMMA_ATTR_S stIspGammaAttr;
 	ISP_YUV_SHARPEN_ATTR_S stIspYuvSharpenAttr;
-	
+
 	/*****set DRC param*****/
-    s32Ret = HI_MPI_ISP_GetDRCAttr(IspDev, &stIspDrcAttr);    
+    s32Ret = HI_MPI_ISP_GetDRCAttr(IspDev, &stIspDrcAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetDRCAttr failed\n");
@@ -304,8 +304,8 @@ HI_S32 Sceneauto_SetTrafficIspParam(ISP_DEV IspDev)
     stIspDrcAttr.stDrcCurveEx.u32BrightPr = g_stSceneautoParam.stTrafficParam.u32BrightPr;
     stIspDrcAttr.stDrcCurveEx.u32Contrast = g_stSceneautoParam.stTrafficParam.u32Contrast;
     stIspDrcAttr.stDrcCurveEx.u32DarkEnhance = g_stSceneautoParam.stTrafficParam.u32DarkEnhance;
-    stIspDrcAttr.stDrcCurveEx.u32Svariance = g_stSceneautoParam.stTrafficParam.u32Svariance;    
-    s32Ret = HI_MPI_ISP_SetDRCAttr(IspDev, &stIspDrcAttr);    
+    stIspDrcAttr.stDrcCurveEx.u32Svariance = g_stSceneautoParam.stTrafficParam.u32Svariance;
+    s32Ret = HI_MPI_ISP_SetDRCAttr(IspDev, &stIspDrcAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetDRCAttr failed\n");
@@ -353,7 +353,7 @@ HI_S32 Sceneauto_SetTrafficIspParam(ISP_DEV IspDev)
     }
 
     /*****set YuvSharpen param*****/
-    s32Ret = HI_MPI_ISP_GetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);    
+    s32Ret = HI_MPI_ISP_GetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetYuvSharpenAttr failed\n");
@@ -369,7 +369,7 @@ HI_S32 Sceneauto_SetTrafficIspParam(ISP_DEV IspDev)
         stIspYuvSharpenAttr.stAuto.au8EdgeThd[i] = g_stSceneautoParam.stTrafficParam.au8EdgeThd[i];
         stIspYuvSharpenAttr.stAuto.au8DetailCtrl[i] = g_stSceneautoParam.stTrafficParam.au8DetailCtrl[i];
     }
-    s32Ret = HI_MPI_ISP_SetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);    
+    s32Ret = HI_MPI_ISP_SetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetYuvSharpenAttr failed\n");
@@ -395,7 +395,7 @@ HI_S32 Sceneauto_SetTrafficMode()
 	        return HI_FAILURE;
 		}
 	}
-	
+
 	return HI_SUCCESS;
 }
 
@@ -408,14 +408,14 @@ HI_S32 Sceneauto_SetFaceIspParam(ISP_DEV IspDev)
     ISP_GAMMA_ATTR_S stIspGammaAttr;
 
     /*****set AE param*****/
-    s32Ret = HI_MPI_ISP_GetExposureAttr(IspDev, &stExpAttr);    
+    s32Ret = HI_MPI_ISP_GetExposureAttr(IspDev, &stExpAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetExposureAttr failed\n");
         return HI_FAILURE;
     }
     stExpAttr.stAuto.stExpTimeRange.u32Max = 8000; /* 8ms */
-    s32Ret = HI_MPI_ISP_SetExposureAttr(IspDev, &stExpAttr);    
+    s32Ret = HI_MPI_ISP_SetExposureAttr(IspDev, &stExpAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetExposureAttr failed\n");
@@ -440,9 +440,9 @@ HI_S32 Sceneauto_SetFaceIspParam(ISP_DEV IspDev)
         printf("HI_MPI_ISP_SetGammaAttr failed\n");
         return HI_FAILURE;
     }
-	
+
     /*****set YuvSharpen param*****/
-    s32Ret = HI_MPI_ISP_GetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);    
+    s32Ret = HI_MPI_ISP_GetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetYuvSharpenAttr failed\n");
@@ -458,7 +458,7 @@ HI_S32 Sceneauto_SetFaceIspParam(ISP_DEV IspDev)
         stIspYuvSharpenAttr.stAuto.au8EdgeThd[i] = g_stSceneautoParam.stFaceParam.au8EdgeThd[i];
         stIspYuvSharpenAttr.stAuto.au8DetailCtrl[i] = g_stSceneautoParam.stFaceParam.au8DetailCtrl[i];
     }
-    s32Ret = HI_MPI_ISP_SetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);    
+    s32Ret = HI_MPI_ISP_SetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetYuvSharpenAttr failed\n");
@@ -484,7 +484,7 @@ HI_S32 Sceneauto_SetFaceMode()
 	        return HI_FAILURE;
 		}
 	}
-	
+
 	return HI_SUCCESS;
 }
 
@@ -493,7 +493,7 @@ HI_S32 Sceneauto_SetHlcViParam(VI_DEV ViDev)
 {
 	HI_S32 s32Ret = HI_SUCCESS;
 	VI_DCI_PARAM_S stViDciParam;
-	
+
 	/*****set DCI param*****/
     s32Ret = HI_MPI_VI_GetDCIParam(ViDev, &stViDciParam);
     if (HI_SUCCESS != s32Ret)
@@ -511,7 +511,7 @@ HI_S32 Sceneauto_SetHlcViParam(VI_DEV ViDev)
         printf("HI_MPI_VI_SetDCIParam failed\n");
         return HI_FAILURE;
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -547,7 +547,7 @@ HI_S32 Sceneauto_SetHlcIspParam(ISP_DEV IspDev)
     }
 
     /*****set DRC param*****/
-    s32Ret = HI_MPI_ISP_GetDRCAttr(IspDev, &stIspDrcAttr);    
+    s32Ret = HI_MPI_ISP_GetDRCAttr(IspDev, &stIspDrcAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetDRCAttr failed\n");
@@ -576,8 +576,8 @@ HI_S32 Sceneauto_SetHlcIspParam(ISP_DEV IspDev)
 	stIspDrcAttr.stDrcCurveEx.u32BrightPr = g_stSceneautoParam.stHlcParam.u32BrightPr;
 	stIspDrcAttr.stDrcCurveEx.u32Contrast = g_stSceneautoParam.stHlcParam.u32Contrast;
 	stIspDrcAttr.stDrcCurveEx.u32DarkEnhance = g_stSceneautoParam.stHlcParam.u32DarkEnhance;
-	stIspDrcAttr.stDrcCurveEx.u32Svariance = g_stSceneautoParam.stHlcParam.u32Svariance;    
-    s32Ret = HI_MPI_ISP_SetDRCAttr(IspDev, &stIspDrcAttr);    
+	stIspDrcAttr.stDrcCurveEx.u32Svariance = g_stSceneautoParam.stHlcParam.u32Svariance;
+    s32Ret = HI_MPI_ISP_SetDRCAttr(IspDev, &stIspDrcAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetDRCAttr failed\n");
@@ -641,7 +641,7 @@ HI_S32 Sceneauto_SetHlcIspParam(ISP_DEV IspDev)
         printf("HI_MPI_ISP_SetGammaAttr failed\n");
         return HI_FAILURE;
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -673,7 +673,7 @@ HI_S32 Sceneauto_SetHLC()
 	        return HI_FAILURE;
 		}
 	}
-	
+
 	return HI_SUCCESS;
 }
 
@@ -681,7 +681,7 @@ HI_S32 Sceneauto_SetIrViParam(VI_DEV ViDev)
 {
 	HI_S32 s32Ret = HI_SUCCESS;
 	VI_DCI_PARAM_S stViDciParam;
-	
+
 	/*****set DCI param*****/
     s32Ret = HI_MPI_VI_GetDCIParam(ViDev, &stViDciParam);
     if (HI_SUCCESS != s32Ret)
@@ -699,7 +699,7 @@ HI_S32 Sceneauto_SetIrViParam(VI_DEV ViDev)
         printf("HI_MPI_VI_SetDCIParam failed\n");
         return HI_FAILURE;
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -715,7 +715,7 @@ HI_S32 Sceneauto_SetIrIspParam(ISP_DEV IspDev)
 	ISP_YUV_SHARPEN_ATTR_S stIspYuvSharpenAttr;
 	ISP_GAMMA_ATTR_S stIspGammaAttr;
 	ISP_DP_ATTR_S *pstIspDpAttr = HI_NULL;
-	
+
 	/*****set AE param*****/
     s32Ret = HI_MPI_ISP_GetExposureAttr(IspDev, &stIspExposureAttr);
     if (HI_SUCCESS != s32Ret)
@@ -822,7 +822,7 @@ HI_S32 Sceneauto_SetIrIspParam(ISP_DEV IspDev)
     }
 
     /*****set YuvSharpen param*****/
-    s32Ret = HI_MPI_ISP_GetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);    
+    s32Ret = HI_MPI_ISP_GetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetYuvSharpenAttr failed\n");
@@ -835,7 +835,7 @@ HI_S32 Sceneauto_SetIrIspParam(ISP_DEV IspDev)
         stIspYuvSharpenAttr.stAuto.au8OverShoot[i] = g_stSceneautoParam.stIrParam.au8OverShoot[i];
         stIspYuvSharpenAttr.stAuto.au8UnderShoot[i] = g_stSceneautoParam.stIrParam.au8UnderShoot[i];
     }
-    s32Ret = HI_MPI_ISP_SetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);    
+    s32Ret = HI_MPI_ISP_SetYuvSharpenAttr(IspDev, &stIspYuvSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetYuvSharpenAttr failed\n");
@@ -916,7 +916,7 @@ HI_S32 Sceneauto_SetIR()
 	        return HI_FAILURE;
 		}
 	}
-		
+
 	return HI_SUCCESS;
 }
 
@@ -936,7 +936,7 @@ HI_S32 Sceneauto_SetIspDrcParam(HI_S32 s32Index)
 	ISP_WDR_MODE_S stIspWdrMode;
 	ISP_EXP_INFO_S stIspExpInfo;
 	ISP_DRC_ATTR_S stIspDrcAttr;
-		
+
 	IspDev = g_stSceneautoParam.pstIspParam[s32Index].IspDev;
 	u32LastExpLevel = au32LastDrcExpLevel[s32Index];
 
@@ -972,7 +972,7 @@ HI_S32 Sceneauto_SetIspDrcParam(HI_S32 s32Index)
     	(eSpecialScene != g_eSpecialScene) ||
     	(eFSWDRMode != g_eFSWDRMode))
     {
-    	if(((SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME == g_eSpecialScene) && (SCENEAUTO_FSWDR_LONG_FRAME_MODE == g_eFSWDRMode)) || 
+    	if(((SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME == g_eSpecialScene) && (SCENEAUTO_FSWDR_LONG_FRAME_MODE == g_eFSWDRMode)) ||
                ((SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR == g_eSpecialScene) && (SCENEAUTO_FSWDR_LONG_FRAME_MODE == g_eFSWDRMode)))
         {
             hi_usleep(200000);
@@ -1024,7 +1024,7 @@ HI_S32 Sceneauto_SetIspDrcParam(HI_S32 s32Index)
                     return HI_FAILURE;
                 }
                 hi_usleep(100000);
-            }            
+            }
         }
 
 		s32Ret = HI_MPI_ISP_SetDRCAttr(IspDev, &stIspDrcAttr);
@@ -1038,8 +1038,8 @@ HI_S32 Sceneauto_SetIspDrcParam(HI_S32 s32Index)
      // eSpecialScene = g_eSpecialScene;
       //  eFSWDRMode = g_eFSWDRMode;
     }
-    
-	return HI_SUCCESS;		
+
+	return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_Set3DNR(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3DNRPARAM_S st3dnrparam)
@@ -1050,109 +1050,109 @@ HI_S32 Sceneauto_Set3DNR(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3DN
     HI_U32 u32Count = st3dnrparam.u323DnrIsoCount;
     HI_U32 *pu32Thresh = st3dnrparam.pu323DnrIsoThresh;
     HI_SCENEAUTO_3DNR_S stNrs;
-    
+
     u32IsoLevel = GetLevelLtoH(u32Iso, u32IsoLevel, u32Count, pu32Thresh);
 
     if (0 == u32IsoLevel)
     {
-        stNrs = st3dnrparam.pst3dnrParam[0];            
+        stNrs = st3dnrparam.pst3dnrParam[0];
     }
-    else 
+    else
     {
         u32Mid = MapISO(u32Iso);
         u32Left = MapISO(st3dnrparam.pu323DnrIsoThresh[u32IsoLevel - 1]);
         u32Right = MapISO(st3dnrparam.pu323DnrIsoThresh[u32IsoLevel]);
 
-         stNrs.sf0_bright = Interpulate(u32Mid, 
+         stNrs.sf0_bright = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf0_bright,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf0_bright);
-         stNrs.sf0_dark = Interpulate(u32Mid, 
+         stNrs.sf0_dark = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf0_dark,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf0_dark);
-        
-         stNrs.sf1_bright = Interpulate(u32Mid, 
+
+         stNrs.sf1_bright = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf1_bright,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf1_bright);
-         stNrs.sf1_dark = Interpulate(u32Mid, 
+         stNrs.sf1_dark = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf1_dark,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf1_dark);
-        
-         stNrs.sf2_bright = Interpulate(u32Mid, 
+
+         stNrs.sf2_bright = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf2_bright,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf2_bright);
-         stNrs.sf2_dark= Interpulate(u32Mid, 
+         stNrs.sf2_dark= Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf2_dark,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf2_dark);
-        
-         stNrs.sfk_bright= Interpulate(u32Mid, 
+
+         stNrs.sfk_bright= Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sfk_bright,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sfk_bright);
-         stNrs.sfk_dark= Interpulate(u32Mid, 
+         stNrs.sfk_dark= Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sfk_dark,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sfk_dark);
 
-         stNrs.sfk_ratio = Interpulate(u32Mid, 
+         stNrs.sfk_ratio = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sfk_ratio,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sfk_ratio);
-         stNrs.sfk_profile = Interpulate(u32Mid, 
+         stNrs.sfk_profile = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sfk_profile,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sfk_profile);
-         stNrs.sf_ed_thresh = Interpulate(u32Mid, 
+         stNrs.sf_ed_thresh = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf_ed_thresh,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf_ed_thresh);
 
-         stNrs.tf1_md_thresh = Interpulate(u32Mid, 
+         stNrs.tf1_md_thresh = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf1_md_thresh,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf1_md_thresh);
-         stNrs.tf2_md_thresh = Interpulate(u32Mid, 
+         stNrs.tf2_md_thresh = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf2_md_thresh,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf2_md_thresh);
 
-         stNrs.tf1_md_profile = Interpulate(u32Mid, 
+         stNrs.tf1_md_profile = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf1_md_profile,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf1_md_profile);
-         stNrs.tf2_md_profile = Interpulate(u32Mid, 
+         stNrs.tf2_md_profile = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf2_md_profile,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf2_md_profile);
-         stNrs.tf_profile = Interpulate(u32Mid, 
+         stNrs.tf_profile = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf_profile,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf_profile);
 
-         stNrs.tf1_still = Interpulate(u32Mid, 
+         stNrs.tf1_still = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf1_still,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf1_still);
-         stNrs.tf2_still = Interpulate(u32Mid, 
+         stNrs.tf2_still = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf2_still,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf2_still);
 
-         stNrs.tf1_md_type = Interpulate(u32Mid, 
+         stNrs.tf1_md_type = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf1_md_type,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf1_md_type);
-         stNrs.tf2_md_type = Interpulate(u32Mid, 
+         stNrs.tf2_md_type = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf2_md_type,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf2_md_type);
 
-         stNrs.tf1_moving = Interpulate(u32Mid, 
+         stNrs.tf1_moving = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf1_moving,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf1_moving);
-         stNrs.tf2_moving = Interpulate(u32Mid, 
+         stNrs.tf2_moving = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].tf2_moving,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].tf2_moving);
          stNrs.sf_bsc_freq = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].sf_bsc_freq,
-            u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf_bsc_freq);            
-         stNrs.csf_strength = Interpulate(u32Mid, 
+            u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].sf_bsc_freq);
+         stNrs.csf_strength = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].csf_strength,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].csf_strength);
-         stNrs.ctf_range = Interpulate(u32Mid, 
+         stNrs.ctf_range = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].ctf_range,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].ctf_range);
-         stNrs.ctf_strength = Interpulate(u32Mid, 
+         stNrs.ctf_strength = Interpulate(u32Mid,
             u32Left, st3dnrparam.pst3dnrParam[u32IsoLevel - 1].ctf_strength,
             u32Right, st3dnrparam.pst3dnrParam[u32IsoLevel].ctf_strength);
 
     }
-    
+
 	stNrs._reserved_b_ = 0;
 
     s32Ret = Sceneauto_SetNrS(VpssGrp, &stNrs);
@@ -1161,7 +1161,7 @@ HI_S32 Sceneauto_Set3DNR(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3DN
         printf("SetNrb failed\n");
         return HI_FAILURE;
     }
-    
+
     return HI_SUCCESS;
 }
 
@@ -1174,75 +1174,75 @@ HI_S32 Sceneauto_Set3DNRX(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3D
     HI_U32 u32Count = st3dnrxparam.u323DnrIsoCount;
     HI_U32 *pu32Thresh = st3dnrxparam.pu323DnrIsoThresh;
     HI_SCENEAUTO_3DNR_X_S stNrx;
-    
+
     u32IsoLevel = GetLevelLtoH(u32Iso, u32IsoLevel, u32Count, pu32Thresh);
 
     if (0 == u32IsoLevel)
     {
-        stNrx = st3dnrxparam.pst3dnrxParam[0];            
+        stNrx = st3dnrxparam.pst3dnrxParam[0];
     }
-    else 
+    else
     {
         u32Mid = MapISO(u32Iso);
         u32Left = MapISO(st3dnrxparam.pu323DnrIsoThresh[u32IsoLevel - 1]);
         u32Right = MapISO(st3dnrxparam.pu323DnrIsoThresh[u32IsoLevel]);
-        
+
         /* IEy */
-        stNrx.IEy.IES = Interpulate(u32Mid, 
+        stNrx.IEy.IES = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].IEy.IES,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].IEy.IES);
-        stNrx.IEy.IET = Interpulate(u32Mid, 
+        stNrx.IEy.IET = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].IEy.IET,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].IEy.IET);
-        stNrx.IEy.IEB = Interpulate(u32Mid, 
+        stNrx.IEy.IEB = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].IEy.IEB,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].IEy.IEB);
 
         /* SFy[4] */
         for (i = 0; i < 4; i++)
         {
-            stNrx.SFy[i].SBF0 = Interpulate(u32Mid, 
+            stNrx.SFy[i].SBF0 = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SBF0,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SBF0);
-            stNrx.SFy[i].SBF1 = Interpulate(u32Mid, 
+            stNrx.SFy[i].SBF1 = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SBF1,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SBF1);
-            stNrx.SFy[i].SBF2 = Interpulate(u32Mid, 
+            stNrx.SFy[i].SBF2 = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SBF2,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SBF2);
-            stNrx.SFy[i].VRTO = Interpulate(u32Mid, 
+            stNrx.SFy[i].VRTO = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].VRTO,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].VRTO);
-            stNrx.SFy[i].horPro = Interpulate(u32Mid, 
+            stNrx.SFy[i].horPro = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].horPro,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].horPro);
-            stNrx.SFy[i].verPro = Interpulate(u32Mid, 
+            stNrx.SFy[i].verPro = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].verPro,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].verPro);
-            stNrx.SFy[i].SFkRfw = Interpulate(u32Mid, 
+            stNrx.SFy[i].SFkRfw = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SFkRfw,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SFkRfw);
-            stNrx.SFy[i].kProDD = Interpulate(u32Mid, 
+            stNrx.SFy[i].kProDD = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].kProDD,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].kProDD);
-            stNrx.SFy[i].SFkType = Interpulate(u32Mid, 
+            stNrx.SFy[i].SFkType = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SFkType,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SFkType);
-            stNrx.SFy[i].SSLP = Interpulate(u32Mid, 
+            stNrx.SFy[i].SSLP = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SSLP,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SSLP);
-            stNrx.SFy[i].SFkBig = Interpulate(u32Mid, 
+            stNrx.SFy[i].SFkBig = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SFkBig,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SFkBig);
             for (j = 0; j < 3; j++)
             {
-                stNrx.SFy[i].SBS[j] = Interpulate(u32Mid, 
+                stNrx.SFy[i].SBS[j] = Interpulate(u32Mid,
                     u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SBS[j],
                     u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SBS[j]);
-                stNrx.SFy[i].SDS[j] = Interpulate(u32Mid, 
+                stNrx.SFy[i].SDS[j] = Interpulate(u32Mid,
                     u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].SDS[j],
                     u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].SDS[j]);
-                stNrx.SFy[i].STH[j] = Interpulate(u32Mid, 
+                stNrx.SFy[i].STH[j] = Interpulate(u32Mid,
                     u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].SFy[i].STH[j],
                     u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].SFy[i].STH[j]);
             }
@@ -1251,22 +1251,22 @@ HI_S32 Sceneauto_Set3DNRX(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3D
         /* MDy[3] */
         for (i = 0; i < 3; i++)
         {
-            stNrx.MDy[i].MATH = Interpulate(u32Mid, 
+            stNrx.MDy[i].MATH = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].MDy[i].MATH,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].MDy[i].MATH);
-            stNrx.MDy[i].MATE = Interpulate(u32Mid, 
+            stNrx.MDy[i].MATE = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].MDy[i].MATE,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].MDy[i].MATE);
-            stNrx.MDy[i].MATW = Interpulate(u32Mid, 
+            stNrx.MDy[i].MATW = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].MDy[i].MATW,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].MDy[i].MATW);
-            stNrx.MDy[i].MASW = Interpulate(u32Mid, 
+            stNrx.MDy[i].MASW = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].MDy[i].MASW,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].MDy[i].MASW);
-            stNrx.MDy[i].MABW = Interpulate(u32Mid, 
+            stNrx.MDy[i].MABW = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].MDy[i].MABW,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].MDy[i].MABW);
-            stNrx.MDy[i].MAXN = Interpulate(u32Mid, 
+            stNrx.MDy[i].MAXN = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].MDy[i].MAXN,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].MDy[i].MAXN);
         }
@@ -1274,52 +1274,52 @@ HI_S32 Sceneauto_Set3DNRX(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3D
         /* TFy[4] */
         for (i = 0; i < 4; i++)
         {
-            stNrx.TFy[i].MDDZ = Interpulate(u32Mid, 
+            stNrx.TFy[i].MDDZ = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].MDDZ,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].MDDZ);
-            stNrx.TFy[i].SDZ = Interpulate(u32Mid, 
+            stNrx.TFy[i].SDZ = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].SDZ,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].SDZ);
-            stNrx.TFy[i].TFS = Interpulate(u32Mid, 
+            stNrx.TFy[i].TFS = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].TFS,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].TFS);
-            stNrx.TFy[i].TSS = Interpulate(u32Mid, 
+            stNrx.TFy[i].TSS = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].TSS,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].TSS);
-            stNrx.TFy[i].TFT = Interpulate(u32Mid, 
+            stNrx.TFy[i].TFT = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].TFT,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].TFT);
-            stNrx.TFy[i].STR = Interpulate(u32Mid, 
+            stNrx.TFy[i].STR = Interpulate(u32Mid,
                 u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].STR,
                 u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].STR);
             for (j = 0; j < 4; j++)
             {
-                stNrx.TFy[i].SFR[j] = Interpulate(u32Mid, 
+                stNrx.TFy[i].SFR[j] = Interpulate(u32Mid,
                     u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].SFR[j],
                     u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].SFR[j]);
-                stNrx.TFy[i].MTFR[j] = Interpulate(u32Mid, 
+                stNrx.TFy[i].MTFR[j] = Interpulate(u32Mid,
                     u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].MTFR[j],
                     u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].MTFR[j]);
-                stNrx.TFy[i].TFR[j] = Interpulate(u32Mid, 
+                stNrx.TFy[i].TFR[j] = Interpulate(u32Mid,
                     u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].TFy[i].TFR[j],
                     u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].TFy[i].TFR[j]);
             }
         }
 
         /* NRc */
-        stNrx.NRc.SFC = Interpulate(u32Mid, 
+        stNrx.NRc.SFC = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].NRc.SFC,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].NRc.SFC);
-        stNrx.NRc.TFC = Interpulate(u32Mid, 
+        stNrx.NRc.TFC = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].NRc.TFC,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].NRc.TFC);
-        stNrx.NRc.TPC = Interpulate(u32Mid, 
+        stNrx.NRc.TPC = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].NRc.TPC,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].NRc.TPC);
-        stNrx.NRc.TRC = Interpulate(u32Mid, 
+        stNrx.NRc.TRC = Interpulate(u32Mid,
             u32Left, st3dnrxparam.pst3dnrxParam[u32IsoLevel - 1].NRc.TRC,
             u32Right, st3dnrxparam.pst3dnrxParam[u32IsoLevel].NRc.TRC);
-    }  
+    }
 
     //printf("ISO:%d, u32IsoLevel:%d, SBS:%d\n", u32Iso, u32IsoLevel, stNrx.SFy[0].SBS[0]);
 
@@ -1329,7 +1329,7 @@ HI_S32 Sceneauto_Set3DNRX(VPSS_GRP VpssGrp, HI_U32 u32Iso, const HI_SCENEAUTO_3D
         printf("SetNrX failed\n");
         return HI_FAILURE;
     }
-    
+
     return HI_SUCCESS;
 }
 
@@ -1343,7 +1343,8 @@ void *SceneAuto_3DnrThread(void* pVoid)
     ISP_DEV IspDev;
     VPSS_GRP VpssGrp;
     ISP_EXP_INFO_S stIspExpInfo;
-    
+    HI_U32 u32NrSel = 0;
+
     SCENEAUTO_SEPCIAL_SCENE_E eSpecialScene;
     eSpecialScene = g_eSpecialScene;
 
@@ -1360,19 +1361,20 @@ void *SceneAuto_3DnrThread(void* pVoid)
             if (HI_SUCCESS != s32Ret)
             {
                 printf("HI_MPI_ISP_QueryExposureInfo failed\n");
-            }           
-            u32Iso[IspDev] = stIspExpInfo.u32ISO;            
+            }
+            u32Iso[IspDev] = stIspExpInfo.u32ISO;
 
             //set 3dnr
             if ((u32Iso[IspDev] != u32LastIso[IspDev]) || (eSpecialScene != g_eSpecialScene))
             {
                 for (s32VpssIndex = 0; s32VpssIndex < g_stSceneautoParam.stCommParam.s32VpssGrpCount; s32VpssIndex++)
                 {
-                    VpssGrp = g_stSceneautoParam.pstVpssParam[s32VpssIndex].VpssGrp; 
-                    
-                    if (SCENEAUTO_SPECIAL_SCENE_HLC == g_eSpecialScene)     
+                    VpssGrp = g_stSceneautoParam.pstVpssParam[s32VpssIndex].VpssGrp;
+                    u32NrSel = g_stSceneautoParam.pstVpssParam[s32VpssIndex].u32NrSel;
+
+                    if (SCENEAUTO_SPECIAL_SCENE_HLC == g_eSpecialScene)
                     {
-                        //set HLC 3DNR param 
+                        //set HLC 3DNR param
                         s32Ret = Sceneauto_Set3DNR(VpssGrp, u32Iso[IspDev], g_stSceneautoParam.stHlcParam.stHlc3dnr);
                         if (HI_SUCCESS != s32Ret)
                         {
@@ -1419,10 +1421,21 @@ void *SceneAuto_3DnrThread(void* pVoid)
                     else
                     {
                         //set Normal 3DNR param
-                        s32Ret = Sceneauto_Set3DNR(VpssGrp, u32Iso[IspDev], g_stSceneautoParam.pstVpssParam[s32VpssIndex].st3dnrParam);
-                        if (HI_SUCCESS != s32Ret)
+                        if (0 == u32NrSel)
                         {
-                            printf("Sceneauto_SetNormal3DNR failed\n");
+                            s32Ret = Sceneauto_Set3DNR(VpssGrp, u32Iso[IspDev], g_stSceneautoParam.pstVpssParam[s32VpssIndex].st3dnrParam);
+                            if (HI_SUCCESS != s32Ret)
+                            {
+                                printf("Sceneauto_SetNormal3DNR failed\n");
+                            }
+                        }
+                        else if (1 == u32NrSel)
+                        {
+                            s32Ret = Sceneauto_Set3DNRX(VpssGrp, u32Iso[IspDev], g_stSceneautoParam.pstVpssParam[s32VpssIndex].st3dnrParamX);
+                            if (HI_SUCCESS != s32Ret)
+                            {
+                                printf("Sceneauto_SetNormal3DNRX failed\n");
+                            }
                         }
                     }
 
@@ -1430,10 +1443,10 @@ void *SceneAuto_3DnrThread(void* pVoid)
                     eSpecialScene = g_eSpecialScene;
                 }
             }
-	    }	
+	    }
 		hi_usleep(200000);
     }
-    
+
     return NULL;
 }
 
@@ -1457,7 +1470,7 @@ void *SceneAuto_DrcThread(void* pVoid)
 
     	hi_usleep(200000);
     }
-	
+
 	return NULL;
 }
 
@@ -1475,7 +1488,7 @@ HI_S32 Sceneauto_SetIspSpecialParam(HI_S32 s32Index)
     HI_U32 u32OnlineMode = 0;
 	ISP_EXP_INFO_S stIspExpInfo;
     ISP_DIS_ATTR_S stDisAttr;
-	
+
 	IspDev = g_stSceneautoParam.pstIspParam[s32Index].IspDev;
 
     s32Ret = HI_MPI_SYS_GetViVpssMode(&u32OnlineMode);
@@ -1531,7 +1544,7 @@ HI_S32 Sceneauto_SetIspSpecialParam(HI_S32 s32Index)
             printf("HI_MPI_ISP_GetDISAttr failed\n");
             return HI_FAILURE;
         }
-        
+
 		if ((u32DeltaExposure > g_stSceneautoParam.stCommParam.u32DeltaDisExpThresh)||(u8DelataAveLum > g_stSceneautoParam.stCommParam.u32AveLumThresh))
 		{
 			if (stDisAttr.bEnable == HI_TRUE)
@@ -1568,14 +1581,14 @@ HI_S32 Sceneauto_SetIspSpecialParam(HI_S32 s32Index)
 		au8LastDisAveLum[s32Index] = u8AveLum;
 	}
 
-	return HI_SUCCESS;	
+	return HI_SUCCESS;
 }
 
 void * SceneAuto_SpecialThread(void* pVoid)
 {
 	HI_S32 s32Ret = HI_SUCCESS;
 	HI_S32 s32Index;
-    
+
     prctl(PR_SET_NAME, (unsigned long)"hi_ScnAuto_Spe", 0, 0, 0);
 
 	while (HI_TRUE == g_stSceneautoState.stThreadSpecial.bThreadFlag)
@@ -1586,12 +1599,12 @@ void * SceneAuto_SpecialThread(void* pVoid)
     		if (HI_SUCCESS != s32Ret)
 	        {
 	            printf("Sceneauto_SetIspSpecialParam failed\n");
-	        }           
+	        }
     	}
 
     	hi_usleep(80000);
     }
-    
+
 	return NULL;
 }
 
@@ -1688,7 +1701,7 @@ HI_S32 Sceneauto_SetAutoFSWDR(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposur
             }
         }
     }
-	
+
 	return HI_SUCCESS;
 }
 
@@ -1705,9 +1718,9 @@ HI_S32 Sceneauto_SetSharpen(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
 	u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel, u32Count, pu32Thresh);
 	u32LastExpLevel = GetLevelLtoH(au32SharpenLastExposure[s32Index], u32LastExpLevel, u32Count, pu32Thresh);
 
-    if ((SCENEAUTO_SPECIAL_SCENE_IR != g_eSpecialScene) && 
-        (SCENEAUTO_SPECIAL_SCENE_TRAFFIC != g_eSpecialScene) && 
-        (SCENEAUTO_SPECIAL_SCENE_FACE != g_eSpecialScene) && 
+    if ((SCENEAUTO_SPECIAL_SCENE_IR != g_eSpecialScene) &&
+        (SCENEAUTO_SPECIAL_SCENE_TRAFFIC != g_eSpecialScene) &&
+        (SCENEAUTO_SPECIAL_SCENE_FACE != g_eSpecialScene) &&
         (u32ExpLevel != u32LastExpLevel))
     {
         s32Ret = HI_MPI_ISP_GetBayerSharpenAttr(IspDev, &stIspBayerSharpenAttr);
@@ -1743,11 +1756,11 @@ HI_S32 Sceneauto_SetSharpen(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
             printf("HI_MPI_ISP_SetYuvSharpenAttr failed\n");
             return HI_FAILURE;
         }
-    } 
+    }
 
     au32SharpenLastExposure[s32Index] = u32Exposure;
-    
-	return HI_SUCCESS;  
+
+	return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_SetDemosaic(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
@@ -1781,10 +1794,10 @@ HI_S32 Sceneauto_SetDemosaic(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure
 	        return HI_FAILURE;
 	    }
     }
-    
+
     au32DemosaicLastExposure[s32Index] = u32Exposure;
 
-    return HI_SUCCESS;    
+    return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_SetFalseColor(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
@@ -1809,7 +1822,7 @@ HI_S32 Sceneauto_SetFalseColor(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposu
         printf("HI_MPI_ISP_SetAntiFalseColorAttr failed\n");
         return HI_FAILURE;
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -1859,7 +1872,7 @@ HI_S32 Sceneauto_SetAeRelatedExp(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Expo
     HI_U32 *pu32Thresh = NULL;
     ISP_EXPOSURE_ATTR_S stIspExposureAttr;
     HI_U32 u32LastExposure;
-    
+
 	u32LastExposure = au32AeLastExposure[s32Index];
 
 	s32Ret = HI_MPI_ISP_GetExposureAttr(IspDev, &stIspExposureAttr);
@@ -1885,7 +1898,7 @@ HI_S32 Sceneauto_SetAeRelatedExp(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Expo
             u32ExpLevel = GetLevelHtoL(u32Exposure, u32ExpLevel, u32Count, pu32Thresh);
             stIspExposureAttr.stAuto.u8Compensation = g_stSceneautoParam.stIrParam.pu8ExpCompensation[u32ExpLevel];
             stIspExposureAttr.stAuto.u8MaxHistOffset = g_stSceneautoParam.stIrParam.pu8MaxHistOffset[u32ExpLevel];
-        }       
+        }
     }
 	else if(SCENEAUTO_SPECIAL_SCENE_TRAFFIC == g_eSpecialScene)
     {
@@ -1896,7 +1909,7 @@ HI_S32 Sceneauto_SetAeRelatedExp(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Expo
     else if(((SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR == g_eSpecialScene) && (SCENEAUTO_FSWDR_LONG_FRAME_MODE == g_eFSWDRMode)) ||
         ((SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME == g_eSpecialScene) && (SCENEAUTO_FSWDR_LONG_FRAME_MODE == g_eFSWDRMode)))
     {
-        hi_usleep(200000);        
+        hi_usleep(200000);
         u32Count = g_stSceneautoParam.stFswdrParam.u32ExpCount;
         if (u32Exposure > u32LastExposure)
         {
@@ -1911,7 +1924,7 @@ HI_S32 Sceneauto_SetAeRelatedExp(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Expo
             u32ExpLevel = GetLevelHtoL(u32Exposure, u32ExpLevel, u32Count, pu32Thresh);
             stIspExposureAttr.stAuto.u8Compensation = g_stSceneautoParam.stFswdrParam.pu8ExpCompensation[u32ExpLevel];
             stIspExposureAttr.stAuto.u8MaxHistOffset = g_stSceneautoParam.stFswdrParam.pu8MaxHistOffset[u32ExpLevel];
-        }       
+        }
     }
     else if ((SCENEAUTO_SPECIAL_SCENE_NONE == g_eSpecialScene) ||
         ((SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR == g_eSpecialScene) && (SCENEAUTO_FSWDR_NORMAL_MODE == g_eFSWDRMode)) ||
@@ -1945,7 +1958,7 @@ HI_S32 Sceneauto_SetAeRelatedExp(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Expo
     //u32LastExposure = u32Exposure;
     au32AeLastExposure[s32Index] = u32Exposure;
 
-    return HI_SUCCESS;    
+    return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_SetGamma(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
@@ -1967,9 +1980,9 @@ HI_S32 Sceneauto_SetGamma(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
 	u32GammaCount = au32GammaCount[s32Index];
 	u32LastExpLevel = au32GammaLastExpLevel[s32Index];
 	u32LastExposure = au32GammaLastExposure[s32Index];
-	
-  	if ((u32Exposure != u32LastExposure) 
-        && (SCENEAUTO_SPECIAL_SCENE_IR != g_eSpecialScene) 
+
+  	if ((u32Exposure != u32LastExposure)
+        && (SCENEAUTO_SPECIAL_SCENE_IR != g_eSpecialScene)
         && (SCENEAUTO_SPECIAL_SCENE_HLC != g_eSpecialScene)
         && (SCENEAUTO_SPECIAL_SCENE_TRAFFIC != g_eSpecialScene)
         && (SCENEAUTO_SPECIAL_SCENE_FACE != g_eSpecialScene))
@@ -1984,7 +1997,7 @@ HI_S32 Sceneauto_SetGamma(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
             pu32Thresh = g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.pu32ExpThreshHtoL;
             u32ExpLevel = GetLevelHtoL(u32Exposure, u32ExpLevel, u32Count, pu32Thresh);
         }
-           
+
         if (u32ExpLevel != u32LastExpLevel)
         {
             u32GammaCount++;
@@ -2040,7 +2053,7 @@ HI_S32 Sceneauto_SetGamma(HI_S32 s32Index, ISP_DEV IspDev, HI_U32 u32Exposure)
             au32GammaCount[s32Index] = 0;
         }
     }
-    
+
     return HI_SUCCESS;
 }
 
@@ -2053,7 +2066,7 @@ HI_S32 Sceneauto_SetIspNoramlParam(HI_S32 s32Index)
 	ISP_INNER_STATE_INFO_S stIspInnerStateInfo;
 	ISP_DRC_ATTR_S stIspDrcAttr;
     ISP_WDR_MODE_S stIspWdrMode;
-    
+
 
 	IspDev = g_stSceneautoParam.pstIspParam[s32Index].IspDev;
 
@@ -2075,7 +2088,7 @@ HI_S32 Sceneauto_SetIspNoramlParam(HI_S32 s32Index)
     {
         stIspInnerStateInfo.u32DRCStrengthActual = g_stSceneautoParam.stCommParam.u32DRCStrengthThresh;
     }
-    
+
     s32Ret = HI_MPI_ISP_GetDRCAttr(IspDev, &stIspDrcAttr);
     if (HI_SUCCESS != s32Ret)
     {
@@ -2089,7 +2102,7 @@ HI_S32 Sceneauto_SetIspNoramlParam(HI_S32 s32Index)
         printf("HI_MPI_ISP_GetWDRMode failed\n");
         return HI_FAILURE;
     }
-    
+
     if (WDR_MODE_NONE != stIspWdrMode.enWDRMode)
     {
         //in wdr mode, use iso as exposure value
@@ -2097,7 +2110,7 @@ HI_S32 Sceneauto_SetIspNoramlParam(HI_S32 s32Index)
     }
     else
     {
-        u32Exposure = ((HI_U64)stIspExpInfo.u32AGain * (HI_U64)stIspExpInfo.u32DGain * (HI_U64)stIspExpInfo.u32ISPDGain) 
+        u32Exposure = ((HI_U64)stIspExpInfo.u32AGain * (HI_U64)stIspExpInfo.u32DGain * (HI_U64)stIspExpInfo.u32ISPDGain)
                       * ((HI_U64)stIspExpInfo.u32ExpTime)
                       >> 30;
 
@@ -2141,17 +2154,17 @@ HI_S32 Sceneauto_SetIspNoramlParam(HI_S32 s32Index)
     if (HI_SUCCESS != s32Ret)
     {
         printf("Sceneauto_SetDemosaic failed\n");
-    } 
+    }
 
 	/*********************set sharpen related with exposure*********************/
     s32Ret = Sceneauto_SetSharpen(s32Index, IspDev, u32Exposure);
     if (HI_SUCCESS != s32Ret)
     {
         printf("Sceneauto_SetSharpen failed\n");
-    } 
+    }
 
-    if ((SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR == g_eSpecialScene) || 
-    	(SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME == g_eSpecialScene) || 
+    if ((SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR == g_eSpecialScene) ||
+    	(SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME == g_eSpecialScene) ||
        	(SCENEAUTO_SPECIAL_SCENE_MANUAL_NORMAL_WDR == g_eSpecialScene))
     {
         s32Ret = Sceneauto_SetAutoFSWDR(s32Index, IspDev, u32Exposure);
@@ -2184,25 +2197,25 @@ void* SceneAuto_NormalThread(void* pVoid)
 
     	hi_usleep(1000000);
     }
-    
+
 	return NULL;
 }
 
 HI_S32 Sceneauto_SetViDefaultParam(HI_S32 s32Index)
-{	
+{
 	HI_S32 s32Ret = HI_SUCCESS;
 	VI_DEV ViDev;
 	VI_DCI_PARAM_S stDciParam;
 
 	ViDev = g_stSceneautoParam.pstViParam[s32Index].ViDev;
-	
+
 	/*********************set DCI*********************/
     s32Ret = HI_MPI_VI_GetDCIParam(ViDev, &stDciParam);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_VI_GetDCIParam failed\n");
         return HI_FAILURE;
-    } 
+    }
     stDciParam.bEnable = g_stSceneautoParam.pstViParam[s32Index].stDciParam.bDCIEnable;
     stDciParam.u32BlackGain = g_stSceneautoParam.pstViParam[s32Index].stDciParam.u32DCIBlackGain;
     stDciParam.u32ContrastGain = g_stSceneautoParam.pstViParam[s32Index].stDciParam.u32DCIContrastGain;
@@ -2213,7 +2226,7 @@ HI_S32 Sceneauto_SetViDefaultParam(HI_S32 s32Index)
         printf("HI_MPI_VI_SetDCIParam failed\n");
         return HI_FAILURE;
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -2242,7 +2255,7 @@ HI_S32 Sceneauto_SetViPreviousParam(HI_S32 s32Index)
         printf("HI_MPI_VI_SetDCIParam failed\n");
         return HI_FAILURE;
     }
-	
+
 	return HI_SUCCESS;
 }
 
@@ -2265,7 +2278,7 @@ HI_S32 Sceneauto_GetViPreviousParam(HI_S32 s32Index)
     g_stSceneautoState.pstPrevisouViParam[s32Index].stDci.u32DCIBlackGain = stViDciParam.u32BlackGain;
     g_stSceneautoState.pstPrevisouViParam[s32Index].stDci.u32DCIContrastGain = stViDciParam.u32ContrastGain;
     g_stSceneautoState.pstPrevisouViParam[s32Index].stDci.u32DCILightGain = stViDciParam.u32LightGain;
-	
+
 	return HI_SUCCESS;
 }
 
@@ -2310,14 +2323,14 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
 	}
 
 	/*********************set ae runintervel*********************/
-    s32Ret = HI_MPI_ISP_GetExposureAttr(IspDev, &stExposureAttr);  
+    s32Ret = HI_MPI_ISP_GetExposureAttr(IspDev, &stExposureAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetExposureAttr failed\n");
         return HI_FAILURE;
     }
     stExposureAttr.u8AERunInterval = g_stSceneautoParam.pstIspParam[s32Index].stAeParam.u8AERunInterval;
-    s32Ret = HI_MPI_ISP_SetExposureAttr(IspDev, &stExposureAttr);  
+    s32Ret = HI_MPI_ISP_SetExposureAttr(IspDev, &stExposureAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetExposureAttr failed\n");
@@ -2343,16 +2356,16 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
     }
     else
     {
-        u32Exposure = ((HI_U64)stIspExpInfo.u32AGain * (HI_U64)stIspExpInfo.u32DGain * (HI_U64)stIspExpInfo.u32ISPDGain >> 30) 
+        u32Exposure = ((HI_U64)stIspExpInfo.u32AGain * (HI_U64)stIspExpInfo.u32DGain * (HI_U64)stIspExpInfo.u32ISPDGain >> 30)
                           * ((HI_U64)stIspExpInfo.u32ExpTime);
     }
 
 	/*********************set gamma*********************/
-    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel, 
+    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel,
 								g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.u32ExpCount,
 								g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.pu32ExpThreshLtoH);
 
-    s32Ret = HI_MPI_ISP_GetGammaAttr(IspDev, &stGammaAttr);  
+    s32Ret = HI_MPI_ISP_GetGammaAttr(IspDev, &stGammaAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_GetGammaAttr failed\n");
@@ -2363,7 +2376,7 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
     {
         stGammaAttr.u16Table[i] = g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.pstGamma[u32ExpLevel].u16Table[i];
     }
-    s32Ret = HI_MPI_ISP_SetGammaAttr(IspDev, &stGammaAttr);  
+    s32Ret = HI_MPI_ISP_SetGammaAttr(IspDev, &stGammaAttr);
     if (HI_SUCCESS != s32Ret)
     {
         printf("HI_MPI_ISP_SetGammaAttr failed\n");
@@ -2371,7 +2384,7 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
     }
 
     /*********************set falsecolor*********************/
-    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel, 
+    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel,
 							 	g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.u32ExpCount,
 							 	g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.pu32ExpThresh);
     s32Ret = HI_MPI_ISP_GetAntiFalseColorAttr(IspDev, &stIspAntiFalsecolor);
@@ -2389,7 +2402,7 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
     }
 
 	/*********************set demosaic*********************/
-    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel, 
+    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel,
 								g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.u32ExpCount,
 								g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pu32ExpThresh);
     s32Ret = HI_MPI_ISP_GetDemosaicAttr(IspDev, &stIspDemosaicAttr);
@@ -2407,13 +2420,13 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
     {
         printf("HI_MPI_ISP_SetDemosaicAttr failed\n");
         return HI_FAILURE;
-    } 
+    }
 
     /*********************set sharpen*********************/
     u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel,
     							g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount,
     							g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pu32ExpThresh);
-	    
+
     s32Ret = HI_MPI_ISP_GetBayerSharpenAttr(IspDev, &stIspBayerSharpenAttr);
     if (HI_SUCCESS != s32Ret)
     {
@@ -2470,7 +2483,7 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
       printf("mallloc ISP_DP_ATTR_S failed\n");
 	  return HI_FAILURE;
 	}
-    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel, 
+    u32ExpLevel = GetLevelLtoH(u32Exposure, u32ExpLevel,
 								g_stSceneautoParam.pstIspParam[s32Index].stDpParam.u32ExpCount,
 								g_stSceneautoParam.pstIspParam[s32Index].stDpParam.pu32ExpThresh);
     s32Ret = HI_MPI_ISP_GetDPAttr(IspDev, pstDPAttr);
@@ -2490,7 +2503,7 @@ HI_S32 Sceneauto_SetIspDefaultParam(HI_S32 s32Index)
         return HI_FAILURE;
     }
 
-    FREE_PTR(pstDPAttr); 
+    FREE_PTR(pstDPAttr);
 
 	return HI_SUCCESS;
 }
@@ -2501,7 +2514,7 @@ HI_S32 Sceneauto_SetIspPreviousParam(HI_S32 s32Index)
 	HI_S32 i,j;
 	ISP_DEV IspDev;
     ISP_WB_ATTR_S stIspWbAttr;
-	ISP_COLORMATRIX_ATTR_S stIspCCMAttr;    
+	ISP_COLORMATRIX_ATTR_S stIspCCMAttr;
 	ISP_DEMOSAIC_ATTR_S stIspDemosaicAttr;
 	ISP_BAYER_SHARPEN_ATTR_S stIspBayerSharpenAttr;
     ISP_YUV_SHARPEN_ATTR_S stIspYuvSharpenAttr;
@@ -2560,7 +2573,7 @@ HI_S32 Sceneauto_SetIspPreviousParam(HI_S32 s32Index)
     {
         printf("HI_MPI_ISP_SetDemosaicAttr failed\n");
         return HI_FAILURE;
-    }    
+    }
 
     //Sharpen
     s32Ret = HI_MPI_ISP_GetBayerSharpenAttr(IspDev, &stIspBayerSharpenAttr);
@@ -2718,7 +2731,7 @@ HI_S32 Sceneauto_SetIspPreviousParam(HI_S32 s32Index)
         printf("HI_MPI_ISP_SetDRCAttr failed\n");
         return HI_FAILURE;
     }
-    
+
     //WDR Exposure attr
     s32Ret = HI_MPI_ISP_GetWDRExposureAttr(IspDev, &stIspWdrExposureAttr);
     if (HI_SUCCESS != s32Ret)
@@ -2726,9 +2739,9 @@ HI_S32 Sceneauto_SetIspPreviousParam(HI_S32 s32Index)
         printf("HI_MPI_ISP_GetWDRExposureAttr failed\n");
         return HI_FAILURE;
     }
-    stIspWdrExposureAttr.enExpRatioType = (ISP_OP_TYPE_E)g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u8ExpRatioType; 
-	stIspWdrExposureAttr.u32ExpRatioMax = g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMax; 
-	stIspWdrExposureAttr.u32ExpRatioMin = g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMin; 
+    stIspWdrExposureAttr.enExpRatioType = (ISP_OP_TYPE_E)g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u8ExpRatioType;
+	stIspWdrExposureAttr.u32ExpRatioMax = g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMax;
+	stIspWdrExposureAttr.u32ExpRatioMin = g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMin;
 	for (i = 0; i < 3; i++)
 	{
 		stIspWdrExposureAttr.au32ExpRatio[i] = g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.au32ExpRatio[i];
@@ -2806,7 +2819,7 @@ HI_S32 Sceneauto_GetIspPreviousParam(HI_S32 s32Index)
         return HI_FAILURE;
     }
     g_stSceneautoState.pstPreviousIspParam[s32Index].stColor.u8CcmType = (HI_U8)stIspCCMAttr.enOpType;
-    
+
 	//demosaic
 	s32Ret = HI_MPI_ISP_GetDemosaicAttr(IspDev, &stIspDemosaicAttr);
     if (HI_SUCCESS != s32Ret)
@@ -2941,9 +2954,9 @@ HI_S32 Sceneauto_GetIspPreviousParam(HI_S32 s32Index)
         printf("HI_MPI_ISP_GetWDRExposureAttr failed\n");
         return HI_FAILURE;
     }
-    g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u8ExpRatioType = stIspWdrExposureAttr.enExpRatioType; 
-	g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMax = stIspWdrExposureAttr.u32ExpRatioMax; 
-	g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMin = stIspWdrExposureAttr.u32ExpRatioMin; 
+    g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u8ExpRatioType = stIspWdrExposureAttr.enExpRatioType;
+	g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMax = stIspWdrExposureAttr.u32ExpRatioMax;
+	g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.u32ExpRatioMin = stIspWdrExposureAttr.u32ExpRatioMin;
 	for (i = 0; i < 3; i++)
 	{
 		g_stSceneautoState.pstPreviousIspParam[s32Index].stWdrExposureAttr.au32ExpRatio[i] = stIspWdrExposureAttr.au32ExpRatio[i];
@@ -2974,18 +2987,18 @@ HI_S32 Sceneauto_GetIspPreviousParam(HI_S32 s32Index)
 HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialScene)
 {
 	CHECK_SCENEAUTO_INIT();
-	CHEKC_SCENEAUTO_START();
+	CHECK_SCENEAUTO_START();
     CHECK_NULL_PTR(peSpecialScene);
-    
+
     HI_S32 s32Ret = HI_SUCCESS;
     HI_S32 s32Index;
-    
+
     if ((*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_IR) &&
         (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_HLC) &&
         (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_NONE) &&
-        (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR) && 
-        (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME) && 
-        (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_MANUAL_NORMAL_WDR) && 
+        (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR) &&
+        (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME) &&
+        (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_MANUAL_NORMAL_WDR) &&
         (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_TRAFFIC) &&
         (*peSpecialScene != SCENEAUTO_SPECIAL_SCENE_FACE))
     {
@@ -2998,7 +3011,7 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
 
 
     if (g_eSpecialScene != eSpecialScene)
-    {		
+    {
         g_eSpecialScene = eSpecialScene;
         switch (eSpecialScene)
         {
@@ -3012,7 +3025,9 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
                 }
                 break;
             case SCENEAUTO_SPECIAL_SCENE_HLC:
+                MUTEX_UNLOCK(g_stSceneautoLock);
                 hi_usleep(1000000);
+                MUTEX_LOCK(g_stSceneautoLock);
                 s32Ret = Sceneauto_SetHLC();
                 if (HI_SUCCESS != s32Ret)
                 {
@@ -3020,9 +3035,11 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
                     MUTEX_UNLOCK(g_stSceneautoLock);
                     return HI_FAILURE;
                 }
-                break;            
+                break;
             case SCENEAUTO_SPECIAL_SCENE_TRAFFIC:
+                MUTEX_UNLOCK(g_stSceneautoLock);
                 hi_usleep(1000000);
+                MUTEX_LOCK(g_stSceneautoLock);
                 s32Ret = Sceneauto_SetTrafficMode();
                 if (HI_SUCCESS != s32Ret)
                 {
@@ -3032,7 +3049,9 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
                 }
                 break;
             case SCENEAUTO_SPECIAL_SCENE_FACE:
+                MUTEX_UNLOCK(g_stSceneautoLock);
                 hi_usleep(1000000);
+                MUTEX_LOCK(g_stSceneautoLock);
                 s32Ret = Sceneauto_SetFaceMode();
                 if (HI_SUCCESS != s32Ret)
                 {
@@ -3043,8 +3062,8 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
                 break;
             case SCENEAUTO_SPECIAL_SCENE_MANUAL_LONG_FRAME:
             case SCENEAUTO_SPECIAL_SCENE_AUTO_FSWDR:
-            case SCENEAUTO_SPECIAL_SCENE_MANUAL_NORMAL_WDR: 
-                g_eFSWDRMode = SCENEAUTO_FSWDR_NORMAL_MODE;                
+            case SCENEAUTO_SPECIAL_SCENE_MANUAL_NORMAL_WDR:
+                g_eFSWDRMode = SCENEAUTO_FSWDR_NORMAL_MODE;
                 break;
             case SCENEAUTO_SPECIAL_SCENE_NONE:
             	for (s32Index = 0; s32Index < g_stSceneautoParam.stCommParam.s32IspDevCount; s32Index++)
@@ -3060,7 +3079,7 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
 		            s32Ret = Sceneauto_SetIspDefaultParam(s32Index);
 		            if (HI_SUCCESS != s32Ret)
 		            {
-		               
+
 						MUTEX_UNLOCK(g_stSceneautoLock);
 		                printf("Sceneauto_SetIspDefaultParam failed\n");
 		                return HI_FAILURE;
@@ -3083,8 +3102,8 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
 		                printf("Sceneauto_SetViDefaultParam failed\n");
 		                return HI_FAILURE;
 		            }
-  				}               
-                break;              
+  				}
+                break;
             default:
                 printf("unknown choice\n");
                 break;
@@ -3093,14 +3112,14 @@ HI_S32 HI_SCENEAUTO_SetSpecialMode(const SCENEAUTO_SEPCIAL_SCENE_E* peSpecialSce
     }
     MUTEX_UNLOCK(g_stSceneautoLock);
 
-    
+
     return HI_SUCCESS;
 }
 
 HI_S32 HI_SCENEAUTO_GetSpecialMode(SCENEAUTO_SEPCIAL_SCENE_E* peSpecialScene)
 {
 	CHECK_SCENEAUTO_INIT();
-	CHEKC_SCENEAUTO_START();
+	CHECK_SCENEAUTO_START();
     CHECK_NULL_PTR(peSpecialScene);
 
 	MUTEX_LOCK(g_stSceneautoLock);
@@ -3113,8 +3132,8 @@ HI_S32 HI_SCENEAUTO_GetSpecialMode(SCENEAUTO_SEPCIAL_SCENE_E* peSpecialScene)
 HI_S32 HI_SCENEAUTO_Stop()
 {
 	CHECK_SCENEAUTO_INIT();
-	
-   
+
+
 	MUTEX_LOCK(g_stSceneautoLock);
     if (HI_FALSE == g_stSceneautoState.bSceneautoStart)
     {
@@ -3125,7 +3144,7 @@ HI_S32 HI_SCENEAUTO_Stop()
 
     g_stSceneautoState.stThreadNormal.bThreadFlag = HI_FALSE;
     g_stSceneautoState.stThreadSpecial.bThreadFlag = HI_FALSE;
-    g_stSceneautoState.stThread3Dnr.bThreadFlag = HI_FALSE;    
+    g_stSceneautoState.stThread3Dnr.bThreadFlag = HI_FALSE;
    	g_stSceneautoState.stThreadDrc.bThreadFlag = HI_FALSE;
 
     (void)pthread_join(g_stSceneautoState.stThreadNormal.pThread, NULL);
@@ -3134,7 +3153,7 @@ HI_S32 HI_SCENEAUTO_Stop()
     (void)pthread_join(g_stSceneautoState.stThreadDrc.pThread, NULL);
 
     g_stSceneautoState.bSceneautoStart = HI_FALSE;
-   
+
     MUTEX_UNLOCK(g_stSceneautoLock);
     printf("SCENEAUTO Module has been stopped successfully!\n");
 
@@ -3144,10 +3163,10 @@ HI_S32 HI_SCENEAUTO_Stop()
 HI_S32 HI_SCENEAUTO_Start()
 {
 	CHECK_SCENEAUTO_INIT();
-	
+
     HI_S32 s32Ret = HI_SUCCESS;
     HI_S32 s32Index;
-    
+
 	MUTEX_LOCK(g_stSceneautoLock);
     if (HI_TRUE == g_stSceneautoState.bSceneautoStart)
     {
@@ -3164,15 +3183,15 @@ HI_S32 HI_SCENEAUTO_Start()
 	        printf("Sceneauto_GetIspPreviousParam failed\n");
 	        MUTEX_UNLOCK(g_stSceneautoLock);
 	        return HI_FAILURE;
-	    } 
-		
+	    }
+
 		s32Ret = Sceneauto_SetIspDefaultParam(s32Index);
 		if (HI_SUCCESS != s32Ret)
 	    {
 	        printf("Sceneauto_SetIspDefaultParam failed\n");
 	        MUTEX_UNLOCK(g_stSceneautoLock);
 	        return HI_FAILURE;
-	    } 
+	    }
 	}
 
 	for (s32Index = 0; s32Index < g_stSceneautoParam.stCommParam.s32ViDevCount; s32Index++)
@@ -3183,15 +3202,15 @@ HI_S32 HI_SCENEAUTO_Start()
 	        printf("Sceneauto_GetViPreviousParam failed\n");
 	        MUTEX_UNLOCK(g_stSceneautoLock);
 	        return HI_FAILURE;
-	    } 
-		
+	    }
+
 		s32Ret = Sceneauto_SetViDefaultParam(s32Index);
 		if (HI_SUCCESS != s32Ret)
 	    {
 	        printf("Sceneauto_SetViDefaultParam failed\n");
 	        MUTEX_UNLOCK(g_stSceneautoLock);
 	        return HI_FAILURE;
-	    } 
+	    }
 	}
 
    	g_stSceneautoState.stThreadNormal.bThreadFlag = HI_TRUE;
@@ -3221,7 +3240,7 @@ HI_S32 HI_SCENEAUTO_Start()
         printf("pthread_create SceneAuto_3DnrThread failed \n");
         MUTEX_UNLOCK(g_stSceneautoLock);
         return HI_FAILURE;
-    }    
+    }
 
     s32Ret = pthread_create(&g_stSceneautoState.stThreadDrc.pThread, NULL, SceneAuto_DrcThread, NULL);
     if (HI_SUCCESS != s32Ret)
@@ -3232,7 +3251,7 @@ HI_S32 HI_SCENEAUTO_Start()
     }
 
     g_stSceneautoState.bSceneautoStart = HI_TRUE;
-  
+
 	MUTEX_UNLOCK(g_stSceneautoLock);
 
     printf("SCENEAUTO Module has been started successfully!\n");
@@ -3265,7 +3284,7 @@ HI_S32 HI_SCENEAUTO_DeInit()
     {
         g_stSceneautoState.stThread3Dnr.bThreadFlag = HI_FALSE;
         (void)pthread_join(g_stSceneautoState.stThread3Dnr.pThread, NULL);
-    }    
+    }
     if (HI_TRUE == g_stSceneautoState.stThreadDrc.bThreadFlag)
     {
         g_stSceneautoState.stThreadDrc.bThreadFlag = HI_FALSE;
@@ -3273,7 +3292,7 @@ HI_S32 HI_SCENEAUTO_DeInit()
     }
 
 	FREE_PTR(g_stSceneautoState.pstPrevisouViParam);
-	FREE_PTR(g_stSceneautoState.pstPreviousIspParam);   
+	FREE_PTR(g_stSceneautoState.pstPreviousIspParam);
     Sceneauto_FreeDict();
     Sceneauto_FreeMem();
     g_stSceneautoState.bSceneautoInit = HI_FALSE;
@@ -3287,7 +3306,7 @@ HI_S32 HI_SCENEAUTO_DeInit()
 HI_VOID PrintParam()
 {
 	HI_S32 i, j, k;
-	
+
 	printf("\n[common]\n");
 	printf("IspDevCount = %d\n", g_stSceneautoParam.stCommParam.s32IspDevCount);
 	printf("ViDevCount = %d\n", g_stSceneautoParam.stCommParam.s32ViDevCount);
@@ -3670,7 +3689,7 @@ HI_VOID PrintParam()
 	for (i = 0; i < g_stSceneautoParam.stCommParam.s32ViDevCount; i++)
 	{
 		printf("[VI_PARAM_%d]\n", i);
-		printf("VI_DEV = %d\n", g_stSceneautoParam.pstViParam[i].ViDev);		
+		printf("VI_DEV = %d\n", g_stSceneautoParam.pstViParam[i].ViDev);
 		printf("DCIEnable = %d\n", g_stSceneautoParam.pstViParam[i].stDciParam.bDCIEnable);
 		printf("DCIBlackGain = %d\n", g_stSceneautoParam.pstViParam[i].stDciParam.u32DCIBlackGain);
 		printf("DCIContrastGain = %d\n", g_stSceneautoParam.pstViParam[i].stDciParam.u32DCIContrastGain);
@@ -3727,7 +3746,7 @@ HI_VOID PrintParam()
 				    g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pst3dnrParam[j].tf1_still,
 				    g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pst3dnrParam[j].tf2_still,
 				    g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pst3dnrParam[j].tf_profile);
-			
+
 		}
 		printf("\n");
 	}
@@ -3871,14 +3890,14 @@ HI_VOID PrintParam()
 			    g_stSceneautoParam.stIrParam.stIr3dnr.pst3dnrParam[j].tf1_still,
 			    g_stSceneautoParam.stIrParam.stIr3dnr.pst3dnrParam[j].tf2_still,
 			    g_stSceneautoParam.stIrParam.stIr3dnr.pst3dnrParam[j].tf_profile);
-		
+
 	}
 	printf("\n");
 	printf("[HLC]\n");
 	printf("u8ExpRatioType = %d\n", g_stSceneautoParam.stHlcParam.u8ExpRatioType);
 	printf("au32ExpRatio = %d,%d,%d\n", g_stSceneautoParam.stHlcParam.au32ExpRatio[0],g_stSceneautoParam.stHlcParam.au32ExpRatio[1],g_stSceneautoParam.stHlcParam.au32ExpRatio[2]);
 	printf("u32ExpRatioMax = %d\n", g_stSceneautoParam.stHlcParam.u32ExpRatioMax);
-	printf("u32ExpRatioMin = %d\n", g_stSceneautoParam.stHlcParam.u32ExpRatioMin);	
+	printf("u32ExpRatioMin = %d\n", g_stSceneautoParam.stHlcParam.u32ExpRatioMin);
 	printf("ExpCompensation = %d\n", g_stSceneautoParam.stHlcParam.u8ExpCompensation);
 	printf("WhiteDelayFrame = %d\n", g_stSceneautoParam.stHlcParam.u16WhiteDelayFrame);
 	printf("BlackDelayFrame = %d\n", g_stSceneautoParam.stHlcParam.u16BlackDelayFrame);
@@ -3965,7 +3984,7 @@ HI_VOID PrintParam()
 			    g_stSceneautoParam.stHlcParam.stHlc3dnr.pst3dnrParam[j].tf1_still,
 			    g_stSceneautoParam.stHlcParam.stHlc3dnr.pst3dnrParam[j].tf2_still,
 			    g_stSceneautoParam.stHlcParam.stHlc3dnr.pst3dnrParam[j].tf_profile);
-		
+
 	}
 	printf("\n");
 	printf("[TRAFFIC]\n");
@@ -4086,7 +4105,7 @@ HI_VOID PrintParam()
 			    g_stSceneautoParam.stTrafficParam.stTraffic3dnr.pst3dnrParam[j].tf1_still,
 			    g_stSceneautoParam.stTrafficParam.stTraffic3dnr.pst3dnrParam[j].tf2_still,
 			    g_stSceneautoParam.stTrafficParam.stTraffic3dnr.pst3dnrParam[j].tf_profile);
-		
+
 	}
 	printf("\n");
 	printf("[FSWDR]\n");
@@ -4166,7 +4185,7 @@ HI_VOID PrintParam()
 			    g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.pst3dnrParam[j].tf1_still,
 			    g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.pst3dnrParam[j].tf2_still,
 			    g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.pst3dnrParam[j].tf_profile);
-		
+
 	}
 	printf("\n");
 }
@@ -4207,7 +4226,7 @@ HI_S32 HI_SCENEAUTO_Init(const HI_CHAR* pszFileName)
     //PrintParam();
 
 	g_stSceneautoState.bSceneautoInit = HI_TRUE;
-    g_eSpecialScene = SCENEAUTO_SPECIAL_SCENE_NONE; 
+    g_eSpecialScene = SCENEAUTO_SPECIAL_SCENE_NONE;
     g_stSceneautoState.pstPreviousIspParam = (HI_SCENEAUTO_PREISPPARAM_S*)malloc((g_stSceneautoParam.stCommParam.s32IspDevCount) * sizeof(HI_SCENEAUTO_PREISPPARAM_S));
 	//CHECK_NULL_PTR(g_stSceneautoState.pstPreviousIspParam);
 	if (NULL == g_stSceneautoState.pstPreviousIspParam)
@@ -4226,7 +4245,7 @@ HI_S32 HI_SCENEAUTO_Init(const HI_CHAR* pszFileName)
         return HI_FAILURE;
     }
 	memset(g_stSceneautoState.pstPrevisouViParam, 0, (g_stSceneautoParam.stCommParam.s32ViDevCount) * sizeof(HI_SCENEAUTO_PREVIPARAM_S));
-	
+
     MUTEX_UNLOCK(g_stSceneautoLock);
 
     printf("SCENUAUTO Module has been inited successfully!\n");

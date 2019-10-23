@@ -7,7 +7,7 @@
   Version       : Initial Draft
   Author        : Hisilicon multimedia software group
   Created       : 2011/01/10
-  Description   : 
+  Description   :
   History       :
   1.Date        : 2011/01/10
     Author      : x00100808
@@ -72,6 +72,7 @@ extern ISP_SNS_OBJ_S stSnsMn34220Obj;
 extern ISP_SNS_OBJ_S stSnsImx185Obj;
 extern ISP_SNS_OBJ_S stSnsImx274MipiObj;
 extern ISP_SNS_OBJ_S stSnsImx377Obj;
+extern ISP_SNS_OBJ_S stSnsOs08a10Obj;
 
 #ifdef __cplusplus
 #if __cplusplus

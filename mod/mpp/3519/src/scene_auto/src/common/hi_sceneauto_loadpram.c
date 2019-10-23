@@ -13,6 +13,16 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
+#ifndef SSCANF_RETURN
+#define SSCANF_RETURN(str, format...)\
+    do{\
+        if (HI_FAILURE == sscanf(str, ##format))\
+        {\
+            printf("func:%s,line:%d, sscanf failed!\n",__FUNCTION__,__LINE__);\
+        }\
+    }while(0);
+#endif
+
 extern HI_SCENEAUTO_PARAM_S g_stSceneautoParam;
 static dictionary* g_Sceneautodictionary = NULL;
 
@@ -76,7 +86,7 @@ HI_S32 Scanf3dnrParam(HI_CHAR* pszTempStr, HI_SCENEAUTO_3DNR_S *pst3dnrParam)
 		return HI_FAILURE;
 	}
 
-	sscanf(pszTempStr, 	"   sf0_bright  ( %3d )      sfx_bright    ( %3d,%3d )      sfk_bright ( %3d )"
+	SSCANF_RETURN(pszTempStr, 	"   sf0_bright  ( %3d )      sfx_bright    ( %3d,%3d )      sfk_bright ( %3d )"
 					    "   sf0_dark    ( %3d )      sfx_dark      ( %3d,%3d )      sfk_dark   ( %3d )"
 					    "  ----------------------+                                  sfk_pro    ( %3d )"
 					    "                        |   tfx_moving    ( %3d,%3d )      sfk_ratio  ( %3d )"
@@ -109,7 +119,7 @@ HI_S32 Scanf3dnrxParam(HI_CHAR* pszTempStr, HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam
     tSceAutoV19yMDy  *pM =    pX->MDy;
     tSceAutoV19yTFy  *pT =    pX->TFy;
 
-	sscanf(pszTempStr, 	"                      |                 |                 |    -ktype   %3d )"
+	SSCANF_RETURN(pszTempStr, 	"                      |                 |                 |    -ktype   %3d )"
 					    "  IES  %4d           |                 |                 |    -krfw   %4d )"
 					    "  IET  %4d           |                 |                 |    -kbig   %4d )"
 					    "  IEB  %4d           |                 |                 |    -kpro   %4d )"
@@ -246,7 +256,7 @@ HI_S32 Sceneauto_LoadFswdrParam()
         return HI_FAILURE;
     }
     g_stSceneautoParam.stFswdrParam.u32RefExpRatioTh = s32Temp;
-    
+
 	/**************FSWDR:ExpCount**************/
     s32Temp = 0;
     s32Temp = iniparser_getint(g_Sceneautodictionary, "FSWDR:ExpCount", HI_FAILURE);
@@ -317,8 +327,8 @@ HI_S32 Sceneauto_LoadFswdrParam()
     for (i = 0; i < g_stSceneautoParam.stFswdrParam.u32ExpCount; i++)
     {
         g_stSceneautoParam.stFswdrParam.pu8MaxHistOffset[i] = MAEWeight[i];
-    }	
-    
+    }
+
 	/**************FSWDR:3DnrIsoCount**************/
     s32Temp = 0;
 	s32Temp = iniparser_getint(g_Sceneautodictionary, "FSWDR:3DnrIsoCount", HI_FAILURE);
@@ -326,7 +336,7 @@ HI_S32 Sceneauto_LoadFswdrParam()
     {
     	printf("FSWDR:3DnrIsoCount failed\n");
         return HI_FAILURE;
-    }  
+    }
     g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.u323DnrIsoCount = s32Temp;
     CHECK_MALLOC_SIZE(s32Temp);
     g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.pu323DnrIsoThresh = (HI_U32*)malloc(s32Temp * sizeof(HI_U32));
@@ -346,11 +356,11 @@ HI_S32 Sceneauto_LoadFswdrParam()
     for (i = 0; i < g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.u323DnrIsoCount; i++)
     {
         g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.pu323DnrIsoThresh[i] = MAEWeight[i];
-    } 
+    }
 
     for (i = 0; i < g_stSceneautoParam.stFswdrParam.stFSWDR3dnr.u323DnrIsoCount; i++)
 	{
-		/**************FSWDR:3DnrParam**************/ 
+		/**************FSWDR:3DnrParam**************/
 		snprintf(szTempStr, sizeof(szTempStr), "FSWDR:3DnrParam_%d", i);
 		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
 		if (NULL == pszTempStr)
@@ -364,9 +374,9 @@ HI_S32 Sceneauto_LoadFswdrParam()
 	    {
 	        printf("Scanf3dnrParam failed\n");
 	        return HI_FAILURE;
-	    }		
+	    }
 	}
-    
+
 	return HI_SUCCESS;
 }
 
@@ -750,7 +760,7 @@ HI_S32 Sceneauto_LoadTrafficParam()
     {
     	printf("TRAFFIC:3DnrIsoCount failed\n");
         return HI_FAILURE;
-    }  
+    }
     g_stSceneautoParam.stTrafficParam.stTraffic3dnr.u323DnrIsoCount = s32Temp;
     CHECK_MALLOC_SIZE(s32Temp);
     g_stSceneautoParam.stTrafficParam.stTraffic3dnr.pu323DnrIsoThresh = (HI_U32*)malloc(s32Temp * sizeof(HI_U32));
@@ -770,11 +780,11 @@ HI_S32 Sceneauto_LoadTrafficParam()
     for (i = 0; i < g_stSceneautoParam.stTrafficParam.stTraffic3dnr.u323DnrIsoCount; i++)
     {
         g_stSceneautoParam.stTrafficParam.stTraffic3dnr.pu323DnrIsoThresh[i] = MAEWeight[i];
-    } 
+    }
 
     for (i = 0; i < g_stSceneautoParam.stTrafficParam.stTraffic3dnr.u323DnrIsoCount; i++)
 	{
-		/**************TRAFFIC:3DnrParam**************/ 
+		/**************TRAFFIC:3DnrParam**************/
 		snprintf(szTempStr, sizeof(szTempStr), "TRAFFIC:3DnrParam_%d", i);
 		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
 		if (NULL == pszTempStr)
@@ -788,10 +798,10 @@ HI_S32 Sceneauto_LoadTrafficParam()
 	    {
 	        printf("Scanf3dnrParam failed\n");
 	        return HI_FAILURE;
-	    }		
+	    }
 	}
-    
-	
+
+
 	return HI_SUCCESS;
 }
 
@@ -804,7 +814,7 @@ void PrintNRx( const HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam )
     tSceAutoV19yMDy  *pM =    pX->MDy;
     tSceAutoV19yTFy  *pT =    pX->TFy;
 
-    printf("\n\n                             sizeof( X ) = %d ", sizeof(*pX) );                                                                                                                                                
+    printf("\n\n                             sizeof( X ) = %d ", sizeof(*pX) );
     printf("\n*******************************************************************************");
     printf("\n                      |                 |                 |    -ktype   %3d )",pS[3].SFkType );
 
@@ -813,7 +823,7 @@ void PrintNRx( const HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam )
     printf("\n  IEB  %4d           |                 |                 |    -kpro   %4d )", pI->IEB,pS[3].kProDD );
 
     printf("\n                      |                 |                 |                 )" );
-               
+
     printf("\n  SBS  %4d:%4d:%4d |  %4d:%4d:%4d |  %4d:%4d:%4d |  %4d:%4d:%4d )",  pS[0].SBS[0], pS[0].SBS[1], pS[0].SBS[2],
                                                                                   pS[1].SBS[0], pS[1].SBS[1], pS[1].SBS[2],
                                                                                   pS[2].SBS[0], pS[2].SBS[1], pS[2].SBS[2],
@@ -839,20 +849,20 @@ void PrintNRx( const HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam )
                                                                                      pS[3].horPro, pS[3].verPro, pS[3].kProDD );
 
     printf("\n                      |                 |                 |                 )" );
-               
+
     printf("\n  SSLP           %4d |            %4d |            %4d |            %4d )",  pS[0].SSLP,pS[1].SSLP,pS[2].SSLP,pS[3].SSLP );
     printf("\n  VRTO           %4d |            %4d |            %4d |            %4d )",  pS[0].VRTO,pS[1].VRTO,pS[2].VRTO,pS[3].VRTO );
-               
+
     printf("\n                      |                 |                 |                 )" );
-              
-    printf("\n  En #             on |             %s |          %s |              on )", (pS[3].SFkBig && (pS[3].SFkType >= 2)) ?    "OFF":   " on", 
+
+    printf("\n  En #             on |             %s |          %s |              on )", (pS[3].SFkBig && (pS[3].SFkType >= 2)) ?    "OFF":   " on",
                                                                                                          (pS[3].SFkType == 2)  ? "BYPASS":"    on");
     printf("\n                      |                 |                 |                 )" );
-              
+
     printf("\n  -ttype         %4d |            %4d |            %4d |            %4d )",  pT[0].TFT, pT[1].TFT, pT[2].TFT, pT[3].TFT );
-              
+
     printf("\n                      |                 |                 |                 )" );
-                 
+
     if (1) { int  i,  j, m[4][4] = { { -1,-1,-1,-1 }, { -1,-1,-1,-1 }, { -1,-1,-1,-1 }, { -1,-1,-1,-1 } };
            for (i = 0; i < 4; i++) { if (!pT[i].TFT) { for (j = 0; j < 4; j++) m[i][j] = pT[i].SFR[j]; }}
 
@@ -860,21 +870,21 @@ void PrintNRx( const HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam )
                                                                                                 m[1][0],m[1][1],m[1][2],m[1][3],
                                                                                                 m[2][0],m[2][1],m[2][2],m[2][3],
                                                                                                 m[3][0],m[3][1],m[3][2],m[3][3] ); }
-              
-    printf("\n                      |                 |                 |                 )" );
-              
 
-    printf("\n  STR            %4d |            %4d |            %4d |            %4d )",(1 == pT[0].TFT) ? pT[0].STR : -1, 
+    printf("\n                      |                 |                 |                 )" );
+
+
+    printf("\n  STR            %4d |            %4d |            %4d |            %4d )",(1 == pT[0].TFT) ? pT[0].STR : -1,
                                                                                         (1 == pT[1].TFT) ? pT[1].STR : -1,
                                                                                         (1 == pT[2].TFT) ? pT[2].STR : -1,
                                                                                         (1 == pT[3].TFT) ? pT[3].STR : -1 );
-              
+
     printf("\n                      |                 |                 |                 )" );
 
-    printf("\n  TFS            %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].TFS : -1, 
-                                                                                            (pT[1].TFT > 1) ? pT[1].TFS : -1, 
+    printf("\n  TFS            %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].TFS : -1,
+                                                                                            (pT[1].TFT > 1) ? pT[1].TFS : -1,
                                                                                             (pT[2].TFT > 1) ? pT[2].TFS : -1 );
-                                                                                                
+
     if (1) { int  i,  j, m[3][4] = { { -1, -1, -1, -1 }, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } };
            for (i = 0; i < 3; i++) { if (2 == pT[i].TFT) { for (j = 0; j < 4; j++) m[i][j] = pT[i].TFR[j]; }}
 
@@ -882,14 +892,14 @@ void PrintNRx( const HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam )
                                                                                                 m[1][0],m[1][1],m[1][2],m[1][3],
                                                                                                 m[2][0],m[2][1],m[2][2],m[2][3] ); }
 
-    printf("\n  TSS            %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].TSS : -1, 
-                                                                                         (pT[1].TFT > 1) ? pT[1].TSS : -1, 
+    printf("\n  TSS            %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].TSS : -1,
+                                                                                         (pT[1].TFT > 1) ? pT[1].TSS : -1,
                                                                                          (pT[2].TFT > 1) ? pT[2].TSS : -1 );
-                                                                                             
-    printf("\n  SDZ            %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].SDZ : -1, 
-                                                                                         (pT[1].TFT > 1) ? pT[1].SDZ : -1, 
+
+    printf("\n  SDZ            %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].SDZ : -1,
+                                                                                         (pT[1].TFT > 1) ? pT[1].SDZ : -1,
                                                                                          (pT[2].TFT > 1) ? pT[2].SDZ : -1 );
-              
+
     printf("\n                      |                 |                 |                 )" );
 
 
@@ -900,21 +910,21 @@ void PrintNRx( const HI_SCENEAUTO_3DNR_X_S *pst3dnrxParam )
                                                                                                 m[1][0],m[1][1],m[1][2],m[1][3],
                                                                                                 m[2][0],m[2][1],m[2][2],m[2][3] ); }
 
-    printf("\n  MDDZ           %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].MDDZ : -1, 
-                                                                                         (pT[1].TFT > 1) ? pT[1].MDDZ : -1, 
+    printf("\n  MDDZ           %4d |            %4d |            %4d |                 )",(pT[0].TFT > 1) ? pT[0].MDDZ : -1,
+                                                                                         (pT[1].TFT > 1) ? pT[1].MDDZ : -1,
                                                                                          (pT[2].TFT > 1) ? pT[2].MDDZ : -1 );
-              
+
     printf("\n                      |                 |                 |                 )" );
-              
-    printf("\n  MATH           %4d |            %4d |            %4d |                 )", pM[0].MATH,pM[1].MATH,pM[2].MATH ); 
+
+    printf("\n  MATH           %4d |            %4d |            %4d |                 )", pM[0].MATH,pM[1].MATH,pM[2].MATH );
     printf("\n  MATE           %4d |            %4d |            %4d +-----------------)", pM[0].MATE,pM[1].MATE,pM[2].MATE );
     printf("\n  MABW           %4d |            %4d |            %4d |       -sfc  %3d )", pM[0].MABW,pM[1].MABW,pM[2].MABW, pX->NRc.SFC );
     printf("\n  MATW           %4d |            %4d |            %4d |       -trc  %3d )", pM[0].MATW,pM[1].MATW,pM[2].MATW, pX->NRc.TRC );
     printf("\n  MASW           %4d |            %4d |            %4d |       -tfc  %3d )", pM[0].MASW,pM[1].MASW,pM[2].MASW, pX->NRc.TFC );
     printf("\n  MAXN           %4d |            %4d |            %4d |       -tpc  %3d )", pM[0].MAXN,pM[1].MAXN,pM[2].MAXN, pX->NRc.TPC );
-                                                                           
-    printf("\n*******************************************************************************\n");                                                                                                                                                  
-}  
+
+    printf("\n*******************************************************************************\n");
+}
 #endif
 
 HI_S32 Sceneauto_LoadFaceParam()
@@ -1066,7 +1076,7 @@ HI_S32 Sceneauto_LoadFaceParam()
     {
     	printf("FACE:3DnrIsoCount failed\n");
         return HI_FAILURE;
-    }  
+    }
     g_stSceneautoParam.stFaceParam.stFace3dnrx.u323DnrIsoCount = s32Temp;
     CHECK_MALLOC_SIZE(s32Temp);
     g_stSceneautoParam.stFaceParam.stFace3dnrx.pu323DnrIsoThresh = (HI_U32*)malloc(s32Temp * sizeof(HI_U32));
@@ -1086,11 +1096,11 @@ HI_S32 Sceneauto_LoadFaceParam()
     for (i = 0; i < g_stSceneautoParam.stFaceParam.stFace3dnrx.u323DnrIsoCount; i++)
     {
         g_stSceneautoParam.stFaceParam.stFace3dnrx.pu323DnrIsoThresh[i] = MAEWeight[i];
-    } 
+    }
 
     for (i = 0; i < g_stSceneautoParam.stFaceParam.stFace3dnrx.u323DnrIsoCount; i++)
 	{
-		/**************FACE:3DnrParam**************/ 
+		/**************FACE:3DnrParam**************/
 		snprintf(szTempStr, sizeof(szTempStr), "FACE:3DnrXParam_%d", i);
 		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
 		if (NULL == pszTempStr)
@@ -1105,7 +1115,7 @@ HI_S32 Sceneauto_LoadFaceParam()
 	    {
 	        printf("Scanf3dnrParam failed\n");
 	        return HI_FAILURE;
-	    }		
+	    }
 	}
 
 #if 0 /* For Debug */
@@ -1115,7 +1125,7 @@ HI_S32 Sceneauto_LoadFaceParam()
             PrintNRx(&g_stSceneautoParam.stFaceParam.stFace3dnrx.pst3dnrxParam[i]);
         }
 #endif
-	
+
 	return HI_SUCCESS;
 }
 
@@ -1512,7 +1522,7 @@ HI_S32 Sceneauto_LoadHLCParam()
     {
     	printf("HLC:3DnrIsoCount failed\n");
         return HI_FAILURE;
-    }  
+    }
     g_stSceneautoParam.stHlcParam.stHlc3dnr.u323DnrIsoCount = s32Temp;
     CHECK_MALLOC_SIZE(s32Temp);
     g_stSceneautoParam.stHlcParam.stHlc3dnr.pu323DnrIsoThresh = (HI_U32*)malloc(s32Temp * sizeof(HI_U32));
@@ -1532,12 +1542,12 @@ HI_S32 Sceneauto_LoadHLCParam()
     for (i = 0; i < g_stSceneautoParam.stHlcParam.stHlc3dnr.u323DnrIsoCount; i++)
     {
         g_stSceneautoParam.stHlcParam.stHlc3dnr.pu323DnrIsoThresh[i] = MAEWeight[i];
-    } 
+    }
 
 
     for (i = 0; i < g_stSceneautoParam.stHlcParam.stHlc3dnr.u323DnrIsoCount; i++)
 	{
-		/**************HLC:3DnrParam**************/ 
+		/**************HLC:3DnrParam**************/
 		snprintf(szTempStr, sizeof(szTempStr), "HLC:3DnrParam_%d", i);
 		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
 		if (NULL == pszTempStr)
@@ -1551,9 +1561,9 @@ HI_S32 Sceneauto_LoadHLCParam()
 	    {
 	        printf("Scanf3dnrParam failed\n");
 	        return HI_FAILURE;
-	    }		
+	    }
 	}
-	
+
 	return HI_SUCCESS;
 }
 
@@ -1565,7 +1575,7 @@ HI_S32 Sceneauto_LoadIRParam()
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
 
-	/**************IR:ExpCount**************/ 
+	/**************IR:ExpCount**************/
 	s32Temp = 0;
     s32Temp = iniparser_getint(g_Sceneautodictionary, "IR:ExpCount", HI_FAILURE);
     if (HI_FAILURE == s32Temp)
@@ -1896,7 +1906,7 @@ HI_S32 Sceneauto_LoadIRParam()
     {
     	printf("IR:3DnrIsoCount failed\n");
         return HI_FAILURE;
-    }  
+    }
     g_stSceneautoParam.stIrParam.stIr3dnr.u323DnrIsoCount = s32Temp;
     CHECK_MALLOC_SIZE(s32Temp);
     g_stSceneautoParam.stIrParam.stIr3dnr.pu323DnrIsoThresh = (HI_U32*)malloc(s32Temp * sizeof(HI_U32));
@@ -1916,11 +1926,11 @@ HI_S32 Sceneauto_LoadIRParam()
     for (i = 0; i < g_stSceneautoParam.stIrParam.stIr3dnr.u323DnrIsoCount; i++)
     {
         g_stSceneautoParam.stIrParam.stIr3dnr.pu323DnrIsoThresh[i] = MAEWeight[i];
-    } 
+    }
 
     for (i = 0; i < g_stSceneautoParam.stIrParam.stIr3dnr.u323DnrIsoCount; i++)
 	{
-		/**************IR:3DnrParam**************/ 
+		/**************IR:3DnrParam**************/
 		snprintf(szTempStr, sizeof(szTempStr), "IR:3DnrParam_%d", i);
 		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
 		if (NULL == pszTempStr)
@@ -1934,9 +1944,9 @@ HI_S32 Sceneauto_LoadIRParam()
 	    {
 	        printf("Scanf3dnrParam failed\n");
 	        return HI_FAILURE;
-	    }		
+	    }
 	}
-    
+
 	return HI_SUCCESS;
 }
 
@@ -1977,11 +1987,11 @@ HI_S32 Sceneauto_Load3dnr(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParam.u323DnrIsoCount; i++)
     {
         g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParam.pu323DnrIsoThresh[i] = MAEWeight[i];
-    } 
+    }
 
 	for (i = 0; i < g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParam.u323DnrIsoCount; i++)
 	{
-		/**************3DNR:3DnrParam**************/ 
+		/**************3DNR:3DnrParam**************/
 		snprintf(szTempStr, sizeof(szTempStr), "VPSS_PARAM_%d:3DnrParam_%d", s32Index, i);
 		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
 		if (NULL == pszTempStr)
@@ -1995,16 +2005,76 @@ HI_S32 Sceneauto_Load3dnr(HI_S32 s32Index)
 	    {
 	        printf("Scanf3dnrParam failed\n");
 	        return HI_FAILURE;
-	    }		
+	    }
 	}
-	
+
+	return HI_SUCCESS;
+}
+
+HI_S32 Sceneauto_Load3dnrX(HI_S32 s32Index)
+{
+	HI_S32 s32Temp;
+    HI_S32 i;
+    HI_CHAR szTempStr[64] = {0};
+    HI_CHAR* pszTempStr = HI_NULL;
+
+	/**************3DNR:3DnrIsoCount**************/
+    s32Temp = 0;
+    snprintf(szTempStr, sizeof(szTempStr), "VPSS_PARAM_%d:3DnrIsoCount", s32Index);
+    s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
+    if (HI_FAILURE == s32Temp)
+    {
+        printf("VPSS_PARAM_%d:3DnrIsoCount failed\n", s32Index);
+        return HI_FAILURE;
+    }
+    g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.u323DnrIsoCount = s32Temp;
+
+    CHECK_MALLOC_SIZE(s32Temp);
+    g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pu323DnrIsoThresh = (HI_U32*)malloc(s32Temp * sizeof(HI_U32));
+    CHECK_NULL_PTR(g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pu323DnrIsoThresh);
+    g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pst3dnrxParam = (HI_SCENEAUTO_3DNR_X_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_3DNR_X_S));
+    CHECK_NULL_PTR(g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pst3dnrxParam);
+
+    /**************3DNR:3DnrIsoThresh**************/
+    snprintf(szTempStr, sizeof(szTempStr), "VPSS_PARAM_%d:3DnrIsoThresh", s32Index);
+	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
+    if (NULL == pszTempStr)
+    {
+        printf("VPSS_PARAM_%d:3DnrIsoThresh failed\n\n", s32Index);
+        return HI_FAILURE;
+    }
+    Weight(pszTempStr);
+    for (i = 0; i < g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.u323DnrIsoCount; i++)
+    {
+        g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pu323DnrIsoThresh[i] = MAEWeight[i];
+    }
+
+	for (i = 0; i < g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.u323DnrIsoCount; i++)
+	{
+		/**************3DNR:3DnrParam**************/
+		snprintf(szTempStr, sizeof(szTempStr), "VPSS_PARAM_%d:3DnrParam_%d", s32Index, i);
+		pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
+		if (NULL == pszTempStr)
+		{
+		    printf("VPSS_PARAM_%d:3DnrParam_%d failed\n", s32Index, i);
+		    return HI_FAILURE;
+		}
+
+        memset((g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pst3dnrxParam + i), 0, sizeof(HI_SCENEAUTO_3DNR_X_S));
+		s32Temp = Scanf3dnrxParam(pszTempStr, (g_stSceneautoParam.pstVpssParam[s32Index].st3dnrParamX.pst3dnrxParam + i));
+		if (HI_FAILURE == s32Temp)
+	    {
+	        printf("Scanf3dnrParamX failed\n");
+	        return HI_FAILURE;
+	    }
+	}
 	return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_LoadVpssParam()
 {
 	HI_S32 s32Ret = HI_SUCCESS;
-	HI_S32 s32Temp = 0;	
+	HI_S32 s32Temp = 0;
 	HI_S32 s32Index;
 	HI_CHAR szTempStr[64] = {0};
 
@@ -2024,14 +2094,36 @@ HI_S32 Sceneauto_LoadVpssParam()
         }
         g_stSceneautoParam.pstVpssParam[s32Index].VpssGrp = s32Temp;
 
-		s32Ret = Sceneauto_Load3dnr(s32Index);
-		if (HI_SUCCESS != s32Ret)
-		{
-     		printf("(s32Index: %d) Sceneauto_Load3dnr failed\n", s32Index);
+		snprintf(szTempStr, sizeof(szTempStr), "VPSS_PARAM_%d:3DnrSel", s32Index);
+		s32Temp = 0;
+        s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
+        if (HI_FAILURE == s32Temp)
+        {
+            printf("VPSS_PARAM_%d:3DnrSel failed\n", s32Index);
             return HI_FAILURE;
+        }
+        g_stSceneautoParam.pstVpssParam[s32Index].u32NrSel = s32Temp;
+
+        if (0 == g_stSceneautoParam.pstVpssParam[s32Index].u32NrSel)
+        {
+    		s32Ret = Sceneauto_Load3dnr(s32Index);
+    		if (HI_SUCCESS != s32Ret)
+    		{
+         		printf("(s32Index: %d) Sceneauto_Load3dnr failed\n", s32Index);
+                return HI_FAILURE;
+    		}
+        }
+        else if (1 == g_stSceneautoParam.pstVpssParam[s32Index].u32NrSel)
+        {
+    		s32Ret = Sceneauto_Load3dnrX(s32Index);
+    		if (HI_SUCCESS != s32Ret)
+    		{
+         		printf("(s32Index: %d) Sceneauto_Load3dnrX failed\n", s32Index);
+                return HI_FAILURE;
+    		}
 		}
 	}
-	
+
 	return HI_SUCCESS;
 }
 
@@ -2091,7 +2183,7 @@ HI_S32 Sceneauto_LoadDCI(HI_S32 s32Index)
 HI_S32 Sceneauto_LoadViParam()
 {
 	HI_S32 s32Ret = HI_SUCCESS;
-	HI_S32 s32Temp = 0;	
+	HI_S32 s32Temp = 0;
 	HI_S32 s32Index;
 	HI_CHAR szTempStr[64] = {0};
 
@@ -2110,7 +2202,7 @@ HI_S32 Sceneauto_LoadViParam()
             return HI_FAILURE;
         }
        	g_stSceneautoParam.pstViParam[s32Index].ViDev = s32Temp;
-	
+
 		s32Ret = Sceneauto_LoadDCI(s32Index);
 		if (HI_SUCCESS != s32Ret)
 		{
@@ -2118,8 +2210,8 @@ HI_S32 Sceneauto_LoadViParam()
             return HI_FAILURE;
 		}
 	}
-	
-	return HI_SUCCESS;	
+
+	return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_LoadGamma(HI_S32 s32Index)
@@ -2183,7 +2275,7 @@ HI_S32 Sceneauto_LoadGamma(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.pu32ExpThreshLtoH[i] = MAEWeight[i];
-    } 
+    }
 
     /**************GAMMA:gammaExpThreshHtoL**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:gammaExpThreshHtoL", s32Index);
@@ -2197,7 +2289,7 @@ HI_S32 Sceneauto_LoadGamma(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.pu32ExpThreshHtoL[i] = MAEWeight[i];
-    } 
+    }
 
     /**************GAMMA:gammatable**************/
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.u32ExpCount; i++)
@@ -2247,7 +2339,7 @@ HI_S32 Sceneauto_LoadGamma(HI_S32 s32Index)
 
         g_stSceneautoParam.pstIspParam[s32Index].stGammaParam.pstGamma[i].u8CurveType = 2;
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -2258,7 +2350,7 @@ HI_S32 Sceneauto_LoadFalseColor(HI_S32 s32Index)
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
 
-	/**************FALSECOLOR:falsecolorExpCount**************/ 
+	/**************FALSECOLOR:falsecolorExpCount**************/
 	s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:falsecolorExpCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -2275,7 +2367,7 @@ HI_S32 Sceneauto_LoadFalseColor(HI_S32 s32Index)
     g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.pstFalseColor = (HI_SCENEAUTO_FALSECOLOR_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_FALSECOLOR_S));
     CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.pstFalseColor);
 
-	/**************FALSECOLOR:falsecolorExpThresh**************/ 
+	/**************FALSECOLOR:falsecolorExpThresh**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:falsecolorExpThresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2287,9 +2379,9 @@ HI_S32 Sceneauto_LoadFalseColor(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.pu32ExpThresh[i] = MAEWeight[i];
-    } 
+    }
 
-    /**************FALSECOLOR:u8Strength**************/ 
+    /**************FALSECOLOR:u8Strength**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8Strength", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2302,7 +2394,7 @@ HI_S32 Sceneauto_LoadFalseColor(HI_S32 s32Index)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stFalseColorParam.pstFalseColor[i].u8Strength = MAEWeight[i];
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -2313,7 +2405,7 @@ HI_S32 Sceneauto_LoadDp(HI_S32 s32Index)
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
 
-	/**************DP:dpExpCount**************/ 
+	/**************DP:dpExpCount**************/
 	s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dpExpCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -2330,7 +2422,7 @@ HI_S32 Sceneauto_LoadDp(HI_S32 s32Index)
     g_stSceneautoParam.pstIspParam[s32Index].stDpParam.pstDPAttr = (HI_SCENEAUTO_DPATTR_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_DPATTR_S));
     CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stDpParam.pstDPAttr);
 
-    /**************DP:dpExpThresh**************/ 
+    /**************DP:dpExpThresh**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dpExpThresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2342,9 +2434,9 @@ HI_S32 Sceneauto_LoadDp(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDpParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDpParam.pu32ExpThresh[i] = MAEWeight[i];
-    } 
+    }
 
-    /**************DP:u16Slop**************/ 
+    /**************DP:u16Slop**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u16Slop", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2356,9 +2448,9 @@ HI_S32 Sceneauto_LoadDp(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDpParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDpParam.pstDPAttr[i].u16Slope = MAEWeight[i];
-    } 
+    }
 
-    /**************DP:u16Thresh**************/ 
+    /**************DP:u16Thresh**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u16Thresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2371,7 +2463,7 @@ HI_S32 Sceneauto_LoadDp(HI_S32 s32Index)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDpParam.pstDPAttr[i].u16Thresh = MAEWeight[i];
     }
-    
+
 	return HI_SUCCESS;
 }
 
@@ -2382,7 +2474,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
 
-	/**************SHARPEN:defSharpenD**************/ 
+	/**************SHARPEN:defSharpenD**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defSharpenD", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2394,9 +2486,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < 16; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8SharpenD = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:defSharpenUd**************/ 
+    /**************SHARPEN:defSharpenUd**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defSharpenUd", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2410,7 +2502,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8SharpenUd = MAEWeight[i];
     }
 
-    /**************SHARPEN:defTextureSt**************/ 
+    /**************SHARPEN:defTextureSt**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defTextureSt", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2424,7 +2516,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8TextureSt = MAEWeight[i];
     }
 
-    /**************SHARPEN:defEdgeSt**************/ 
+    /**************SHARPEN:defEdgeSt**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defEdgeSt", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2438,7 +2530,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8EdgeSt = MAEWeight[i];
     }
 
-    /**************SHARPEN:defOverShoot**************/ 
+    /**************SHARPEN:defOverShoot**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defOverShoot", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2452,7 +2544,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8OverShoot = MAEWeight[i];
     }
 
-    /**************SHARPEN:defUnderShoot**************/ 
+    /**************SHARPEN:defUnderShoot**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defUnderShoot", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2466,7 +2558,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8UnderShoot = MAEWeight[i];
     }
 
-    /**************SHARPEN:defDetailCtrl**************/ 
+    /**************SHARPEN:defDetailCtrl**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:defDetailCtrl", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2480,7 +2572,7 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.astDefaultSharpen[i].u8DetailCtrl = MAEWeight[i];
     }
 
-	/**************SHARPEN:sharpenExpCount**************/ 
+	/**************SHARPEN:sharpenExpCount**************/
 	s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:sharpenExpCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -2496,8 +2588,8 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pu32ExpThresh);
     g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen = (HI_SCENEAUTO_SHARPEN_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_SHARPEN_S));
     CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen);
-    
-	/**************SHARPEN:sharpenExpThresh**************/ 
+
+	/**************SHARPEN:sharpenExpThresh**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:sharpenExpThresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2509,9 +2601,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pu32ExpThresh[i] = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:dynSharpenD**************/ 
+    /**************SHARPEN:dynSharpenD**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynSharpenD", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2523,9 +2615,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8SharpenD = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:dynSharpenUd**************/ 
+    /**************SHARPEN:dynSharpenUd**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynSharpenUd", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2537,9 +2629,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8SharpenUd = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:dynTextureSt**************/ 
+    /**************SHARPEN:dynTextureSt**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynTextureSt", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2551,9 +2643,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8TextureSt = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:dynEdgeSt**************/ 
+    /**************SHARPEN:dynEdgeSt**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynEdgeSt", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2565,9 +2657,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8EdgeSt = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:dynOverShoot**************/ 
+    /**************SHARPEN:dynOverShoot**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynOverShoot", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2579,9 +2671,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8OverShoot = MAEWeight[i];
-    } 
+    }
 
-    /**************SHARPEN:dynUnderShoot**************/ 
+    /**************SHARPEN:dynUnderShoot**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynUnderShoot", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2593,9 +2685,9 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8UnderShoot = MAEWeight[i];
-    } 
+    }
 
-	/**************SHARPEN:dynDetailCtrl**************/ 
+	/**************SHARPEN:dynDetailCtrl**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:dynDetailCtrl", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2607,8 +2699,8 @@ HI_S32 Sceneauto_LoadSharpen(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stSharpenParam.pstDynamicSharpen[i].u8DetailCtrl = MAEWeight[i];
-    } 
-    
+    }
+
 	return HI_SUCCESS;
 }
 
@@ -2619,7 +2711,7 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
 
-	/**************DEMOSAIC:demosaicExpCount**************/ 
+	/**************DEMOSAIC:demosaicExpCount**************/
 	s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:demosaicExpCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -2636,7 +2728,7 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pstDemosaic = (HI_SCENEAUTO_DEMOSAIC_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_DEMOSAIC_S));
     CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pstDemosaic);
 
-	/**************DEMOSAIC:drThresh**************/ 
+	/**************DEMOSAIC:drThresh**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:demosaicExpThresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2648,9 +2740,9 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pu32ExpThresh[i] = MAEWeight[i];
-    }    
+    }
 
-	/**************DEMOSAIC:u8UuSlpoe**************/ 
+	/**************DEMOSAIC:u8UuSlpoe**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8UuSlpoe", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2662,9 +2754,9 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pstDemosaic[i].u8UuSlope = MAEWeight[i];
-    } 
+    }
 
-    /**************DEMOSAIC:u8AaSlope**************/ 
+    /**************DEMOSAIC:u8AaSlope**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8AaSlope", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2676,9 +2768,9 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pstDemosaic[i].u8AaSlope = MAEWeight[i];
-    } 
+    }
 
-    /**************DEMOSAIC:u8VaSlope**************/ 
+    /**************DEMOSAIC:u8VaSlope**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8VaSlope", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2690,9 +2782,9 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pstDemosaic[i].u8VaSlope = MAEWeight[i];
-    } 
+    }
 
-    /**************DEMOSAIC:u8VhSlope**************/ 
+    /**************DEMOSAIC:u8VhSlope**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8VhSlope", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2704,7 +2796,7 @@ HI_S32 Sceneauto_LoadDemosaic(HI_S32 s32Index)
     for (i = 0; i < g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.u32ExpCount; i++)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDemosaicParam.pstDemosaic[i].u8VhSlope = MAEWeight[i];
-    } 
+    }
 
 	return HI_SUCCESS;
 }
@@ -2716,7 +2808,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
 
-    /**************DRC:drCount**************/ 
+    /**************DRC:drCount**************/
 	s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:drCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -2733,7 +2825,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr = (HI_SCENEAUTO_DRC_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_DRC_S));
     CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr);
 
-    /**************DRC:drThresh**************/ 
+    /**************DRC:drThresh**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:drThresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2747,7 +2839,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pu32DRThresh[i] = MAEWeight[i];
     }
 
-	/**************DRC:bEnable**************/ 
+	/**************DRC:bEnable**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:bEnable", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2761,7 +2853,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].bEnable = (HI_BOOL)MAEWeight[i];
     }
 
-    /**************DRC:bEnable**************/ 
+    /**************DRC:bEnable**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8OpType", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2774,8 +2866,8 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     {
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u8OpType = MAEWeight[i];
     }
-    
-	/**************DRC:u32Strength**************/ 
+
+	/**************DRC:u32Strength**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32Strength", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2789,7 +2881,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32Strength = MAEWeight[i];
     }
 
-    /**************DRC:u32DRCAutoStrength**************/ 
+    /**************DRC:u32DRCAutoStrength**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32DRCAutoStrength", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2803,7 +2895,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32DRCAutoStrength = MAEWeight[i];
     }
 
-    /**************DRC:u32WhiteLevel**************/ 
+    /**************DRC:u32WhiteLevel**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32WhiteLevel", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2817,7 +2909,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32WhiteLevel = MAEWeight[i];
     }
 
-    /**************DRC:u32BlackLevel**************/ 
+    /**************DRC:u32BlackLevel**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32BlackLevel", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2831,7 +2923,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32BlackLevel = MAEWeight[i];
     }
 
-    /**************DRC:u32Asymmetry**************/ 
+    /**************DRC:u32Asymmetry**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32Asymmetry", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2845,7 +2937,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32Asymmetry = MAEWeight[i];
     }
 
-    /**************DRC:u32BrightEnhance**************/ 
+    /**************DRC:u32BrightEnhance**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32BrightEnhance", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2859,7 +2951,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32BrightEnhance = MAEWeight[i];
     }
 
-    /**************DRC:u8FilterMux**************/ 
+    /**************DRC:u8FilterMux**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8FilterMux", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2873,7 +2965,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u8FilterMux = MAEWeight[i];
     }
 
-    /**************DRC:u32SlopeMax**************/ 
+    /**************DRC:u32SlopeMax**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32SlopeMax", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2887,7 +2979,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32SlopeMax = MAEWeight[i];
     }
 
-    /**************DRC:u32SlopeMin**************/ 
+    /**************DRC:u32SlopeMin**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32SlopeMin", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2901,7 +2993,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32SlopeMin = MAEWeight[i];
     }
 
-    /**************DRC:u32VarianceSpace**************/ 
+    /**************DRC:u32VarianceSpace**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32VarianceSpace", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2915,7 +3007,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32VarianceSpace = MAEWeight[i];
     }
 
-    /**************DRC:u32VarianceIntensity**************/ 
+    /**************DRC:u32VarianceIntensity**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32VarianceIntensity", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2929,7 +3021,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32VarianceIntensity = MAEWeight[i];
     }
 
-    /**************DRC:u32Contrast**************/ 
+    /**************DRC:u32Contrast**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32Contrast", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2943,7 +3035,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32Contrast = MAEWeight[i];
     }
 
-    /**************DRC:u32BrightPr**************/ 
+    /**************DRC:u32BrightPr**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32BrightPr", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2957,7 +3049,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32BrightPr = MAEWeight[i];
     }
 
-    /**************DRC:u32Svariance**************/ 
+    /**************DRC:u32Svariance**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32Svariance", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2971,7 +3063,7 @@ HI_S32 Sceneauto_LoadDRC(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stDrcParam.pstDRCAttr[i].u32Svariance = MAEWeight[i];
     }
 
-    /**************DRC:u32DarkEnhance**************/ 
+    /**************DRC:u32DarkEnhance**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32DarkEnhance", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -2994,7 +3086,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     HI_S32 i;
     HI_CHAR szTempStr[64] = {0};
     HI_CHAR* pszTempStr = HI_NULL;
-    
+
     /**************AE:aeRunInterval**************/
     s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:aeRunInterval", s32Index);
@@ -3021,7 +3113,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
 	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.stAeRoute.pstRuteNode = (HI_SCENEAUTO_ROUTENODE_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_ROUTENODE_S));
 	CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stAeParam.stAeRoute.pstRuteNode);
 
-	/**************AE:u32IntTime**************/ 
+	/**************AE:u32IntTime**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32IntTime", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3035,7 +3127,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.stAeRoute.pstRuteNode[i].u32IntTime = MAEWeight[i];
     }
 
-    /**************AE:u32SysGain**************/ 
+    /**************AE:u32SysGain**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32SysGain", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3049,7 +3141,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.stAeRoute.pstRuteNode[i].u32SysGain = MAEWeight[i];
     }
 
-	/**************AE:aeBitrateCount**************/ 
+	/**************AE:aeBitrateCount**************/
 	s32Temp = 0;
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:aeBitrateCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -3066,7 +3158,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit = (HI_SCENEAUTO_AERELATEDBIT_S*)malloc(s32Temp * sizeof(HI_SCENEAUTO_AERELATEDBIT_S));
 	CHECK_NULL_PTR(g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit);
 
-	/**************AE:aeBitrateThresh**************/ 
+	/**************AE:aeBitrateThresh**************/
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:aeBitrateThresh", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3080,7 +3172,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pu32BitrateThresh[i] = MAEWeight[i];
     }
 
-	/**************AE:u8Speed**************/ 
+	/**************AE:u8Speed**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8Speed", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3094,7 +3186,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit[i].u8Speed = MAEWeight[i];
     }
 
-    /**************AE:u8Tolerance**************/ 
+    /**************AE:u8Tolerance**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u8Tolerance", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3108,7 +3200,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit[i].u8Tolerance = MAEWeight[i];
     }
 
-    /**************AE:u16BlackDelayFrame**************/ 
+    /**************AE:u16BlackDelayFrame**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u16BlackDelayFrame", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3122,7 +3214,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit[i].u16BlackDelayFrame = MAEWeight[i];
     }
 
-    /**************AE:u16WhiteDelayFrame**************/ 
+    /**************AE:u16WhiteDelayFrame**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u16WhiteDelayFrame", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3136,7 +3228,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit[i].u16WhiteDelayFrame = MAEWeight[i];
     }
 
-    /**************AE:u32SysGainMax**************/ 
+    /**************AE:u32SysGainMax**************/
     snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:u32SysGainMax", s32Index);
 	pszTempStr = iniparser_getstr(g_Sceneautodictionary, szTempStr);
     if (NULL == pszTempStr)
@@ -3150,7 +3242,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
     	g_stSceneautoParam.pstIspParam[s32Index].stAeParam.pstAERelatedBit[i].u32SysGainMax = MAEWeight[i];
     }
 
-	/**************AE:aeExpCount**************/ 
+	/**************AE:aeExpCount**************/
 	s32Temp = 0;
 	snprintf(szTempStr, sizeof(szTempStr), "ISP_PARAM_%d:aeExpCount", s32Index);
     s32Temp = iniparser_getint(g_Sceneautodictionary, szTempStr, HI_FAILURE);
@@ -3230,7 +3322,7 @@ HI_S32 Sceneauto_LoadAE(HI_S32 s32Index)
 HI_S32 Sceneauto_LoadIspParam()
 {
 	HI_S32 s32Ret = HI_SUCCESS;
-	HI_S32 s32Temp = 0;	
+	HI_S32 s32Temp = 0;
 	HI_S32 s32Index;
 	HI_CHAR szTempStr[64] = {0};
 
@@ -3250,7 +3342,7 @@ HI_S32 Sceneauto_LoadIspParam()
         }
         g_stSceneautoParam.pstIspParam[s32Index].IspDev = s32Temp;
         ISP_CHECK_DEV(g_stSceneautoParam.pstIspParam[s32Index].IspDev);
-	
+
 		s32Ret = Sceneauto_LoadAE(s32Index);
 		if (HI_SUCCESS != s32Ret)
 		{
@@ -3298,14 +3390,14 @@ HI_S32 Sceneauto_LoadIspParam()
 		{
      		printf("(s32Index: %d) Sceneauto_LoadGamma failed\n", s32Index);
             return HI_FAILURE;
-		} 
+		}
 	}
-	
+
 	return HI_SUCCESS;
 }
 
 HI_S32 Sceneauto_LoadCommon()
-{   
+{
     HI_S32 s32Temp;
 
     /**************common:IspDevCount**************/
@@ -3338,7 +3430,7 @@ HI_S32 Sceneauto_LoadCommon()
         printf("common:VpssGrpCount failed\n");
         return HI_FAILURE;
     }
-    g_stSceneautoParam.stCommParam.s32VpssGrpCount = s32Temp;   
+    g_stSceneautoParam.stCommParam.s32VpssGrpCount = s32Temp;
     CHECK_ISP_DEV_COUNT(g_stSceneautoParam.stCommParam.s32VpssGrpCount);
 
     /**************common:ave_lum_thresh**************/
@@ -3440,7 +3532,7 @@ HI_S32 Sceneauto_LoadINIPara()
         printf("Sceneauto_LoadFaceParam failed!\n");
         return HI_FAILURE;
     }
-    
+
     return HI_SUCCESS;
 }
 
@@ -3517,12 +3609,20 @@ HI_VOID Sceneauto_FreeVpssParam()
 	{
 		for (i = 0; i < g_stSceneautoParam.stCommParam.s32VpssGrpCount; i++)
 		{
-			FREE_PTR(g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pst3dnrParam);
-            FREE_PTR(g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pu323DnrIsoThresh);
+            if (0 == g_stSceneautoParam.pstVpssParam[i].u32NrSel)
+            {
+			    FREE_PTR(g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pst3dnrParam);
+                FREE_PTR(g_stSceneautoParam.pstVpssParam[i].st3dnrParam.pu323DnrIsoThresh);
+            }
+            else if (1 == g_stSceneautoParam.pstVpssParam[i].u32NrSel)
+            {
+			    FREE_PTR(g_stSceneautoParam.pstVpssParam[i].st3dnrParamX.pst3dnrxParam);
+                FREE_PTR(g_stSceneautoParam.pstVpssParam[i].st3dnrParamX.pu323DnrIsoThresh);
+            }
 		}
 
 		free(g_stSceneautoParam.pstVpssParam);
-		g_stSceneautoParam.pstVpssParam = NULL;	
+		g_stSceneautoParam.pstVpssParam = NULL;
 	}
 
 }
@@ -3548,7 +3648,7 @@ HI_VOID Sceneauto_FreeIspParam()
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stFalseColorParam.pstFalseColor);
 
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stFalseColorParam.pu32ExpThresh);
-			
+
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stDpParam.pstDPAttr);
 
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stDpParam.pu32ExpThresh);
@@ -3559,7 +3659,7 @@ HI_VOID Sceneauto_FreeIspParam()
 
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stDemosaicParam.pstDemosaic);
 
-			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stDemosaicParam.pu32ExpThresh);		
+			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stDemosaicParam.pu32ExpThresh);
 
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stDrcParam.pstDRCAttr);
 
@@ -3577,9 +3677,9 @@ HI_VOID Sceneauto_FreeIspParam()
 
 			FREE_PTR(g_stSceneautoParam.pstIspParam[i].stAeParam.stAeRoute.pstRuteNode);
 		}
-		
+
 		free(g_stSceneautoParam.pstIspParam);
-		g_stSceneautoParam.pstIspParam = NULL;		
+		g_stSceneautoParam.pstIspParam = NULL;
 	}
 }
 

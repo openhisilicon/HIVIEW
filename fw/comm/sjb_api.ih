@@ -24,6 +24,7 @@
 #define uint32        unsigned int
 #define uint16        unsigned short
 #define uint8         unsigned char
+#define bool          int
 
 #define STRING(X,Y)   char X[Y]
 #define FIELD(X,Y)    X Y
@@ -69,6 +70,7 @@ static  int __ele__;  //dummy;
 #undef uint32
 #undef uint16
 #undef uint8
+#undef bool
 #undef UNION_B
 #undef UNION_C
 #undef UNION_S

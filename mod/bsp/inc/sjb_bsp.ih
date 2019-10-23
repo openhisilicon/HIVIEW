@@ -50,6 +50,19 @@ STRUCT(gsf_bsp_parm_t)
   ARRAY(gsf_user_t, users, 8);
 };
 
+STRUCT(gsf_time_t)
+{
+	FIELD(char, year);      /* Year - 1900  */
+	FIELD(char, month);     /* Month (0-11) */
+	FIELD(char, day);       /* Day of the month (1-31) */
+	FIELD(char, wday);      /* Day of the week (0-6, Sunday = 0) */
+	FIELD(char, hour);      /* Hours (0-23)   */
+	FIELD(char, minute);    /* Minutes (0-59) */
+	FIELD(char, second);    /* Seconds (0-60) */
+	FIELD(char, isdst);     /* Daylight saving time */
+	FIELD(int,  zone);      /* timezone second */
+};
+
 
 
 #pragma pack(pop)

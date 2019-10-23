@@ -3,6 +3,14 @@
 
 #include "bsp.h"
 
-int wdg_init(void);
+// open watchdog(enable);
+int wdg_open(int to);
+
+// stop watchdog(reset-board);
+int wdg_stop(void);
+
+// close watchdog(disable);
+int wdg_close(void);
+
 
 #endif

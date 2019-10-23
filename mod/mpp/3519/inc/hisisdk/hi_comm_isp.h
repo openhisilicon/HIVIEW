@@ -7,7 +7,7 @@
   Version       : Initial Draft
   Author        : Hisilicon multimedia software group
   Created       : 2010/12/20
-  Description   : 
+  Description   :
   History       :
   1.Date        : 2010/12/20
     Author      : x00100808
@@ -52,9 +52,8 @@ extern "C"{
 #define AWB_ZONE_COLUMN             (32)
 #define AWB_ZONE_ROW_STITCH         (16)
 #define AWB_ZONE_COLUMN_STITCH      (64)
-#define AWB_ZONE_NUM                (AWB_ZONE_ROW * AWB_ZONE_COLUMN) 
-#define AF_ZONE_ROW                 (15)
-#define AF_ZONE_COLUMN              (17)
+#define AWB_ZONE_NUM                (AWB_ZONE_ROW * AWB_ZONE_COLUMN)
+
 #define LIGHTSOURCE_NUM             (4)
 
 #define DRC_TM_NODE_NUM             (65)
@@ -151,7 +150,7 @@ typedef enum hiISP_MODE_E
 
 typedef enum hiISP_STATE_E
 {
-    ISP_STATE_INIT     = 0, 
+    ISP_STATE_INIT     = 0,
     ISP_STATE_SUCCESS  = 1,
     ISP_STATE_TIMEOUT  = 2,
     ISP_STATE_BUTT
@@ -159,19 +158,12 @@ typedef enum hiISP_STATE_E
 
 typedef struct hiISP_PIPE_DIFF_ATTR_S
 {
-    HI_S32 as32Offset[ISP_BAYER_CHN_NUM]; 
+    HI_S32 as32Offset[ISP_BAYER_CHN_NUM];
     HI_U32 au32Gain[ISP_BAYER_CHN_NUM];
     HI_U16 au16ColorMatrix[CCM_MATRIX_SIZE];
 } ISP_PIPE_DIFF_ATTR_S;
 
-typedef enum hiISP_BAYER_FORMAT_E
-{
-    BAYER_RGGB    = 0,
-    BAYER_GRBG    = 1,
-    BAYER_GBRG    = 2,
-    BAYER_BGGR    = 3,
-    BAYER_BUTT    
-} ISP_BAYER_FORMAT_E;
+
 typedef struct hiISP_PUB_ATTR_S
 {
     RECT_S          stWndRect;      /* RW. */
@@ -181,26 +173,26 @@ typedef struct hiISP_PUB_ATTR_S
 } ISP_PUB_ATTR_S;
 
 /* Slave mode sensor sync signal generate module */
-typedef struct hiISP_SLAVE_SNS_SYNC_S 
+typedef struct hiISP_SLAVE_SNS_SYNC_S
 {
-    union 
+    union
     {
-        struct 
+        struct
         {
             HI_U32  bit16HsDlyCyc     :  16;
             HI_U32  bitHInv           :  1;
             HI_U32  bitVInv           :  1;
             HI_U32  bit12Rsv          :  12;
             HI_U32  bitHEnable        :  1;
-            HI_U32  bitVEnable        :  1;          
-        } stBits;   
-        HI_U32 u32Bytes; 
+            HI_U32  bitVEnable        :  1;
+        } stBits;
+        HI_U32 u32Bytes;
     } unCfg;
 
     HI_U32  u32VsTime;
     HI_U32  u32HsTime;
     HI_U32  u32VsCyc;
-    HI_U32  u32HsCyc;    
+    HI_U32  u32HsCyc;
 }ISP_SLAVE_SNS_SYNC_S;
 
 typedef enum hiISP_FMW_STATE_E
@@ -258,8 +250,8 @@ typedef union hiISP_MODULE_CTRL_U
 
 typedef struct hiISP_INPUT_FORMATTER_ATTR_S
 {
-    HI_U16 au16KneePoint[IF_KNEE_POINT_NUM];           /* RW, Built-In WDR sensor knee point, Range:[0x0, 0xFFFF] */   
-    HI_U8  au8SlopeSelect[IF_SLOPE_NUM];               /* RW, Built-In WDR sensor compress curve slope select, Range:[0x0, 0xF] */  
+    HI_U16 au16KneePoint[IF_KNEE_POINT_NUM];           /* RW, Built-In WDR sensor knee point, Range:[0x0, 0xFFFF] */
+    HI_U8  au8SlopeSelect[IF_SLOPE_NUM];               /* RW, Built-In WDR sensor compress curve slope select, Range:[0x0, 0xF] */
 } ISP_INPUT_FORMATTER_ATTR_S;
 
 
@@ -268,7 +260,7 @@ typedef enum hiISP_COMBINE_MODE_E
 {
     FS_WDR_COMBINE_SHORT_FIRST = 0,                            /* Short exposure data is used when combining                                                           */
     FS_WDR_COMBINE_LONG_FIRST = 1,                             /* Long exposure data is used when combining                                                            */
-    FS_WDR_COMBINE_BUTT                                        
+    FS_WDR_COMBINE_BUTT
 } ISP_COMBINE_MODE_E;
 
 typedef struct hiISP_WDR_FS_ATTR_S
@@ -286,26 +278,26 @@ typedef struct hiISP_WDR_FS_ATTR_S
     HI_U16  u16MedLongThresh;                                 /* RW, Range: [0x0, u16MedShortThresh]. Data below this threshold will be taken from long exposure only...
                                                                  ...This value is normally not changed and should be left at the default value                         */
     ISP_COMBINE_MODE_E enMedComMode;
-    
+
     HI_BOOL bLongMotionComp;                                   /* RW, HI_TRUE: enable motion compensation; HI_FLASE: disable motion compensation                       */
     HI_U16  u16LongShortThresh;                                /* RW, Range: [0x0, 0xFFF]. Data above this threshold will be taken from short exposure only...
                                                                   ...This value is normally not changed and should be left at the default value                        */
     HI_U16  u16LongLongThresh;                                 /* RW, Range: [0x0, u16LongShortThresh]. Data below this threshold will be taken from long exposure only...
                                                                   ...This value is normally not changed and should be left at the default value                        */
-    ISP_COMBINE_MODE_E enLongComMode;                        
+    ISP_COMBINE_MODE_E enLongComMode;
 } ISP_WDR_FS_ATTR_S;
 
 
 /****************** DRC *******************/
 typedef struct hiISP_DRC_MANUAL_ATTR_S
 {
-    HI_U32  u32Strength;          /* RW, Range: [0, 0x3FF]. Strength of dynamic range compression. 
+    HI_U32  u32Strength;          /* RW, Range: [0, 0x3FF]. Strength of dynamic range compression.
                                      Higher values lead to higher differential gain between shadows and highlights. */
 } ISP_DRC_MANUAL_ATTR_S;
 
 typedef struct hiISP_DRC_AUTO_ATTR_S
 {
-    HI_U32  u32Strength;          /* RW, Range: [0, 0x3FF]. It is the base strength. The strength used in ISP is generated by firmware. 
+    HI_U32  u32Strength;          /* RW, Range: [0, 0x3FF]. It is the base strength. The strength used in ISP is generated by firmware.
                                         In linear mode, strength = f1(u32Strength, histogram, ISO)
                                         In sensor WDR mode: strength = f2(u32Strength, histogram, ISO)
                                         In FSWDR mode: strength = f3(ExpRatio, ISO) */
@@ -318,15 +310,15 @@ typedef enum hiISP_DRC_CURVE_TYPE_E
     DRC_CURVE_TYPE_BUTT
 } ISP_DRC_CURVE_TYPE_E;
 /* Old DRC fine curve control */
-typedef struct hiISP_DRC_CURVE_S 
+typedef struct hiISP_DRC_CURVE_S
 {
     HI_U32  u32SlopeMax;          /* RW, Range: [0, 0xFF].  Restricts the maximum slope (gain). */
     HI_U32  u32SlopeMin;          /* RW, Range: [0, 0xFF].  Restricts the minimum slope (gain). */
     HI_U32  u32VarianceSpace;     /* RW, Range: [0, 0xF].   Degree of spatial sensitivity of the DRC algorithm*/
     HI_U32  u32VarianceIntensity; /* RW, Range: [0, 0xF].   Degree of intensity sensitivity of the DRC algorithm */
-}ISP_DRC_CURVE_S;	
+}ISP_DRC_CURVE_S;
 /* New DRC fine curve control */
-typedef struct hiISP_DRC_CURVE_EX_S 
+typedef struct hiISP_DRC_CURVE_EX_S
 {
 	HI_U32  u32Contrast;		  /* RW, Range: [0, 0xFF]. */
 	HI_U32  u32BrightPr;	  	  /* RW, Range: [0, 0xFF]. */
@@ -338,21 +330,21 @@ typedef struct hiISP_DRC_ATTR_S
 {
     HI_BOOL bEnable;
     HI_U32  u32WhiteLevel;        		            /* RW, Range: [0, 0xFFFFF]. Values above this are not processed and remain linear. */
-    HI_U32  u32BlackLevel;        		            /* RW, Range: [0, 0xFFFFF]. Values below this are not processed and remain linear. */	
+    HI_U32  u32BlackLevel;        		            /* RW, Range: [0, 0xFFFFF]. Values below this are not processed and remain linear. */
 
-    HI_BOOL bUserTmEnable;                          /* RW, bUserTmEnable = 0: DRC tone curve is generated by u32Asymmetry and u32BrightEnhance; 
+    HI_BOOL bUserTmEnable;                          /* RW, bUserTmEnable = 0: DRC tone curve is generated by u32Asymmetry and u32BrightEnhance;
                                                                 bUserTmEnable = 1: DRC tone curve is defined by au32ToneMappingValue.
                                                                 Default value: 0. */
-    
+
     HI_U32  u32Asymmetry;         		            /* RW, Range: [0, 0xFF].  The parameter0 of DRC tone curve. Default value: 0x8. */
-    HI_U32  u32BrightEnhance;     		            /* RW, Range: [0, 0xFF].  The parameter1 of DRC tone curve. Default value: 0xE6. */	
+    HI_U32  u32BrightEnhance;     		            /* RW, Range: [0, 0xFF].  The parameter1 of DRC tone curve. Default value: 0xE6. */
 
     HI_U32  au32ToneMappingValue[DRC_TM_NODE_NUM];  /*RW, Range: [0x0, 0xFFFFF] */
-    
+
 	ISP_DRC_CURVE_TYPE_E FilterMux;	  	            /* RW,  Set FilterMux = 1 is New DRC curve shapes restrict, else Old. */
 	ISP_DRC_CURVE_S  stDrcCurve;
 	ISP_DRC_CURVE_EX_S stDrcCurveEx;
-	
+
     ISP_OP_TYPE_E enOpType;
 	ISP_DRC_MANUAL_ATTR_S stManual;
 	ISP_DRC_AUTO_ATTR_S   stAuto;
@@ -360,8 +352,8 @@ typedef struct hiISP_DRC_ATTR_S
 
 
 typedef enum hiISP_STATIC_DP_TYPE_E{
-    ISP_STATIC_DP_BRIGHT = 0x0,  
-    ISP_STATIC_DP_DARK,    
+    ISP_STATIC_DP_BRIGHT = 0x0,
+    ISP_STATIC_DP_DARK,
     ISP_STATIC_DP_BUTT
 } ISP_STATIC_DP_TYPE_E;
 
@@ -369,7 +361,7 @@ typedef struct hiISP_DP_STATIC_CALIBRATE_S
 {
     HI_BOOL bEnable;              /* RW. Enable/disable the static defect-pixel module.Default Value:1(0x1). */
     HI_BOOL bEnableDetect;        /* RW. Set 'HI_TRUE'to start static defect-pixel calibration, and firmware will set 'HI_FALSE' when finished. */
-    
+
     ISP_STATIC_DP_TYPE_E enStaticDPType;    /* Select static bright/dark defect-pixel calibration. */
     HI_U8   u8StartThresh;        /* RW, Range: [1, 0xFF]. Start threshold for static defect-pixel calibraiton.Default Value:31(0x1f).. */
     HI_U16  u16CountMax;          /* RW, Range: [0, 0xFFF]. Limit of max number of static defect-pixel calibraiton.Default Value:256(0x100). */
@@ -377,7 +369,7 @@ typedef struct hiISP_DP_STATIC_CALIBRATE_S
     HI_U16  u16TimeLimit;         /* RW, Range: [0x0, 0x640].Time limit for static defect-pixel calibraiton, in frame number.Default Value:1600(0x640). */
 
     HI_U32      u32Table[STATIC_DP_COUNT_MAX];  /* RO, Static defect-pixel calibraiton table,the first 13 bits represents the X coordinate of the defect pixel, the second 13 bits represent the Y coordinate of the defect pixel. */
-    HI_U8       u8FinishThresh;   /* RO, Range: [0, 0xFF]. Finish threshold for static defect-pixel calibraiton. */    
+    HI_U8       u8FinishThresh;   /* RO, Range: [0, 0xFF]. Finish threshold for static defect-pixel calibraiton. */
     HI_U16      u16Count;         /* RO, Range: [0, 0xFFF]. Finish number for static defect-pixel calibraiton. */
     ISP_STATUS_E enStatus;        /* RO, Status of static defect-pixel calibraiton.Default Value:0(0x0). */
 } ISP_DP_STATIC_CALIBRATE_S;
@@ -385,11 +377,11 @@ typedef struct hiISP_DP_STATIC_CALIBRATE_S
 typedef struct hiISP_DP_DYNAMIC_ATTR_S
 {
     HI_BOOL bEnable;
-    
+
     HI_U16  u16Slope;             /* RW, Range: [0x0, 0xFFF] */
     HI_U16  u16Thresh;            /* RW, Range: [0x0, 0xFFF] */
     HI_U16  u16LineThresh;        /* RW, Range: [0x0, 0xFFF] */
-    HI_U16  u16HpThresh;          /* RW, Range: [0x0, 0xFFF] */  
+    HI_U16  u16HpThresh;          /* RW, Range: [0x0, 0xFFF] */
     HI_U8   u8BlendRatio;         /* RW, Range: [0x0, 0xFF] */
 } ISP_DP_DYNAMIC_ATTR_S;
 
@@ -397,7 +389,7 @@ typedef struct hiISP_DP_STATIC_ATTR_S
 {
     HI_BOOL bEnable;
     HI_U16  u16BrightCount;       /* RW, When used as input(W), indicate the number of static bright defect pixels; As output(R),indicate the number of static bright and dark defect pixels */
-    HI_U16  u16DarkCount;         /* RW, When used as input(W), indicate the number of static dark defect pixels; As output(R), invalid value 0 */    
+    HI_U16  u16DarkCount;         /* RW, When used as input(W), indicate the number of static dark defect pixels; As output(R), invalid value 0 */
     HI_U32  au32BrightTable[STATIC_DP_COUNT_MAX];   /* RW, Range: [0x0, 0x3FFFFFF],the first 13 bits represents the X coordinate of the defect pixel, the second 13 bits represent the Y coordinate of the defect pixel
                                                                     Notice : When used as input(W), indicate static bright defect pixels table;  As output(R), indicate static bright and dark defect pixels table */
     HI_U32  au32DarkTable[STATIC_DP_COUNT_MAX];     /* RW, Range: [0x0, 0x3FFFFFF],the first 13 bits represents the X coordinate of the defect pixel, the second 13 bits represent the Y coordinate of the defect pixel
@@ -407,7 +399,7 @@ typedef struct hiISP_DP_STATIC_ATTR_S
 
 typedef struct hiISP_DP_ATTR_S
 {
-    ISP_DP_DYNAMIC_ATTR_S stDynamicAttr;    
+    ISP_DP_DYNAMIC_ATTR_S stDynamicAttr;
     ISP_DP_STATIC_ATTR_S  stStaticAttr;
 } ISP_DP_ATTR_S;
 
@@ -502,9 +494,9 @@ typedef struct hiISP_BAYER_SHARPEN_S
 {
     HI_U8  u8SharpenD;       	/* RW,  Range:[0, 0xFF]. */
     HI_U8  u8SharpenUd;      	/* RW,  Range:[0, 0xFF]. */
-    HI_U16 u16LumaThd;          /* RW,  Range:[0, 0xFFF]. */	
+    HI_U16 u16LumaThd;          /* RW,  Range:[0, 0xFFF]. */
 }ISP_BAYER_SHARPEN_S;
-/* SharpenEx */	
+/* SharpenEx */
 typedef struct hiISP_BAYER_SHARPEN_EX_S
 {
 	HI_U8 u8SharpenHF;			/* RW,  Range:[0, 0xFF]. Strength parameter for high frequency components.*/
@@ -512,7 +504,7 @@ typedef struct hiISP_BAYER_SHARPEN_EX_S
 	HI_U8 u8SharpenLF;			/* RW,  Range:[0, 0xFF]. Strength parameter for low frequency components.*/
 	HI_U8 u8SadAmplifier;		/* RW,  Range:[0, 0xFF]. Amplifier for sad.*/
 }ISP_BAYER_SHARPEN_EX_S;
-	
+
 typedef struct hiISP_BAYER_SHARPEN_MANUAL_ATTR_S
 {
 	ISP_BAYER_SHARPEN_S stShp;
@@ -523,13 +515,13 @@ typedef struct hiISP_BAYER_SHARPEN_MANUAL_ATTR_S
 typedef struct hiISP_BAYER_SHARPEN_AUTO_ATTR_S
 {
 	ISP_BAYER_SHARPEN_S astShp[ISP_AUTO_STENGTH_NUM];
-	ISP_BAYER_SHARPEN_EX_S astShpEx[ISP_AUTO_STENGTH_NUM];	
+	ISP_BAYER_SHARPEN_EX_S astShpEx[ISP_AUTO_STENGTH_NUM];
 } ISP_BAYER_SHARPEN_AUTO_ATTR_S;
 
 typedef struct hiISP_BAYER_SHARPEN_ATTR_S
 {
     HI_BOOL bEnable;
-    ISP_SHARPEN_TYPE_E enShpAlgSel;   		/* RW, Set enShpAlgSel = 1 is Sharpen, else SharpenEx. */		
+    ISP_SHARPEN_TYPE_E enShpAlgSel;   		/* RW, Set enShpAlgSel = 1 is Sharpen, else SharpenEx. */
     ISP_OP_TYPE_E enOpType;
 
     ISP_BAYER_SHARPEN_MANUAL_ATTR_S stManual;
@@ -544,36 +536,36 @@ typedef struct hiISP_YUV_SHARPEN_MANUAL_ATTR_S
 {
     HI_BOOL bEnLowLumaShoot;
     HI_U8 u8TextureSt;    	 	 /* RW,  Sharpen strength of detail, range [0, 0xFF], equal to maxEdgeAmt in fw. */
-    HI_U8 u8EdgeSt;		 		 /* RW,  Sharpen strength of Edge, range [0, 0xFF], equal to maxSharpAmt1 in fw */     
-    HI_U8 u8OverShoot;		 	 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 u8UnderShoot;		 	 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 u8TextureThd;	 		 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 u8EdgeThd;		 	 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 u8JagCtrl;		 	 /* RW,  Range:[0, 0x3F]. Jag control strength. set to "0" is off */	
+    HI_U8 u8EdgeSt;		 		 /* RW,  Sharpen strength of Edge, range [0, 0xFF], equal to maxSharpAmt1 in fw */
+    HI_U8 u8OverShoot;		 	 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 u8UnderShoot;		 	 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 u8TextureThd;	 		 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 u8EdgeThd;		 	 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 u8JagCtrl;		 	 /* RW,  Range:[0, 0x3F]. Jag control strength. set to "0" is off */
     HI_U8 u8SaltCtrl;			 /* RW,  Range:[0, 0xFF]. */
     HI_U8 u8PepperCtrl;			 /* RW,  Range:[0, 0xFF]. */
     HI_U8 u8DetailCtrl;			 /* RW,  Range:[0, 0xFF]. */
 
-    HI_U8 au8LumaThd[ISP_YUV_SHPLUMA_NUM];    	 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 au8LumaWgt[ISP_YUV_SHPLUMA_NUM];   	 /* RW,  Range:[0, 0xFF]. */	
+    HI_U8 au8LumaThd[ISP_YUV_SHPLUMA_NUM];    	 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 au8LumaWgt[ISP_YUV_SHPLUMA_NUM];   	 /* RW,  Range:[0, 0xFF]. */
 } ISP_YUV_SHARPEN_MANUAL_ATTR_S;
 
 typedef struct hiISP_YUV_SHARPEN_AUTO_ATTR_S
 {
     HI_BOOL abEnLowLumaShoot[ISP_AUTO_STENGTH_NUM];
     HI_U8 au8TextureSt[ISP_AUTO_STENGTH_NUM];  		 /* RW,  Sharpen strength of detail, range [0, 0xFF], equal to maxEdgeAmt in fw. */
-    HI_U8 au8EdgeSt[ISP_AUTO_STENGTH_NUM];  		 /* RW,  Sharpen strength of Edge, range [0, 0xFF], equal to maxSharpAmt1 in fw */ 
-    HI_U8 au8OverShoot[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 au8UnderShoot[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */	
-    HI_U8 au8TextureThd[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */	
+    HI_U8 au8EdgeSt[ISP_AUTO_STENGTH_NUM];  		 /* RW,  Sharpen strength of Edge, range [0, 0xFF], equal to maxSharpAmt1 in fw */
+    HI_U8 au8OverShoot[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 au8UnderShoot[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */
+    HI_U8 au8TextureThd[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */
     HI_U8 au8EdgeThd[ISP_AUTO_STENGTH_NUM];	 		 /* RW,  Range:[0, 0xFF]. */
-    HI_U8 au8JagCtrl[ISP_AUTO_STENGTH_NUM];		 	 /* RW,  Range:[0, 0x3F]. set to '0' is off */	
+    HI_U8 au8JagCtrl[ISP_AUTO_STENGTH_NUM];		 	 /* RW,  Range:[0, 0x3F]. set to '0' is off */
     HI_U8 au8SaltCtrl[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */
     HI_U8 au8PepperCtrl[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */
     HI_U8 au8DetailCtrl[ISP_AUTO_STENGTH_NUM];		 /* RW,  Range:[0, 0xFF]. */
 
-    HI_U8 au8LumaThd[ISP_YUV_SHPLUMA_NUM][ISP_AUTO_STENGTH_NUM];  	 /* RW,  Range:[0, 0xFF]. luma threshold */	
-    HI_U8 au8LumaWgt[ISP_YUV_SHPLUMA_NUM][ISP_AUTO_STENGTH_NUM]; 	 /* RW,  Range:[0, 0xFF]. luma weight */		
+    HI_U8 au8LumaThd[ISP_YUV_SHPLUMA_NUM][ISP_AUTO_STENGTH_NUM];  	 /* RW,  Range:[0, 0xFF]. luma threshold */
+    HI_U8 au8LumaWgt[ISP_YUV_SHPLUMA_NUM][ISP_AUTO_STENGTH_NUM]; 	 /* RW,  Range:[0, 0xFF]. luma weight */
 } ISP_YUV_SHARPEN_AUTO_ATTR_S;
 
 typedef struct hiISP_YUV_SHARPEN_ATTR_S
@@ -596,7 +588,7 @@ typedef struct hiISP_CR_ATTR_S
 
 typedef struct hiISP_ANTI_FALSECOLOR_S
 {
-    HI_U8  u8Strength;      /* RW, Range: [0x0, 0xFF]. The recommended range is [0x0, 0x95], the normal 
+    HI_U8  u8Strength;      /* RW, Range: [0x0, 0xFF]. The recommended range is [0x0, 0x95], the normal
                                     color will gradually be eroded when this register is larger than 0x95. */
 } ISP_ANTI_FALSECOLOR_S;
 
@@ -610,44 +602,44 @@ typedef enum hiISP_DEMOSAIC_CFG_E
 
     ISP_DEMOSAIC_CFG_BUTT,
 } ISP_DEMOSAIC_CFG_E;
-    
+
 typedef struct hiISP_DEMOSAIC_ATTR_S
 {
     HI_U8   u8VhSlope;              /* RW,Range: [0x0, 0xFF] */
     HI_U8   u8AaSlope;              /* RW,Range: [0x0, 0xFF] */
     HI_U8   u8VaSlope;              /* RW,Range: [0x0, 0xFF] */
     HI_U8   u8UuSlope;              /* RW,Range: [0x0, 0xFF] */
-    HI_U16  u16VhThresh;            /* RW,Range: [0x0, 0xFFF] */   
+    HI_U16  u16VhThresh;            /* RW,Range: [0x0, 0xFFF] */
     HI_U16  u16AaThresh;            /* RW,Range: [0x0, 0xFFF] */
     HI_U16  u16VaThresh;            /* RW,Range: [0x0, 0xFFF] */
     HI_U16  u16UuThresh;            /* RW,Range: [0x0, 0xFFF] */
-    ISP_DEMOSAIC_CFG_E   enCfgType;             /* RW,Range: [0x0, 0xFF] */    
+    ISP_DEMOSAIC_CFG_E   enCfgType;             /* RW,Range: [0x0, 0xFF] */
     HI_U8   au8NpOffset[ISP_AUTO_STENGTH_NUM];  /* RW, Range:[0x0, 0xFF] */
 }ISP_DEMOSAIC_ATTR_S;
 
-typedef struct hiISP_BLACK_LEVEL_S 
-{ 
-    HI_U16 au16BlackLevel[ISP_BAYER_CHN_NUM]; /* RW, Range: [0x0, 0xFFF]*/ 
+typedef struct hiISP_BLACK_LEVEL_S
+{
+    HI_U16 au16BlackLevel[ISP_BAYER_CHN_NUM]; /* RW, Range: [0x0, 0xFFF]*/
 } ISP_BLACK_LEVEL_S;
 
 /* FPN */
 typedef enum hiISP_FPN_TYPE_E
 {
-    ISP_FPN_TYPE_FRAME = 0, 
-    ISP_FPN_TYPE_LINE = 1, 
-    ISP_FPN_TYPE_BUTT       
+    ISP_FPN_TYPE_FRAME = 0,
+    ISP_FPN_TYPE_LINE = 1,
+    ISP_FPN_TYPE_BUTT
 }ISP_FPN_TYPE_E;
 
 typedef struct hiISP_FPN_FRAME_INFO_S
 {
     HI_U32              u32Iso;             /* FPN CALIBRATE ISO */
-    HI_U32              u32Offset;          /* FPN frame u32Offset (agv pixel value) */    
+    HI_U32              u32Offset;          /* FPN frame u32Offset (agv pixel value) */
     HI_U32              u32FrmSize;         /* FPN frame size (exactly frm size or compress len) */
     VIDEO_FRAME_INFO_S  stFpnFrame;         /* FPN frame info, 8bpp,10bpp,12bpp,16bpp. Compression or not */
 }ISP_FPN_FRAME_INFO_S;
 
 typedef struct hiISP_FPN_CALIBRATE_ATTR_S
-{    
+{
     HI_U32                          u32Threshold;        /* pix value > threshold means defective pixel, [1, 0xFFF] */
     HI_U32                          u32FrameNum;         /* value is 2^N, range: [1, 16] */
     ISP_FPN_TYPE_E                  enFpnType;           /* frame mode or line mode */
@@ -667,7 +659,7 @@ typedef struct hiISP_FPN_AUTO_ATTR_S
 typedef struct hiISP_FPN_ATTR_S
 {
     HI_BOOL               bEnable;
-    ISP_OP_TYPE_E         enOpType;           /* manual or auto mode */   
+    ISP_OP_TYPE_E         enOpType;           /* manual or auto mode */
     ISP_FPN_TYPE_E        enFpnType;          /* frame mode or line mode */
     ISP_FPN_FRAME_INFO_S  stFpnFrmInfo;       /* input in correction mode. */
     ISP_FPN_MANUAL_ATTR_S stManual;
@@ -682,21 +674,21 @@ typedef enum hiISP_BAYER_RAW_E
     BAYER_RAW_12BIT = 12,
     BAYER_RAW_14BIT = 14,
     BAYER_RAW_16BIT = 16,
-    BAYER_RAW_BUTT    
-} ISP_BAYER_RAW_E; 
+    BAYER_RAW_BUTT
+} ISP_BAYER_RAW_E;
 
-typedef struct hiISP_LSC_CALIBRATION_CFG_S 
+typedef struct hiISP_LSC_CALIBRATION_CFG_S
 {
     HI_BOOL bOffsetInEn;
     ISP_BAYER_FORMAT_E enBayer;   /*Bayer Pattern RGGB:0 GRBG:1 GBRG:2 BGGR:3*/
     ISP_BAYER_RAW_E    enRawBit;  /*Raw bit bandwidth,Range:[8,10,12,14,16]*/
-	HI_U8  u8MeshScale;           /*Scale of Mesh Shading,Range:[0,7]*/ 
+	HI_U8  u8MeshScale;           /*Scale of Mesh Shading,Range:[0,7]*/
 	HI_U8  u8EliminatePer;       /*used for eliminate dark and white point,Range:[0,49]*/
 
     HI_U8  u8GridSizeX;          /* gridSizeX,Range:[3,65]*/
     HI_U8  u8GridSizeY;          /* gridSizeY,Range:[3,65]*/
-    HI_U16 u16ImageHeight;       
-    HI_U16 u16ImageWidth;           
+    HI_U16 u16ImageHeight;
+    HI_U16 u16ImageWidth;
 
     HI_U16 u16BLCOffsetR;        /*Black level for R channel of 12bit,Range:[0,0xFFF)*/
     HI_U16 u16BLCOffsetGr;       /*Black level for Gr channel of 12bit,Range:[0,0xFFF)*/
@@ -708,12 +700,12 @@ typedef struct hiISP_LSC_CALIBRATION_CFG_S
 
 typedef struct hiISP_MESH_SHADING_TABLE_S
 {
- /* 
+ /*
     HI_U8 u8Rgain[(GridSizeX-1)*(GridSizeY-1)]
     HI_U8 u8Ggain[(GridSizeX-1)*(GridSizeY-1)]
     HI_U8 u8Bgain[(GridSizeX-1)*(GridSizeY-1)]
  */
-	HI_U8 *pu8Rgain;    
+	HI_U8 *pu8Rgain;
 	HI_U8 *pu8Ggain;
 	HI_U8 *pu8Bgain;
 }ISP_MESH_SHADING_TABLE_S;
@@ -721,9 +713,39 @@ typedef struct hiISP_MESH_SHADING_TABLE_S
 /* AWB Calibration */
 typedef struct hiISP_AWB_Calibration_Gain_S
 {
-	HI_U16 u16AvgRgain;    
+	HI_U16 u16AvgRgain;
 	HI_U16 u16AvgBgain;
 }ISP_AWB_Calibration_Gain_S;
+
+typedef enum hiISP_IR_STATUS_E
+{
+    ISP_IR_STATUS_NORMAL = 0,
+    ISP_IR_STATUS_IR     = 1,
+    ISP_IR_BUTT
+} ISP_IR_STATUS_E;
+
+typedef enum hiISP_IR_SWITCH_STATUS_E
+{
+    ISP_IR_SWITCH_NONE      = 0,
+    ISP_IR_SWITCH_TO_NORMAL = 1,
+    ISP_IR_SWITCH_TO_IR     = 2,
+    ISP_IR_SWITCH_BUTT
+} ISP_IR_SWITCH_STATUS_E;
+
+typedef struct hiISP_IR_AUTO_ATTR_S
+{
+    HI_BOOL bEnable;            /* RW, HI_TRUE: enable IR_auto function;  HI_TRUE: disable IR_auto function. */
+    HI_U32  u32Normal2IrIsoThr; /* RW, Range: [0, 0xFFFFFFFF]. ISO threshold of switching from normal to IR mode. */
+    HI_U32  u32Ir2NormalIsoThr; /* RW, Range: [0, 0xFFFFFFFF]. ISO threshold of switching from IR to normal mode. */
+    HI_U32  u32RGMax;           /* RW, Range: [0x0, 0xFFF].    Maximum value of R/G in IR scene, 4.8-bit fix-point. */
+    HI_U32  u32RGMin;           /* RW, Range: [0x0, u32RGMax]. Minimum value of R/G in IR scene, 4.8-bit fix-point. */
+    HI_U32  u32BGMax;           /* RW, Range: [0x0, 0xFFF].    Maximum value of B/G in IR scene, 4.8-bit fix-point. */
+    HI_U32  u32BGMin;           /* RW, Range: [0x0, u32BGMax]. Minimum value of B/G in IR scene, 4.8-bit fix-point. */
+
+    ISP_IR_STATUS_E enIrStatus; /* RW. Current IR status. */
+
+    ISP_IR_SWITCH_STATUS_E enIrSwitch; /* RO, IR switch status. */
+} ISP_IR_AUTO_ATTR_S;
 
 /* DeFog */
 typedef struct hiISP_DEFOG_MANUAL_ATTR_S
@@ -733,15 +755,20 @@ typedef struct hiISP_DEFOG_MANUAL_ATTR_S
 
 typedef struct hiISP_DEFOG_AUTO_ATTR_S
 {
-    HI_U8               u8strength;          
+    HI_U8               u8strength;
 }ISP_DEFOG_AUTO_ATTR_S;
-   
+
 typedef struct hiISP_DEFOG_ATTR_S
 {
     HI_BOOL            bEnable;
     ISP_OP_TYPE_E      enOpType;
     ISP_DEFOG_MANUAL_ATTR_S stManual;
     ISP_DEFOG_AUTO_ATTR_S   stAuto;
+
+    HI_BOOL bUserLutEnable;    /*RW,Range:[0,1],0:Auto Lut 1:User Lut*/
+    HI_U8 au8DefogLut[256];
+	HI_U16       u16TmprfltIncrCoef; /* RW, Range: [0x0, 0x80].filter increase coeffcient.*/
+    HI_U16       u16TmprfltDecrCoef; /* RW, Range: [0x0, 0x80].filter decrease coeffcient.*/
 }ISP_DEFOG_ATTR_S;
 
 /********************** ACM **************************************/
@@ -794,7 +821,7 @@ typedef enum hiISP_AE_SWITCH_E
     ISP_AE_AFTER_SHADING                ,
     ISP_AE_AFTER_GAMMA_FE               ,  /* not support */
     ISP_AE_AFTER_DRC                    ,  /* not support */
-    ISP_AE_FROM_SENSOR_CHANNEL_2        ,  /* not support */  
+    ISP_AE_FROM_SENSOR_CHANNEL_2        ,  /* not support */
     ISP_AE_AFTER_WDR_STITCH             ,
     ISP_AE_AFTER_BLC_CHANNEL_2          ,  /* not support */
     ISP_AE_SWITCH_BUTT
@@ -804,12 +831,12 @@ typedef enum hiISP_AE_SWITCH_E
 typedef enum hiISP_AE_HIST_SWITCH_E
 {
     ISP_AE_HIST_SAME_AS_AE                = 0,
-    ISP_AE_HIST_FROM_SENSOR_CHANNEL_1        ,   
+    ISP_AE_HIST_FROM_SENSOR_CHANNEL_1        ,
     ISP_AE_HIST_AFTER_SHADING                ,
     ISP_AE_HIST_AFTER_GAMMA_FE               ,  /* not support */
     ISP_AE_HIST_AFTER_DRC                    ,  /* not support */
     ISP_AE_HIST_FROM_SENSOR_CHANNEL_2        ,  /* not support */
-    ISP_AE_HIST_AFTER_WDR_STITCH             , 
+    ISP_AE_HIST_AFTER_WDR_STITCH             ,
     ISP_AE_HIST_AFTER_BLC_CHANNEL_2          ,   /* not support */
     ISP_AE_HIST_SWITCH_BUTT
 } ISP_AE_HIST_SWITCH_E;
@@ -826,7 +853,7 @@ typedef struct hiISP_AE_HIST_CONFIG_S
 {
     HI_U8 u8HistSkipX;    /* Histogram decimation in horizontal direction: 0=every 2nd pixel; 1=every 3rd pixel;
                                2=every 4th pixel; 3=every 5th pixel; 4=every 8th pixel ; 5+=every 9th pixel */
-    HI_U8 u8HistSkipY;    /* Histogram decimation in vertical direction: 0=every pixel; 1=every 2nd pixel; 2=every 
+    HI_U8 u8HistSkipY;    /* Histogram decimation in vertical direction: 0=every pixel; 1=every 2nd pixel; 2=every
                                3rd pixel; 3=every 4th pixel; 4=every 5th pixel; 5=every 8th pixel ; 6+=every 9th pixel */
     HI_U8 u8HistOffsetX;  /* 0= start from the first column; 1=start from second column */
     HI_U8 u8HistOffsetY;  /* 0= start from the first row; 1= start from second row */
@@ -838,7 +865,7 @@ typedef struct hiISP_AE_HIST_CONFIG_S
 typedef struct hiISP_AE_STATISTICS_CFG_S
 {
     HI_U8  au8HistThresh[HIST_THRESH_NUM];    /*RW, Histogram threshold for bin 0/1 1/2 2/3 3/4 boundary, Range: [0x0, 0xFF]*/
-    ISP_AE_SWITCH_E  enAESwitch;          /*RW, The position of Global 5 bins histogram and zone 5bins histogram in ISP pipeline*/ 
+    ISP_AE_SWITCH_E  enAESwitch;          /*RW, The position of Global 5 bins histogram and zone 5bins histogram in ISP pipeline*/
                                 /* 0 = After static WB;   1 = Immediately from sensor, channel 1 (for WDR modes); */
                                 /* 2 = After shading;      */
                                 /* 6 = After WDR stitch;  */
@@ -846,12 +873,12 @@ typedef struct hiISP_AE_STATISTICS_CFG_S
     ISP_AE_HIST_SWITCH_E  enHistSwitch;        /*RW, The position of Global 1024 bins histogram in ISP pipeline*/
                                 /* 0 = Same as AE;       1 = Immediately from sensor, channel 1 (for WDR modes); */
                                 /* 2 = After shading;      */
-                                /* 6 = After WDR stitch;  */                                
+                                /* 6 = After WDR stitch;  */
 
     ISP_AE_SWITCH_E  enAESumSwitch;       /*RW, The position of Global average and zone average in ISP pipeline*/
                                 /* 0 = After static WB;   1 = Immediately from sensor, channel 1 (for WDR modes); */
                                 /* 2 = After shading;     */
-                                /* 6 = After WDR stitch;  */  
+                                /* 6 = After WDR stitch;  */
 
     ISP_AE_PRE_HIST_SWITCH_E  enPreHistSwitch;  /*RW, The position of Global 256 bins histogram in ISP pipeline of channel 2/3/4 for WDR mode */
                                 /* 0 = Enabled (Immediately from sensor, channels 2, 3 and 4);   1 = Disabled; */
@@ -867,152 +894,23 @@ typedef struct hiISP_WB_STATISTICS_CFG_PARA_S
     HI_U16 u16CbMin;            /*RW, Minimum value of B/G for white region, Range: [0x0, u16CbMax]*/
     HI_U16 u16CrMax;            /*RW, Maximum value of R/G for white region, Range: [0x0, 0xFFF]*/
     HI_U16 u16CrMin;            /*RW, Minimum value of R/G for white region, Range: [0x0, u16CrMax]*/
-    HI_U16 u16CbHigh;           /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrMax, u16CbHigh]*/  
-    HI_U16 u16CbLow;            /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrMin, u16CbLow]*/ 
-    HI_U16 u16CrHigh;           /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrHigh, u16CbMax]*/  
-    HI_U16 u16CrLow;            /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrLow, u16CbMin]*/  
+    HI_U16 u16CbHigh;           /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrMax, u16CbHigh]*/
+    HI_U16 u16CbLow;            /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrMin, u16CbLow]*/
+    HI_U16 u16CrHigh;           /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrHigh, u16CbMax]*/
+    HI_U16 u16CrLow;            /*RW, hexagon limit, Range: [0x0,0xFFF], Axis is [u16CrLow, u16CbMin]*/
 } ISP_WB_STATISTICS_CFG_PARA_S;
 typedef struct hiISP_WB_STATISTICS_CFG_S
 {
     ISP_WB_STATISTICS_CFG_PARA_S stBayerCfg;
     ISP_WB_STATISTICS_CFG_PARA_S stRGBCfg;         /*Not support*/
 } ISP_WB_STATISTICS_CFG_S;
-
-typedef enum hiISP_AF_PEAK_MODE_E
-{
-    ISP_AF_STA_NORM         = 0,    /* use every value of the block statistic*/
-    ISP_AF_STA_PEAK            ,    /* use the maximum value in one line of the block statistic*/
-    ISP_AF_STA_BUTT    
-}ISP_AF_PEAK_MODE_E;
-
-typedef enum hiISP_AF_SQU_MODE_E
-{
-    ISP_AF_STA_SUM_NORM     = 0,    /* statistic value accumlate*/
-    ISP_AF_STA_SUM_SQU         ,    /* statistic value square then accumlate*/
-    ISP_AF_STA_SUM_BUTT    
-}ISP_AF_SQU_MODE_E;
-
-typedef struct hiISP_AF_CROP_S 
-{
-    HI_BOOL             bEnable;    /* RW, Range: [0,1].  AF crop enable.               */
-    HI_U16              u16X;       /* RW, Range: [0x0, 0x1FFF]. AF image crop start x.  */
-    HI_U16              u16Y;       /* RW, Range: [0x0, 0x1FFF]. AF image crop start y.  */
-    HI_U16              u16W;       /* RW, Range: [0x0, 0x1FFF]. AF image crop width.    */
-    HI_U16              u16H;       /* RW, Range: [0x0, 0x1FFF]. AF image crop height.   */       
-} ISP_AF_CROP_S;
-
-typedef enum hiISP_AF_STATISTICS_POS_E
-{   
-    ISP_AF_STATISTICS_YUV    = 0,   
-    ISP_AF_STATISTICS_RAW       ,   
-    ISP_AF_STATISTICS_BUTT
-    
-}ISP_AF_STATISTICS_POS_E;
-
-typedef struct hiISP_AF_RAW_CFG_S 
-{
-    HI_BOOL             bGammaEn;    /* RW, Range: [0,1].  gamma enable  .               */
-    HI_BOOL             bOffsetEn;   /* RW, Range: [0,1].  AF black level enable  .      */
-    HI_U16              u16GrOffset; /* RW, Range: [0x0, 0x3FFF]. black level of GR.     */
-    HI_U16              u16GbOffset; /* RW, Range: [0x0, 0x3FFF]. black level of GB.     */
-    ISP_BAYER_FORMAT_E  enPattern;   /* RW, Range: [0x0, 0x3]. raw domain pattern.       */
-    
-} ISP_AF_RAW_CFG_S;
-
-typedef struct hiISP_AF_PRE_FILTER_CFG_S 
-{
-    HI_BOOL             bEn;         /* RW, Range: [0,1].  pre filter enable  .          */
-    HI_U16              u16strength; /* RW, Range: [0x0, 0xFFFF]. pre filter strength    */
-    
-} ISP_AF_PRE_FILTER_CFG_S;
-
-typedef struct hiISP_AF_CFG_S
-{
-    HI_BOOL                 bEnable;        /* RW, Range: [0,1].   AF enable.                             */
-    HI_U16                  u16Hwnd;        /* RW, Range: [1, 17]. AF statistic window horizontal block.  */
-    HI_U16                  u16Vwnd;        /* RW, Range: [1, 15]. AF statistic window veritical block.   */
-    HI_U16                  u16Hsize;       /* RW, Range: [1, RES_WIDTH_MAX]. AF image width.             */
-    HI_U16                  u16Vsize;       /* RW, Range: [1, RES_HEIGHT_MAX]. AF image height.           */
-    ISP_AF_PEAK_MODE_E      enPeakMode;     /* RW, Range: [0,1]. AF peak value statistic mode.            */
-    ISP_AF_SQU_MODE_E       enSquMode;      /* RW, Range: [0,1]. AF statistic square accumulate.          */   
-    ISP_AF_CROP_S           stCrop;         /* RW, AF input image crop                                    */
-    ISP_AF_STATISTICS_POS_E enStatisticsPos;/* RW, Range: [0,1]. AF statistic position, it can be set to yuv or raw */
-    ISP_AF_RAW_CFG_S        stRawCfg;       /* RW, When AF locate at RAW domain, these para should be cfg.*/
-    ISP_AF_PRE_FILTER_CFG_S stPreFltCfg;    /* RW, pre filter cfg                                         */
-    HI_U16                  u16HighLumaTh;  /* RW, Range: [0,0xFF]. high luma threshold.                  */ 
-    
-}ISP_AF_CFG_S;
-
-typedef struct hiISP_AF_LD_S 
-{
-    HI_BOOL     bLdEn;                      /* RW, Range: [0, 1]. FILTER level depend gain enable.        */
-    HI_U16      u16ThLow;                   /* RW, range: [0x0, 0xFF]. FILTER level depend th low         */
-    HI_U16      u16GainLow;                 /* RW, range: [0x0, 0xFF]. FILTER level depend gain low       */
-    HI_U16      u16SlpLow;                  /* RW, range: [0x0, 0xF].  FILTER level depend slope low      */  
-    HI_U16      u16ThHigh;                  /* RW, range: [0x0, 0xFF]. FILTER level depend th high        */
-    HI_U16      u16GainHigh;                /* RW, range: [0x0, 0xFF]. FILTER level depend gain high      */
-    HI_U16      u16SlpHigh;                 /* RW, range: [0x0, 0xF].  FILTER level depend slope high     */
-    
-} ISP_AF_LD_S;                              
-                                            
-typedef struct hiISP_AF_CORING_S            
-{                                           
-    HI_U16      u16Th;                      /* RW, Range: [0x0, 0x7FF].FILTER coring threshold.           */
-    HI_U16      u16Slp;                     /* RW, Range: [0x0, 0xF].  FILTER Coring Slope                */
-    HI_U16      u16Lmt;                     /* RW, Range: [0x0, 0x7FF].FILTER coring limit                */
-    
-} ISP_AF_CORING_S ;                         
-                                            
-                                            
-#define IIR_EN_NUM      (3)
-#define IIR_GAIN_NUM    (7)
-#define IIR_SHIFT_NUM   (4)
-typedef struct hiISP_AF_H_PARAM_S           
-{
-    HI_BOOL         bNarrowBand;            /* RW, Range: [0, 1]. IIR narrow band enable.                 */ 
-    HI_BOOL         abIIREn[IIR_EN_NUM];             /* RW, Range: [0, 1]. IIR enable.                             */
-    HI_S16          as16IIRGain[IIR_GAIN_NUM];         /* RW, Range: gain0:[0,255]; others:[-511, 511]. IIR gain.    */
-    HI_U16          au16IIRShift[IIR_SHIFT_NUM];        /* RW, Range: [0x0, 0x7].  IIR shift.                         */
-    ISP_AF_LD_S     stLd;                   /* RW, filter level depend.                                   */
-    ISP_AF_CORING_S stCoring;               /* RW, filter coring.                                         */                                                                                                      
-                                                                                                          
-}ISP_AF_H_PARAM_S;                                                                                        
-                                                                                                          
-#define FIR_GAIN_NUM    (5)
-typedef struct hiISP_AF_V_PARAM_S                                                                         
-{                                                                                                         
-    HI_S16          as16FIRH[FIR_GAIN_NUM];            /* RW, Range: [-31, 31].   FIR gain.                          */
-    ISP_AF_LD_S     stLd;                   /* RW, filter level depend.                                   */
-    ISP_AF_CORING_S stCoring;               /* RW, filter coring.                                         */ 
-}ISP_AF_V_PARAM_S;                          
-
-#define ACC_SHIFT_H_NUM (2)
-#define ACC_SHIFT_V_NUM (2)
-typedef struct hiISP_AF_FV_PARAM_S          
-{                                           
-    HI_U16 u16AccShiftY;                    /* RW, Range: [0x0, 0xF]. luminance Y statistic shift.        */
-    HI_U16 au16AccShiftH[ACC_SHIFT_H_NUM];  /* RW, Range: [0x0, 0xF]. IIR statistic shift.                */
-    HI_U16 au16AccShiftV[ACC_SHIFT_V_NUM];  /* RW, Range: [0x0, 0xF]. FIR statistic shift.                */
-    HI_U16 u16HlCntShift;                   /* RW, Range: [0x0, 0xF]. High luminance counter shift        */
-}ISP_AF_FV_PARAM_S;
-
-typedef struct hiISP_FOCUS_STATISTICS_CFG_S
-{
-    ISP_AF_CFG_S        stConfig;
-    ISP_AF_H_PARAM_S    stHParam_IIR0;
-    ISP_AF_H_PARAM_S    stHParam_IIR1;
-    ISP_AF_V_PARAM_S    stVParam_FIR0;
-    ISP_AF_V_PARAM_S    stVParam_FIR1;
-    ISP_AF_FV_PARAM_S   stFVParam;
-} ISP_FOCUS_STATISTICS_CFG_S;
-
-/* 
+/*
    the main purpose of stat key was to access individual statistic info separately...
    ...for achieving performance optimization of CPU, because of we acquire stat...
    ... in ISP_DRV ISR for our firmware reference and USER can also use alternative MPI...
    ... to do this job, so bit1AeStat1~bit1AfStat for MPI behavior control, and bit16IsrAccess...
    ... for ISR access control, they were independent. but they have the same bit order, for example...
-   ... bit1AeStat1 for MPI AeStat1 access key, and bit16 of u32Key for ISR AeStat1 access key 
+   ... bit1AeStat1 for MPI AeStat1 access key, and bit16 of u32Key for ISR AeStat1 access key
 */
 typedef union hiISP_STATISTICS_CTRL_U
 {
@@ -1037,7 +935,7 @@ typedef union hiISP_STATISTICS_CTRL_U
 
 typedef struct hiISP_STATISTICS_CFG_S
 {
-    ISP_STATISTICS_CTRL_U       unKey; 
+    ISP_STATISTICS_CTRL_U       unKey;
     ISP_AE_STATISTICS_CFG_S     stAECfg;
     ISP_WB_STATISTICS_CFG_S     stWBCfg;
     ISP_FOCUS_STATISTICS_CFG_S  stFocusCfg;
@@ -1048,7 +946,7 @@ typedef struct hiISP_STATISTICS_CFG_S
 #define HIST_1024_NUM   (1024)
 #define HIST_256_NUM    (256)
 typedef struct hiISP_AE_STATISTICS_S
-{   
+{
     HI_U16 au16Hist5Value[HIST_5_NUM];                                   /*RO, Global 5 bins histogram, Range: [0x0, 0xFFFF]*/
     //HI_U16 au16ZoneHist5Value[AE_ZONE_ROW][AE_ZONE_COLUMN][5];  /*RO, Zone 5 bins histogram,Range: [0x0, 0xFFFF]*/
     HI_U32 au32Hist1024Value[HIST_1024_NUM];                             /*RO, Global 1024 bins histogram,Range: [0x0, 0xFFFFFFFF]*/
@@ -1062,20 +960,20 @@ typedef struct hiISP_AE_STATISTICS_S
 
 typedef struct hiISP_WB_BAYER_STATISTICS_S
 {
-    HI_U16 u16GlobalR;          /*RO, Global WB output Average R, Range: [0x0, 0xFFFF]*/   
-    HI_U16 u16GlobalG;          /*RO, Global WB output Average G, Range: [0x0, 0xFFFF]*/  
-    HI_U16 u16GlobalB;          /*RO, Global WB output Average B, Range: [0x0, 0xFFFF]*/  
-    HI_U16 u16CountAll;         /*RO, normalized number of Gray points, Range: [0x0, 0xFFFF]*/  
-    HI_U16 u16CountMin;         /*RO, normalized number of pixels under BlackLevel, Range: [0x0, 0xFFFF]*/  
-    HI_U16 u16CountMax;         /*RO, normalized number of pixels above Whitelevel, Range: [0x0, 0xFFFF], u16CountAll + u16CountMin + u16CountMax = 0xFFFF*/  
-           
-    HI_U16 au16ZoneAvgR[AWB_ZONE_NUM];            /*RO, Zone Average R, Range: [0x0, 0xFFFF]*/   
-    HI_U16 au16ZoneAvgG[AWB_ZONE_NUM];            /*RO, Zone Average G, Range: [0x0, 0xFFFF]*/   
-    HI_U16 au16ZoneAvgB[AWB_ZONE_NUM];            /*RO, Zone Average B, Range: [0x0, 0xFFFF]*/   
-    HI_U16 au16ZoneCountAll[AWB_ZONE_NUM];        /*RO, normalized number of Gray points, Range: [0x0, 0xFFFF]*/   
-    HI_U16 au16ZoneCountMin[AWB_ZONE_NUM];        /*RO, normalized number of pixels under BlackLevel, Range: [0x0, 0xFFFF]*/   
-    HI_U16 au16ZoneCountMax[AWB_ZONE_NUM];        /*RO, normalized number of pixels above Whitelevel, Range: [0x0, 0xFFFF]*/   
-} ISP_WB_BAYER_STATISTICS_INFO_S; 
+    HI_U16 u16GlobalR;          /*RO, Global WB output Average R, Range: [0x0, 0xFFFF]*/
+    HI_U16 u16GlobalG;          /*RO, Global WB output Average G, Range: [0x0, 0xFFFF]*/
+    HI_U16 u16GlobalB;          /*RO, Global WB output Average B, Range: [0x0, 0xFFFF]*/
+    HI_U16 u16CountAll;         /*RO, normalized number of Gray points, Range: [0x0, 0xFFFF]*/
+    HI_U16 u16CountMin;         /*RO, normalized number of pixels under BlackLevel, Range: [0x0, 0xFFFF]*/
+    HI_U16 u16CountMax;         /*RO, normalized number of pixels above Whitelevel, Range: [0x0, 0xFFFF], u16CountAll + u16CountMin + u16CountMax = 0xFFFF*/
+
+    HI_U16 au16ZoneAvgR[AWB_ZONE_NUM];            /*RO, Zone Average R, Range: [0x0, 0xFFFF]*/
+    HI_U16 au16ZoneAvgG[AWB_ZONE_NUM];            /*RO, Zone Average G, Range: [0x0, 0xFFFF]*/
+    HI_U16 au16ZoneAvgB[AWB_ZONE_NUM];            /*RO, Zone Average B, Range: [0x0, 0xFFFF]*/
+    HI_U16 au16ZoneCountAll[AWB_ZONE_NUM];        /*RO, normalized number of Gray points, Range: [0x0, 0xFFFF]*/
+    HI_U16 au16ZoneCountMin[AWB_ZONE_NUM];        /*RO, normalized number of pixels under BlackLevel, Range: [0x0, 0xFFFF]*/
+    HI_U16 au16ZoneCountMax[AWB_ZONE_NUM];        /*RO, normalized number of pixels above Whitelevel, Range: [0x0, 0xFFFF]*/
+} ISP_WB_BAYER_STATISTICS_INFO_S;
 
 typedef struct hiISP_WB_RGB_STATISTICS_S
 {
@@ -1086,7 +984,7 @@ typedef struct hiISP_WB_RGB_STATISTICS_S
     HI_U16 au16ZoneGR[AWB_ZONE_NUM];       /*RO, Zone WB output G/R, 4.8-bit fix-point, Range: [0x0, 0xFFF]*/
     HI_U16 au16ZoneGB[AWB_ZONE_NUM];       /*RO, Zone WB output G/B, 4.8-bit fix-point, Range: [0x0, 0xFFF]*/
     HI_U32 au32ZoneSum[AWB_ZONE_NUM];      /*RO, Zone WB output population*/
-} ISP_WB_RGB_STATISTICS_INFO_S; 
+} ISP_WB_RGB_STATISTICS_INFO_S;
 
 typedef struct hiISP_WB_STATISTICS_S
 {
@@ -1110,12 +1008,12 @@ typedef struct hiISP_FOCUS_STATISTICS_S
 
 typedef struct hiISP_STATISTICS_S
 {
-    ISP_AE_STATISTICS_S         stAEStat;   
+    ISP_AE_STATISTICS_S         stAEStat;
     ISP_WB_STATISTICS_S         stWBStat;
     ISP_FOCUS_STATISTICS_S      stFocusStat;
 } ISP_STATISTICS_S;
 
-typedef struct hiISP_INIT_ATTR_S 
+typedef struct hiISP_INIT_ATTR_S
 {
     HI_U32 u32ExpTime;
     HI_U32 u32AGain;
@@ -1155,27 +1053,27 @@ typedef enum hiISP_SNS_TYPE_E
 {
     ISP_SNS_I2C_TYPE = 0,
     ISP_SNS_SSP_TYPE,
-    
+
     ISP_SNS_TYPE_BUTT,
 } ISP_SNS_TYPE_E;
 
 /* sensor communication bus */
-typedef union hiISP_SNS_COMMBUS_U 
+typedef union hiISP_SNS_COMMBUS_U
 {
     HI_S8   s8I2cDev;
-    struct 
+    struct
     {
         HI_S8  bit4SspDev       : 4;
-        HI_S8  bit4SspCs        : 4;  
+        HI_S8  bit4SspCs        : 4;
     }s8SspDev;
-} ISP_SNS_COMMBUS_U; 
+} ISP_SNS_COMMBUS_U;
 
 typedef struct hiISP_I2C_DATA_S
 {
     HI_BOOL bUpdate;
     HI_U8   u8DelayFrmNum;
     HI_U8   u8IntPos;
-    
+
     HI_U8   u8DevAddr;
     HI_U32  u32RegAddr;
     HI_U32  u32AddrByteNum;
@@ -1188,7 +1086,7 @@ typedef struct hiISP_SSP_DATA_S
     HI_BOOL bUpdate;
     HI_U8   u8DelayFrmNum;
     HI_U8   u8IntPos;
-    
+
     HI_U32  u32DevAddr;
     HI_U32  u32DevAddrByteNum;
     HI_U32  u32RegAddr;
@@ -1209,11 +1107,11 @@ typedef struct hiISP_SNS_REGS_INFO_S
         ISP_SSP_DATA_S astSspData[ISP_MAX_SNS_REGS];
     };
 
-   struct 
-   {  
+   struct
+   {
        HI_BOOL bUpdate;
        HI_U8   u8DelayFrmNum;
-       HI_U32  u32SlaveVsTime;      /* time of vsync. Unit: inck clock cycle */             
+       HI_U32  u32SlaveVsTime;      /* time of vsync. Unit: inck clock cycle */
     } stSlvSync;
 
    HI_BOOL bConfig;
@@ -1245,7 +1143,7 @@ typedef enum hiISP_IRIS_TYPE_E
 {
     ISP_IRIS_DC_TYPE = 0,
     ISP_IRIS_P_TYPE,
-    
+
     ISP_IRIS_TYPE_BUTT,
 } ISP_IRIS_TYPE_E;
 
@@ -1261,8 +1159,8 @@ typedef enum hiISP_IRIS_F_NO_E
     ISP_IRIS_F_NO_2_8,
     ISP_IRIS_F_NO_2_0,
     ISP_IRIS_F_NO_1_4,
-    ISP_IRIS_F_NO_1_0,    
-    
+    ISP_IRIS_F_NO_1_0,
+
     ISP_IRIS_F_NO_BUTT,
 } ISP_IRIS_F_NO_E;
 
@@ -1281,12 +1179,12 @@ typedef struct hiISP_PIRIS_ATTR_S
     HI_BOOL bStepFNOTableChange;    /*WO, Step-F number mapping table change or not */
     HI_BOOL bZeroIsMax;             /*RW, Step 0 corresponds to max aperture or not, it's related to the specific iris */
     HI_U16 u16TotalStep;            /*RW, Range:[1, 1024], Total steps of  Piris's aperture, it's related to the specific iris */
-    HI_U16 u16StepCount;            /*RW, Range:[1, 1024], Used steps of Piris's aperture. when Piris's aperture is too small, the F number precision is not enough, 
+    HI_U16 u16StepCount;            /*RW, Range:[1, 1024], Used steps of Piris's aperture. when Piris's aperture is too small, the F number precision is not enough,
                                           so not all the steps can be used. It's related to the specific iris*/
     HI_U16 au16StepFNOTable[AI_MAX_STEP_FNO_NUM];   /*RW, Range:[0, 1024], Step-F number mapping table. F1.0 is expressed as 1024, F32 is expressed as 1, it's related to the specific iris*/
     ISP_IRIS_F_NO_E  enMaxIrisFNOTarget;  /*RW, Range:[F32.0, F1.0], Max F number of Piris's aperture, it's related to the specific iris */
     ISP_IRIS_F_NO_E  enMinIrisFNOTarget;  /*RW, Range:[F32.0, F1.0], Min F number of Piris's aperture, it's related to the specific iris */
-    
+
     HI_BOOL bFNOExValid;            /*RW, use equivalent gain to present FNO or not */
     HI_U32 u32MaxIrisFNOTarget;    /*RW, Range:[1, 1024], Max equivalent gain of F number of Piris's aperture, only used when bFNOExValid is true, it's related to the specific iris */
     HI_U32 u32MinIrisFNOTarget;    /*RW, Range:[1, 1024], Min equivalent gain of F number of Piris's aperture, only used when bFNOExValid is true, it's related to the specific iris */
@@ -1367,11 +1265,11 @@ typedef struct hiISP_SUBFLICKER_S
 {
     HI_BOOL bEnable;
 
-    /* RW, Range: [0x0, 0x64], if subflicker mode enable, current luma is less than AE compensation plus LumaDiff, 
-      AE will keep min antiflicker shutter time(for example: 1/100s or 1/120s) to avoid flicker. while current luma is 
-      larger than AE compensation plus the LumaDiff, AE will reduce shutter time to avoid over-exposure and introduce 
+    /* RW, Range: [0x0, 0x64], if subflicker mode enable, current luma is less than AE compensation plus LumaDiff,
+      AE will keep min antiflicker shutter time(for example: 1/100s or 1/120s) to avoid flicker. while current luma is
+      larger than AE compensation plus the LumaDiff, AE will reduce shutter time to avoid over-exposure and introduce
       flicker in the pircture */
-    HI_U8   u8LumaDiff;          
+    HI_U8   u8LumaDiff;
 } ISP_SUBFLICKER_S;
 
 
@@ -1388,7 +1286,7 @@ typedef enum hiISP_FSWDR_MODE_E
     ISP_FSWDR_MODE_BUTT
 }ISP_FSWDR_MODE_E;
 
- 
+
 typedef struct hiISP_AE_ATTR_S
 {
     /* base parameter */
@@ -1402,19 +1300,19 @@ typedef struct hiISP_AE_ATTR_S
     HI_U8  u8Speed;                  /*RW, Range: [0x0, 0xFF], AE adjust step for dark scene to bright scene switch */
     HI_U16  u16BlackSpeedBias;       /*RW, Range: [0x0, 0xFFFF], AE adjust step bias for bright scene to dark scene switch */
     HI_U8  u8Tolerance;              /*RW, Range: [0x0, 0xFF], AE adjust tolerance*/
-    HI_U8  u8Compensation;           /*RW, Range: [0x0, 0xFF], AE compensation*/ 
+    HI_U8  u8Compensation;           /*RW, Range: [0x0, 0xFF], AE compensation*/
     HI_U16  u16EVBias;               /*RW, Range: [0x0, 0xFFFF], AE EV bias*/
     ISP_AE_STRATEGY_E enAEStrategyMode;  /*RW, Support Highlight prior or Lowlight prior*/
     HI_U16  u16HistRatioSlope;       /*RW, Range: [0x0, 0xFFFF], AE hist ratio slope*/
     HI_U8   u8MaxHistOffset;         /*RW, Range: [0x0, 0xFF], Max hist offset*/
-  
+
     ISP_AE_MODE_E  enAEMode;         /*RW, AE mode(slow shutter/fix framerate)(onvif)*/
     ISP_ANTIFLICKER_S stAntiflicker;
     ISP_SUBFLICKER_S stSubflicker;
-    ISP_AE_DELAY_S stAEDelayAttr;       
+    ISP_AE_DELAY_S stAEDelayAttr;
 
     HI_BOOL bManualExpValue;         /*RW, manual exposure value or not*/
-    HI_U32 u32ExpValue;              /*RW, Range: (0x0, 0xFFFFFFFF], manual exposure value */ 
+    HI_U32 u32ExpValue;              /*RW, Range: (0x0, 0xFFFFFFFF], manual exposure value */
 
     ISP_FSWDR_MODE_E enFSWDRMode;    /*RW, FSWDR running mode */
     HI_BOOL bWDRQuick;               /*RW, WDR use delay strategy or not; If is true, WDR AE adjust will be faster */
@@ -1439,15 +1337,15 @@ typedef struct hiISP_ME_ATTR_S
 } ISP_ME_ATTR_S;
 
 typedef struct hiISP_EXPOSURE_ATTR_S
-{    
+{
     HI_BOOL         bByPass;
     ISP_OP_TYPE_E   enOpType;
     HI_U8     u8AERunInterval;         /*RW, Range: [0x1, 0xFF], set the AE run interval*/
-    HI_BOOL   bHistStatAdjust;         /*RW, HI_TRUE: 256 bin histogram statistic config will adjust when large red or blue area detected. 
+    HI_BOOL   bHistStatAdjust;         /*RW, HI_TRUE: 256 bin histogram statistic config will adjust when large red or blue area detected.
                                                  HI_FALSE: 256 bin histogram statistic config will not change */
     HI_BOOL   bAERouteExValid;         /*RW, use extend AE route or not */
     ISP_ME_ATTR_S   stManual;
-    ISP_AE_ATTR_S   stAuto;    
+    ISP_AE_ATTR_S   stAuto;
 } ISP_EXPOSURE_ATTR_S;
 
 #define EXP_RATIO_NUM       (3)
@@ -1464,7 +1362,7 @@ typedef struct hiISP_WDR_EXPOSURE_ATTR_S
                                             When enExpRatioType is OP_TYPE_AUTO, u32ExpRatioMin is min(lower limit) of ExpRatio generated by firmware.
                                             When enExpRatioType is OP_TYPE_MANUAL, u32ExpRatioMin is invalid. */
     HI_U16 u16Tolerance;            /* RW, Range: [0x0, 0xFF], set the dynamic range tolerance. Format: unsigned 6.2-bit fixed-point. 0x4 means 1dB. */
-    HI_U16 u16Speed;                /* RW, Range: [0x0, 0xFF], exposure ratio adjust speed */   
+    HI_U16 u16Speed;                /* RW, Range: [0x0, 0xFF], exposure ratio adjust speed */
     HI_U16 u16RatioBias;            /* RW, Range: [0x0, 0xFFFF], exposure ratio bias */
 	HI_U32 u32ProWDRGain;           /* RW, ISP digital gain after WDR, only effective in WDR mode(unit: times, 10bit precision), Range : [0x400, 0xFFFFFFFF], it's related to the ISP digital gain range */
 } ISP_WDR_EXPOSURE_ATTR_S;
@@ -1480,7 +1378,7 @@ typedef struct hiISP_AE_ROUTE_NODE_S
 
 typedef struct hiISP_AE_ROUTE_S
 {
-    HI_U32 u32TotalNum;     /*RW,  Range: [0x0, 0x10], total node number of AE route */ 
+    HI_U32 u32TotalNum;     /*RW,  Range: [0x0, 0x10], total node number of AE route */
     ISP_AE_ROUTE_NODE_S astRouteNode[ISP_AE_ROUTE_MAX_NODES];
 } ISP_AE_ROUTE_S;
 
@@ -1497,28 +1395,28 @@ typedef struct hiISP_AE_ROUTE_EX_NODE_S
 
 typedef struct hiISP_AE_ROUTE_EX_S
 {
-    HI_U32 u32TotalNum;       /*RW,  Range: [0x0, 0x10], total node number of extend AE route */ 
+    HI_U32 u32TotalNum;       /*RW,  Range: [0x0, 0x10], total node number of extend AE route */
     ISP_AE_ROUTE_EX_NODE_S astRouteExNode[ISP_AE_ROUTE_EX_MAX_NODES];
 } ISP_AE_ROUTE_EX_S;
 
 typedef struct hiISP_EXP_INFO_S
 {
-    HI_U32 u32ExpTime;                 /* RO, Range: [0x0, 0xFFFFFFFF] */  
+    HI_U32 u32ExpTime;                 /* RO, Range: [0x0, 0xFFFFFFFF] */
     HI_U32 u32ShortExpTime;            /* RO, Range: [0x0, 0xFFFFFFFF] */
     HI_U32 u32MedianExpTime;           /* RO, Range: [0x0, 0xFFFFFFFF] */
     HI_U32 u32LongExpTime;             /* RO, Range: [0x0, 0xFFFFFFFF] */
-    HI_U32 u32AGain;                   /* RO, Range: [0x400, 0xFFFFFFFF] */                
-    HI_U32 u32DGain;                   /* RO, Range: [0x400, 0xFFFFFFFF] */            
-    HI_U32 u32ISPDGain;                /* RO, Range: [0x400, 0xFFFFFFFF] */            
-    HI_U32 u32Exposure;                /* RO, Range: [0x40, 0xFFFFFFFF] */  
+    HI_U32 u32AGain;                   /* RO, Range: [0x400, 0xFFFFFFFF] */
+    HI_U32 u32DGain;                   /* RO, Range: [0x400, 0xFFFFFFFF] */
+    HI_U32 u32ISPDGain;                /* RO, Range: [0x400, 0xFFFFFFFF] */
+    HI_U32 u32Exposure;                /* RO, Range: [0x40, 0xFFFFFFFF] */
     HI_BOOL bExposureIsMAX;            /* RO, Range: [0x0, 0x1]*/
-    HI_S16 s16HistError;               /* RO, Range: [-0x8000, 0x7FFF]*/               
+    HI_S16 s16HistError;               /* RO, Range: [-0x8000, 0x7FFF]*/
     HI_U32 au32AE_Hist1024Value[HIST_1024_NUM]; /* RO, 1024 bins histogram for channel 1 */
     HI_U16 au16AE_Hist5Value[HIST_5_NUM];       /* RO, 5 bins histogram */
     HI_U8  u8AveLum;                   /* RO, Range: [0x0, 0xFF]*/
-    HI_U32 u32LinesPer500ms;           /* RO, Range: [0x0, 0xFFFFFFFF], exposure lines per 500ms */ 
-    HI_U32 u32PirisFNO;                /* RO, Range: [0x0, 0x400] */  
-    HI_U32 u32Fps;                     /* RO, actual fps */  
+    HI_U32 u32LinesPer500ms;           /* RO, Range: [0x0, 0xFFFFFFFF], exposure lines per 500ms */
+    HI_U32 u32PirisFNO;                /* RO, Range: [0x0, 0x400] */
+    HI_U32 u32Fps;                     /* RO, actual fps */
     HI_U32 u32ISO;                     /* RO, Range: [0x64, 0xFFFFFFFF] */
     HI_U32 u32ISOCalibrate;            /* RO, Range: [0,0xFFFFFFFF]*/
     HI_U32 u32RefExpRatio;             /* RO, Range: [0x40, 0x4000] */
@@ -1572,15 +1470,15 @@ typedef struct hiISP_AWB_IN_OUT_ATTR_S
     HI_U16 u16HighStart;                                          /*6500K is recommend, shoule be larger than u8LowStart*/
     HI_U16 u16HighStop;                                           /*8000K is recommend, should be larger than u8HighStart*/
     HI_BOOL bGreenEnhanceEn;                                      /*If this is enabled, Green channel will be enhanced based on the ratio of green plant*/
-    HI_U8   u8OutShiftLimit;                                      /*Max white point zone distance to Planckian Curve*/	
+    HI_U8   u8OutShiftLimit;                                      /*Max white point zone distance to Planckian Curve*/
 } ISP_AWB_IN_OUT_ATTR_S;
 
 typedef struct hiISP_AWB_CBCR_TRACK_ATTR_S
 {
     HI_BOOL bEnable;                          /*If enabled, statistic parameter cr, cb will change according to iso*/
-    
+
     HI_U16  au16CrMax[ISP_AUTO_STENGTH_NUM];  /*RW, Range:[0x0, 0xFFFF], au16CrMax[i] >= au16CrMin[i]*/
-    HI_U16  au16CrMin[ISP_AUTO_STENGTH_NUM];  /*RW, Range:[0x0, 0xFFFF]*/ 
+    HI_U16  au16CrMin[ISP_AUTO_STENGTH_NUM];  /*RW, Range:[0x0, 0xFFFF]*/
     HI_U16  au16CbMax[ISP_AUTO_STENGTH_NUM];  /*RW, Range:[0x0, 0xFFFF], au16CbMax[i] >= au16CbMin[i]*/
     HI_U16  au16CbMin[ISP_AUTO_STENGTH_NUM];  /*RW, Range:[0x0, 0xFFFF]*/
 } ISP_AWB_CBCR_TRACK_ATTR_S;
@@ -1606,24 +1504,24 @@ typedef struct hiISP_AWB_LIGHTSOURCE_INFO_S
 #define AWB_LS_NUM          (4)
 #define AWB_MULTI_CT_NUM    (8)
 typedef struct hiISP_AWB_ATTR_EX_S
-{  
-    HI_U8  u8Tolerance;                                 /*RW, Range:[0x0, 0xFF], AWB adjust tolerance*/   
-    HI_U8  u8ZoneRadius;                                /*RW, Range:[0x0, 0xFF], radius of AWB blocks*/  
-    HI_U16 u16CurveLLimit;                              /*RW, Range:[0x0, 0x100],   Left limit of AWB Curve, recomend for indoor 0xE0, outdoor 0xE0*/ 
-    HI_U16 u16CurveRLimit;                              /*RW, Range:[0x100, 0xFFF], Right Limit of AWB Curve,recomend for indoor 0x130, outdoor 0x120*/ 
- 
+{
+    HI_U8  u8Tolerance;                                 /*RW, Range:[0x0, 0xFF], AWB adjust tolerance*/
+    HI_U8  u8ZoneRadius;                                /*RW, Range:[0x0, 0xFF], radius of AWB blocks*/
+    HI_U16 u16CurveLLimit;                              /*RW, Range:[0x0, 0x100],   Left limit of AWB Curve, recomend for indoor 0xE0, outdoor 0xE0*/
+    HI_U16 u16CurveRLimit;                              /*RW, Range:[0x100, 0xFFF], Right Limit of AWB Curve,recomend for indoor 0x130, outdoor 0x120*/
+
     HI_BOOL  bExtraLightEn;                             /*Enable special light source function*/
-    ISP_AWB_EXTRA_LIGHTSOURCE_INFO_S    stLightInfo[AWB_LS_NUM]; 
+    ISP_AWB_EXTRA_LIGHTSOURCE_INFO_S    stLightInfo[AWB_LS_NUM];
     ISP_AWB_IN_OUT_ATTR_S               stInOrOut;
 
-    HI_BOOL bMultiLightSourceEn;                        /*If enabled, awb will do special process in multi light source enviroment*/ 
+    HI_BOOL bMultiLightSourceEn;                        /*If enabled, awb will do special process in multi light source enviroment*/
     ISP_AWB_MULTI_LS_TYPE_E enMultiLSType;              /*Saturation or CCM Tunning*/
-    HI_U16  u16MultiLSScaler;                           /*In saturation type, it means the max saturation it can achieve, in ccm type, it means the strenght of multi process. [0x0, 0x100]*/ 
+    HI_U16  u16MultiLSScaler;                           /*In saturation type, it means the max saturation it can achieve, in ccm type, it means the strenght of multi process. [0x0, 0x100]*/
     HI_U16  au16MultiCTBin[AWB_MULTI_CT_NUM];           /*AWB Support divide the color temperature range by 8 bins*/
     HI_U16  au16MultiCTWt[AWB_MULTI_CT_NUM];            /*Weight for different color temperature, same value of 8 means CT weight does't work, [0x0, 0x400]*/
 
     HI_BOOL bFineTunEn;                                 /*If enabled, skin color scene will be optimized*/
-    HI_U8   u8FineTunStrength;                          /*larger value means better performance of skin color scene, but will increase error probability in low color temperature scene */	
+    HI_U8   u8FineTunStrength;                          /*larger value means better performance of skin color scene, but will increase error probability in low color temperature scene */
 } ISP_AWB_ATTR_EX_S;
 
 #define AWB_CURVE_PARA_NUM  (6)
@@ -1647,7 +1545,7 @@ typedef struct hiISP_AWB_ATTR_S
     HI_BOOL bShiftLimitEn;                          /*RW, If enabled, when the statistic information is out of range, it should be project back*/
     HI_U8  u8ShiftLimit;                            /*RW, planckian curve range, Range: [0x0, 0xFF], Recommended: [0x30, 0x50] */
     HI_BOOL bGainNormEn;                            /*RW, if enabled, the min of RGB gain is fixed. */
-    HI_BOOL bNaturalCastEn;                         /*RW, if enabled, the color performance will be natural in lowlight and low color temperature*/	
+    HI_BOOL bNaturalCastEn;                         /*RW, if enabled, the color performance will be natural in lowlight and low color temperature*/
 
     ISP_AWB_CBCR_TRACK_ATTR_S stCbCrTrack;
     ISP_AWB_LUM_HISTGRAM_ATTR_S stLumaHist;
@@ -1656,7 +1554,7 @@ typedef struct hiISP_AWB_ATTR_S
     HI_U8   au8ZoneWt[AWB_ZONE_NUM];                /*Zone Wt Table*/
 } ISP_AWB_ATTR_S;
 
-typedef struct hiISP_MWB_ATTR_S        
+typedef struct hiISP_MWB_ATTR_S
 {
     HI_U16 u16Rgain;            /*RW, Multiplier for R  color channel, Range: [0x0, 0xFFF]*/
     HI_U16 u16Grgain;           /*RW, Multiplier for Gr color channel, Range: [0x0, 0xFFF]*/
@@ -1668,22 +1566,22 @@ typedef struct hiISP_WB_ATTR_S
 {
     HI_BOOL bByPass;
     HI_U8   u8AWBRunInterval;         /*RW, Range: [0x1, 0xFF], set the AWB run interval*/
-    ISP_OP_TYPE_E   enOpType;       /* manual or auto mode */  
+    ISP_OP_TYPE_E   enOpType;       /* manual or auto mode */
     ISP_MWB_ATTR_S  stManual;
     ISP_AWB_ATTR_S  stAuto;
 } ISP_WB_ATTR_S;
 
 typedef struct hiISP_COLORMATRIX_MANUAL_S
-{  
+{
     HI_BOOL bSatEn;             /*If bSatEn=1, the active CCM = SatMatrix * ManualMatrix, else tha active CCM =  ManualMatrix*/
     HI_U16 au16CCM[CCM_MATRIX_SIZE];          /*RW,  Range: [0x0,  0xFFFF]*/
 } ISP_COLORMATRIX_MANUAL_S;
 
 typedef struct hiISP_COLORMATRIX_AUTO_S
-{ 
+{
     HI_BOOL bISOActEn;           /*if enabled, CCM will bypass in low light*/
-    HI_BOOL bTempActEn;          /*if enabled, CCM will bypass when color temperate is larger than 10K or less than 2500K*/ 
-    
+    HI_BOOL bTempActEn;          /*if enabled, CCM will bypass when color temperate is larger than 10K or less than 2500K*/
+
     HI_U16 u16HighColorTemp;    /*RW,  Range: <=10000*/
     HI_U16 au16HighCCM[CCM_MATRIX_SIZE];      /*RW,  Range: [0x0,  0xFFFF]*/
     HI_U16 u16MidColorTemp;     /*RW,  the MidColorTemp should be at least 400 smaller than HighColorTemp*/
@@ -1696,7 +1594,7 @@ typedef struct hiISP_COLORMATRIX_ATTR_S
 {
     ISP_OP_TYPE_E enOpType;
     ISP_COLORMATRIX_MANUAL_S stManual;
-    ISP_COLORMATRIX_AUTO_S stAuto;   
+    ISP_COLORMATRIX_AUTO_S stAuto;
 }ISP_COLORMATRIX_ATTR_S;
 
 typedef struct hiISP_SATURATION_MANUAL_S
@@ -1706,14 +1604,14 @@ typedef struct hiISP_SATURATION_MANUAL_S
 
 typedef struct hiISP_SATURATION_AUTO_S
 {
-    HI_U8   au8Sat[ISP_AUTO_STENGTH_NUM];           /*RW,  Range: [0, 0xFF], should be decreased based on ISO increase */ 
+    HI_U8   au8Sat[ISP_AUTO_STENGTH_NUM];           /*RW,  Range: [0, 0xFF], should be decreased based on ISO increase */
 } ISP_SATURATION_AUTO_S;
 
 typedef struct hiISP_SATURATION_ATTR_S
 {
     ISP_OP_TYPE_E enOpType;
     ISP_SATURATION_MANUAL_S stManual;
-    ISP_SATURATION_AUTO_S stAuto;   
+    ISP_SATURATION_AUTO_S stAuto;
 }ISP_SATURATION_ATTR_S;
 
 typedef struct hiISP_COLOR_TONE_ATTR_S
@@ -1737,9 +1635,10 @@ typedef struct hiISP_WB_INFO_S
     HI_U16 u16LS1CT;                /*RO, color tempearture of secondary light source*/
     HI_U16 u16LS0Area;              /*RO, area of primary light source*/
     HI_U16 u16LS1Area;              /*RO, area of secondary light source*/
-    HI_U8  u8MultiDegree;           /*RO, 0 means uniform light source, larger value means multi light source*/ 
+    HI_U8  u8MultiDegree;           /*RO, 0 means uniform light source, larger value means multi light source*/
     HI_U32 u32FirstStableTime;      /*RO, AWB first stable frame number */
-    ISP_AWB_INDOOR_OUTDOOR_STATUS_E enInOutStatus; 	 /*RO, indoor or outdoor status*/ 
+    ISP_AWB_INDOOR_OUTDOOR_STATUS_E enInOutStatus; 	 /*RO, indoor or outdoor status*/
+	 HI_U16 u16ActiveShift;                           /*R; Range;[0x0,0xFF]*/
 }ISP_WB_INFO_S;
 
 
@@ -1754,7 +1653,7 @@ typedef struct hiISP_AF_ATTR_S
 } ISP_AF_ATTR_S;
 typedef struct hiISP_MF_ATTR_S
 {
-    HI_S32 s32DefaultSpeed;     /* 1,default speed(unit:m/s).(onvif)*/    
+    HI_S32 s32DefaultSpeed;     /* 1,default speed(unit:m/s).(onvif)*/
 } ISP_MF_ATTR_S;
 typedef struct hiISP_FOCUS_ATTR_S
 {
@@ -1843,6 +1742,111 @@ typedef struct hiISP_UPDATE_INFO_S
                                                                                 0 = Auto white balance ,1 = Manual white balance */
 } ISP_DCF_UPDATE_INFO_S;
 #endif
+
+/*
+DNG cfalayout type
+1 = Rectangular (or square) layout
+2 = Staggered layout A: even columns are offset down by 1/2 row
+3 = Staggered layout B: even columns are offset up by 1/2 row
+4 = Staggered layout C: even rows are offset right by 1/2 column
+5 = Staggered layout D: even rows are offset left by 1/2 column
+6 = Staggered layout E: even rows are offset up by 1/2 row, even columns are offset left by 1/2 column
+7 = Staggered layout F: even rows are offset up by 1/2 row, even columns are offset right by 1/2 column
+8 = Staggered layout G: even rows are offset down by 1/2 row, even columns are offset left by 1/2 column
+9 = Staggered layout H: even rows are offset down by 1/2 row, even columns are offset right by 1/2 column
+*/
+typedef enum hiDNG_CFALAYOUT_TYPE_E
+{
+    CFALAYOUT_TYPE_RECTANGULAR = 1,
+    CFALAYOUT_TYPE_A,        /*a,b,c... not support*/
+    CFALAYOUT_TYPE_B,
+    CFALAYOUT_TYPE_C,
+    CFALAYOUT_TYPE_D,
+    CFALAYOUT_TYPE_E,
+    CFALAYOUT_TYPE_F,
+    CFALAYOUT_TYPE_G,
+    CFALAYOUT_TYPE_H,
+    CFALAYOUT_TYPE_BUTT
+}DNG_CFALAYOUT_TYPE_E;
+
+typedef struct hiDNG_SRATIONAL_S
+{
+    HI_S32 s32Numerator;   /* represents the numerator of a fraction,*/
+    HI_S32 s32Denominator; /* the denominator. */
+}DNG_SRATIONAL_S;
+
+typedef struct hiDNG_BLCREPEATDIM_S
+{
+    HI_U16 u16BlcRepeatRows;
+    HI_U16 u16BlcRepeatCols;
+}DNG_BLCREPEATDIM_S;
+
+typedef struct hiDNG_DEFAULTSCALE_S
+{
+    DNG_RATIONAL_S stDefaultScaleH;
+    DNG_RATIONAL_S stDefaultScaleV;
+}DNG_DEFAULTSCALE_S;
+
+typedef struct hiDNG_REPEATPATTERNDIM_S
+{
+    HI_U16 u16RepeatPatternDimRows;
+    HI_U16 u16RepeatPatternDimCols;
+}DNG_REPEATPATTERNDIM_S;
+
+/*
+Defines the structure of dng raw format.
+*/
+typedef struct hiDNG_RAW_FORMAT_S
+{
+    HI_U8 u8BitsPerSample;                        /* RO;Format:8.0; Indicate the bit numbers of raw data*/
+    HI_U8 au8CfaPlaneColor[CFACOLORPLANE];        /* RO;Format:8.0; Indicate the planer numbers of raw data; 0:red 1:green 2: blue*/
+    DNG_CFALAYOUT_TYPE_E enCfaLayout;             /* RO;Range:[1,9]; Describes the spatial layout of the CFA*/
+    DNG_BLCREPEATDIM_S stBlcRepeatDim;            /* Specifies repeat pattern size for the BlackLevel*/
+    HI_U32 u32WhiteLevel;                         /* RO;Format:32.0; Indicate the WhiteLevel of the raw data*/
+    DNG_DEFAULTSCALE_S stDefaultScale;            /* Specifies the default scale factors for each direction to convert the image to square pixels*/
+    DNG_REPEATPATTERNDIM_S stCfaRepeatPatternDim;/* Specifies the pixel number of repeat color planer in each direction*/
+    HI_U8 au8CfaPattern[ISP_BAYER_CHN];           /* RO;Format:8.0; Indicate the bayer start order; 0:red 1:green 2: blue*/
+}DNG_RAW_FORMAT_S;
+
+/*
+Defines the structure of dng image static infomation. read only
+*/
+typedef struct hiDNG_IMAGE_STATIC_INFO_S
+{
+    DNG_RAW_FORMAT_S stDngRawFormat;
+    DNG_SRATIONAL_S astColorMatrix1[CCM_MATRIX_SIZE];       /* defines a transformation matrix that converts XYZ values to reference camera native color space values, under the first calibration illuminant.*/
+    DNG_SRATIONAL_S astColorMatrix2[CCM_MATRIX_SIZE];       /* defines a transformation matrix that converts XYZ values to reference camera native color space values, under the second calibration illuminant.*/
+    DNG_SRATIONAL_S astCameraCalibration1[CCM_MATRIX_SIZE];/* defines a calibration matrix that transforms reference camera native space values to individual camera native space values under the first calibration illuminant*/
+    DNG_SRATIONAL_S astCameraCalibration2[CCM_MATRIX_SIZE];/* defines a calibration matrix that transforms reference camera native space values to individual camera native space values under the second calibration illuminant*/
+    DNG_SRATIONAL_S astForwadMatrix1[CCM_MATRIX_SIZE];      /* defines a matrix that maps white balanced camera colors to XYZ D50 colors*/
+    DNG_SRATIONAL_S astForwadMatrix2[CCM_MATRIX_SIZE];      /* defines a matrix that maps white balanced camera colors to XYZ D50 colors*/
+
+    HI_U8  u8CalibrationIlluminant1;                       /* RO;Format:8.0;Light source, actually this means white balance setting. '0' means unknown, '1' daylight, '2'
+                                                                 fluorescent, '3' tungsten, '10' flash, '17' standard light A, '18' standard light B, '19' standard light
+                                                                 C, '20' D55, '21' D65, '22' D75, '255' other*/
+    HI_U8  u8CalibrationIlluminant2;                       /* RO;Format:8.0;Light source, actually this means white balance setting. '0' means unknown, '1' daylight, '2'
+                                                                 fluorescent, '3' tungsten, '10' flash, '17' standard light A, '18' standard light B, '19' standard light
+                                                                 C, '20' D55, '21' D65, '22' D75, '255' other*/
+}DNG_IMAGE_STATIC_INFO_S;
+
+/*
+Defines the structure of DNG WB gain used for calculate DNG colormatrix.
+*/
+typedef struct hiISP_DNG_WBGAIN_S
+{
+    HI_U16 u16Rgain;            /* RW;Range: [0x0, 0xFFF]; Multiplier for R  color channel*/
+    HI_U16 u16Ggain;            /* RW;Range: [0x0, 0xFFF]; Multiplier for G  color channel*/
+    HI_U16 u16Bgain;            /* RW;Range: [0x0, 0xFFF]; Multiplier for B  color channel*/
+}ISP_DNG_WBGAIN_S;
+
+/*
+Defines the structure of DNG color parameters.
+*/
+typedef struct hiISP_DNG_COLORPARAM_S
+{
+    ISP_DNG_WBGAIN_S stWbGain1;/* the calibration White balance gain of colorcheker in low colortemper light source*/
+    ISP_DNG_WBGAIN_S stWbGain2;/* the calibration White balance gain of colorcheker in high colortemper light source*/
+}ISP_DNG_COLORPARAM_S;
 
 #ifdef __cplusplus
 #if __cplusplus

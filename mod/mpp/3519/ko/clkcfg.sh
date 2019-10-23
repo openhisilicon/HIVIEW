@@ -12,7 +12,7 @@ clk_close()
 # open module clock while you need it!
 clk_cfg()
 {
-	himm 0x120100e4 0x1ff70000; # I2C0-3/SSP0-3 unreset, enable clk gate
+	himm 0x120100e4 0x1fff0000; # I2C0-3/SSP0-3 unreset, ir,enable clk gate
 	himm 0x1201003c 0x31000100;	# MIPI VI ISP unreset
 	himm 0x12010050 0x2;		# VEDU0 unreset	
 	himm 0x12010058 0x2;		# VPSS0 unreset 

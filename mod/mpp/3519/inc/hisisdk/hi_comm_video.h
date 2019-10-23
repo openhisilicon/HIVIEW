@@ -382,6 +382,8 @@ typedef struct hiVIDEO_SUPPLEMENT_S
 	HI_VOID* pIspStatVirAddr;
     HI_U32   u32LowDelayPhyAddr;
     HI_VOID* pLowDelayVirAddr;
+	HI_U32   u32FrameDNGPhyAddr;
+    HI_VOID* pFrameDNGVirAddr;
 } VIDEO_SUPPLEMENT_S;
 
 typedef struct hiVIDEO_FRAME_S
@@ -419,6 +421,176 @@ typedef struct hiVIDEO_FRAME_INFO_S
     VIDEO_FRAME_S stVFrame;
     HI_U32 u32PoolId;
 } VIDEO_FRAME_INFO_S;
+
+#define CFACOLORPLANE     (3)
+#define DNG_NP_SIZE       (6)
+typedef struct hiDNG_RATIONAL_S
+{
+    HI_U32 u32Numerator;/*represents the numerator of a fraction,*/
+    HI_U32 u32Denominator;/* the denominator. */
+}DNG_RATIONAL_S;
+typedef struct hiDNG_IMAGE_DYNAMIC_INFO_S
+{
+    HI_U32 au32BlackLevel[ISP_BAYER_CHN];
+    DNG_RATIONAL_S astAsShotNeutral[CFACOLORPLANE];
+    HI_DOUBLE adNoiseProfile[DNG_NP_SIZE];    
+}DNG_IMAGE_DYNAMIC_INFO_S;
+
+/* the statistics of af alg */
+#define AF_ZONE_ROW                 (15)
+#define AF_ZONE_COLUMN              (17)
+typedef struct hiISP_AF_ZONE_S
+{
+    HI_U16  u16v1;
+    HI_U16  u16h1;
+    HI_U16  u16v2;
+    HI_U16  u16h2;
+    HI_U16  u16y;
+    HI_U16  u16HlCnt;
+} ISP_AF_ZONE_S;
+typedef struct hiISP_AF_STAT_S
+{
+    ISP_AF_ZONE_S stZoneMetrics[AF_ZONE_ROW][AF_ZONE_COLUMN]; /*RO, The zoned measure of contrast*/
+} ISP_AF_STAT_S;
+
+typedef enum hiISP_AF_PEAK_MODE_E
+{
+    ISP_AF_STA_NORM         = 0,    /* use every value of the block statistic*/
+    ISP_AF_STA_PEAK            ,    /* use the maximum value in one line of the block statistic*/
+    ISP_AF_STA_BUTT
+}ISP_AF_PEAK_MODE_E;
+
+typedef enum hiISP_AF_SQU_MODE_E
+{
+    ISP_AF_STA_SUM_NORM     = 0,    /* statistic value accumlate*/
+    ISP_AF_STA_SUM_SQU         ,    /* statistic value square then accumlate*/
+    ISP_AF_STA_SUM_BUTT
+}ISP_AF_SQU_MODE_E;
+
+typedef struct hiISP_AF_CROP_S
+{
+    HI_BOOL             bEnable;    /* RW, Range: [0,1].  AF crop enable.               */
+    HI_U16              u16X;       /* RW, Range: [0x0, 0x1FFF]. AF image crop start x.  */
+    HI_U16              u16Y;       /* RW, Range: [0x0, 0x1FFF]. AF image crop start y.  */
+    HI_U16              u16W;       /* RW, Range: [0x0, 0x1FFF]. AF image crop width.    */
+    HI_U16              u16H;       /* RW, Range: [0x0, 0x1FFF]. AF image crop height.   */
+} ISP_AF_CROP_S;
+
+typedef enum hiISP_AF_STATISTICS_POS_E
+{
+    ISP_AF_STATISTICS_YUV    = 0,
+    ISP_AF_STATISTICS_RAW       ,
+    ISP_AF_STATISTICS_RAW_AFTER_DRC,  /* RW, Range, hi3519V101:[0,1];hi3516cV300:[0,2];AF statistic position, it can be set to yuv or raw */
+    ISP_AF_STATISTICS_BUTT
+
+}ISP_AF_STATISTICS_POS_E;
+
+typedef enum hiISP_BAYER_FORMAT_E
+{
+    BAYER_RGGB    = 0,
+    BAYER_GRBG    = 1,
+    BAYER_GBRG    = 2,
+    BAYER_BGGR    = 3,
+    BAYER_BUTT
+} ISP_BAYER_FORMAT_E;
+
+typedef struct hiISP_AF_RAW_CFG_S
+{
+    HI_BOOL             bGammaEn;    /* RW, Range: [0,1].  gamma enable  .               */
+    HI_BOOL             bOffsetEn;   /* RW, Range: [0,1].  AF black level enable  .      */
+    HI_U16              u16GrOffset; /* RW, Range: [0x0, 0x3FFF]. black level of GR.     */
+    HI_U16              u16GbOffset; /* RW, Range: [0x0, 0x3FFF]. black level of GB.     */
+    ISP_BAYER_FORMAT_E  enPattern;   /* RW, Range: [0x0, 0x3]. raw domain pattern.       */
+
+} ISP_AF_RAW_CFG_S;
+
+typedef struct hiISP_AF_PRE_FILTER_CFG_S
+{
+    HI_BOOL             bEn;         /* RW, Range: [0,1].  pre filter enable  .          */
+    HI_U16              u16strength; /* RW, Range: [0x0, 0xFFFF]. pre filter strength    */
+
+} ISP_AF_PRE_FILTER_CFG_S;
+
+typedef struct hiISP_AF_CFG_S
+{
+    HI_BOOL                 bEnable;        /* RW, Range: [0,1].   AF enable.                             */
+    HI_U16                  u16Hwnd;        /* RW, Range: [1, 17]. AF statistic window horizontal block.  */
+    HI_U16                  u16Vwnd;        /* RW, Range: [1, 15]. AF statistic window veritical block.   */
+    HI_U16                  u16Hsize;       /* RW, Range: hi3519V101:[1,4608];hi3516cV300:[1,2048] ,AF image width.             */
+    HI_U16                  u16Vsize;       /* RW, Range: hi3519V101:[1,4608];hi3516cV300:[1,2048] , AF image height.           */
+    ISP_AF_PEAK_MODE_E      enPeakMode;     /* RW, Range: [0,1]. AF peak value statistic mode.            */
+    ISP_AF_SQU_MODE_E       enSquMode;      /* RW, Range: [0,1]. AF statistic square accumulate.          */
+    ISP_AF_CROP_S           stCrop;         /* RW, AF input image crop                                    */
+    ISP_AF_STATISTICS_POS_E enStatisticsPos;/* RW, Range, hi3519V101:[0,1];hi3516cV300:[0,2];AF statistic position, it can be set to yuv or raw */
+    ISP_AF_RAW_CFG_S        stRawCfg;       /* RW, When AF locate at RAW domain, these para should be cfg.*/
+    ISP_AF_PRE_FILTER_CFG_S stPreFltCfg;    /* RW, pre filter cfg                                         */
+    HI_U16                  u16HighLumaTh;  /* RW, Range: [0,0xFF]. high luma threshold.                  */
+
+}ISP_AF_CFG_S;
+
+typedef struct hiISP_AF_LD_S
+{
+    HI_BOOL     bLdEn;                      /* RW, Range: [0, 1]. FILTER level depend gain enable.        */
+    HI_U16      u16ThLow;                   /* RW, range: [0x0, 0xFF]. FILTER level depend th low         */
+    HI_U16      u16GainLow;                 /* RW, range: [0x0, 0xFF]. FILTER level depend gain low       */
+    HI_U16      u16SlpLow;                  /* RW, range: [0x0, 0xF].  FILTER level depend slope low      */
+    HI_U16      u16ThHigh;                  /* RW, range: [0x0, 0xFF]. FILTER level depend th high        */
+    HI_U16      u16GainHigh;                /* RW, range: [0x0, 0xFF]. FILTER level depend gain high      */
+    HI_U16      u16SlpHigh;                 /* RW, range: [0x0, 0xF].  FILTER level depend slope high     */
+
+} ISP_AF_LD_S;
+
+typedef struct hiISP_AF_CORING_S
+{
+    HI_U16      u16Th;                      /* RW, Range: [0x0, 0x7FF].FILTER coring threshold.           */
+    HI_U16      u16Slp;                     /* RW, Range: [0x0, 0xF].  FILTER Coring Slope                */
+    HI_U16      u16Lmt;                     /* RW, Range: [0x0, 0x7FF].FILTER coring limit                */
+
+} ISP_AF_CORING_S ;
+
+
+#define IIR_EN_NUM      (3)
+#define IIR_GAIN_NUM    (7)
+#define IIR_SHIFT_NUM   (4)
+typedef struct hiISP_AF_H_PARAM_S
+{
+    HI_BOOL         bNarrowBand;            /* RW, Range: [0, 1]. IIR narrow band enable.                 */
+    HI_BOOL         abIIREn[IIR_EN_NUM];             /* RW, Range: [0, 1]. IIR enable.                             */
+    HI_S16          as16IIRGain[IIR_GAIN_NUM];         /* RW, Range: gain0:[0,255]; others:[-511, 511]. IIR gain.    */
+    HI_U16          au16IIRShift[IIR_SHIFT_NUM];        /* RW, Range: [0x0, 0x7].  IIR shift.                         */
+    ISP_AF_LD_S     stLd;                   /* RW, filter level depend.                                   */
+    ISP_AF_CORING_S stCoring;               /* RW, filter coring.                                         */
+
+}ISP_AF_H_PARAM_S;
+
+#define FIR_GAIN_NUM    (5)
+typedef struct hiISP_AF_V_PARAM_S
+{
+    HI_S16          as16FIRH[FIR_GAIN_NUM];            /* RW, Range: [-31, 31].   FIR gain.                          */
+    ISP_AF_LD_S     stLd;                   /* RW, filter level depend.                                   */
+    ISP_AF_CORING_S stCoring;               /* RW, filter coring.                                         */
+}ISP_AF_V_PARAM_S;
+
+#define ACC_SHIFT_H_NUM (2)
+#define ACC_SHIFT_V_NUM (2)
+typedef struct hiISP_AF_FV_PARAM_S
+{
+    HI_U16 u16AccShiftY;                    /* RW, Range: [0x0, 0xF]. luminance Y statistic shift.        */
+    HI_U16 au16AccShiftH[ACC_SHIFT_H_NUM];  /* RW, Range: [0x0, 0xF]. IIR statistic shift.                */
+    HI_U16 au16AccShiftV[ACC_SHIFT_V_NUM];  /* RW, Range: [0x0, 0xF]. FIR statistic shift.                */
+    HI_U16 u16HlCntShift;                   /* RW, Range: [0x0, 0xF]. High luminance counter shift        */
+}ISP_AF_FV_PARAM_S;
+
+typedef struct hiISP_FOCUS_STATISTICS_CFG_S
+{
+    ISP_AF_CFG_S        stConfig;
+    ISP_AF_H_PARAM_S    stHParam_IIR0;
+    ISP_AF_H_PARAM_S    stHParam_IIR1;
+    ISP_AF_V_PARAM_S    stVParam_FIR0;
+    ISP_AF_V_PARAM_S    stVParam_FIR1;
+    ISP_AF_FV_PARAM_S   stFVParam;
+} ISP_FOCUS_STATISTICS_CFG_S;
+
 
 typedef struct hiBITMAP_S
 {

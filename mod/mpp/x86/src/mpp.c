@@ -2,13 +2,13 @@
 #include "sample_comm.h"
 #include "mpp.h"
 
-SAMPLE_MPP_CONFIG_S mpp_cfg;
+gsf_mpp_cfg_t mpp_cfg;
 
 int SENSOR_TYPE;
 int (*sensor_set_inifile_path)(const char *pcPath);
 int (*sensor_register_callback)(void);
 
-int SAMPLE_COMM_MPP_Cfg(SAMPLE_MPP_CONFIG_S *cfg)
+int gsf_mpp_cfg(gsf_mpp_cfg_t *cfg)
 {
   SENSOR_TYPE = cfg->sensor_type;
   sensor_set_inifile_path  = NULL;

@@ -3,6 +3,10 @@
 
 #include "bsp.h"
 
-int rtc_init(void);
+//from rtc to linux;
+int rtc_init();
+
+//set time to rtc;
+int rtc_set(gsf_time_t *gsf);
 
 #endif

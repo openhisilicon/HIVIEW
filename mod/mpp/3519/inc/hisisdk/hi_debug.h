@@ -15,7 +15,7 @@ History       :
 
 2.Date        : 2008/03/03
   Author      : c42025
-  Modification: 1. mv definition LOG_ERRLEVEL_E to here form file "hi_errno.h", 
+  Modification: 1. mv definition LOG_ERRLEVEL_E to here form file "hi_errno.h",
   but it will be obsolete in next version.
   2. add new macro definition for debug levle.
   3. change macro defintion HI_TRACE
@@ -31,7 +31,7 @@ History       :
 5.Date        :   2010/11/03
   Author      :   z44949
   Modification:   Remove some unnecessary typedef
-   
+
 ******************************************************************************/
 #ifndef __HI_DEBUG_H__
 #define __HI_DEBUG_H__
@@ -71,7 +71,7 @@ typedef struct hiLOG_LEVEL_CONF_S
     HI_CHAR   cModName[HI_MOD_NAME_MAX_LEN];
 } LOG_LEVEL_CONF_S;
 
-#ifndef __KERNEL__ 
+#ifndef __KERNEL__
 /******************************************************************************
 ** For User Mode : HI_PRINT, HI_ASSERT, HI_TRACE
 ******************************************************************************/
@@ -130,7 +130,7 @@ int HI_LOG(HI_S32 level, MOD_ID_E enModId,const char *fmt, ...);
         } \
     }while(0)
 
-    /* Using samples: 
+    /* Using samples:
     ** HI_TRACE(HI_DBG_DEBUG, HI_ID_CMPI, "Test %d, %s\n", 12, "Test");
     **/
 #ifndef DISABLE_DEBUG_INFO

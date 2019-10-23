@@ -9,10 +9,10 @@
 extern "C" {
 #endif
 
-#define CFIFO_MIN(x,y) ({ \
-        typeof(x) _x = (x);     \
-        typeof(y) _y = (y);     \
-        (void) (&_x == &_y);    \
+#define CFIFO_MIN(x,y) ({     \
+        typeof(x) _x = (x);   \
+        typeof(y) _y = (y);   \
+        (void) (&_x == &_y);  \
         _x < _y ? _x : _y; })
 
 typedef unsigned int(*cfifo_recsize_t)(unsigned char *p1, unsigned int n1, unsigned char *p2);
@@ -20,10 +20,6 @@ typedef unsigned int(*cfifo_rectag_t)(unsigned char *p1, unsigned int n1, unsign
 typedef unsigned int(*cfifo_recput_t)(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u);
 typedef unsigned int(*cfifo_recgut_t)(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u);
 typedef unsigned int(*cfifo_recrel_t)(unsigned char *p1, unsigned int n1, unsigned char *p2);
-
-struct cfifo_reader {
-    unsigned int out;
-};
 
 // cfifo op
 struct cfifo_ex;
@@ -33,7 +29,7 @@ struct cfifo_ex *cfifo_alloc(unsigned int size
                         , cfifo_recsize_t rec_size    /* parse recsize */
                         , cfifo_rectag_t rec_tag      /* parse rectag  */
                         , cfifo_recrel_t rec_rel      /* release rec   */
-                        , int *shmid);
+                        , int *shmid, int vod);
 // shmat
 struct cfifo_ex *cfifo_shmat(cfifo_recsize_t rec_size
                         , cfifo_rectag_t rec_tag
@@ -42,24 +38,20 @@ struct cfifo_ex *cfifo_shmat(cfifo_recsize_t rec_size
 void cfifo_free(struct cfifo_ex *fifo_ex);
 
 // newest
-void cfifo_newest(struct cfifo_ex *fifo_ex
-                , struct cfifo_reader *r
-                , unsigned int tag);
+void cfifo_newest(struct cfifo_ex *fifo_ex, unsigned int tag);
+
 // oldest
-void cfifo_oldest(struct cfifo_ex *fifo_ex
-                , struct cfifo_reader *r
-                , unsigned int tag);
+void cfifo_oldest(struct cfifo_ex *fifo_ex, unsigned int tag);
+
 // put
 signed int cfifo_put(struct cfifo_ex *fifo_ex
                     , unsigned int len
                     , cfifo_recput_t put_cb, void *u);
 // get
 signed int cfifo_get(struct cfifo_ex *fifo_ex
-                    , struct cfifo_reader *r
                     , cfifo_recgut_t get_cb, void *u);
-
+                    
 // epoll
-
 enum {
   CFIFO_EP_ADD = 0,
   CFIFO_EP_DEL = 1,
@@ -77,10 +69,16 @@ signed int cfifo_ep_ctl(int epoll_fd, int op, struct cfifo_ex *fifo_ex);
 // wait
 signed int cfifo_ep_wait(int epoll_fd, int to, struct cfifo_ex **result, int n);
 
-
 // info
-void cfifo_info(struct cfifo_ex *fifo_ex
-                , unsigned int out);
+void cfifo_info(struct cfifo_ex *fifo_ex);
+
+// in-out
+int cfifo_get_io(struct cfifo_ex *fifo_ex
+                , unsigned int* in, unsigned int* out);
+                
+// fd
+int cfifo_take_fd(struct cfifo_ex *fifo_ex);
+
 
 #ifdef __cplusplus
 }

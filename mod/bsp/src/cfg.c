@@ -4,11 +4,11 @@
 
 gsf_bsp_def_t bsp_def = {
   .board = {
-    .model = "IPCXXX",
+    .model = "IPC123",
     .sn    = "123456",
-    .type  = "HI3519_E_4_2",
-    .snscnt = 2,
-    .sensor = {"BT1120_R", "BT1120_R", },
+    .type  = "HI3516DV300_E_4_2",
+    .snscnt = 1,
+    .sensor = {"imx335", "", },
     .caps   = 0xFFFFFFFF,
     },
   .eth  = {
@@ -26,7 +26,7 @@ gsf_bsp_def_t bsp_def = {
     
 gsf_bsp_parm_t bsp_parm;
 
-int jscon_def_load(char *filename, gsf_bsp_def_t *cfg)
+int json_def_load(char *filename, gsf_bsp_def_t *cfg)
 {
   if(access(filename, 0)) return -1;
   FILE *f=fopen(filename,"rb");fseek(f,0,SEEK_END);long len=ftell(f);fseek(f,0,SEEK_SET);
@@ -41,7 +41,7 @@ int jscon_def_load(char *filename, gsf_bsp_def_t *cfg)
   return 0;
 }
 
-int jscon_def_save(char *filename, gsf_bsp_def_t *cfg)
+int json_def_save(char *filename, gsf_bsp_def_t *cfg)
 {
   FILE *f=fopen(filename,"wb");
   cJSON* out = cJSON_CreateObject();
@@ -57,7 +57,7 @@ int jscon_def_save(char *filename, gsf_bsp_def_t *cfg)
   return 0;
 }
 
-int jscon_parm_load(char *filename, gsf_bsp_parm_t *cfg)
+int json_parm_load(char *filename, gsf_bsp_parm_t *cfg)
 {
   if(access(filename, 0)) return -1;
   FILE *f=fopen(filename,"rb");fseek(f,0,SEEK_END);long len=ftell(f);fseek(f,0,SEEK_SET);
@@ -72,7 +72,7 @@ int jscon_parm_load(char *filename, gsf_bsp_parm_t *cfg)
   return 0;
 }
 
-int jscon_parm_save(char *filename, gsf_bsp_parm_t *cfg)
+int json_parm_save(char *filename, gsf_bsp_parm_t *cfg)
 {
   FILE *f=fopen(filename,"wb");
   cJSON* out = cJSON_CreateObject();

@@ -7,7 +7,11 @@ extern "C" {
 
 #include "bsp.h"
 
+//init net interface;
 int netinf_init(void);
+
+//set eth;
+int netinf_eth_set(gsf_eth_t *eth);
 
 #ifdef __cplusplus
 }

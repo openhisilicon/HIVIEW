@@ -1,9 +1,9 @@
 /******************************************************************************
   Some simple Hisilicon Hi35xx video input functions.
 
-  Copyright (C), 2010-2011, Hisilicon Tech. Co., Ltd.
+  Copyright (C), 2010-2018, Hisilicon Tech. Co., Ltd.
  ******************************************************************************
-    Modification:  2011-2 Created
+    Modification:  2017-2 Created
 ******************************************************************************/
 #ifdef __cplusplus
 #if __cplusplus

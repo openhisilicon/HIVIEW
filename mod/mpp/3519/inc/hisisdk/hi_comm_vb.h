@@ -109,6 +109,7 @@ typedef struct hiVB_CONF_S
         HI_U32 u32BlkSize;
         HI_U32 u32BlkCnt;
         HI_CHAR acMmzName[MAX_MMZ_NAME_LEN];
+        HI_BOOL bEnableRempVir;
     }astCommPool[VB_MAX_COMM_POOLS];
 } VB_CONF_S;
 
@@ -123,6 +124,7 @@ typedef struct hiVB_POOL_STATUS_S
 #define VB_SUPPLEMENT_USERINFO_MASK 0x2
 #define VB_SUPPLEMENT_ISPINFO_MASK  0x4
 #define VB_SUPPLEMENT_ISPSTAT_MASK  0x8
+#define VB_SUPPLEMENT_DNG_MASK      0x10
 
 typedef struct hiVB_SUPPLEMENT_CONF_S
 {

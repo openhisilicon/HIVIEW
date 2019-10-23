@@ -63,7 +63,7 @@ typedef enum hiEN_VIU_ERR_CODE_E
     ERR_VI_INVALID_PHYCHNID,            /* invalid phychn id*/
     ERR_VI_FAILED_NOTBIND,              /* device or channel not bind */
     ERR_VI_FAILED_BINDED,               /* device or channel not unbind */
-    ERR_VI_DIS_PROCESS_FAIL,			/* dis process failed */
+    ERR_VI_DIS_PROCESS_FAIL,            /* dis process failed */
 } EN_VIU_ERR_CODE_E;
 
 #define HI_ERR_VI_INVALID_PARA          HI_DEF_ERR(HI_ID_VIU, EN_ERR_LEVEL_ERROR, EN_ERR_ILLEGAL_PARAM)
@@ -109,7 +109,7 @@ typedef enum hiVI_INTF_MODE_E
     VI_MODE_BT1120_INTERLEAVED,     /* BT.1120 interstage mode */
     VI_MODE_MIPI,                   /*MIPI mode*/
     VI_MODE_LVDS,
-    VI_MODE_HISPI, 
+    VI_MODE_HISPI,
 
     VI_MODE_BUTT
 } VI_INTF_MODE_E;
@@ -299,29 +299,29 @@ typedef enum hiVI_DATA_PATH_E
     VI_PATH_BUTT
 }VI_DATA_PATH_E;
 
-typedef enum hiVI_REPHASE_MODE_E   
+typedef enum hiVI_REPHASE_MODE_E
 {
-	VI_REPHASE_MODE_NONE 		= 0,
-	VI_REPHASE_MODE_SKIP_1_2	= 1,		/*skip 1/2*/
-	VI_REPHASE_MODE_SKIP_1_3	= 2,			/* skip 1/3 */
-	VI_REPHASE_MODE_BINNING_1_2	= 3,  		/* binning 1/2*/
-	VI_REPHASE_MODE_BINNING_1_3	= 4,		/* binning 1/3*/
-	VI_REPHASE_MODE_BUTT
+    VI_REPHASE_MODE_NONE        = 0,
+    VI_REPHASE_MODE_SKIP_1_2    = 1,        /*skip 1/2*/
+    VI_REPHASE_MODE_SKIP_1_3    = 2,            /* skip 1/3 */
+    VI_REPHASE_MODE_BINNING_1_2 = 3,        /* binning 1/2*/
+    VI_REPHASE_MODE_BINNING_1_3 = 4,        /* binning 1/3*/
+    VI_REPHASE_MODE_BUTT
 }VI_REPHASE_MODE_E;
 typedef struct hiVI_BAS_REPHASE_ATTR_S
-{	
-	VI_REPHASE_MODE_E   enHRephaseMode;
-	VI_REPHASE_MODE_E   enVRephaseMode;	
+{
+    VI_REPHASE_MODE_E   enHRephaseMode;
+    VI_REPHASE_MODE_E   enVRephaseMode;
 } VI_BAS_REPHASE_ATTR_S;
 typedef struct hiVI_BAS_SCALE_ATTR_S
 {
-	SIZE_S				stBasSize; 			/* bayer scale size.*/
-	HI_BOOL 			bCompress;			/*bayer scale compress.*/
+    SIZE_S              stBasSize;          /* bayer scale size.*/
+    HI_BOOL             bCompress;          /*bayer scale compress.*/
 } VI_BAS_SCALE_ATTR_S;
 typedef struct hiVI_BAS_ATTR_S
 {
-	VI_BAS_SCALE_ATTR_S stSacleAttr;
-	VI_BAS_REPHASE_ATTR_S stRephaseAttr;
+    VI_BAS_SCALE_ATTR_S stSacleAttr;
+    VI_BAS_REPHASE_ATTR_S stRephaseAttr;
 } VI_BAS_ATTR_S;
 /* the extended attributes of VI device */
 typedef struct hiVI_DEV_ATTR_EX_S
@@ -347,9 +347,9 @@ typedef struct hiVI_DEV_ATTR_EX_S
     VI_DATA_TYPE_E      enInputDataType;    /* RGB: CSC-709 or CSC-601, PT YUV444 disable; YUV: default yuv CSC coef PT YUV444 enable. */
 
     HI_BOOL             bDataRev;           /* Data reverse */
-    
+
     RECT_S              stDevRect;          /* Dev capture rect */
-	VI_BAS_ATTR_S       stBasAttr;           /*BAS*/	
+    VI_BAS_ATTR_S       stBasAttr;           /*BAS*/
 } VI_DEV_ATTR_EX_S;
 
 /* the attributes of a VI device */
@@ -372,7 +372,7 @@ typedef struct hiVI_DEV_ATTR_S
     HI_BOOL             bDataRev;           /* Data reverse */
 
     RECT_S              stDevRect;          /* Dev capture rect */
-    VI_BAS_ATTR_S       stBasAttr;           /*BAS*/	
+    VI_BAS_ATTR_S       stBasAttr;           /*BAS*/
 } VI_DEV_ATTR_S;
 
 
@@ -393,7 +393,7 @@ typedef enum hiVI_CAPSEL_E
 } VI_CAPSEL_E;
 typedef struct hiVI_DEV_BIND_ATTR_S
 {
-	MIPI_DEV s32MipiDev;
+    MIPI_DEV s32MipiDev;
 }VI_DEV_BIND_ATTR_S;
 
 
@@ -460,16 +460,16 @@ typedef struct hiVI_USERPIC_ATTR_S
 
 typedef enum hiVI_FLASH_MODE_E
 {
-    VI_FLASH_ONCE = 0,		            /* Flash one time */
+    VI_FLASH_ONCE = 0,                  /* Flash one time */
     VI_FLASH_FREQ = 1,                  /* Flash frequently */
     VI_FLASH_MODE_BUTT
 }VI_FLASH_MODE_E;
 
 typedef struct hiVI_FlASH_CONFIG_S
 {
-    VI_FLASH_MODE_E enFlashMode;	    /* Flash one time, flash frequently*/
+    VI_FLASH_MODE_E enFlashMode;        /* Flash one time, flash frequently*/
 
-    HI_U32 u32StartTime;	            /* Flash start time,unit: sensor pix clk.*/
+    HI_U32 u32StartTime;                /* Flash start time,unit: sensor pix clk.*/
     HI_U32 u32Duration;                 /* Flash high duration, unit: sensor pix clk.*/
     HI_U32 u32CapFrmIndex;              /* Set which vframe will be bFlashed after flashing, default is 0. */
     HI_U32 u32Interval;                 /* Flash frequently interval, unit: frame*/
@@ -477,8 +477,8 @@ typedef struct hiVI_FlASH_CONFIG_S
 
 typedef struct hiVI_EXT_CHN_ATTR_S
 {
-    VI_CHN    s32BindChn;		        /* The channel num which extend channel will bind to*/
-    SIZE_S    stDestSize;		        /* Target size*/
+    VI_CHN    s32BindChn;               /* The channel num which extend channel will bind to*/
+    SIZE_S    stDestSize;               /* Target size*/
 
     HI_S32    s32SrcFrameRate;          /* Source frame rate. The value -1 indicates that the frame rate is not controlled */
     HI_S32    s32DstFrameRate;             /* Target frame rate. The value -1 indicates that the frame rate is not controlled */
@@ -509,15 +509,15 @@ typedef struct hiVI_CYLIND_ATTR_S
 #define PMF_COEF_MAX_NUM    9
 typedef struct hiVI_PMF_ATTR_S
 {
-	HI_BOOL     				bEnable;	
-	HI_S32      				as32PMFCoef[PMF_COEF_MAX_NUM];
-	SIZE_S      				stDestSize;
+    HI_BOOL                     bEnable;
+    HI_S32                      as32PMFCoef[PMF_COEF_MAX_NUM];
+    SIZE_S                      stDestSize;
 }VI_PMF_ATTR_S;
 typedef struct hiVI_STITCH_CORRECTION_ATTR_S
 {
-	VI_LDC_ATTR_S				stLdcAttr;
-	VI_CYLIND_ATTR_S			stCylindAttr;
-	VI_PMF_ATTR_S				stPMFAttr;
+    VI_LDC_ATTR_S               stLdcAttr;
+    VI_CYLIND_ATTR_S            stCylindAttr;
+    VI_PMF_ATTR_S               stPMFAttr;
 }VI_STITCH_CORRECTION_ATTR_S;
 
 typedef struct hiVI_CHN_LUM_S
@@ -548,14 +548,14 @@ typedef struct hiVI_CSC_ATTR_S
     HI_U32 u32ContrVal;                 /* Contrast: [0 ~ 100] */
     HI_U32 u32HueVal;                   /* Hue: [0 ~ 100] */
     HI_U32 u32SatuVal;                  /* Satuature: [0 ~ 100] */
-    HI_BOOL bTVModeEn;                  /*TV Mode: true or false*/       
+    HI_BOOL bTVModeEn;                  /*TV Mode: true or false*/
     VI_CSC_MATRIX_S stCSCMatrix;        /* The coefficient matrix of CSC */
 } VI_CSC_ATTR_S;
 
 #define RAW_READ_MAX_FRAME_NUM    30
-typedef struct 
+typedef struct
 {
-	VIDEO_FRAME_INFO_S stFrame;
+    VIDEO_FRAME_INFO_S stFrame;
 }VI_RAW_DATA_INFO_S;
 
 typedef struct hiVI_DCI_PARAM_S
@@ -591,9 +591,9 @@ typedef enum hiVI_DUMP_TYPE_E
 
 typedef enum hiVI_DUMP_SEL_E
 {
-	VI_DUMP_SEL_PORT   = 0,
-	VI_DUMP_SEL_BAS    = 1,  
-	VI_DUMP_SEL_BUTT
+    VI_DUMP_SEL_PORT   = 0,
+    VI_DUMP_SEL_BAS    = 1,
+    VI_DUMP_SEL_BUTT
 }VI_DUMP_SEL_E;
 
 typedef struct hiVI_DUMP_ATTR_S
@@ -601,24 +601,24 @@ typedef struct hiVI_DUMP_ATTR_S
     VI_DUMP_TYPE_E enDumpType;
     PIXEL_FORMAT_E enPixelFormat;
     CROP_INFO_S    stCropInfo;
-	VI_DUMP_SEL_E  enDumpSel;
+    VI_DUMP_SEL_E  enDumpSel;
 }VI_DUMP_ATTR_S;
 
 typedef enum hiVI_DIS_ACCURACY_E
 {
-	VI_DIS_ACCURACY_HIGH,
-	VI_DIS_ACCURACY_MIDDLE,
-	VI_DIS_ACCURACY_LOW,
-	
-	VI_DIS_ACCURACY_BUTT
+    VI_DIS_ACCURACY_HIGH,
+    VI_DIS_ACCURACY_MIDDLE,
+    VI_DIS_ACCURACY_LOW,
+
+    VI_DIS_ACCURACY_BUTT
 }VI_DIS_ACCURACY_E;
 
 typedef enum hiVI_DIS_CAMERA_MODE_E
 {
-	VI_DIS_CAMERA_MODE_NORMAL,
-	VI_DIS_CAMERA_MODE_IPC,
-	
-	VI_DIS_CAMERA_MODE_BUTT	
+    VI_DIS_CAMERA_MODE_NORMAL,
+    VI_DIS_CAMERA_MODE_IPC,
+
+    VI_DIS_CAMERA_MODE_BUTT
 }VI_DIS_CAMERA_MODE_E;
 
 typedef enum hiVI_DIS_MOTION_TYPE_E
@@ -642,44 +642,45 @@ typedef enum hiVI_DIS_ANGLE_TYPE_E
 
 typedef struct hiVI_DIS_CONFIG_S
 {
-	VI_DIS_ACCURACY_E		enAccuracy;					/* Accuracy setting of motion detection */
-	VI_DIS_CAMERA_MODE_E    enCameraMode;				/* DIS Camera mode */
-	VI_DIS_MOTION_TYPE_E    enMotionType;				/* DIS Motion Type*/
-	HI_U32  				u32FixLevel;				/* Level of how strong the screen is fixated. range:[0~7] */	
-	HI_S32  				s32RollingShutterCoef;		/* Rolling shutter distortion correction coefficient. range:[-100~100]*/
-	HI_U32					u32BufNum;					/* Buf num for DIS ,range:[5~8]*/
-	HI_U32					u32CropRatio;				/* crop ratio of output image,[50~98]*/
-	HI_S32					s32FrameRate;				/* the output framerate,[1~120]*/
-	HI_BOOL					bScale;						/* Scale output image */
-	HI_U32					u32DelayFrmNum;				/* delay frame number*/
-	HI_U32					u32RetCenterStrength;		/* The Strength for returning the screen to the center position.*/
-    HI_U32					u32GyroWeight;				/* the weight that depend on gyro data*/
+    VI_DIS_ACCURACY_E       enAccuracy;                 /* Accuracy setting of motion detection */
+    VI_DIS_CAMERA_MODE_E    enCameraMode;               /* DIS Camera mode */
+    VI_DIS_MOTION_TYPE_E    enMotionType;               /* DIS Motion Type*/
+    HI_U32                  u32FixLevel;                /* Level of how strong the screen is fixated. range:[0~7] */
+    HI_S32                  s32RollingShutterCoef;      /* Rolling shutter distortion correction coefficient. range:[-100~100]*/
+    HI_U32                  u32BufNum;                  /* Buf num for DIS ,range:[5~8]*/
+    HI_U32                  u32CropRatio;               /* crop ratio of output image,[50~98]*/
+    HI_S32                  s32FrameRate;               /* the output framerate,[1~120]*/
+    HI_BOOL                 bScale;                     /* Scale output image */
+    HI_U32                  u32DelayFrmNum;             /* delay frame number*/
+    HI_U32                  u32RetCenterStrength;       /* The Strength for returning the screen to the center position.*/
+    HI_U32                  u32GyroWeight;              /* the weight that depend on gyro data*/
 }VI_DIS_CONFIG_S;
 
 typedef struct hiVI_DIS_ATTR_S
 {
-    HI_BOOL         		bEnable;                    /* DIS enable */
-    HI_U32          		u32MovingSubjectLevel;      /* Threshold level to determine moving subject in the screen. range:[0~7] */
-    HI_U32          		u32NoMovementLevel;         /* Threshold level to determine that the screen is still. range:[0~7] */
-    HI_U32          		u32TimeLag;                 /* Time lag between Frame and gyro data*/
+    HI_BOOL                 bEnable;                    /* DIS enable */
+    HI_U32                  u32MovingSubjectLevel;      /* Threshold level to determine moving subject in the screen. range:[0~7] */
+    HI_U32                  u32NoMovementLevel;         /* Threshold level to determine that the screen is still. range:[0~7] */
+    HI_U32                  u32TimeLag;                 /* Time lag between Frame and gyro data*/
     VI_DIS_ANGLE_TYPE_E     enAngleType;                /* View angle type [0~2] HORIZONTAL = 0, VERTICAL = 1, DIAGONAL = 2,*/
-    HI_U32                  u32Vangle;                  /* View angle,[100,1380]*/
-    HI_BOOL      			bStillCrop;					/* the stabilization will be not working ,but the output image still be cropped*/
+    HI_U32                  u32Vangle;                  /* View angle,[5,1380]*/
+    HI_S32                  s32FrameRate;               /* the output framerate,[0~120]*/
+    HI_BOOL                 bStillCrop;                 /* the stabilization will be not working ,but the output image still be cropped*/
 }VI_DIS_ATTR_S;
 
 typedef struct hiVI_DIS_GYRO_DATA_S
 {
-	HI_DOUBLE     *pdRotX;		/* Pointer to the x-axis angler velocity array */
-	HI_DOUBLE     *pdRotY;		/* Pointer to the y-axis angler velocity array */
-	HI_DOUBLE     *pdRotZ;		/* Pointer to the z-axis angler velocity array */
-	HI_S64    	  *ps64Time;	/* Pointer to the time stamp array */
-	HI_U32    	   u32Num;		/* Number of valid data */
+    HI_DOUBLE     *pdRotX;      /* Pointer to the x-axis angler velocity array */
+    HI_DOUBLE     *pdRotY;      /* Pointer to the y-axis angler velocity array */
+    HI_DOUBLE     *pdRotZ;      /* Pointer to the z-axis angler velocity array */
+    HI_S64        *ps64Time;    /* Pointer to the time stamp array */
+    HI_U32         u32Num;      /* Number of valid data */
 }VI_DIS_GYRO_DATA_S;
 
 typedef struct hiVI_DIS_CALLBACK_S
 {
    HI_S32 (*pfnGetGyroDataCallback)(HI_U64 u64BeginPts , HI_U64 u64EndPts, VI_DIS_GYRO_DATA_S* pstDISGyroData);
-   HI_S32 (*pfnReleaseGyroDataCallback)(HI_VOID);	
+   HI_S32 (*pfnReleaseGyroDataCallback)(HI_VOID);
 }VI_DIS_CALLBACK_S;
 
 typedef struct hiVI_MOD_PARAM_S
@@ -701,7 +702,7 @@ typedef struct hiVI_SNAP_NORMAL_ATTR_S
     HI_U32  u32FrameCnt;     /* set capture frame counts */
 }VI_SNAP_NORMAL_ATTR_S;
 
-typedef struct hiVI_SNAP_HDR_ATTR_S
+typedef struct hiVI_SNAP_PRO_ATTR_S
 {
     /* -------- statical attrs -------- */
     HI_U32  u32FrameDepth;  /* buffer depth, range:[2,8]*/
@@ -711,28 +712,28 @@ typedef struct hiVI_SNAP_USER_ATTR_S
 {
     HI_U32  u32FrameDepth;   /* buffer depth, range:[1,8] */
     HI_S32  s32SrcFrameRate; /* for raw frame rate control */
-    HI_S32  s32DstFrameRate;   
+    HI_S32  s32DstFrameRate;
 }VI_SNAP_USER_ATTR_S;
 
 typedef struct hiVI_SNAP_ATTR_S
 {
     SNAP_TYPE_E enSnapType;
     ISP_DEV     IspDev;         /* which ISP is used */
-    HI_U32      u32RefFrameNum; /* referencial fame numbers, must be in 
+    HI_U32      u32RefFrameNum; /* referencial fame numbers, must be in
                                    accordance with 3NDR's referencial frame numbers */
     union
     {
         VI_SNAP_NORMAL_ATTR_S   stNormalAttr;
         VI_SNAP_PRO_ATTR_S      stProAttr;
-		VI_SNAP_USER_ATTR_S     stUserAttr;
+        VI_SNAP_USER_ATTR_S     stUserAttr;
     }unAttr;
 }VI_SNAP_ATTR_S;
 
 typedef struct hiVI_RAW_FRAME_INFO_S
 {
-    VIDEO_FRAME_INFO_S 		stFrame;	
-    ISP_CONFIG_INFO_S    	stIspInfo;  
-	ISP_DCF_UPDATE_INFO_S  	stIspUpdateInfo;
+    VIDEO_FRAME_INFO_S      stFrame;
+    ISP_CONFIG_INFO_S       stIspInfo;
+    ISP_DCF_UPDATE_INFO_S   stIspUpdateInfo;
 }VI_RAW_FRAME_INFO_S;
 
 typedef struct hiVI_BAYER_READ_ATTR_S

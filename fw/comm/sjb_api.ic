@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include "fw/cjson/inc/cJSON.h"
 
-#ifndef DEBUG
-#define printf(...)
+#ifdef DEBUG
+#define printd printf
+#else
+#define printd(...)
 #endif
 
 // ÀàÐÍ°ó¶¨;
@@ -22,6 +24,21 @@ typedef unsigned char  uint8;
 #define sjb_bind_uint32  sjb_bind_int
 #define sjb_bind_uint16  sjb_bind_short   
 #define sjb_bind_uint8   sjb_bind_char
+
+
+static void sjb_bind_bool(cJSON* json, int m, int *str, int i, int size) 
+{
+  if(m)
+  {
+    if( json && (json->type == cJSON_True || json->type == cJSON_False))
+    			*(str+i) = json->type;
+  }
+  else
+  {
+    json->type= *(str+i)?cJSON_True:cJSON_False;
+  }
+}
+
 
 static void sjb_bind_int(cJSON* json, int m, int *str, int i, int size) 
 {
@@ -102,7 +119,7 @@ static void sjb_bind_uint64(cJSON* json, int m, uint64 *str, int i, int size)
 		if( json && json->type == cJSON_String)
     {
 		  *(str+i) = strtoull(json->valuestring, NULL, 16);
-      printf("json >>>>>> struct: valuestring[%s], uint64[%llx]\n", json->valuestring, *(str+i));
+      printd("json >>>>>> struct: valuestring[%s], uint64[%llx]\n", json->valuestring, *(str+i));
     }
   }
   else
@@ -111,7 +128,7 @@ static void sjb_bind_uint64(cJSON* json, int m, uint64 *str, int i, int size)
     char t[64];
     sprintf(t, "%llx", *(str+i));
     cJSON_SetStrValue(json, t);
-    printf("struct >>>>>> json: t[%s], uint64[%llx]\n", t, *(str+i));
+    printd("struct >>>>>> json: t[%s], uint64[%llx]\n", t, *(str+i));
   }
 }
 
@@ -187,7 +204,7 @@ static void sjb_bind_array(cJSON* json, int m, char *str, int size, int* sub, sj
   int j = 0;
  
   ARR_CURR(sub) += 1;
-  printf("s:%d, curr:%d, num:%d, [%d, %d, %d, %d], size:%d\n"
+  printd("s:%d, curr:%d, num:%d, [%d, %d, %d, %d], size:%d\n"
     , ARR_STRING(sub), ARR_CURR(sub), ARR_SUBN(sub), sub[3+0], sub[3+1], sub[3+2], sub[3+3]
     , size);
     
@@ -201,18 +218,18 @@ static void sjb_bind_array(cJSON* json, int m, char *str, int size, int* sub, sj
     			
     			if( ARR_STRING(sub) && ARR_CURR(sub) + 1 == ARR_SUBN(sub))
     			{
-    			  printf("<<<<<< string j:%d, tsize:%d\n", j, tsize);
+    			  printd("<<<<<< string j:%d, tsize:%d\n", j, tsize);
     			  cb(child, m, str, j, tsize);
     			}
     			else if (ARR_CURR(sub) == ARR_SUBN(sub))
     		  {
-    		    printf("<<<<<< !!!!!! j:%d, tsize:%d\n", j, tsize);
+    		    printd("<<<<<< !!!!!! j:%d, tsize:%d\n", j, tsize);
     		    cb(child, m, str, j, tsize);
     		  }
     			else
     		  {
     		    ARR_DUP(_sub, sub);
-            printf("<<<<<< [ ] j:%d, size:%d, skip:%d, tsize:%d\n", j, size, j*ARR_SKIP(sub,tsize), tsize);
+            printd("<<<<<< [ ] j:%d, size:%d, skip:%d, tsize:%d\n", j, size, j*ARR_SKIP(sub,tsize), tsize);
     		    sjb_bind_array(child, m, str+j*ARR_SKIP(sub,tsize), ARR_SUBS(sub), _sub, cb, tsize);
     		  }
     		}
@@ -226,19 +243,19 @@ static void sjb_bind_array(cJSON* json, int m, char *str, int size, int* sub, sj
   		  
   		  if( ARR_STRING(sub) && ARR_CURR(sub) + 1 == ARR_SUBN(sub))
   		  {
-  		    printf(">>>>>> string j:%d, tsize:%d\n", j, tsize);
+  		    printd(">>>>>> string j:%d, tsize:%d\n", j, tsize);
     			cb(jani, m, str, j, tsize);
   		  }
   		  else if(ARR_CURR(sub) == ARR_SUBN(sub))
   		  {
-  		    printf(">>>>>> !!!!!! j:%d, tsize:%d\n", j, tsize);
+  		    printd(">>>>>> !!!!!! j:%d, tsize:%d\n", j, tsize);
     			cb(jani, m, str, j, tsize);
   		  }
   		  else
   		  {
     			jani->type = cJSON_Array;
     			ARR_DUP(_sub, sub);
-    			printf(">>>>>> [ ] j:%d, size:%d, skip:%d, tsize:%d\n", j, size, j*ARR_SKIP(sub,tsize), tsize);
+    			printd(">>>>>> [ ] j:%d, size:%d, skip:%d, tsize:%d\n", j, size, j*ARR_SKIP(sub,tsize), tsize);
     			sjb_bind_array(jani, m, str+j*ARR_SKIP(sub,tsize), ARR_SUBS(sub), _sub, cb, tsize);
   		  }
   		  cJSON_AddItemToArray(json, jani);
@@ -278,10 +295,10 @@ static void sjb_bind_array(cJSON* json, int m, char *str, int size, int* sub, sj
   __ELE_SIZE(HOLDER,SIZE); \
   if(m) { if(!json) break; cJSON* jani = cJSON_GetObjectItem(json, #HOLDER); if(!jani) break;\
       *n = cJSON_GetArraySize(jani); *n = (*n > SIZE)?SIZE:*n;\
-      printf("<<<<<< @@@ %s [%d] @@@\n", #HOLDER, *n);\
+      printd("<<<<<< @@@ %s [%d] @@@\n", #HOLDER, *n);\
       sjb_bind_array(jani, m, (char*)((str+i)-> HOLDER), *n, SUB, (sjb_bind_T*)sjb_bind_##TYPE, TSIZE);}\
   else {cJSON* jani = cJSON_CreateArray(); \
-  		printf(">>>>>> @@@ %s [%d] @@@\n", #HOLDER, *n);\
+  		printd(">>>>>> @@@ %s [%d] @@@\n", #HOLDER, *n);\
   		cJSON_AddItemToObject(json, #HOLDER, jani);\
       sjb_bind_array( jani, m, (char*)((str+i)-> HOLDER), *n, SUB, (sjb_bind_T*)sjb_bind_##TYPE, TSIZE);}\
 }while(0)
@@ -338,6 +355,7 @@ typedef char string;
 #undef uint32
 #undef uint16
 #undef uint8
+#undef bool
 #undef UNION_B
 #undef UNION_C
 #undef UNION_S

@@ -7,10 +7,10 @@
   Version       : Initial Draft
   Author        : Hisilicon multimedia software group
   Created       : 2013/05/08
-  Description   : 
+  Description   :
   History       :
   1.Date        : 2013/05/08
-    Author      : 
+    Author      :
     Modification: Created file
 
 ******************************************************************************/
@@ -111,6 +111,7 @@ HI_S32 HI_MPI_VI_DisableBayerDump(VI_DEV ViDev);
 HI_S32 HI_MPI_VI_EnableBayerRead(VI_DEV ViDev);
 HI_S32 HI_MPI_VI_DisableBayerRead(VI_DEV ViDev);
 HI_S32 HI_MPI_VI_SendBayerData(VI_DEV ViDev, const VI_RAW_DATA_INFO_S  *pstRawData, HI_S32 s32MilliSec);
+HI_S32 HI_MPI_VI_SendBayerDataEx(VI_DEV ViDev, const VI_RAW_DATA_INFO_S *pastRawData[], HI_U32 u32DataNum, HI_S32 s32MilliSec);
 
 HI_S32 HI_MPI_VI_SetDCIParam(VI_DEV ViDev, const VI_DCI_PARAM_S *pstDciParam);
 HI_S32 HI_MPI_VI_GetDCIParam(VI_DEV ViDev, VI_DCI_PARAM_S *pstDciParam);
@@ -129,6 +130,8 @@ HI_S32 HI_MPI_VI_DISRun(VI_CHN ViChn);
 HI_S32 HI_MPI_VI_DISExit(VI_CHN ViChn);
 HI_S32 HI_MPI_VI_RegisterDISCallback(VI_CHN ViChn, VI_DIS_CALLBACK_S *pstDISCallback);
 HI_S32 HI_MPI_VI_UnRegisterDISCallback(VI_CHN ViChn);
+HI_S32 HI_MPI_VI_SetDISDebug(HI_BOOL bDebug);
+
 
 /*These functions only apply to hi3519v101*/
 HI_S32 HI_MPI_VI_SetStitchCorrectionAttr(VI_CHN ViChn, const VI_STITCH_CORRECTION_ATTR_S *pstCorretionAttr);
@@ -146,6 +149,11 @@ HI_S32 HI_MPI_VI_ReleaseSnapRaw(VI_DEV ViDev, VI_RAW_FRAME_INFO_S *pstFrameInfo)
 HI_S32 HI_MPI_VI_SendSnapRaw(VI_DEV ViDev, const VI_RAW_FRAME_INFO_S *pstFrameInfo,  HI_S32 s32MilliSec);
 HI_S32 HI_MPI_VI_SetBayerReadAttr(VI_DEV ViDev, const VI_BAYER_READ_ATTR_S *pstBayReadAttr);
 HI_S32 HI_MPI_VI_GetBayerReadAttr(VI_DEV ViDev, VI_BAYER_READ_ATTR_S *pstBayReadAttr);
+
+/*These functions only bt1120/BT656 get Af statistics info,only support hi3519V101*/
+HI_S32 HI_MPI_VI_SetAFStatisticsConfig(VI_CHN ViChn, const ISP_FOCUS_STATISTICS_CFG_S *pstAFStatConfig);
+HI_S32 HI_MPI_VI_GetAFStatisticsConfig(VI_CHN ViChn, ISP_FOCUS_STATISTICS_CFG_S *pstAFStatConfig);
+HI_S32 HI_MPI_VI_GetAFStatistics(VI_CHN ViChn, ISP_AF_STAT_S *pstAFStatistics);
 #ifdef __cplusplus
 #if __cplusplus
 }

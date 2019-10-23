@@ -1,8 +1,8 @@
 /******************************************************************************
   A simple program of Hisilicon Hi35xx audio input/output/encoder/decoder implementation.
-  Copyright (C), 2010-2011, Hisilicon Tech. Co., Ltd.
+  Copyright (C), 2010-2018, Hisilicon Tech. Co., Ltd.
  ******************************************************************************
-    Modification:  2011-2 Created
+    Modification:  2017-2 Created
 ******************************************************************************/
 
 #include <stdlib.h>

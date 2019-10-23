@@ -84,8 +84,6 @@ HI_S32 HI_MPI_SYS_MflushCache(HI_U32 u32PhyAddr, HI_VOID *pVirAddr, HI_U32 u32Si
 ** Access the physical address.
 ** You can use this function to access memory address or register address.
 */
-HI_S32 HI_MPI_SYS_SetReg(HI_U32 u32Addr, HI_U32 u32Value);
-HI_S32 HI_MPI_SYS_GetReg(HI_U32 u32Addr, HI_U32* pu32Value);
 
 HI_S32 HI_MPI_SYS_SetMemConf(MPP_CHN_S* pstMppChn, const HI_CHAR* pcMmzName);
 HI_S32 HI_MPI_SYS_GetMemConf(MPP_CHN_S* pstMppChn, HI_CHAR* pcMmzName);
@@ -112,6 +110,16 @@ HI_S32 HI_MPI_SYS_GetTimeZone(HI_S32 *ps32TimeZone);
 
 HI_S32 HI_MPI_SYS_SetGPSInfo(GPS_INFO_S *pstGPSInfo);
 HI_S32 HI_MPI_SYS_GetGPSInfo(GPS_INFO_S *pstGPSInfo);
+
+HI_S32 HI_MPI_SYS_SetCheckResult(HI_S32 s32Result);
+HI_S32 HI_MPI_SYS_GetCheckResult(HI_S32* ps32Result);
+HI_S32 HI_MPI_SYS_GetCustomCode(HI_U32 *pu32CustomCode);
+
+HI_S32 HI_MPI_LOG_SetLevelConf(LOG_LEVEL_CONF_S *pstConf);
+HI_S32 HI_MPI_LOG_SetWaitFlag(HI_BOOL bWait);
+HI_S32 HI_MPI_LOG_GetLevelConf(LOG_LEVEL_CONF_S *pstConf);
+HI_S32 HI_MPI_LOG_Read(HI_CHAR *pBuf, HI_U32 u32Size);
+HI_VOID HI_MPI_LOG_Close(HI_VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -942,10 +942,10 @@ HI_S32 SAMPLE_COMM_IVE_StartVpss(SIZE_S *pastSize,HI_U32 u32VpssChnNum)
 	HI_U32 u32Depth = 3;
 	VPSS_GRP VpssGrp = 0;
     VPSS_CHN as32VpssChn[] = {VPSS_CHN0, VPSS_CHN3};
-    VPSS_GRP_ATTR_S stVpssGrpAttr;
-    //VPSS_CHN_ATTR_S stVpssChnAttr;
+    VPSS_GRP_ATTR_S stVpssGrpAttr = {0};
+    VPSS_CHN_ATTR_S stVpssChnAttr = {0};
     VPSS_CHN_MODE_S stVpssChnMode;
-	
+    
 	VpssGrp = 0;
 	stVpssGrpAttr.u32MaxW	= pastSize[0].u32Width;
 	stVpssGrpAttr.u32MaxH	= pastSize[0].u32Height;
@@ -957,17 +957,26 @@ HI_S32 SAMPLE_COMM_IVE_StartVpss(SIZE_S *pastSize,HI_U32 u32VpssChnNum)
 	stVpssGrpAttr.enDieMode = VPSS_DIE_MODE_NODIE;
 	stVpssGrpAttr.enPixFmt	= SAMPLE_PIXEL_FORMAT;	
     stVpssGrpAttr.bStitchBlendEn   = HI_FALSE;
+      
 	s32Ret = SAMPLE_COMM_VPSS_StartGroup(VpssGrp, &stVpssGrpAttr);	
 	SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, VPSS_FAIL_0, 
 		"SAMPLE_COMM_VPSS_StartGroup failed,Error(%#x)!\n",s32Ret);	
 
 	for(i = 0; i < u32VpssChnNum; i++)
 	{
+        stVpssChnAttr.s32SrcFrameRate = -1;
+	    stVpssChnAttr.s32DstFrameRate = -1;
+        s32Ret = HI_MPI_VPSS_SetChnAttr(VpssGrp, as32VpssChn[i], &stVpssChnAttr);
+        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, VPSS_FAIL_1, 
+			"HI_MPI_VPSS_SetChnAttr failed, Error(%#x),VpssGrp(%#x),VpssChn(%#x)!\n", 
+			s32Ret,VpssGrp,as32VpssChn[i]); 
+        
 		stVpssChnMode.enChnMode = VPSS_CHN_MODE_USER;
 		stVpssChnMode.u32Width	= pastSize[i].u32Width;
 		stVpssChnMode.u32Height = pastSize[i].u32Height;
 		stVpssChnMode.enPixelFormat = SAMPLE_PIXEL_FORMAT;
 		stVpssChnMode.enCompressMode = COMPRESS_MODE_NONE;
+        stVpssChnMode.bDouble = HI_FALSE;
 		
 		s32Ret = HI_MPI_VPSS_SetChnMode(VpssGrp, as32VpssChn[i], &stVpssChnMode);
 		SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, VPSS_FAIL_1, 
@@ -979,12 +988,10 @@ HI_S32 SAMPLE_COMM_IVE_StartVpss(SIZE_S *pastSize,HI_U32 u32VpssChnNum)
 			"HI_MPI_VPSS_EnableChn failed, Error(%#x),VpssGrp(%#x),VpssChn(%#x)!\n", 
 			s32Ret,VpssGrp,as32VpssChn[i]); 
 
-
 		s32Ret = HI_MPI_VPSS_SetDepth(VpssGrp, as32VpssChn[i], u32Depth);
 		SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, VPSS_FAIL_1, 
 			"HI_MPI_VPSS_SetDepth failed, Error(%#x),VpssGrp(%#x),VpssChn(%#x)!\n",
 			s32Ret,VpssGrp,as32VpssChn[i]); 
-		
 	}
 
 	return s32Ret;

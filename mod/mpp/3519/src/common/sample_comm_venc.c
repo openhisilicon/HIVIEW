@@ -1,7 +1,7 @@
 /******************************************************************************
-  Some simple Hisilicon Hi35xx video encode functions.  Copyright (C), 2010-2011, Hisilicon Tech. Co., Ltd.
+  Some simple Hisilicon Hi35xx video encode functions.  Copyright (C), 2010-2018, Hisilicon Tech. Co., Ltd.
  ******************************************************************************
-    Modification:  2011-2 Created******************************************************************************/
+    Modification:  2017-2 Created******************************************************************************/
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -738,6 +738,18 @@ HI_S32 SAMPLE_COMM_VENC_SaveStream(PAYLOAD_TYPE_E enType, FILE* pFd, VENC_STREAM
     return s32Ret;
 }
 
+//maohw
+HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VENC_GETSTREAM_PARA_S* pstPara, VENC_STREAM_S* pstStream)
+{
+    if(pstPara->cb)
+    {
+      pstPara->cb(VencChn, PT, pstStream, pstPara->uargs);
+    }
+
+    return HI_SUCCESS;
+}
+
+
 
 /******************************************************************************
 * funciton : the process of physical address retrace
@@ -905,9 +917,9 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType, VIDEO_NOR
                 stH264FixQp.u32Gop = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
                 stH264FixQp.u32SrcFrmRate = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
                 stH264FixQp.fr32DstFrmRate = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
-                stH264FixQp.u32IQp = 20;
-                stH264FixQp.u32PQp = 23;
-				stH264FixQp.u32BQp = 23;
+                stH264FixQp.u32IQp = 33;
+                stH264FixQp.u32PQp = 33;
+				stH264FixQp.u32BQp = 33;
                 memcpy(&stVencChnAttr.stRcAttr.stAttrH264FixQp, &stH264FixQp, sizeof(VENC_ATTR_H264_FIXQP_S));
             }
             else if (SAMPLE_RC_VBR == enRcMode)
@@ -1011,7 +1023,7 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType, VIDEO_NOR
             if (SAMPLE_RC_FIXQP == enRcMode)
             {
                 stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_MJPEGFIXQP;
-                stMjpegeFixQp.u32Qfactor        = 90;
+                stMjpegeFixQp.u32Qfactor        = 50;
                 stMjpegeFixQp.u32SrcFrmRate      = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
                 stMjpegeFixQp.fr32DstFrmRate = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
                 memcpy(&stVencChnAttr.stRcAttr.stAttrMjpegeFixQp, &stMjpegeFixQp,
@@ -1175,9 +1187,9 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType, VIDEO_NOR
                 stH265FixQp.u32Gop = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
                 stH265FixQp.u32SrcFrmRate = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
                 stH265FixQp.fr32DstFrmRate = (VIDEO_ENCODING_MODE_PAL == enNorm) ? 25 : 30;
-                stH265FixQp.u32IQp = 20;
-                stH265FixQp.u32PQp = 23;
-                stH265FixQp.u32BQp = 25;
+                stH265FixQp.u32IQp = 33;
+                stH265FixQp.u32PQp = 33;
+                stH265FixQp.u32BQp = 33;
                 memcpy(&stVencChnAttr.stRcAttr.stAttrH265FixQp, &stH265FixQp, sizeof(VENC_ATTR_H265_FIXQP_S));
             }
             else if (SAMPLE_RC_VBR == enRcMode)
@@ -1561,16 +1573,21 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             return NULL;
         }
         
-        snprintf(aszFileName[i],32, "stream_chn%d%s", i, szFilePostfix);
-        
-        pFile[i] = fopen(aszFileName[i], "wb");
-        
-        if (!pFile[i])
+        if(0) //maohw
         {
-            SAMPLE_PRT("open file[%s] failed!\n",
-                       aszFileName[i]);
-            return NULL;
-        }        /* Set Venc Fd. */
+          snprintf(aszFileName[i],32, "stream_chn%d%s", i, szFilePostfix);
+          
+          pFile[i] = fopen(aszFileName[i], "wb");
+          
+          if (!pFile[i])
+          {
+              SAMPLE_PRT("open file[%s] failed!\n",
+                         aszFileName[i]);
+              return NULL;
+          }
+        }
+        
+        /* Set Venc Fd. */
         VencFd[i] = HI_MPI_VENC_GetFd(i);
         if (VencFd[i] < 0)
         {
@@ -1673,7 +1690,9 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                      step 2.5 : save frame to file
                     *******************************************************/
                     #ifndef __HuaweiLite__
-                    s32Ret = SAMPLE_COMM_VENC_SaveStream(enPayLoadType[i], pFile[i], &stStream);
+                    //maohw
+                    //s32Ret = SAMPLE_COMM_VENC_SaveStream(enPayLoadType[i], pFile[i], &stStream);
+                    s32Ret = SAMPLE_COMM_VENC_CbStream(i, enPayLoadType[i], pstPara, &stStream);
                     #else
 
                     s32Ret =SAMPLE_COMM_VENC_SaveFile(pFile[i], &stStreamBufInfo[i], &stStream);
@@ -2013,6 +2032,15 @@ HI_S32 SAMPLE_COMM_VENC_StartGetStream(HI_S32 s32Cnt)
     gs_stPara.s32Cnt = s32Cnt;
     return pthread_create(&gs_VencPid, 0, SAMPLE_COMM_VENC_GetVencStreamProc, (HI_VOID*)&gs_stPara);
 }
+
+//maohw
+HI_S32 SAMPLE_COMM_VENC_StartGetStreamCb(VENC_CHN VeChn[],HI_S32 s32Cnt, int (*cb)(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs), void *uargs)
+{
+  gs_stPara.uargs = uargs;
+  gs_stPara.cb = cb;
+  return SAMPLE_COMM_VENC_StartGetStream(s32Cnt);
+}
+
 
 /******************************************************************************
 * funciton : start get venc svc-t stream process thread

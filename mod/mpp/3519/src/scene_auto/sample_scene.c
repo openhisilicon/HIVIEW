@@ -42,7 +42,7 @@ void SAMPLE_SCENE_HandleSig(HI_S32 signo)
 #ifdef __HuaweiLite__
 int app_main(int argc, char *argv[])
 #else
-int main(int argc, char* argv[])
+int sample_scene_main(int argc, char* argv[])
 #endif
 {
     int ret = -1;

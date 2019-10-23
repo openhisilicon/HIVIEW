@@ -223,6 +223,10 @@ typedef struct hiAWB_CCM_CONFIG_S
     HI_U32  u32ManualTempValue;	
     HI_U16  u16CCMSpeed;
 
+    HI_U16  au16HighCCM[9];
+    HI_U16  au16LowCCM[9];	
+    HI_U16  u16HighColorTemp;
+    HI_U16  u16LowColorTemp;
 }AWB_CCM_CONFIG_S;
 
 /* the init param of awb alg */
@@ -364,20 +368,7 @@ typedef struct hiISP_AF_PARAM_S
     HI_S32 s32Rsv;
 } ISP_AF_PARAM_S;
 
-/* the statistics of af alg */
-typedef struct hiISP_AF_ZONE_S
-{
-    HI_U16  u16v1;
-    HI_U16  u16h1;
-    HI_U16  u16v2;
-    HI_U16  u16h2;
-    HI_U16  u16y;
-    HI_U16  u16HlCnt;
-} ISP_AF_ZONE_S;
-typedef struct hiISP_AF_STAT_S
-{
-    ISP_AF_ZONE_S stZoneMetrics[AF_ZONE_ROW][AF_ZONE_COLUMN]; /*RO, The zoned measure of contrast*/
-} ISP_AF_STAT_S;
+
 
 typedef struct hiISP_AF_INFO_S
 {

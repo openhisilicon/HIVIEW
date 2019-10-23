@@ -1,9 +1,9 @@
 /******************************************************************************
   Hisilicon Hi35xx sample programs head file.
 
-  Copyright (C), 2010-2011, Hisilicon Tech. Co., Ltd.
+  Copyright (C), 2010-2018, Hisilicon Tech. Co., Ltd.
  ******************************************************************************
-    Modification:  2011-2 Created
+    Modification:  2017-2 Created
 ******************************************************************************/
 
 #ifndef __SAMPLE_COMM_H__
@@ -45,7 +45,11 @@
 ///maohw 
 #include "hi_sns_ctrl.h"
 #include "mpp.h"
-///
+
+#define ALIGN_UP(x, a)           ( ( ((x) + ((a) - 1) ) / a ) * a )
+#define ALIGN_DOWN(x, a)         ( ( (x) / (a)) * (a) )
+
+////////////////////
 
 #include "hi_mipi.h"
 #include <sys/prctl.h>
@@ -141,6 +145,33 @@ extern "C" {
 /*******************************************************
     enum define
 *******************************************************/
+//maohw
+enum // hi_comm_video.h:PIC_SIZE_E
+{
+    //PIC_CIF = ,
+    PIC_D1_PAL = PIC_D1,    /* 720 * 576 */
+    PIC_D1_NTSC= PIC_D1,    /* 720 * 480 */
+    PIC_720P   = PIC_HD720, /* 1280 * 720  */
+    PIC_1080P  = PIC_HD1080,/* 1920 * 1080 */
+    //PIC_2592x1520 = ,
+    PIC_2592x1536   = PIC_2592x1520,
+    PIC_2592x1944 = PIC_5M,
+    //--PIC_2716x1524,
+    PIC_3840x2160 = PIC_UHD4K,
+    //--PIC_4096x2160,
+    PIC_3000x3000 = PIC_3Kx3K,
+    PIC_4000x3000 = PIC_12M,
+    //--PIC_7680x4320,
+    //--PIC_3840x8640,
+    //PIC_BUTT
+};
+enum // hi_comm_video.h:PIXEL_FORMAT_E
+{
+  PIXEL_FORMAT_ARGB_1555 = PIXEL_FORMAT_RGB_1555,
+};
+
+/////////////////////
+
 
 typedef enum sample_ispcfg_opt_e
 {
@@ -167,7 +198,7 @@ typedef enum sample_vi_mode_e
     PANASONIC_MN34220_MIPI_1080P_30FPS,
     PANASONIC_MN34220_MIPI_720P_120FPS,
     SONY_IMX178_LVDS_5M_30FPS,
-    SONY_IMX226_LVDS_4K_30FPS,    
+    SONY_IMX226_LVDS_4K_30FPS,
     SONY_IMX226_LVDS_9M_30FPS,
 	SONY_IMX226_LVDS_12M_30FPS,
 	SONY_IMX226_LVDS_4K_60FPS,
@@ -194,6 +225,7 @@ typedef enum sample_vi_mode_e
     OMNIVISION_OV5658_MIPI_5M_30FPS,
     SONY_IMX326_MIPI_5M_30FPS,
     OMNIVISION_OS05A_MIPI_5M_30FPS,
+    OMNIVISION_OS08A_MIPI_4K_30FPS,
 } SAMPLE_VI_MODE_E;
 
 typedef enum
@@ -260,7 +292,7 @@ typedef enum sample_sensor_num_e
 {
     SAMPLE_SENSOR_SINGLE = 0,
     SAMPLE_SENSOR_DOUBLE   = 1,
-    SAMPLE_SENSOR_BUT  
+    SAMPLE_SENSOR_BUT
 } SAMPLE_SENSOR_NUM_E;
 
 /*******************************************************
@@ -294,6 +326,9 @@ typedef struct sample_venc_getstream_s
 {
     HI_BOOL bThreadStart;
     HI_S32  s32Cnt;
+    //maohw
+    void *uargs;
+    int (*cb)(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs);
 } SAMPLE_VENC_GETSTREAM_PARA_S;
 
 typedef struct sample_vi_config_s
@@ -350,8 +385,8 @@ HI_S32 SAMPLE_COMM_VI_Mode2Size(SAMPLE_VI_MODE_E enViMode, VIDEO_NORM_E enNorm, 
 VI_DEV SAMPLE_COMM_VI_GetDev(SAMPLE_VI_MODE_E enViMode, VI_CHN ViChn);
 HI_S32 SAMPLE_COMM_VI_StartDev(VI_DEV ViDev, SAMPLE_VI_MODE_E enViMode);
 HI_S32 SAMPLE_COMM_VI_StartChn(VI_CHN ViChn, RECT_S* pstCapRect, SIZE_S* pstTarSize, SAMPLE_VI_CONFIG_S* pstViConfig);
-HI_S32 SAMPLE_COMM_VI_StartBT656(SAMPLE_VI_CONFIG_S* pstViConfig);
-HI_S32 SAMPLE_COMM_VI_StopBT656(SAMPLE_VI_MODE_E enViMode);
+HI_S32 SAMPLE_COMM_VI_StartBT1120(SAMPLE_VI_CONFIG_S* pstViConfig);
+HI_S32 SAMPLE_COMM_VI_StopBT1120(SAMPLE_VI_MODE_E enViMode);
 HI_S32 SAMPLE_COMM_VI_BindVpss(SAMPLE_VI_MODE_E enViMode);
 HI_S32 SAMPLE_COMM_VI_UnBindVpss(SAMPLE_VI_MODE_E enViMode);
 HI_S32 SAMPLE_COMM_VI_BindVenc(SAMPLE_VI_MODE_E enViMode);
@@ -421,6 +456,8 @@ HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_BOOL bSaveJpg, HI_BOOL 
 
 HI_S32 SAMPLE_COMM_VENC_SnapStop(VENC_CHN VencChn);
 HI_S32 SAMPLE_COMM_VENC_StartGetStream(HI_S32 s32Cnt);
+//maohw
+HI_S32 SAMPLE_COMM_VENC_StartGetStreamCb(VENC_CHN VeChn[],HI_S32 s32Cnt, int (*cb)(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs), void *uargs);
 HI_S32 SAMPLE_COMM_VENC_StopGetStream();
 HI_S32 SAMPLE_COMM_VENC_BindVpss(VENC_CHN VencChn, VPSS_GRP VpssGrp, VPSS_CHN VpssChn);
 HI_S32 SAMPLE_COMM_VENC_UnBindVpss(VENC_CHN VencChn, VPSS_GRP VpssGrp, VPSS_CHN VpssChn);
@@ -462,6 +499,8 @@ HI_S32 SAMPLE_COMM_AUDIO_StopAenc(HI_S32 s32AencChnCnt);
 HI_S32 SAMPLE_COMM_AUDIO_StartAdec(ADEC_CHN AdChn, PAYLOAD_TYPE_E enType);
 HI_S32 SAMPLE_COMM_AUDIO_StopAdec(ADEC_CHN AdChn);
 HI_VOID SAMPLE_COMM_SYS_Exit(void);
+HI_S32 SAMPLE_SYS_SetReg(HI_U32 u32Addr, HI_U32 u32Value);
+HI_S32 SAMPLE_SYS_GetReg(HI_U32 u32Addr, HI_U32 *pu32Value);
 
 #ifdef __cplusplus
 #if __cplusplus

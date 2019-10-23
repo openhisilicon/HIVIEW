@@ -282,7 +282,9 @@ typedef struct
 typedef struct
 {
 	VPSS_GRP VpssGrp;
+    HI_U32 u32NrSel;    /* 0: 3DNR S; 1: 3DNR X */
 	HI_SCENEAUTO_3DNRPARAM_S st3dnrParam;
+    HI_SCENEAUTO_3DNRPARAM_X_S st3dnrParamX;
 }HI_SCENEAUTO_VPSSPARAM_S;
 
 typedef struct

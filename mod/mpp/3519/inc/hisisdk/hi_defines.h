@@ -60,7 +60,7 @@ extern "C"{
     #error HICHIP define may be error
 #endif
 
-#define VEDU_MAX_CNT 2                 /*max vedu number,3531/3521(2), 3521(1)*/       
+#define VEDU_MAX_CNT 2                 /*max vedu number,3531/3521(2), 3521(1)*/
 
 
 #define DEFAULT_ALIGN                16
@@ -82,7 +82,7 @@ extern "C"{
 #define VENC_MAX_NAME_LEN            16
 #define VENC_MAX_CHN_NUM             16
 #define VENC_MAX_GRP_NUM             16
-#define VEDU_NUM                     1  
+#define VEDU_NUM                     1
 #define H264E_MAX_WIDTH              4608
 #define H264E_MAX_HEIGHT             4608
 #define H264E_MIN_WIDTH              256
@@ -177,6 +177,7 @@ extern "C"{
 
 #define VIU_MAX_CHN_NUM              (VIU_MAX_PHYCHN_NUM + VIU_MAX_EXT_CHN_NUM)
 #define VIU_MAX_UFLIST_NUM           (VIU_MAX_CHN_NUM + VIU_MAX_RAWCHN_NUM)
+#define VIU_MAX_RAWLIST_NUM 		 8
 
 #define VIU_DEV_MIN_WIDTH       64
 #define VIU_DEV_MIN_HEIGHT      64
@@ -229,7 +230,7 @@ extern "C"{
 #define AO_DEV_MIN_NUM          0
 #define AO_DEV_MAX_NUM          1
 #define AIO_MAX_NUM             1
-#define AIO_MAX_CHN_NUM         2
+#define AIO_MAX_CHN_NUM         16
 #define AENC_MAX_CHN_NUM        32
 #define ADEC_MAX_CHN_NUM        32
 
@@ -373,6 +374,43 @@ VB size calculate for compressed frame.
 				RawChn = VIU_MAX_CHN_NUM + 3;\
 			}\
 	}while(0)
+
+
+#define VENC_H264_BLK_SIZE(Width, Height, size)\
+    do{\
+        HI_U32 u32AlignWidth, u32AlignHeight, u32Align256Width, u32Align2048Width;\
+        HI_U32 u32PmeSize, u32PmeInfoSize;\
+        HI_U32 u32YSize, u32CSize, u32HeaderSize;\
+        u32AlignWidth     = ((Width  +   63)>> 6)<<6;\
+        u32AlignHeight    = ((Height +   15)>> 4)<<4;\
+        u32Align256Width  = ((Width  +  255)>> 8)<<8;\
+        u32Align2048Width = ((Width  + 2047)>>11)<<11;\
+        u32HeaderSize  = (u32Align256Width>>4) * (u32AlignHeight>>4) * 4;  \
+        u32YSize       = u32AlignWidth * u32AlignHeight;\
+        u32CSize       = u32YSize >> 1;  \
+        u32PmeSize     = (u32AlignWidth * u32AlignHeight) >> 4;  \
+        u32PmeInfoSize = (u32Align2048Width * u32AlignHeight) >> 11;    \
+        size = u32YSize + u32CSize + u32HeaderSize + u32PmeSize + u32PmeInfoSize;\
+    }while(0)
+
+
+#define VENC_H265_BLK_SIZE(Width, Height, size)\
+    do{\
+        HI_U32 u32AlignWidth, u32AlignHeight, u32Align512Width;\
+        HI_U32 u32TmvSize, u32PmeSize, u32PmeInfoSize, u32LcuNum;\
+        HI_U32 u32YSize, u32CSize, u32HeaderSize;\
+        u32AlignWidth    = ((Width  +  63)>>6)<<6;\
+        u32AlignHeight   = ((Height +  63)>>6)<<6;\
+        u32Align512Width = ((Width  + 511)>>9)<<9;\
+        u32LcuNum = (u32AlignWidth>>6) * (u32AlignHeight>>6);\
+        u32TmvSize     = u32LcuNum << 7;\
+        u32PmeSize     = u32LcuNum << 8;\
+        u32PmeInfoSize = ((u32Align512Width * u32AlignHeight) >> 10);\
+        u32HeaderSize  = u32LcuNum << 6;  \
+        u32YSize       = u32AlignWidth * u32AlignHeight;\
+        u32CSize       = u32YSize >> 1;\
+        size = u32YSize + u32CSize + u32HeaderSize + u32TmvSize + u32PmeSize + u32PmeInfoSize;\
+    }while(0)
 
 #ifdef __cplusplus
 #if __cplusplus
