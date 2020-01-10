@@ -3,7 +3,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-
+#include <stdlib.h>
+#include <time.h>
+ 
 #include "rtc.h"
 #include "cfg.h"
 #include "hi_rtc.h"
@@ -76,8 +78,7 @@ gsf_time_t*	tm2gsf(struct tm* tm, gsf_time_t* gsf)
 	return gsf;
 }
 
-
-int rtc_init()
+int rtc_init(void)
 {
   rtc_fd = open(DEV_NAME, O_RDWR);
   if (rtc_fd < 0) 
@@ -104,7 +105,29 @@ int rtc_init()
 		tv.tv_usec = 0;
 		settimeofday(&tv, &tz);
   }
-  return -1;
+  return 0;
+}
+
+int rtc_get(gsf_time_t *gsf)
+{ 
+  time_t _time = time(NULL);
+  struct tm _tm;
+  localtime_r(&_time, &_tm);
+  tm2gsf(&_tm, gsf);
+  
+  char *z = getenv("TZ");
+  printf("getenv >>> TZ=[%s]\n", z);
+  
+  if(z)
+  {
+    char s = '+';
+    int hour = 0, min = 0;
+    
+    sscanf(z, "UTC%c%d:%02d", &s, &hour, &min);
+    gsf->zone = (hour*60 + min) * (s=='+'?1:-1);
+  }
+  
+  return 0;
 }
 
 
@@ -129,4 +152,56 @@ int rtc_set(gsf_time_t *gsf)
     return ret;
   }
   return -1;
+}
+
+int ntp_set(gsf_ntp_t *ntp)
+{
+  system("killall watch ntpd");
+  
+  if(ntp->prog > 0)
+  {
+    //hwclock -s; ntpd -qNn -p 0.cn.pool.ntp.org; hwclock -w;
+    char cmd[128];
+    
+    sprintf(cmd, "echo \"%s\" > /etc/ntp.conf", ntp->server1);
+    system(cmd);
+    
+    sprintf(cmd, "echo \"$s\" >> /etc/ntp.conf", ntp->server2);
+    system(cmd);
+    
+    system("hwclock -s");
+    
+    sprintf(cmd, "watch -n %d \"ntpd -qNn; hwclock -w;\" &", ntp->prog);
+    system(cmd);
+  }
+  
+  return 0;
+}
+
+static char zone_env[128];
+
+int zone_set(int zone)
+{
+  int hour = abs(zone)/60;
+  int min  = abs(zone)%60;
+  char z[32];
+  char cmd[128];
+  
+  sprintf(z, "UTC%c%d:%02d", zone>0?'+':'-', hour, min);
+  sprintf(zone_env, "TZ=%s", z);
+  printf("zone_env:[%s]\n", zone_env);
+  putenv(zone_env);
+  
+  //sprintf(cmd, "sed '/^export TZ=/{h;s/=.*/=%s/};${x;/^$/{s//export TZ=%s/;H};x}' /etc/profile", z, z);
+  sprintf(cmd, "echo -e \"\nexport TZ=%s\" >> /etc/profile", z);
+  printf("cmd:[%s]\n", cmd);
+  system(cmd);
+  tzset();
+  
+  printf( "daylight = %d\n", daylight);
+  printf( "timezone = %ld\n", timezone/60);
+  printf( "tzname[0] = %s\n", tzname[0]);
+  
+  
+  return 0;
 }

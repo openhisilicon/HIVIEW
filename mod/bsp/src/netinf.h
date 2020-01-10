@@ -12,6 +12,14 @@ int netinf_init(void);
 
 //set eth;
 int netinf_eth_set(gsf_eth_t *eth);
+int netinf_eth_get(gsf_eth_t *eth);
+
+// set wifi;
+int netinf_wifi_set(gsf_wifi_t *wifi);
+
+int netinf_wifi_list(gsf_wifi_list_t list[128]);
+
+
 
 #ifdef __cplusplus
 }

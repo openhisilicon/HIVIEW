@@ -1,12 +1,14 @@
 #include "mpp.h"
 #include "fw/libfont/inc/gsf_font_draw.h"
 #include "rgn.h"
+#include "cfg.h"
 
-static gsf_rgn_ini_t rgn_ini = {.st_num = 1};
+static gsf_rgn_ini_t rgn_ini = {.st_num = 3};
 
 int gsf_rgn_init(gsf_rgn_ini_t *ini)
 {
-  rgn_ini = *ini;
+  if(ini)
+    rgn_ini = *ini;
   return 0;
 }
 
@@ -41,8 +43,6 @@ enum {
 
 #define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*3+8*3) + (type)*(8*3) + (st)*(8) + idx)
 static gsf_rgn_obj_t rgn_obj[8*3+8*3 + 8*3+8*3];
-
-
 
 int utf8_byte_num(unsigned char firstCh)
 {
@@ -299,7 +299,8 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     int _osdH = info->osdH;
     
     gsf_parse_text(osd->text, info->lines, &info->lineN, &info->colN);
-    gsf_calc_fontsize(1920, 1080, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
+    
+    gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
     
     info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
     info->osdH = info->fontH * info->lineN + 1;
@@ -394,8 +395,8 @@ int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.enCoverType = AREA_RECT;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.s32X = ALIGN_UP(vmask->rect[0], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.s32Y = ALIGN_UP(vmask->rect[1], 2);
-    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.u32Width  = ALIGN_UP(vmask->rect[2], 2);
-    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.u32Height = ALIGN_UP(vmask->rect[3], 2);
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.u32Width  = ALIGN_UP(vmask->rect[2], 2)?:2;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.u32Height = ALIGN_UP(vmask->rect[3], 2)?:2;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.u32Layer         = idx;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.u32Color         = vmask->color;//0x0000ffff;
     //rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.enCoordinate     = RGN_ABS_COOR;

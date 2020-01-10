@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include "cfg.h"
 
+
+char codec_parm_path[128] = {0};
+
 gsf_codec_ipc_t codec_ipc = {
   .venc = {
     [0] = {
@@ -26,6 +29,17 @@ gsf_codec_ipc_t codec_ipc = {
         .profile= 0,
         .qp     = 0,
     },
+    [2] = {
+        .en     = 1,
+        .type   = 4,
+        .width  = 1920,
+        .height = 1080,
+        .gop    = 30,
+        .flow   = 0,
+        .bitrate= 2000,
+        .profile= 0,
+        .qp     = 0,
+    }
   },
   .aenc = {
     0,

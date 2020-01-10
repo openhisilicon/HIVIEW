@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include "cfg.h"
 
+char bsp_parm_path[128] = {0};
+char bsp_def_path[128] = {0};
+
 gsf_bsp_def_t bsp_def = {
   .board = {
     .model = "IPC123",
@@ -11,12 +14,27 @@ gsf_bsp_def_t bsp_def = {
     .sensor = {"imx335", "", },
     .caps   = 0xFFFFFFFF,
     },
+  .base = {
+    .name = "gsfIpc",
+    .language = 0,
+    .zone     = -8*60,
+  },
   .eth  = {
     .dhcp = 0,
     .ipv6 = 0,
-    .ipaddr = "192.168.1.66",
+    .ipaddr = "192.168.0.2",
     .netmask = "255.255.255.0",
-    .gateway = "192.168.1.1",
+    .gateway = "192.168.0.1",
+    .dns1    = "202.96.134.133",
+    .dns2    = "202.96.128.86",
+  },
+  .wifi = {
+    .en = 0,
+  },
+  .ntp = {
+    .prog = 600,
+    .server1 = "server 0.cn.pool.ntp.org",
+    .server2 = "server 1.cn.pool.ntp.org",
   },
   .admin = {
     .name = "admin",

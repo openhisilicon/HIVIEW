@@ -10,6 +10,13 @@ STRUCT(gsf_board_t)
   FIELD(uint64,   caps);
 };
 
+STRUCT(gsf_base_t)
+{
+  STRING(name,   32);   // name;
+  FIELD(int, language); // language;
+  FIELD(int, zone);     // timezone;
+};
+
 STRUCT(gsf_user_t)
 {
   STRING(name,   32);
@@ -35,19 +42,21 @@ STRUCT(gsf_wifi_t)
   STRING(pwd,   64);
 };
 
-STRUCT(gsf_bsp_def_t)
+STRUCT(gsf_wifi_list_t)
 {
-  FIELD(gsf_board_t, board);
-  FIELD(gsf_eth_t,   eth);
-  FIELD(gsf_wifi_t,  wifi);
-  FIELD(gsf_user_t,  admin);
+  STRING(ssid,  64);
+  STRING(mac,   32);
+  FIELD(int,    quality);
+  FIELD(int,    encrypt);
+  FIELD(int,    frequency);
+  FIELD(int,    channle);
 };
 
-STRUCT(gsf_bsp_parm_t)
+STRUCT(gsf_ntp_t)
 {
-  FIELD(gsf_eth_t,   eth);
-  FIELD(gsf_wifi_t,  wifi);
-  ARRAY(gsf_user_t, users, 8);
+  FIELD(int, prog);     // 0: disable, > 0: enable (PROG);
+  STRING(server1,  64); // ntpserver;
+  STRING(server2,  64); // ntpserver;
 };
 
 STRUCT(gsf_time_t)
@@ -60,9 +69,28 @@ STRUCT(gsf_time_t)
 	FIELD(char, minute);    /* Minutes (0-59) */
 	FIELD(char, second);    /* Seconds (0-60) */
 	FIELD(char, isdst);     /* Daylight saving time */
-	FIELD(int,  zone);      /* timezone second */
+	FIELD(int,  zone);      /* timezone minute */
 };
 
+
+STRUCT(gsf_bsp_def_t)
+{
+  FIELD(gsf_board_t, board);
+  FIELD(gsf_base_t,  base);
+  FIELD(gsf_eth_t,   eth);
+  FIELD(gsf_wifi_t,  wifi);
+  FIELD(gsf_ntp_t,   ntp);
+  FIELD(gsf_user_t,  admin);
+};
+
+STRUCT(gsf_bsp_parm_t)
+{
+  FIELD(gsf_base_t,  base);
+  FIELD(gsf_eth_t,   eth);
+  FIELD(gsf_wifi_t,  wifi);
+  FIELD(gsf_ntp_t,   ntp);
+  ARRAY(gsf_user_t, users, 8);
+};
 
 
 #pragma pack(pop)

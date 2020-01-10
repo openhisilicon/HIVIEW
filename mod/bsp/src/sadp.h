@@ -3,6 +3,11 @@
 
 #include "bsp.h"
 
+enum {
+  GSF_SADP_VER_REQ = (1<<0), // requset-flag;
+  GSF_SADP_VER_MC  = (1<<1), // require-multicast-response;
+};
+
 //peer ip;
 typedef struct {
   char ipaddr[64];
@@ -11,7 +16,7 @@ typedef struct {
 
 //sadp_msg;
 typedef struct {
-  short ver;      // 0x0001
+  short ver;      // ver GSF_SADP_VER_;
   short modid;    // gsf.h
   gsf_user_t user;// auth;
   gsf_msg_t  msg; // msg.h;

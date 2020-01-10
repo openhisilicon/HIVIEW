@@ -1,0 +1,99 @@
+<?xml version="1.0"?><root>	<devname></devname>
+	<ch>		<Item>			<en>false</en>
+			<host>onvif://user:pwd@192.168.1.61:80</host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>true</en>
+			<host>onvif://user:pwd@192.168.1.62:80</host>
+			<transp>1</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host>onvif://user:pwd@192.168.1.63:80</host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>true</en>
+			<host>onvif://user:pwd@192.168.1.64:80</host>
+			<transp>1</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+		<Item>			<en>false</en>
+			<host></host>
+			<transp>0</transp>
+			<st1></st1>
+			<st2></st2>
+</Item>
+</ch>
+</root>

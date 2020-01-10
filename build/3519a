@@ -1,5 +1,5 @@
 export GSF_CPU_ARCH=3519a
-
+export GSF_DEV_TYPE=ipc
 export GSF_HOME=`pwd`
 export GSF_CC="arm-himix200-linux-gcc"
 export GSF_AR=arm-himix200-linux-ar

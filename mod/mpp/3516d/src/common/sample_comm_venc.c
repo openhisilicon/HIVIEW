@@ -1105,7 +1105,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         case PT_JPEG:
             stJpegAttr.bSupportDCF     = HI_FALSE;
             stJpegAttr.stMPFCfg.u8LargeThumbNailNum = 0;
-            stJpegAttr.enReceiveMode                = VENC_PIC_RECEIVE_SINGLE;
+            stJpegAttr.enReceiveMode   = VENC_PIC_RECEIVE_SINGLE;
             memcpy(&stVencChnAttr.stVencAttr.stAttrJpege, &stJpegAttr, sizeof(VENC_ATTR_JPEG_S));
             break;
         default:
@@ -1150,13 +1150,15 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         return s32Ret;
     }
 
-    s32Ret = SAMPLE_COMM_VENC_CloseReEncode(VencChn);
-    if (HI_SUCCESS != s32Ret)
+    if( PT_JPEG != enType) // maohw
     {
-        HI_MPI_VENC_DestroyChn(VencChn);
-        return s32Ret;
+        s32Ret = SAMPLE_COMM_VENC_CloseReEncode(VencChn);
+        if (HI_SUCCESS != s32Ret)
+        {
+            HI_MPI_VENC_DestroyChn(VencChn);
+            return s32Ret;
+        }
     }
-
     return HI_SUCCESS;
 }
 
@@ -1179,16 +1181,21 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         SAMPLE_PRT("SAMPLE_COMM_VENC_Creat faild with%#x! \n", s32Ret);
         return HI_FAILURE;
     }
-    /******************************************
-     step 2:  Start Recv Venc Pictures
-    ******************************************/
-    stRecvParam.s32RecvPicNum = -1;
-    s32Ret = HI_MPI_VENC_StartRecvFrame(VencChn,&stRecvParam);
-    if (HI_SUCCESS != s32Ret)
+    
+    if(enType != PT_JPEG) // maohw
     {
-        SAMPLE_PRT("HI_MPI_VENC_StartRecvPic faild with%#x! \n", s32Ret);
-        return HI_FAILURE;
+      /******************************************
+       step 2:  Start Recv Venc Pictures
+      ******************************************/
+      stRecvParam.s32RecvPicNum = -1;
+      s32Ret = HI_MPI_VENC_StartRecvFrame(VencChn,&stRecvParam);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_VENC_StartRecvPic faild with%#x! \n", s32Ret);
+          return HI_FAILURE;
+      }
     }
+    
     return HI_SUCCESS;
 }
 
@@ -1277,6 +1284,21 @@ HI_S32 SAMPLE_COMM_VENC_SnapStop(VENC_CHN VencChn)
 /******************************************************************************
 * funciton : snap process
 ******************************************************************************/
+static pthread_mutex_t SnapMutex = PTHREAD_MUTEX_INITIALIZER;
+static int(*SnapCB)(int i, VENC_STREAM_S* pstStream, void* u) = NULL;
+static void* SnapU = NULL;
+HI_S32 SAMPLE_COMM_VENC_SnapProcessCB(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+{
+  HI_S32 ret = 0;
+  pthread_mutex_lock(&SnapMutex);
+  SnapCB = cb;
+  SnapU = u;
+  ret = SAMPLE_COMM_VENC_SnapProcess(VencChn, SnapCnt, 0, 0);
+  pthread_mutex_unlock(&SnapMutex);
+  
+  return ret;
+}
+
 
 HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_U32 SnapCnt, HI_BOOL bSaveJpg, HI_BOOL bSaveThm)
 {
@@ -1368,6 +1390,12 @@ HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_U32 SnapCnt, HI_BOOL bS
                     stStream.pstPack = NULL;
                     return HI_FAILURE;
                 }
+                
+                if(SnapCB)
+                {
+                  SnapCB(i, &stStream, SnapU);
+                }
+                
                 if(bSaveJpg || bSaveThm)
                 {
                     char acFile[FILE_NAME_LEN]    = {0};
@@ -1878,7 +1906,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
     HI_U32 u32PictureCnt[VENC_MAX_CHN_NUM]={0};
     HI_S32 VencFd[VENC_MAX_CHN_NUM];
     HI_CHAR aszFileName[VENC_MAX_CHN_NUM][64];
-    FILE* pFile[VENC_MAX_CHN_NUM];
+    FILE* pFile[VENC_MAX_CHN_NUM] = {0};
     char szFilePostfix[10];
     VENC_CHN_STATUS_S stStat;
     VENC_STREAM_S stStream;
@@ -2034,7 +2062,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     /*******************************************************
                      step 2.5 : save frame to file
                     *******************************************************/
-                    if(PT_JPEG == enPayLoadType[i])
+                    if(0)//maohw if(PT_JPEG == enPayLoadType[i])
                     {
                         snprintf(aszFileName[i],32, "stream_chn%d_%d%s", i, u32PictureCnt[i],szFilePostfix);
                         pFile[i] = fopen(aszFileName[i], "wb");
@@ -2077,7 +2105,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     free(stStream.pstPack);
                     stStream.pstPack = NULL;
                     u32PictureCnt[i]++;
-                    if(PT_JPEG == enPayLoadType[i])
+                    if(0)//maohw if(PT_JPEG == enPayLoadType[i])
                     {
                         fclose(pFile[i]);
                     }
@@ -2090,7 +2118,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
     *******************************************************/
     for (i = 0; i < s32ChnTotal; i++)
     {
-        if(PT_JPEG != enPayLoadType[i])
+        if(0)//maohw if(PT_JPEG != enPayLoadType[i])
         {
             fclose(pFile[i]);
         }

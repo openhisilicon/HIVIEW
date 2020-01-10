@@ -1,5 +1,5 @@
 export GSF_CPU_ARCH=3559a
-
+export GSF_DEV_TYPE=ipc
 export GSF_HOME=`pwd`
 export GSF_CC="aarch64-himix100-linux-gcc"
 export GSF_AR=aarch64-himix100-linux-ar

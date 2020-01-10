@@ -11,6 +11,15 @@
 #include "sample_comm.h"
 #include "mpp.h"
 
+
+
+extern HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, HI_U32 u32SupplementConfig);
+extern HI_S32 SAMPLE_VENC_CheckSensor(SAMPLE_SNS_TYPE_E   enSnsType,SIZE_S  stSize);
+extern HI_S32 SAMPLE_VENC_ModifyResolution(SAMPLE_SNS_TYPE_E   enSnsType,PIC_SIZE_E *penSize,SIZE_S *pstSize);
+extern HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RANGE_E enDynamicRange,PIXEL_FORMAT_E enPixelFormat,SIZE_S stSize[],SAMPLE_SNS_TYPE_E enSnsType);
+
+
+
 //#define STR_HELPER(x) #x
 //#define STR(x) STR_HELPER(x)
 //#pragma message("\n\n<<<<<<<<<<<< GSF_CPU_ARCH: " STR(GSF_CPU_ARCH)  " >>>>>>>>>>>>>\n\n")
@@ -303,6 +312,11 @@ int gsf_mpp_venc_dest()
 {
   SAMPLE_COMM_VENC_StopGetStream();
   return 0;  
+}
+
+int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+{
+  return SAMPLE_COMM_VENC_SnapProcessCB(VencChn, SnapCnt, cb, u);
 }
 
 int gsf_mpp_scene_start(char *path, int scenemode)

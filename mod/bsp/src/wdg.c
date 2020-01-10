@@ -8,6 +8,7 @@
 #include "cfg.h"
 #include "watchdog.h"
 
+#define WDG_TO  15
 #define DEV_FILE "/dev/watchdog"
 
 int wdg_fd = -1;
@@ -19,10 +20,16 @@ int wdg_func(void *u)
   return 0;
 }
 
+#if 0
+  insmod hi_osal.ko anony=1;insmod hi_wdt.ko;
+  watchdog -T 10 /dev/watchdog
+  watchdog -t 5 /dev/watchdog
+#endif
 
-int wdg_open(int to)
+int wdg_open(void)
 {
   int ret = 0;
+  int to = WDG_TO;
   to = (to <= 15)?15/2:to/2; //hi_wdg.c
   
 	if(wdg_fd < 0)
@@ -45,7 +52,7 @@ int wdg_open(int to)
 }
 
 
-int wdg_stop(void)
+int wdg_reboot(void)
 {
   if(wdg_fd > 0)
   {

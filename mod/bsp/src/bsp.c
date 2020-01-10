@@ -1,5 +1,8 @@
-#include <unistd.h>
+#include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "inc/gsf.h"
 #include "bsp.h"
 
@@ -34,146 +37,18 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     rsp->err  = 0;
     rsp->size = 0;
 
-    if(1)
-    {
-    	struct timespec _ts;
-      clock_gettime(CLOCK_MONOTONIC, &_ts);
-      printf("id:%d, delay:%d ms\n", req->id, _ts.tv_sec*1000 + _ts.tv_nsec/1000000 - req->ts);     
-    }
+    printf("req->id:%d, isize:%d\n", req->id, isize);
 
     ret = msg_func_proc(req, isize, rsp, osize);
 
     rsp->err = (ret == TRUE)?rsp->err:GSF_ERR_MSG;
     *osize = sizeof(gsf_msg_t)+rsp->size;
+    
+    printf("req->id:%d, ret:%d, rsp->err:%d\n", req->id, ret, rsp->err);
+
 
     return 0;
 }
-
-#include <math.h>
-static int same_subnet(char *sub_mask, char *ip_a, char *ip_b)
-{ 
-  int i;
-  double cnt_m = 0.0;
-  double cnt_a = 0.0;
-  double cnt_b = 0.0;
-  double tmp = 0.0;
- 
-  char *token = NULL;
- 
-  i = 3;
-  for (token = strtok (sub_mask, "."); token != NULL; token = strtok (NULL, ".")) {
-    tmp = atoi (token);
-    tmp = tmp * pow (256, i--);  /* what dose this mean? do you understand */
-    cnt_m += tmp;
-  }
-  
-  i = 3;
-  for (token = strtok (ip_a, "."); token != NULL; token = strtok (NULL, ".")) {
-    tmp = atoi (token);
-    tmp = tmp * pow (256, i--);  /* what dose this mean? do you understand */
-    cnt_a += tmp;
-  }
- 
-  i = 3; /* reset i */
-  for (token = strtok (ip_b, "."); token != NULL; token = strtok (NULL, ".")) {
-    tmp = atoi (token);
-    tmp = tmp * pow (256, i--);
-    cnt_b += tmp;
-  }
- 
-  unsigned long mask   = (unsigned long)cnt_m;
-  unsigned long mask_a = (unsigned long)cnt_a;
-  unsigned long mask_b = (unsigned long)cnt_b;
-
-  mask_a &= mask;
-  mask_b &= mask;
- 
-  if (mask_a == mask_b)
-    return 0;
-  else
-    return -1;
-}
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-static int ip_addr(char* ethname, char *ipaddr, size_t len)
-{
-    int fd;
-    char buffer[20];
-    struct ifreq ifr;
-    struct sockaddr_in *addr;
-
-    if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
-    {
-        strncpy(ifr.ifr_name, ethname, IFNAMSIZ);
-        ifr.ifr_name[IFNAMSIZ - 1] = '\0';
-        if (ioctl(fd, SIOCGIFADDR, &ifr) == 0)
-        {
-            addr = (struct sockaddr_in *) & (ifr.ifr_addr);
-            inet_ntop(AF_INET, &addr->sin_addr, buffer, 20);
-        }
-        else
-        {
-            close(fd);
-            return(-1);
-        }
-    }
-    else
-    {
-        return(-1);
-    }
-
-    if (strlen(buffer) > len - 1)
-    {
-		    close(fd);
-        return(-1);
-    }
-    strncpy(ipaddr, buffer, len);
-    close(fd);
-    return(0);
-}
-
-static int net_mask(char* ethname, char *netmask, size_t len)
-{
-    int fd;
-    char buffer[20];
-    struct ifreq ifr;
-    struct sockaddr_in *addr;
-
-    if ((fd = socket (AF_INET, SOCK_DGRAM, 0)) >= 0)
-    {
-        strncpy(ifr.ifr_name, ethname, IFNAMSIZ);
-        ifr.ifr_name[IFNAMSIZ - 1] = '\0';
-        if (ioctl(fd, SIOCGIFNETMASK, &ifr) == 0)
-        {
-            addr = (struct sockaddr_in *) & (ifr.ifr_addr);
-            inet_ntop(AF_INET, &addr->sin_addr, buffer, 20);
-        }
-        else
-        {
-            close(fd);
-            return(-1);
-        }
-    }
-    else
-    {
-        return(-1);
-    }
-
-    if (strlen(buffer) > len - 1)
-    {
-		    close(fd);
-        return(-1);
-    }
-    strncpy(netmask, buffer, len);
-
-    close(fd);
-    return(0);
-}
-
 
 static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
           , int *osize/*IN&OUT*/, gsf_sadp_peer_t* peer)
@@ -183,9 +58,9 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
   printf("in->ver:%04X, modid:%d, msg.size:%d, peer:[%s:%d]\n"
         , in->ver, in->modid, in->msg.size, peer->ipaddr, peer->port);
   
-  if(in->modid < 0 || in->modid >= GSF_MOD_ID_END)
+  if(!(in->ver&GSF_SADP_VER_REQ) || in->modid < 0 || in->modid >= GSF_MOD_ID_END)
   {
-    printf("modid err.\n", in->modid);
+    printf("err, ver:%04X, modid:%d.\n", in->ver, in->modid);
     *osize = 0;
     return 0;
   }
@@ -197,29 +72,29 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
     *osize = 0;
     return 0;
   }
-  
-  if(1)
+
+  if(in->ver & GSF_SADP_VER_MC)
   {
-    //for test mcast resp;
-    char lcaddr[64];
-    char netmask[64];
-    ip_addr("eth0", lcaddr, sizeof(lcaddr));
-    net_mask("eth0", netmask, sizeof(netmask));
+    char buf[16*1024] = {0};
+    gsf_sadp_msg_t *req = (gsf_sadp_msg_t*)buf;
+    gsf_sadp_peer_t dst = {"238.238.238.238", 8888};
     
-    if(same_subnet(netmask, peer->ipaddr, lcaddr))
-    {
-      printf("not same subnet sendto 238.238.238.238\n");
-      gsf_sadp_peer_t dst = {"238.238.238.238", 8888};
-      gsf_sadp_msg_t in = {.modid = GSF_MOD_ID_END, .msg = {0,}};
-      sadp_cu_gset(&dst, &in, NULL, osize, 0);
-      *osize = 0;
-      return 0;
-    }
+    req->ver   = 0;
+    req->modid = in->modid;
+    memcpy(&req->msg, out, *osize);
+    
+    printf("send MC to 238.238.238.238:8888, modid:%d, msgid:%d\n", in->modid, out->id);
+    sadp_cu_gset(&dst, req, NULL, NULL, 0);
+    
+    *osize = 0;
+    return 0;
   }
 
-  printf("nm_req_sendto(modid:%d) => osize:%d\n\n", in->modid, *osize);
+  printf("send UC to %s:%d, modid:%d, msgid:%d\n\n", peer->ipaddr, peer->port, in->modid, out->id);
   return 0;
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -232,30 +107,43 @@ int main(int argc, char *argv[])
       return -1;
     }
     
-    GSF_LOG_CONN(1, 100);
+    strncpy(bsp_def_path, argv[1], sizeof(bsp_def_path)-1);
+    strncpy(bsp_parm_path, argv[2], sizeof(bsp_parm_path)-1);
     
-    if(json_def_load(argv[1], &bsp_def) < 0)
+    GSF_LOG_CONN(1, 100);
+
+    if(json_def_load(bsp_def_path, &bsp_def) < 0)
     {
-      json_def_save(argv[1], &bsp_def);
-      json_def_load(argv[1], &bsp_def);
+      json_def_save(bsp_def_path, &bsp_def);
+      json_def_load(bsp_def_path, &bsp_def);
     }
     info("def.model:%s\n", bsp_def.board.model);
     
-    if(json_parm_load(argv[2], &bsp_parm) < 0)
+    if(json_parm_load(bsp_parm_path, &bsp_parm) < 0)
     {
+      bsp_parm.base = bsp_def.base;
       bsp_parm.eth = bsp_def.eth;
+      bsp_parm.wifi = bsp_def.wifi;
+      bsp_parm.ntp = bsp_def.ntp;
+            
       bsp_parm.users[0] = bsp_def.admin;
       
-      json_parm_save(argv[2], &bsp_parm);
-      json_parm_load(argv[2], &bsp_parm);
+      json_parm_save(bsp_parm_path, &bsp_parm);
+      json_parm_load(bsp_parm_path, &bsp_parm);
     }
     info("parm.ipaddr:%s\n", bsp_parm.eth.ipaddr);
 
-    
-    wdg_open(15);
+    wdg_open();    
     netinf_init();
+    rtc_init();
+    zone_set(bsp_parm.base.zone);
+    ntp_set(&bsp_parm.ntp);
+
     
-    
+    system("ifconfig eth0:1 192.168.1.2");
+
+
+    // sadp;
     gsf_sadp_ini_t puini = {
       .ethname = "eth0",
       .lcaddr = "0.0.0.0",

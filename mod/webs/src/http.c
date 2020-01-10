@@ -9,9 +9,15 @@
 #include <signal.h>
 #include <stdarg.h>
 
-#include "inc/gsf.h"
+#include "inc/gsf.h"  // "fw/comm/inc/list.h" define LIST_HEAD;
 #include "fw/libflv/inc/flv-muxer.h"
-#include "mongoose.h"
+#include "mongoose.h" // src/mongoose.h:2644:0: warning: "LIST_HEAD" redefined
+
+#include "mod_call.h"
+#include "gsf_urldec.h"
+
+#include "http.h"
+
 
 extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
 extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
@@ -508,6 +514,147 @@ void handle_upload(struct mg_connection *nc, int ev, void *p) {
   }
 }
 
+
+
+
+void handle_config(struct mg_connection *nc, int ev, void *pp) 
+{
+  struct http_message* hm = (struct http_message*)pp;
+
+  if(ev == MG_EV_CLOSE)
+    return;
+ 
+  if(hm->query_string.len == 0)
+    return;
+
+  char req[128] = {0};
+  char args[128] = {0};
+  char *p = NULL, *body = NULL;
+  char *post_body = NULL;
+  char *qs = (char*)malloc(hm->query_string.len + 1);
+  sprintf(qs, "%.*s", hm->query_string.len, hm->query_string.p);
+  
+  
+  // GET /config?id=GSF_ID_CODEC_VENC&args=G0C0S0&body=
+  
+  if(p = strstr(qs, "id="))
+    sscanf(p, "id=%127[^&]", req);
+  if(p = strstr(qs, "args="))
+    sscanf(p, "args=%127[^&]", args);
+ 
+  printf("qs >>> id:[%s], args:[%s]\n", req, args);
+ 
+  if(mg_vcmp(&hm->method, "POST") == 0)
+  {
+    /*
+      curl -X POST -d '{"a" : "aaaaa", "b" : "bbbbb"}' 'http://192.168.1.2/config?id=GSF_ID_CODEC_VENC&args=G0C0S0'
+      POST /config?id=GSF_ID_CODEC_VENC&args=G0C0S0
+      Content-Length: xx
+      
+      {"a" : "aaaaa", "b" : "bbbbb"}
+    */
+    printf("POST body >>> [%.*s]\n", hm->body.len, hm->body.p);
+    if(hm->body.len > 0)
+    {
+      post_body = (char*)malloc(hm->body.len + 1);
+      sprintf(post_body, "%.*s", hm->body.len, hm->body.p);
+      body = post_body;
+    }
+  }
+  else
+  {
+    /*
+      curl -G  "http://192.168.1.2/config?id=GSF_ID_CODEC_VENC&args=G0C0S0" --data-urlencode 'body={"a":"aaaaa","b" : "bbbbbb"}'
+      GET /config?id=GSF_ID_CODEC_VENC&args=G0C0S0&body=%7B%22a%22%3A%22aaaaa%22%2C%22b%22%20%3A%20%22bbbbbb%22%7D
+    */
+    body = strstr(qs, "&body=");
+    body = (body)?body+strlen("&body="):NULL;
+    if(body)
+      gsf_url_decode(body, strlen(body));
+    printf("GET body >>> [%s]\n", body);
+  }
+  
+  
+  // call process;
+  char out[8*1024] = {0};
+  mod_call(req, args, body, out, sizeof(out));
+  
+  if(qs)
+    free(qs);
+  
+  if(post_body)
+    free(post_body);
+
+  mg_printf(nc, "HTTP/1.1 200 OK\r\n");
+  mg_printf(nc, "Content-Length: %lu\r\n\r\n", strlen(out));
+  mg_printf(nc, out);
+  
+  //响应完毕，关闭连接
+  nc->flags |= MG_F_SEND_AND_CLOSE;
+}
+
+void handle_snap(struct mg_connection *nc, int ev, void *pp)
+{
+  struct http_message* hm = (struct http_message*)pp;
+
+  if(ev == MG_EV_CLOSE)
+    return;
+ 
+  if(hm->query_string.len == 0)
+    return;
+    
+  // GET /snap?args=G0C0S0
+  int ret = 0;
+  int channel = -1, gset = -1, sid = -1;
+  sscanf(hm->query_string.p, "args=G%dC%dS%d", &gset, &channel, &sid);
+  
+  GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t) + 4*1024);
+
+  //gset;
+  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SNAP, channel, gset, sid
+                        , 0
+                        , GSF_IPC_CODEC
+                        , 3000);
+                        
+  printf("send => To:%s, ret:%d, msg->size:%d\n", GSF_IPC_CODEC, ret, __pmsg->size);
+  
+  if(ret == 0 && __pmsg->size > 0)
+  {
+    FILE* fpJpg = NULL;
+    fpJpg = fopen(__pmsg->data, "rb");
+    if(fpJpg)
+    {
+      struct stat stStat;
+      memset(&stStat, 0, sizeof(struct stat));
+      
+      int fd = fileno(fpJpg);
+      fstat(fd, &stStat);
+      
+      mg_printf(nc, "HTTP/1.1 200 OK\r\n");
+    	mg_printf(nc, "Content-length: %d\r\n",  stStat.st_size);
+    	mg_printf(nc, "Content-type: image/jpeg\r\n\r\n");
+
+      char buf[BUFSIZ];
+      size_t n;
+      while ((n = mg_fread(buf, 1, sizeof(buf), fpJpg)) > 0) 
+      {
+        mg_send(nc, buf, n);
+      }
+
+      //响应完毕，关闭连接
+      nc->flags |= MG_F_SEND_AND_CLOSE;
+      return;
+    }
+  }
+  
+  mg_printf(nc, "HTTP/1.1 404 Not Found\r\n");
+  
+  //响应完毕，关闭连接
+  nc->flags |= MG_F_SEND_AND_CLOSE;
+  return;
+}
+
+
 static void* ws_task(void* parm)
 {
    
@@ -535,7 +682,9 @@ static void* ws_task(void* parm)
   s_http_server_opts.document_root = "/var/app/www";  // Serve current directory
   
   mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL));
-
+  mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL));
+  mg_register_http_endpoint(c, "/snap", handle_snap MG_UD_ARG(NULL));
+  
   // Set up HTTP server parameters
   mg_set_protocol_http_websocket(c);
   

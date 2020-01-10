@@ -4,14 +4,17 @@
 GSF_HOME ?= $(PWD)
 GSF_CPU_ARCH ?= XXX
 
-#SUB_DIRS := fw/nm fw/cfifo fw/cjson 
-SUB_DIRS := \
-            mod/bsp/lib/sadp mod/bsp/lib/upg mod/bsp \
+
+SUB_DIRS := fw/nm fw/cfifo fw/cjson fw/comm \
+			fw/tindex fw/libmov fw/libfont fw/libhttp fw/librtp fw/librtsp fw/libflv \
+            mod/bsp   \
             mod/mpp/${GSF_CPU_ARCH} \
-            mod/cam \
             mod/codec \
-            mod/rec/lib/tindex mod/rec/lib/libmov  mod/rec \
+            mod/rtsps \
+            mod/rec   \
+			mod/onvif \
 			mod/webs
+
 
 CLEAN_DIRS := $(addprefix _cls_, $(SUB_DIRS))
 

@@ -13,6 +13,7 @@ enum {
   GSF_VENC_TYPE_H265,
   GSF_VENC_TYPE_MJPEG,
   GSF_VENC_TYPE_MPEG4,
+  GSF_VENC_TYPE_JPEG,
   GSF_VENC_TYPE_BUTT
 };
 
@@ -28,9 +29,9 @@ enum {
   GSF_AENC_TYPE_BUTT
 };
 
-#include "fw/comm/sjb_api.ih"
+#include "fw/cjson/inc/sjb_api.ih"
 #include "mod/codec/inc/sjb_codec.ih"
-#include "fw/comm/sjb_end.ih"
+#include "fw/cjson/inc/sjb_end.ih"
 
 
 #endif //__sjb_codec_h__

@@ -22,7 +22,8 @@ enum {
     GSF_ID_CODEC_SRC      = 7,  // ch, sid, gsf_src_t
     GSF_ID_CODEC_VORES    = 8,  // ch, sid, gsf_resolu_t;
     GSF_ID_CODEC_VOSP     = 9,  // ch, sid, gsf_split_t;
-    GSF_ID_CODEC_VOMV     = 10, // ch, sdi, gsf_rect_t;
+    GSF_ID_CODEC_VOMV     = 10, // ch, sid, gsf_rect_t;
+    GSF_ID_CODEC_SNAP     = 11, // ch, sid, nil;
     GSF_ID_CODEC_END
 };
 

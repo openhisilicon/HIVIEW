@@ -30,14 +30,14 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
 
 int main(int argc, char *argv[])
 {
-  if(argc < 2)
+  if(argc < 3)
   {
-    printf("pls %s 238.238.238.238 || 192.168.1.2 \n", argv[0]);
+    printf("pls %s 238.238.238.238/192.168.1.2 , timeout\n", argv[0]);
     return 0;
   }
 
   gsf_sadp_ini_t puini = {
-    .ethname= "ens33",
+    .ethname= "eth0",
     .lcaddr = "0.0.0.0",
     .mcaddr = "238.238.238.238",
     .mcport = 8888,
@@ -47,13 +47,12 @@ int main(int argc, char *argv[])
   int ret = sadp_pu_init(&puini);
   printf("sadp_pu_init ret:%d\n", ret);
 
-
   gsf_sadp_peer_t dst1;
   strcpy(dst1.ipaddr, argv[1]);
   dst1.port = 8888;
   
 
-  gsf_sadp_msg_t in = {.ver = 0x1234, .modid = GSF_MOD_ID_BSP, .msg = {.id = GSF_ID_BSP_DEF}};
+  gsf_sadp_msg_t in = {.ver = GSF_SADP_VER_REQ|GSF_SADP_VER_MC, .modid = GSF_MOD_ID_BSP, .msg = {.id = GSF_ID_BSP_DEF}};
 
   char outbuf[64*1024] = {0};
   gsf_msg_t *out = (gsf_msg_t*)outbuf;
@@ -61,11 +60,14 @@ int main(int argc, char *argv[])
 
   gsf_sadp_peer_t *dst = &dst1;
   
-  printf("\n >>>> sadp_cu_gset %s %d osize:%d, out->size:%d\n", dst->ipaddr, time(NULL), osize, out->size);
-  sadp_cu_gset(dst, &in, out, &osize, 3);
-  if(osize > 0)
-    printf("\n <<<< sadp_cu_gset %s %d osize:%d, out->size:%d\n", dst->ipaddr, time(NULL), osize, out->size);
-  printf("\n\n\n");
-  
+  while(1)
+  {
+    sadp_cu_gset(dst, &in, out, &osize, atoi(argv[2]));
+    printf("\n\n");
+    sleep(1);
+  }
+
+
+
   return 0;
 }

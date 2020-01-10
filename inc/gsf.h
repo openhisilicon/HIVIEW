@@ -9,7 +9,8 @@ extern "C" {
 #include "fw/cfifo/inc/timer.h"
 #include "fw/cfifo/inc/shm.h"
 #include "fw/cfifo/inc/cfifo.h"
-#include "fw/comm/uthash.h"
+#include "fw/comm/inc/uthash.h"
+#include "fw/comm/inc/list.h"
 
 #include "msg.h"
 
