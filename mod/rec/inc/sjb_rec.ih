@@ -1,0 +1,48 @@
+#pragma pack(push, 4)
+
+#define GSF_REC_CH_NUM 2
+
+STRUCT(gsf_rec_cfg_t)
+{
+  FIELD(int, en);
+};
+
+
+STRUCT(gsf_rec_parm_t)
+{
+  ARRAY(gsf_rec_cfg_t,  cfg,  GSF_REC_CH_NUM);
+};
+
+
+STRUCT(gsf_disk_t)
+{ 
+  FIELD(int, grp_id);   // unused;
+  FIELD(int, disk_id);  // disk id;
+  FIELD(int, part_num); // part num;
+  FIELD(uint32, size);  // total size M;
+  STRING(dev_name,128); // device name;
+  STRING(mnt_dir,128);  // mount directory;
+};
+
+STRUCT(gsf_file_t)  // == ti_file_info_t
+{
+  FIELD(uint32, btime);    // file btime;
+  FIELD(uint16, btime_ms); // btime ms;
+  FIELD(uint16, channel);  // channel no;
+  FIELD(uint32, etime);    // file endtime;
+  FIELD(uint32, tags);     // file tags;
+  FIELD(uint32, size);     // file size;
+  ARRAY(uint32, res, 3);   // res;
+};
+
+STRUCT(gsf_rec_q_t)
+{
+  FIELD(int, channel);    // channel no;
+  FIELD(int, btime);      // file btime;
+  FIELD(int, etime);      // file endtime;
+  FIELD(int, tags);       // file tags;
+};
+
+
+
+#pragma pack(pop)

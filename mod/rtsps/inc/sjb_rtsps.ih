@@ -1,0 +1,10 @@
+#pragma pack(push, 4)
+
+
+STRUCT(gsf_rtsps_t)
+{
+  FIELD(int, en);
+};
+
+
+#pragma pack(pop)
