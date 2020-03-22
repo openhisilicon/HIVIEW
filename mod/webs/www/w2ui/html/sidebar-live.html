@@ -1,0 +1,84 @@
+<div class="content">
+    <div id="example_title" style="text-align:center">
+    <button class="w2ui-btn" onclick="">UP</button>
+    <div style="height: 15px"></div>    
+    <button class="w2ui-btn" onclick="">LEFT</button>
+    <button class="w2ui-btn" onclick="">RIGHT</button>
+    <div style="height: 15px"></div>
+    <button class="w2ui-btn" onclick="">DOWN</button>
+    </div>
+    
+    <div id="example_view"></div>
+    <div id="example_code"></div>
+</div>
+
+<!--CODE-->
+<div id="ptz-tabs" style="width: 100%;"></div>
+<div id="selected-tab" style="width: 100%; height: 400px;"></div>
+<!--CODE-->
+<script>
+  
+$(function () {
+  
+  $().w2destroy('ptz-tabs');
+  
+   $('#ptz-tabs').w2tabs({
+        name: 'ptz-tabs',
+        style:  'background-color: #F0F0F0',
+        active: 'tab1',
+        tabs: [
+            { id: 'tab1', text: 'PT' },
+            { id: 'tab2', text: 'IM' },
+            { id: 'tab3', text: 'PM' }
+        ],
+        onClick: function (event) {
+            $('#selected-tab').w2render('grid');
+        }
+    });
+  
+  
+    $().w2destroy('grid');
+  
+    $().w2grid({ 
+        name: 'grid', 
+        show: { 
+            toolbar: true,
+            toolbarReload: false,
+            toolbarInput:  false,
+            toolbarSearch: false,
+            toolbarAdd: true,
+            toolbarDelete: true,
+        },
+    
+        columns: [                
+            { field: 'recid', caption: 'ID', size: '50px', sortable: true, attr: 'align=center' },
+            { field: 'fname', caption: 'Name', size: '30%', sortable: true },
+            { field: 'lname', caption: 'Valid', size: '30%', sortable: true , attr: 'align=center'},
+        ],
+        onAdd: function (event) {
+            w2alert('add');
+        },
+        onDelete: function (event) {
+            console.log('delete has default behavior');
+        },
+        records: [
+            { recid: 1, fname: 'preset1'  , lname: '1'},
+            { recid: 2, fname: 'preset2'  , lname: '1'},
+            { recid: 3, fname: 'preset3'  , lname: '1'},
+            { recid: 4, fname: 'preset4'  , lname: '1'},
+            { recid: 5, fname: 'preset5'  , lname: '0'},
+            { recid: 6, fname: 'preset6'  , lname: '0'},
+            { recid: 7, fname: 'preset7'  , lname: '0'},
+            { recid: 8, fname: 'preset8'  , lname: '0'},
+            { recid: 9, fname: 'preset9'  , lname: '0'},
+        ]
+    }); 
+    
+    $('#selected-tab').w2render('grid');
+
+    
+    load_html('main', 'live');
+       
+});
+ 
+</script>

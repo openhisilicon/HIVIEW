@@ -1,0 +1,115 @@
+
+<div id="main_view"></div>
+<div id="main_code"></div>
+ 
+<!--CODE-->
+<div id="toolbar"></div>
+<video name="videoElement" class="centeredVideo" controls autoplay>
+	Your browser is too old which doesn't support HTML5 video.
+</video>
+
+<!--CODE-->
+<script>
+
+function flv_load() {
+    console.log('isSupported: ' + flvjs.isSupported());
+    var mediaDataSource = {
+        type: "flv",
+        isLive: true,
+        //cors: true,
+        hasAudio: false,
+        autoCleanupSourceBuffer:true,
+        //url: 'ws://'+ window.location.hostname + ':' + (window.location.port?1+parseInt(window.location.port,10):81) + '/' + document.getElementsByName('urlinput')[0].value,
+        url: 'ws://'+ window.location.hostname + ':80/flv1',
+    }
+        console.log('MediaDataSource', mediaDataSource);
+        var element = document.getElementsByName('videoElement')[0];
+        
+        
+         element.width = w2ui['main_layout'].get('main').width - 0;
+         element.height = w2ui['main_layout'].get('main').height - $('#toolbar').outerHeight();
+        
+        
+        if (typeof player !== "undefined") {
+            if (player != null) {
+                player.unload();
+                player.detachMediaElement();
+                player.destroy();
+                player = null;
+                console.log("flv_load => destroy player!");
+            }
+        }
+        player = flvjs.createPlayer(mediaDataSource, {
+            // enableWorker: false,
+            // lazyLoadMaxDuration: 3 * 60,
+            // seekType: 'range',
+            enableWorker: true,
+            enableStashBuffer: false,
+            stashInitialSize: 128,
+        });
+        player.attachMediaElement(element);
+        player.load();
+        
+}
+
+function flv_start() {
+    player.play();
+}
+
+function flv_pause() {
+    console.log(player.mediaInfo)
+  //  player.pause();
+}
+
+function flv_destroy() {
+  if (player != null)
+  {
+    player.pause();
+    player.unload();
+    player.detachMediaElement();
+    player.destroy();
+    player = null;
+    console.log("flv_destroy => destroy player!");
+  }
+}
+
+function flv_seekto() {
+    var input = document.getElementsByName('seekpoint')[0];
+    player.currentTime = parseFloat(input.value);
+}
+function flv_seektoend()
+{
+	console.log("seek to end", player.buffered.end(0));
+	player.currentTime = player.buffered.end(0)-0.01;
+	
+}
+
+
+$(function () {
+
+    $().w2destroy('live-toolbar');
+
+    $('#toolbar').w2toolbar({
+            name: 'live-toolbar',
+            items: [
+                { type: 'button', id: 'refresh', text: 'Refresh', icon: 'fa-wrench' },
+                { type: 'break' },
+                { type: 'radio', id: 'stream1', text: 'Stream1', icon: 'fa-heart' },
+                { type: 'radio', id: 'stream2', text: 'Stream2', icon: 'fa-star' }
+            ],
+            onClick: function (event) {
+                console.log('Target: '+ event.target, event);
+                if(event.target == 'refresh')
+                {
+                  flv_load();
+                }
+            }
+        });
+
+    flv_load();
+    
+});
+
+
+
+</script>

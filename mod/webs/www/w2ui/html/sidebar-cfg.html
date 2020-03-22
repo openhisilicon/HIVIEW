@@ -1,0 +1,52 @@
+<div class="content">
+    <div id="example_view"></div>
+    <div id="example_code"></div>
+</div>
+
+<!--CODE-->
+<div id="sidebar" style="height: 600px; width: 220px; float: left"></div>
+
+<!--CODE-->
+<script>
+$(function () {
+  
+    $().w2destroy('sidebar1');
+    
+    $('#sidebar').w2sidebar({
+        name: 'sidebar1',
+
+        nodes: [ 
+        
+            { id: 'bsp', text: 'BSP', img: 'icon-folder', expanded: true, group: true,
+              nodes: [ { id: 'GSF_ID_BSP_TIME', text: 'GSF_ID_BSP_TIME', icon: 'fa-star-empty' },
+                       { id: 'GSF_ID_BSP_ETH',  text: 'GSF_ID_BSP_ETH', icon: 'fa-star-empty' },
+                       { id: 'GSF_ID_BSP_NTP',  text: 'GSF_ID_BSP_NTP', icon: 'fa-star-empty' }
+                     ]
+            },
+        
+            { id: 'codec', text: 'VIDEO', img: 'icon-folder', expanded: true, group: true,
+              nodes: [ { id: 'GSF_ID_CODEC_VENC',   text: 'GSF_ID_CODEC_VENC', icon: 'fa-star-empty' },
+                       { id: 'GSF_ID_CODEC_VMASK',  text: 'GSF_ID_CODEC_VMASK', icon: 'fa-star-empty' },
+                       { id: 'GSF_ID_CODEC_OSD',    text: 'GSF_ID_CODEC_OSD', icon: 'fa-star-empty' }
+                     ]
+            },
+            
+            { id: 'version', text: 'VERSION', img: 'icon-folder', expanded: true, group: true,
+              nodes: [ { id: 'INFO',      text: 'INFO', icon: 'fa-star-empty' },
+                       { id: 'UPGRADE',   text: 'UPGRADE', icon: 'fa-star-empty' },
+                     ]
+            }
+
+        ],
+        onClick: function (event) {
+          var cmd = event.target;
+          //if (parseInt(cmd.substr(cmd.length-1)) != cmd.substr(cmd.length-1)) return;
+          load_html('main', cmd);
+        }
+    });
+    
+    load_html('main', 'GSF_ID_BSP_TIME');
+    
+});
+
+</script>

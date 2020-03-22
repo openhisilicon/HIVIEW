@@ -1,0 +1,33 @@
+<div class="content">
+    <div id="example_view"></div>
+    <div id="example_code"></div>
+</div>
+
+<!--CODE-->
+<div id="sidebar" style="height: 300px; width: 180px; float: left"></div>
+<div style="clear: both"/>
+
+<!--CODE-->
+<script>
+$(function () {
+    
+    $().w2destroy('sidebar2');
+  
+    $('#sidebar').w2sidebar({
+        name: 'sidebar2',
+        img: null,
+        nodes: [ 
+            { id: 'level-1', text: 'Level 1', img: 'icon-folder', expanded: true, group: true,
+              nodes: [ { id: 'level-1-1', text: 'Level 1.1', icon: 'fa-star-empty' },
+                       { id: 'level-1-2', text: 'Level 1.2', icon: 'fa-star-empty' },
+                       { id: 'level-1-3', text: 'Level 1.3', icon: 'fa-star-empty' }
+                     ]
+            }
+        ]
+    });
+});
+
+w2ui['main_layout'].content('main', '<div style="padding: 12px 20px; font-size: 18px;">Vod Player</div>');
+
+
+</script>
