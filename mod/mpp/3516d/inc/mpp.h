@@ -24,10 +24,13 @@ typedef struct {
 //SAMPLE_COMM_VI_StartVi
 int gsf_mpp_vi_start(gsf_mpp_vi_t *vi);
 int gsf_mpp_vi_stop();
+//HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
+//HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
+int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
 
 typedef struct {
   VPSS_GRP    VpssGrp;
-  HI_S32      ViPipe;
+  HI_S32      ViPipe; // >=0: bind ViPipe;
   VI_CHN      ViChn; 
   HI_BOOL     enable[VPSS_MAX_PHY_CHN_NUM];
   PIC_SIZE_E  enSize[VPSS_MAX_PHY_CHN_NUM];
@@ -36,6 +39,9 @@ typedef struct {
 //SAMPLE_COMM_VI_Bind_VPSS
 int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss);
 int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
+//HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
+int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
+
 
 typedef struct {
   VENC_CHN        VencChn;

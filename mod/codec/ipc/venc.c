@@ -214,12 +214,13 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
     
     if(size > 0)
     {
-      venc_mgr[i].video_fifo = cfifo_alloc(size, 
-                                        cfifo_recsize, 
-                                        cfifo_rectag, 
-                                        cfifo_recrel, 
-                                        &venc_mgr[i].video_shmid,
-                                        0);
+      venc_mgr[i].video_fifo 
+              = cfifo_alloc(size, 
+                          cfifo_recsize, 
+                          cfifo_rectag, 
+                          cfifo_recrel, 
+                          &venc_mgr[i].video_shmid,
+                          0);
     }
   }
   return 0;

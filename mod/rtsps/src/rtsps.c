@@ -36,7 +36,7 @@ static void main_exit(int signal)
 	exit(0);
 }
 
-#if GSF_CPU_ARCH == 3519 // test rtspcli;
+#if (defined GSF_CPU_3519) // test rtspcli;
 int main(int argc, char *argv[])
 {
   signal(SIGPIPE, SIG_IGN);

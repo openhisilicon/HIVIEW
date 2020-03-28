@@ -5,9 +5,6 @@
 #include "sample_comm.h"
 #include "mpp.h"
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#pragma message("\n\n<<<<<<<<<<<< GSF_CPU_ARCH: " STR(GSF_CPU_ARCH)  " >>>>>>>>>>>>>\n\n")
 
 typedef struct {
   int   type;

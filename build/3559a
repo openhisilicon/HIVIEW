@@ -3,7 +3,7 @@ export GSF_DEV_TYPE=ipc
 export GSF_HOME=`pwd`
 export GSF_CC="aarch64-himix100-linux-gcc"
 export GSF_AR=aarch64-himix100-linux-ar
-export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_CPU_ARCH=35591"
+export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_CPU_3559a"
 export GSF_LDFLAGS=""
 
 if [ ! -d ${GSF_HOME}/lib/${GSF_CPU_ARCH} ]

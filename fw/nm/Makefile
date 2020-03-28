@@ -20,6 +20,8 @@ ifeq ($(GSF_CPU_ARCH), x86)
 LIBS += -lanl
 else ifeq ($(GSF_CPU_ARCH), 3516d)
 LIBS += -lanl
+else ifeq ($(GSF_CPU_ARCH), 3519a)
+LIBS += -lanl
 endif
 
 DEP_OBJS := OBJS

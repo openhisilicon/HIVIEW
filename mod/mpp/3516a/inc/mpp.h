@@ -2,10 +2,6 @@
 #define __mpp_h__
 
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#pragma message("\n\n<<<<<<<<<<<< GSF_CPU_ARCH: " STR(GSF_CPU_ARCH)  " >>>>>>>>>>>>>\n\n")
-
 //api;
 typedef struct {
   char  snsname[32];  // sensor imx335

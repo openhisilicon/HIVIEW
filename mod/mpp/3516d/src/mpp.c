@@ -20,10 +20,6 @@ extern HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYN
 
 
 
-//#define STR_HELPER(x) #x
-//#define STR(x) STR_HELPER(x)
-//#pragma message("\n\n<<<<<<<<<<<< GSF_CPU_ARCH: " STR(GSF_CPU_ARCH)  " >>>>>>>>>>>>>\n\n")
-
 typedef struct {
   int   type;
   char* name;
@@ -167,6 +163,12 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
 int gsf_mpp_vi_stop()
 {
   HI_S32 s32Ret;
+  
+  SAMPLE_VI_CONFIG_S stViConfig;
+  memset(&stViConfig, 0, sizeof(stViConfig));
+  SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
+  SAMPLE_COMM_VI_StopVi(&stViConfig);
+  
   SAMPLE_COMM_SYS_Exit();
   return s32Ret;
 }
@@ -218,11 +220,14 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
       goto EXIT_VI_STOP;
   }
 
-  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpss->ViPipe, vpss->ViChn, vpss->VpssGrp);
-  if(s32Ret != HI_SUCCESS)
+  if(vpss->ViPipe >= 0)
   {
-      SAMPLE_PRT("VI Bind VPSS err for %#x!\n", s32Ret);
-      goto EXIT_VPSS_STOP;
+    s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpss->ViPipe, vpss->ViChn, vpss->VpssGrp);
+    if(s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("VI Bind VPSS err for %#x!\n", s32Ret);
+        goto EXIT_VPSS_STOP;
+    }
   }
   
   return s32Ret;
@@ -230,7 +235,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
 EXIT_VPSS_STOP:
     SAMPLE_COMM_VPSS_Stop(vpss->VpssGrp,vpss->enable);
 EXIT_VI_STOP:
-    SAMPLE_COMM_VI_StopVi(&stViConfig);
+    //SAMPLE_COMM_VI_StopVi(&stViConfig);
   return s32Ret;
 }
 
@@ -238,13 +243,15 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
 {
   HI_S32 s32Ret = 0;
   
-  SAMPLE_VI_CONFIG_S stViConfig;
-  memset(&stViConfig, 0, sizeof(stViConfig));
-  SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
+  //SAMPLE_VI_CONFIG_S stViConfig;
+  //memset(&stViConfig, 0, sizeof(stViConfig));
+  //SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
+
+  if(vpss->ViPipe >= 0)
+    SAMPLE_COMM_VI_UnBind_VPSS(vpss->ViPipe,vpss->ViChn,vpss->VpssGrp);
   
-  SAMPLE_COMM_VI_UnBind_VPSS(vpss->ViPipe,vpss->ViChn,vpss->VpssGrp);
   SAMPLE_COMM_VPSS_Stop(vpss->VpssGrp,vpss->enable);
-  SAMPLE_COMM_VI_StopVi(&stViConfig);
+  //SAMPLE_COMM_VI_StopVi(&stViConfig);
   return s32Ret;
 }
 

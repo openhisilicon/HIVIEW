@@ -1,0 +1,337 @@
+#!/bin/sh
+# Useage: ./load3519av100 [ -r|-i|-a ] [ -sensor0~7 ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#         -a : rmmod all moules and then insmod them
+# e.g: ./load3519av100 -i -sensor0 imx334 -sensor1 imx334 -sensor2 imx334 -sensor3 imx334 -sensor4 imx334
+
+
+####################Variables Definition##########################
+
+
+SNS_TYPE0=imx334;           	# sensor type
+SNS_TYPE1=imx334;            	# sensor type
+SNS_TYPE2=imx334;           	# sensor type
+SNS_TYPE3=imx334;            	# sensor type
+SNS_TYPE4=imx334;           	# sensor type
+
+#DDR start:0x20000000,  DSP(32M);  kernel start:0x22000000,  OS(256M); MMZ start:0x32000000
+mem_total=2048                # 2048M, total mem
+mem_start=0x20000000          # phy mem start
+
+dsp_mem_size=32               # 32M, dsp mem
+os_mem_size=256               # 256M, os mem
+
+mmz_start=0x32000000;         # mmz start addr
+mmz_size=1760M;               # 1760M, mmz size
+
+reserve_mem_size=0            # 0M, reserve mmz size
+##################################################################
+
+report_error()
+{
+	echo "******* Error: There's something wrong, please check! *****"
+	exit 1
+}
+
+insert_audio()
+{
+	insmod hi3519av100_aio.ko
+	insmod hi3519av100_ai.ko
+	insmod hi3519av100_ao.ko
+	insmod hi3519av100_aenc.ko
+	insmod hi3519av100_adec.ko
+	insmod hi3519av100_acodec.ko
+#	insmod extdrv/hi_tlv320aic31.ko 
+	echo "insert audio"
+}
+
+remove_audio()
+{
+	rmmod hi3519av100_acodec
+#	rmmod hi_tlv320aic31.ko
+	rmmod hi3519av100_adec
+	rmmod hi3519av100_aenc
+	rmmod hi3519av100_ao
+	rmmod hi3519av100_ai
+	rmmod hi3519av100_aio
+	
+	echo "remove audio"
+}
+
+insert_isp()
+{
+	insmod hi3519av100_isp.ko
+}
+
+insert_ko()
+{
+	# sys config
+	insmod sys_config.ko sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1,sns2=$SNS_TYPE2,sns3=$SNS_TYPE3,sns4=$SNS_TYPE4
+
+	# driver load
+	insmod hi_osal.ko anony=1 mmz_allocator=hisi mmz=anonymous,0,$mmz_start,$mmz_size || report_error
+	insmod hi3519av100_base.ko
+	insmod hi3519av100_sys.ko
+	insmod hi3519av100_tde.ko
+	insmod hi3519av100_rgn.ko
+	insmod hi3519av100_gdc.ko
+	insmod hi3519av100_vgs.ko
+	insmod hi3519av100_dis.ko
+	insert_isp;
+	insmod hi3519av100_vi.ko
+	insmod hi3519av100_vpss.ko 
+	insmod hi3519av100_avs.ko
+	insmod hi3519av100_vo.ko
+	insmod hifb.ko video="hifb:vram0_size:32400,vram1_size:16200,vram2_size:256"     # default fb0:4k,fb1:1080p,fb2:256x256
+	insmod hi3519av100_rc.ko
+	insmod hi3519av100_venc.ko 
+	insmod hi3519av100_chnl.ko
+	insmod hi3519av100_vedu.ko
+	insmod hi3519av100_h264e.ko
+	insmod hi3519av100_h265e.ko
+	insmod hi3519av100_jpege.ko
+	insmod hi3519av100_jpegd.ko
+	insmod hi3519av100_vfmw.ko
+	insmod hi3519av100_vdec.ko
+
+	insmod hi3519av100_ive.ko save_power=1
+	insmod hi_ipcm.ko
+	insmod hi3519av100_nnie.ko nnie_save_power=1 nnie_max_tskbuf_num=32
+	insmod hi3519av100_dsp.ko
+	insmod hi3519av100_dpu_rect.ko
+	insmod hi3519av100_dpu_match.ko
+
+	insmod extdrv/hi_pwm.ko
+	insmod extdrv/hi_piris.ko
+	insmod extdrv/hi_sensor_i2c.ko
+	insmod extdrv/hi_sensor_spi.ko
+	#insmod extdrv/hi_sil9022.ko
+	insmod hi3519av100_hdmi.ko
+	#insmod hi_mipi_tx.ko
+
+	insert_audio
+
+	insmod hi_mipi_rx.ko
+	insmod hi_user.ko
+}
+
+remove_ko()
+{
+	rmmod hi_user
+	remove_audio
+
+	#rmmod hi_mipi_tx
+	rmmod hi_mipi_rx
+	rmmod hi_piris
+	#rmmod hi_sil9022
+
+	rmmod hi3519av100_dpu_match
+	rmmod hi3519av100_dpu_rect
+	rmmod hi3519av100_nnie
+	rmmod hi3519av100_dsp
+	rmmod hi_ipcm
+	rmmod hi3519av100_ive
+	rmmod hi3519av100_jpegd
+	rmmod hi3519av100_vfmw
+	rmmod hi3519av100_vdec
+	rmmod hi3519av100_rc
+	rmmod hi3519av100_jpege
+	rmmod hi3519av100_h264e
+	rmmod hi3519av100_h265e
+	rmmod hi3519av100_vedu
+	rmmod hi3519av100_chnl
+	rmmod hi3519av100_venc
+	rmmod hifb
+	rmmod hi3519av100_vo
+	rmmod hi3519av100_avs
+	rmmod hi3519av100_vpss
+	rmmod hi3519av100_isp
+	rmmod hi3519av100_vi
+	rmmod hi3519av100_gdc
+
+	rmmod hi3519av100_dis
+	rmmod hi3519av100_vgs
+	rmmod hi3519av100_rgn
+	rmmod hi3519av100_tde
+	rmmod hi3519av100_hdmi
+
+	rmmod hi_sensor_i2c &> /dev/null
+	rmmod hi_sensor_spi &> /dev/null
+	rmmod hi_pwm
+	rmmod hi3519av100_sys
+	rmmod hi3519av100_base
+	rmmod hi_osal
+	rmmod sys_config
+}
+
+sys_restore()
+{
+	####################################################
+	clkcfg_hi3519av100.sh > /dev/null
+
+	# system configuration
+	sysctl_hi3519av100.sh  # > /dev/null
+	#insert_sns;
+}
+
+load_usage()
+{
+	echo "Usage:  ./load3519av100 [-option] [-sensor0~4] "
+	echo "options:"
+	echo "    -i                       insert modules"
+	echo "    -r                       remove modules"
+	echo "    -a                       remove modules first, then insert modules"
+	echo "    -sensor0~4 sensor_name   config sensor type [default: imx334]"
+        echo "    -total mem_size          config total mem size [unit: M, default: 2048]"
+        echo "    -osmem os_mem_size       config os mem size [unit: M, default: 256]"
+	echo "    -h                       help information"
+	echo -e "Notice: sensors which share one clock must be same! sensor0 use clock0, sensor1 and sensor2 share clock1, sensor3 and sensor4 share clock2."
+	echo -e "Available sensors: imx334 imx477 imx377 imx290 imx290_slave"
+	echo -e "for example: ./load3519av100 -i -sensor0 imx334 -sensor1 imx334 -sensor2 imx334 -sensor3 imx334 -sensor4 imx334 -total 2048 -osmem 256\n"
+}
+
+calc_mmz_info()
+{
+        mmz_start=`echo "$mem_start $os_mem_size $dsp_mem_size" |
+        awk 'BEGIN { temp = 0; }
+        {
+                temp = $1/1024/1024 + $2 + $3;
+        }
+        END { printf("0x%x00000\n", temp); }'`
+
+        mmz_size=`echo "$mem_total $os_mem_size $dsp_mem_size $reserve_mem_size" |
+        awk 'BEGIN { temp = 0; }
+        {
+                temp = $1 - $2 - $3 - $4;
+        }
+        END { printf("%dM\n", temp); }'`
+        echo "mmz_start: $mmz_start, mmz_size: $mmz_size"
+}
+
+######################parse arg###################################
+b_arg_sensor0=0
+b_arg_sensor1=0
+b_arg_sensor2=0
+b_arg_sensor3=0
+b_arg_sensor4=0
+b_arg_sensor5=0
+b_arg_insmod=0
+b_arg_remove=0
+b_arg_restore=0
+b_arg_total_mem=0
+b_arg_os_mem=0
+
+for arg in $@
+do
+	if [ $b_arg_sensor0 -eq 1 ] ; then
+		b_arg_sensor0=0;
+		SNS_TYPE0=$arg;
+	fi
+	if [ $b_arg_sensor1 -eq 1 ] ; then
+		b_arg_sensor1=0;
+		SNS_TYPE1=$arg;
+	fi
+	if [ $b_arg_sensor2 -eq 1 ] ; then
+		b_arg_sensor2=0;
+		SNS_TYPE2=$arg;
+	fi
+	if [ $b_arg_sensor3 -eq 1 ] ; then
+		b_arg_sensor3=0;
+		SNS_TYPE3=$arg;
+	fi
+	if [ $b_arg_sensor4 -eq 1 ] ; then
+		b_arg_sensor4=0;
+		SNS_TYPE4=$arg;
+	fi
+
+	if [ $b_arg_total_mem -eq 1 ]; then
+		b_arg_total_mem=0;
+		mem_total=$arg;
+
+		if [ -z $mem_total ]; then
+			echo "[error] mem_total is null"
+			exit;
+		fi
+	fi
+
+	if [ $b_arg_os_mem -eq 1 ] ; then
+		b_arg_os_mem=0;
+		os_mem_size=$arg;
+
+		if [ -z $os_mem_size ]; then
+			echo "[error] os_mem_size is null"
+			exit;
+		fi
+	fi
+
+	case $arg in
+		"-i")
+			b_arg_insmod=1;
+			;;
+		"-r")
+			b_arg_remove=1;
+			;;
+		"-a")
+			b_arg_insmod=1;
+			b_arg_remove=1;
+			;;
+		"-h")
+			load_usage;
+			;;
+		"-sensor0")
+			b_arg_sensor0=1;
+			;;
+		"-sensor")
+			b_arg_sensor0=1;
+			;;
+		"-sensor1")
+			b_arg_sensor1=1;
+			;;
+		"-sensor2")
+			b_arg_sensor2=1;
+			;;
+		"-sensor3")
+			b_arg_sensor3=1;
+			;;
+		"-sensor4")
+			b_arg_sensor4=1;
+			;;
+		"-osmem")
+			b_arg_os_mem=1;
+			;;
+		"-total")
+			b_arg_total_mem=1;
+			;;
+		"-restore")
+			b_arg_restore=1;
+			;;
+	esac
+done
+#######################parse arg end########################
+if [ $os_mem_size -ge $(($mem_total - $dsp_mem_size - $reserve_mem_size)) ] ; then
+	echo "[err] os_mem[$os_mem_size], over total_mem[$mem_total] - dsp_mem[$dsp_mem_size] - reserve_mem[$reserve_mem_size]"
+	exit;
+fi
+
+calc_mmz_info;
+
+#######################Action###############################
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+
+if [ $b_arg_remove -eq 1 ]; then
+	remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+	insert_ko;
+fi
+
+if [ $b_arg_restore -eq 1 ]; then	
+	sys_restore;
+fi
