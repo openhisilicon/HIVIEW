@@ -1,0 +1,320 @@
+#!/bin/sh
+# Useage: ./load3559av100_multicore [ -r|-i|-a ] [ -sensor0~7 ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+# e.g: ./load3559av100_multicore -i -sensor0 imx334 -sensor1 imx334 -sensor2 imx334 -sensor3 imx334 -sensor4 imx334 -sensor5 imx334 -sensor6 imx334 -sensor7 imx334
+
+
+####################Variables Definition##########################
+
+
+SNS_TYPE0=imx334;           	# sensor0 type
+SNS_TYPE1=imx334;            	# sensor1 type
+SNS_TYPE2=imx334;           	# sensor2 type
+SNS_TYPE3=imx334;            	# sensor3 type
+SNS_TYPE4=imx334;           	# sensor4 type
+SNS_TYPE5=imx334;            	# sensor5 type
+SNS_TYPE6=imx334;           	# sensor6 type
+SNS_TYPE7=imx334;            	# sensor7 type
+
+#DDR start:0x40000000,  DSP(64M);  kernel start:0x44000000,  OS(512M); MMZ start:0x64000000
+mmz_start=0x64000000;         # mmz start addr
+mmz_size=3520M;               # 3520M, mmz size
+
+##################################################################
+
+report_error()
+{
+	echo "******* Error: There's something wrong, please check! *****"
+	exit 1
+}
+
+insert_audio()
+{
+	insmod hi3559av100_aio.ko
+	insmod hi3559av100_ai.ko
+	insmod hi3559av100_ao.ko
+	insmod hi3559av100_aenc.ko
+	insmod hi3559av100_adec.ko
+	insmod hi3559av100_acodec.ko
+#	insmod extdrv/hi_tlv320aic31.ko
+	echo "insert audio"
+}
+
+remove_audio()
+{
+	rmmod hi3559av100_acodec
+#	rmmod hi_tlv320aic31.ko
+	rmmod hi3559av100_adec
+	rmmod hi3559av100_aenc
+	rmmod hi3559av100_ao
+	rmmod hi3559av100_ai
+	rmmod hi3559av100_aio
+
+	echo "remove audio"
+}
+
+insert_pci()
+{
+    insmod pcie/hi35xx_dev_host.ko
+	insmod pcie/irq_map_host.ko
+    insmod pcie/pcit_dma_host.ko
+    insmod pcie/mcc_drv_host.ko
+    insmod pcie/mcc_usrdev_host.ko
+
+    insmod hi3559av100_pciv_fmw.ko
+    insmod hi3559av100_pciv.ko
+}
+
+remove_pci()
+{
+    rmmod  hi3559av100_pciv.ko
+    rmmod  hi3559av100_pciv_fmw.ko
+
+    rmmod mcc_usrdev_host.ko
+    rmmod mcc_drv_host.ko
+    rmmod pcit_dma_host.ko
+	rmmod irq_map_host.ko
+    rmmod hi35xx_dev_host.ko
+}
+
+insert_isp()
+{
+	insmod hi3559av100_isp.ko
+}
+
+insert_ko()
+{
+	insmod sys_config.ko g_online_flag=0 sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1,sns2=$SNS_TYPE2,sns3=$SNS_TYPE3,sns4=$SNS_TYPE4,sns5=$SNS_TYPE5,sns6=$SNS_TYPE6,sns7=$SNS_TYPE7 
+
+	# driver load
+	insmod hi_osal.ko anony=1 mmz_allocator=hisi mmz=anonymous,0,$mmz_start,$mmz_size || report_error
+	insmod hi3559av100_base.ko
+	insmod hi3559av100_sys.ko
+	insmod hi3559av100_tde.ko
+	insmod hi3559av100_rgn.ko
+	insmod hi3559av100_gdc.ko
+	insmod hi3559av100_vgs.ko
+	insmod hi3559av100_dis.ko
+	insert_isp;
+	insmod hi3559av100_vi.ko
+	insmod hi3559av100_vpss.ko
+	insmod hi3559av100_avs.ko
+	insmod hi3559av100_vo.ko
+	insmod hifb.ko video="hifb:vram0_size:32400,vram1_size:16200,vram2_size:256"     # default fb0:4k,fb1:1080p,fb2:256x256
+
+	insmod hi3559av100_rc.ko
+	insmod hi3559av100_venc.ko
+	insmod hi3559av100_chnl.ko
+	insmod hi3559av100_vedu.ko
+	insmod hi3559av100_h264e.ko
+	insmod hi3559av100_h265e.ko
+	insmod hi3559av100_jpege.ko
+	#insmod hi3559av100_prores.ko
+	insmod hi3559av100_jpegd.ko
+	insmod hi3559av100_vfmw.ko
+	insmod hi3559av100_vdec.ko
+
+	insmod hi3559av100_ive.ko save_power=1
+	insmod hi_ipcm.ko
+	insmod hi3559av100_nnie.ko nnie_save_power=1
+	insmod hi3559av100_dsp.ko
+	insmod hi3559av100_dpu_rect.ko
+	insmod hi3559av100_dpu_match.ko
+	insmod extdrv/hi_pwm.ko
+	insmod extdrv/hi_piris.ko
+	insmod extdrv/hi_sensor_i2c.ko
+	insmod extdrv/hi_sensor_spi.ko
+#	insmod extdrv/hi_ssp_sony.ko
+#	insmod extdrv/hi_sil9022.ko norm=12    #1080P@30fps
+	insmod hi3559av100_hdmi.ko
+
+	insert_audio
+
+#	insert_pci
+
+	insmod hi_mipi.ko
+	insmod hi_mipi_tx.ko
+
+	insmod hi_user.ko
+}
+
+remove_ko()
+{
+    rmmod hi_user
+#	remove_pci
+	remove_audio
+	rmmod hi_mipi
+	rmmod hi_mipi_tx
+	rmmod hi_sil9022 &> /dev/null
+	rmmod hi_pwm
+	rmmod hi_piris
+
+	rmmod hi3559av100_dpu_match
+	rmmod hi3559av100_dpu_rect
+	rmmod hi3559av100_nnie
+	rmmod hi3559av100_dsp
+	rmmod hi_ipcm
+	rmmod hi3559av100_ive
+	rmmod hi3559av100_jpegd
+	rmmod hi3559av100_vfmw
+	rmmod hi3559av100_vdec
+	rmmod hi3559av100_rc
+	#rmmod hi3559av100_prores
+	rmmod hi3559av100_jpege
+	rmmod hi3559av100_h264e
+	rmmod hi3559av100_h265e
+	rmmod hi3559av100_vedu
+	rmmod hi3559av100_chnl
+	rmmod hi3559av100_venc
+	rmmod hifb
+	rmmod hi3559av100_vo
+	rmmod hi3559av100_avs
+	rmmod hi3559av100_vpss
+	rmmod hi3559av100_isp
+	rmmod hi3559av100_vi
+	rmmod hi3559av100_gdc
+
+	rmmod hi3559av100_dis
+	rmmod hi3559av100_vgs
+	rmmod hi3559av100_rgn
+	rmmod hi3559av100_tde
+	rmmod hi3559av100_hdmi
+
+	rmmod hi_sensor_i2c &> /dev/null
+	rmmod hi_sensor_spi &> /dev/null
+#	rmmod mpu_bosch
+	rmmod hi3559av100_sys
+	rmmod hi3559av100_base
+	rmmod hi_osal
+	rmmod sys_config
+}
+
+load_usage()
+{
+	echo "Usage:  ./load3559av100_multicore [-option] [-sensor0~7] "
+	echo "options:"
+	echo "    -i                       insert modules"
+	echo "    -r                       remove modules"
+	echo "    -a                       remove modules first, then insert modules"
+	echo "    -sensor0~7 sensor_name   config sensor type [default: imx334]"
+	echo "    -h                       help information"
+	echo -e "Available sensors: imx334 imx477 imx377 imx299 imx290 imx290_slave imx277_slvs"
+	echo -e "for example: ./load3559av100_multicore -i -sensor0 imx334 -sensor1 imx334 -sensor2 imx334 -sensor3 imx334 -sensor4 imx334 -sensor5 imx334 -sensor6 imx334 -sensor7 imx334\n"
+}
+
+
+######################parse arg###################################
+b_arg_sensor0=0
+b_arg_sensor1=0
+b_arg_sensor2=0
+b_arg_sensor3=0
+b_arg_sensor4=0
+b_arg_sensor5=0
+b_arg_sensor6=0
+b_arg_sensor7=0
+b_arg_insmod=0
+b_arg_remove=0
+b_arg_restore=0
+
+for arg in $@
+do
+	if [ $b_arg_sensor0 -eq 1 ] ; then
+		b_arg_sensor0=0;
+		SNS_TYPE0=$arg;
+	fi
+	if [ $b_arg_sensor1 -eq 1 ] ; then
+		b_arg_sensor1=0;
+		SNS_TYPE1=$arg;
+	fi
+	if [ $b_arg_sensor2 -eq 1 ] ; then
+		b_arg_sensor2=0;
+		SNS_TYPE2=$arg;
+	fi
+	if [ $b_arg_sensor3 -eq 1 ] ; then
+		b_arg_sensor3=0;
+		SNS_TYPE3=$arg;
+	fi
+	if [ $b_arg_sensor4 -eq 1 ] ; then
+		b_arg_sensor4=0;
+		SNS_TYPE4=$arg;
+	fi
+	if [ $b_arg_sensor5 -eq 1 ] ; then
+		b_arg_sensor5=0;
+		SNS_TYPE5=$arg;
+	fi
+	if [ $b_arg_sensor6 -eq 1 ] ; then
+		b_arg_sensor6=0;
+		SNS_TYPE6=$arg;
+	fi
+	if [ $b_arg_sensor7 -eq 1 ] ; then
+		b_arg_sensor7=0;
+		SNS_TYPE7=$arg;
+	fi
+	case $arg in
+		"-i")
+			b_arg_insmod=1;
+			;;
+		"-r")
+			b_arg_remove=1;
+			;;
+		"-a")
+			b_arg_insmod=1;
+			b_arg_remove=1;
+			;;
+		"-h")
+			load_usage;
+			;;
+		"-sensor0")
+			b_arg_sensor0=1;
+			;;
+		"-sensor1")
+			b_arg_sensor1=1;
+			;;
+		"-sensor2")
+			b_arg_sensor2=1;
+			;;
+		"-sensor3")
+			b_arg_sensor3=1;
+			;;
+		"-sensor4")
+			b_arg_sensor4=1;
+			;;
+		"-sensor5")
+			b_arg_sensor5=1;
+			;;
+		"-sensor6")
+			b_arg_sensor6=1;
+			;;
+		"-sensor7")
+			b_arg_sensor7=1;
+			;;
+		"-restore")
+			b_arg_restore=1;
+			;;
+	esac
+done
+#######################parse arg end########################
+
+
+#######################Action###############################
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+
+if [ $b_arg_remove -eq 1 ]; then
+	remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+	insert_ko;
+fi
+
+if [ $b_arg_restore -eq 1 ]; then
+	sys_restore;
+fi
+
