@@ -67,7 +67,6 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
   return NULL;
 }
 
-
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
 {
     SAMPLE_SNS_TYPE_E enSnsType;
@@ -92,7 +91,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   } 
   
   char loadstr[64];
-  sprintf(loadstr, "/var/app/ko/load3519av100 -i -sensor0 %s", cfg->snsname);
+  sprintf(loadstr, "/var/app/ko/load3559av100_multicore -i -sensor0 %s", cfg->snsname);
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
