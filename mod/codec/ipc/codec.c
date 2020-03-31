@@ -119,6 +119,7 @@ int venc_start(int start)
 {
   // venc start;
   #define PIC_WIDTH(w) \
+              (w >= 3840)?PIC_3840x2160:\
               (w >= 1920)?PIC_1080P:\
               (w >= 1280)?PIC_720P: \
               PIC_D1_NTSC
@@ -151,6 +152,7 @@ int venc_start(int start)
       .bRcnRefShareBuf = HI_TRUE,
       .enGopMode = VENC_GOPMODE_NORMALP,
     };
+    printf("start >>> i:%d, width:%d\n", i, codec_ipc.venc[i].width);
     if(!start)
       gsf_mpp_venc_stop(&venc);
     else
@@ -161,13 +163,13 @@ int venc_start(int start)
     return 0;
     
   // recv start;
-  printf("start >>> gsf_mpp_venc_recv i:%d\n", i);
   gsf_mpp_recv_t st = {
-    .s32Cnt = 2,  // 3 for JPEG;
+    .s32Cnt = (i<=2)?i:2,  // 3 for JPEG;
     .VeChn = {0,1},
     .uargs = NULL,
     .cb = gsf_venc_recv,
   };
+  printf("start >>> gsf_mpp_venc_recv s32Cnt:%d\n", st.s32Cnt);
   gsf_mpp_venc_recv(&st);
 
   // rgn;
@@ -197,7 +199,7 @@ int main(int argc, char *argv[])
       json_parm_save(codec_parm_path, &codec_ipc);
       json_parm_load(codec_parm_path, &codec_ipc);
     }
-    info("parm.venc[0].type:%d\n", codec_ipc.venc[0].type);
+    info("parm.venc[0].type:%d, width:%d\n", codec_ipc.venc[0].type, codec_ipc.venc[0].width);
 
     // register to bsp && get bsp_def;
     if(reg2bsp() < 0)
@@ -219,7 +221,7 @@ int main(int argc, char *argv[])
         .snscnt = 1,
         .lane = 0,
         .wdr  = 0,
-        .res  = 4,
+        .res  = 8,
         .fps  = 30,
     };
     
@@ -240,7 +242,7 @@ int main(int argc, char *argv[])
         .ViPipe  = 0,
         .ViChn   = 0, 
         .enable  = {1, 1,},
-        .enSize  = {PIC_2592x1536, PIC_720P,},
+        .enSize  = {PIC_3840x2160, PIC_720P,},
     };
     gsf_mpp_vpss_start(&vpss);
 

@@ -8,6 +8,9 @@
 
 ####################Variables Definition##########################
 
+#maohw
+basepath=$(cd `dirname $0`; pwd)
+cd $basepath
 
 SNS_TYPE0=imx334;           	# sensor type
 SNS_TYPE1=imx334;            	# sensor type
@@ -20,7 +23,10 @@ mem_total=2048                # 2048M, total mem
 mem_start=0x20000000          # phy mem start
 
 dsp_mem_size=32               # 32M, dsp mem
-os_mem_size=256               # 256M, os mem
+
+#maohw
+#os_mem_size=256               # 256M, os mem
+os_mem_size=$(cat /proc/cmdline |cut -d" " -f1|sed -e 's/ //g'|cut -b 5-10|cut -d'M' -f1)
 
 mmz_start=0x32000000;         # mmz start addr
 mmz_size=1760M;               # 1760M, mmz size

@@ -235,6 +235,8 @@ void PrintNRx(const HI_SCENE_3DNR_S *pX )
   #undef  _tmprt4_
   #define _tmprt4_( ps,  K,X,Y,Z )  _t4_( ps,0,K,X,Y,Z ),_t4_( ps,1,K,X,Y,Z ),_t4_( ps,2,K,X,Y,Z ),_t4_( ps,3,K,X,Y,Z )
 
+  /* maohw
+  
   printf("\n\n                             sizeof( X ) = %d ", sizeof(*pX) );
   printf("\n*******************************************************************************");
   printf("\n -en                %3d |             %3d |             %3d |             %3d",  _tmprt1_( ps, NRyEn ));
@@ -280,6 +282,9 @@ void PrintNRx(const HI_SCENE_3DNR_S *pX )
   printf("\n -masw                  |             %3d |             %3d |   -ctfp     %3d",  pm[0].MASW, pm[1].MASW,   pX->NRc.TFC );
   printf("\n -maxn                  |             %3d |             %3d |   -ctfr     %3d",  pm[0].MAXN, pm[1].MAXN,   pX->NRc.CTFR);
   printf("\n*******************************************************************************\n");
+  
+  */
+  
 }
 
 void PrintNRxVPSS( const VPSS_NRX_V1_S *pX )
@@ -309,6 +314,8 @@ void PrintNRxVPSS( const VPSS_NRX_V1_S *pX )
   #undef  _tmprt4_
   #define _tmprt4_( ps,  K,X,Y,Z )  _t4_( ps,0,K,X,Y,Z ),_t4_( ps,1,K,X,Y,Z ),_t4_( ps,2,K,X,Y,Z ),_t4_( ps,3,K,X,Y,Z )
 
+  /* maohw
+  
   printf("\n\n                             sizeof( X ) = %d ", sizeof(*pX) );
   printf("\n*******************************************************************************");
   printf("\n -en                %3d |             %3d |             %3d |             %3d",  _tmprt1_( ps, NRyEn ));
@@ -354,6 +361,8 @@ void PrintNRxVPSS( const VPSS_NRX_V1_S *pX )
   printf("\n -masw                  |             %3d |             %3d |   -ctfp     %3d",  pm[0].MASW, pm[1].MASW,   pX->NRc.TFC );
   printf("\n -maxn                  |             %3d |             %3d |   -ctfr     %3d",  pm[0].MAXN, pm[1].MAXN,   pX->NRc.CTFR);
   printf("\n*******************************************************************************\n");
+  
+  */
 }
 
 HI_S32 HI_SCENE_SetAeWeightTab(VI_PIPE ViPipe, HI_U8 u8Index)
