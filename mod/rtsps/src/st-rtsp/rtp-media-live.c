@@ -143,7 +143,7 @@ static void *live_send_task(void *arg)
     #if 1
     cfifo_newest(m->track[MEDIA_TRACK_VIDEO].m_reader, 0);
     GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t));
-    GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, 0, SET, 0
+    GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, 0, SET, m->st
                     , 0
                     , GSF_IPC_CODEC
                     , 2000);
@@ -303,17 +303,29 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
   gsf_sdp->video_shmid = -1;
   gsf_sdp->audio_shmid = -1;
-  if(GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, 0
+  if(GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, m->st
                         , 0
                         , GSF_IPC_CODEC
                         , 2000) < 0)
   {
-    printf("%s => get GSF_ID_CODEC_SDP err.\n" ,__func__);
+    printf("%s => get SDP err.\n" ,__func__);
     return 0;
   }
-  printf("%s => get GSF_ID_CODEC_SDP ok.\n" ,__func__);
+  
   m->track[MEDIA_TRACK_VIDEO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
   m->track[MEDIA_TRACK_VIDEO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_VIDEO].m_reader);
+  
+  printf("%s => get SDP ok. st:%d, video_shmid:%d, m_reader:%p, m_evfd:%d\n" 
+        , __func__
+        , m->st, gsf_sdp->video_shmid
+        , m->track[MEDIA_TRACK_VIDEO].m_reader
+        , m->track[MEDIA_TRACK_VIDEO].m_evfd);
+        
+  if(m->track[MEDIA_TRACK_VIDEO].m_reader == NULL 
+    || m->track[MEDIA_TRACK_VIDEO].m_evfd < 0)
+  {
+    return 0;
+  }
   
   char media[1024] = {0};
   snprintf(media, sizeof(media), pattern_video, RTP_PAYLOAD_H264, RTP_PAYLOAD_H264,
@@ -409,6 +421,8 @@ struct rtp_media_t* rtp_media_live_new(int ch, int st)
 {
   struct rtp_media_live_t *ml = calloc(1, sizeof(struct rtp_media_live_t));
  
+  ml->ch = ch;
+  ml->st = st;
   ml->base.get_sdp        = rtp_live_get_sdp;      
   ml->base.get_duration   = rtp_live_get_duration;
   ml->base.play           = rtp_live_play;

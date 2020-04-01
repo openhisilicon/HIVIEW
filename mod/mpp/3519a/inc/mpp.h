@@ -53,6 +53,10 @@ typedef struct {
   HI_U32          u32Profile;
   HI_BOOL         bRcnRefShareBuf;
   VENC_GOP_MODE_E enGopMode;
+  //add 2020.04.01;
+  HI_U32          u32FrameRate;
+  HI_U32          u32Gop;
+  HI_U32          u32BitRate;
 }gsf_mpp_venc_t;
 
 //SAMPLE_COMM_VPSS_Bind_VENC

@@ -263,6 +263,8 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
       goto EXIT_VI_VPSS_UNBIND;
   }
 
+  SAMPLE_COMM_VENC_CreatAttr(venc->VencChn, venc->u32FrameRate, venc->u32Gop, venc->u32BitRate);
+
   s32Ret = SAMPLE_COMM_VENC_Start(venc->VencChn, 
                                 venc->enPayLoad, 
                                 venc->enSize, 

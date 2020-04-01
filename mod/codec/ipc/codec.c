@@ -151,6 +151,9 @@ int venc_start(int start)
       .u32Profile = 0,
       .bRcnRefShareBuf = HI_TRUE,
       .enGopMode = VENC_GOPMODE_NORMALP,
+      .u32FrameRate = codec_ipc.venc[i].fps,
+      .u32Gop       = codec_ipc.venc[i].gop,
+      .u32BitRate   = codec_ipc.venc[i].bitrate,
     };
     printf("start >>> i:%d, width:%d\n", i, codec_ipc.venc[i].width);
     if(!start)
@@ -222,7 +225,7 @@ int main(int argc, char *argv[])
         .lane = 0,
         .wdr  = 0,
         .res  = 8,
-        .fps  = 30,
+        .fps  = 60,
     };
     
     strcpy(cfg.snsname, bsp_def.board.sensor[0]);
