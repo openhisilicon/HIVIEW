@@ -1,0 +1,1 @@
+This is a gsoap-based implementation of onvif NVT and NVC;
