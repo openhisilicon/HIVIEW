@@ -14,7 +14,7 @@
     ├── codec   (isp&&venc&vdec&vo)  
     ├── svp     (smart vison platform)  
     ├── rec     (video file to storage)  
-    ├── netbox  (for ftp ntp ddns ...)  
+    ├── user1   (user custom module)
     ├── mpp     (hisi mpp)  
     ├── app     (event joint && application)  
     ├── gui     (gui base hifb)  
@@ -26,7 +26,7 @@
 // system structure:  
   
 +------------+    +------------+         +-----------+  
-|    app     |    |   netbox   |         |    svp    |             req +------------+  
+|    app     |    |   user1    |         |    svp    |             req +------------+  
 +------------+    +------------+         +-----------+           <-----+    gui     |  
    pub  rep          pub   rep            pub    rep             |     +------------+  
     ^    ^            ^     ^              ^      ^              |  
@@ -53,7 +53,7 @@
   
 // startup sequence:  
   
-  BSP  CODEC  SVP   REC  NETBOX  APP   RTSPS  GUI    WEBS  
+  BSP  CODEC  SVP   REC  USER1  APP   RTSPS  GUI    WEBS  
    +     +     +     +     +      +      +     +      +  
    |     |     |     |     |      |      |     |      |  
    |     |     |     |     |      |      |     |      |  
