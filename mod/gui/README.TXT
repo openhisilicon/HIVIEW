@@ -1,2 +1,2 @@
-The smallest header-only GUI library(5 KLOC) for all platforms 
-https://github.com/idea4good/GuiLite
+littlevgl - Its will be the preferred GUI.
+nuklear   - Its C version of imgui.
