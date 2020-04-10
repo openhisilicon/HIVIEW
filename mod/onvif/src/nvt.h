@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include "soapH.h"
 
+#include "network.h"
 #include "onvif_api.h"
 
 #define DEFAULT_SCOPE   "onvif://www.onvif.org"
@@ -14,11 +15,6 @@
 
 #define KEY (1492)
 #define NUM_BROADCAST (4)        //number of times hello is broadcasted
-
-typedef union __NET_IPV4 {
-	unsigned int  int32;
-	unsigned char str[4];
-} NET_IPV4;
 
 #define MACH_ADDR_LENGTH 	  6
 #define INFO_LENGTH         256

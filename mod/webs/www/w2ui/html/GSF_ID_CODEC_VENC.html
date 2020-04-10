@@ -63,16 +63,53 @@ $(function () {
 });
 
 function json_get(){
-  var input = document.getElementById('req-id')
-  //sock.send(input.value)
-  //input.value = ''
+  
+    var input = document.getElementById('req-id')
+		//nanomsg
+		// Milliseconds between reconnects.
+		nanomsg.reconnectTime = 10 * 1000;
+		// Show some debug logging in the console.
+		nanomsg.debug = true;
+		// Receives ArrayBuffer objects instead of strings. Default is `false`.
+		nanomsg.receiveArrayBuffer = false;
+  
+		const sock = new nanomsg.Socket(nanomsg.REQ);
+		// const sock = new nanomsg.Socket(nanomsg.PAIR);
+		sock.connect('ws://' + window.location.hostname + ':7790')
+		// old school more streamy approach
+
+		sock.on('data', function (msg) {
+		  //console.log('got =>', msg);
+		  document.getElementById('rsp-id').value = msg /* <-- an improvement from FileReader :) */
+		});
+  
+    sock.send(input.value)
 }
 
 
 function json_set(){
-  var input = document.getElementById('rsp-id')
-  //sock.send(input.value)
-  //input.value = ''
+  
+    var input = document.getElementById('rsp-id')
+
+		//nanomsg
+		// Milliseconds between reconnects.
+		nanomsg.reconnectTime = 10 * 1000;
+		// Show some debug logging in the console.
+		nanomsg.debug = true;
+		// Receives ArrayBuffer objects instead of strings. Default is `false`.
+		nanomsg.receiveArrayBuffer = false;
+  
+		const sock = new nanomsg.Socket(nanomsg.REQ);
+		// const sock = new nanomsg.Socket(nanomsg.PAIR);
+		sock.connect('ws://' + window.location.hostname + ':7790')
+		// old school more streamy approach
+
+		sock.on('data', function (msg) {
+		  //console.log('got =>', msg);
+		  document.getElementById('res-id').value = msg /* <-- an improvement from FileReader :) */
+		});
+  
+    sock.send(input.value)
 }
 
 

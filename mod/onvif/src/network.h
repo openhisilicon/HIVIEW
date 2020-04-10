@@ -21,6 +21,10 @@
 #define ETH_NAME "eth0"
 #endif
 
+typedef union __NET_IPV4 {
+	unsigned int  int32;
+	unsigned char str[4];
+} NET_IPV4;
 
 int net_get_hwaddr(char *ifname, unsigned char *mac);
 int bind_server_udp(int server_s, char *server_ip);

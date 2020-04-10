@@ -6,5 +6,6 @@ nvc.*        - onvif nvc interface;
 nvt.*        - onvif nvt interface;
 
 gsoap        - autogen.
+             - move to /fw/gsoap;
 
 <end>
