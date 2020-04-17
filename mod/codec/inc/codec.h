@@ -10,6 +10,7 @@ extern "C" {
 //for json cfg;
 #include "mod/codec/inc/sjb_codec.h"
 
+
 #define GSF_IPC_CODEC      "ipc:///tmp/codec_rep"
 
 enum {
@@ -19,17 +20,35 @@ enum {
     GSF_ID_CODEC_IDR      = 4,  // ch, sid, nil;
     GSF_ID_CODEC_OSD      = 5,  // ch, sid, gsf_osd_t
     GSF_ID_CODEC_VMASK    = 6,  // ch, sid, gsf_vmask_t
-    GSF_ID_CODEC_SRC      = 7,  // ch, sid, gsf_src_t
+    GSF_ID_CODEC_SNAP     = 7,  // ch, sid, nil;
     GSF_ID_CODEC_VORES    = 8,  // ch, sid, gsf_resolu_t;
-    GSF_ID_CODEC_VOSP     = 9,  // ch, sid, gsf_split_t;
+    GSF_ID_CODEC_VOLY     = 9,  // ch, sid, gsf_layout_t;
     GSF_ID_CODEC_VOMV     = 10, // ch, sid, gsf_rect_t;
-    GSF_ID_CODEC_SNAP     = 11, // ch, sid, nil;
     GSF_ID_CODEC_END
 };
 
 enum {
     GSF_CODEC_ERR = -1,
 };
+
+typedef struct {
+  int resolu;
+}gsf_resolu_t;
+
+typedef struct {
+  int video_shmid;
+  int audio_shmid;
+}gsf_shmid_t;
+
+typedef struct {
+  int layout;
+  gsf_shmid_t shmid[GSF_CODEC_NVR_CHN];
+}gsf_layout_t;
+
+typedef struct {
+  int x, y;
+  int w, h;
+}gsf_rect_t;
 
 typedef struct {
   int size;

@@ -461,7 +461,12 @@ int ser_open_vod(gsf_file_t *file, gsf_rec_media_t *media)
   // open file;
   // generate sdp;
   
-  struct cfifo_ex *av_fifo = cfifo_alloc(2*1024*1024, cfifo_recsize, cfifo_rectag, NULL, &media->av_shmid, 1);
+  struct cfifo_ex *av_fifo = cfifo_alloc(2*1024*1024
+                              , cfifo_recsize
+                              , cfifo_rectag
+                              , NULL
+                              , &media->av_shmid
+                              , 1);
   
   // add cfifo to push_task;
   

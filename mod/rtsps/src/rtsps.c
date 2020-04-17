@@ -36,15 +36,9 @@ static void main_exit(int signal)
 	exit(0);
 }
 
-#if (defined GSF_CPU_3519) // test rtspcli;
-int main(int argc, char *argv[])
+static int multi_processes()
 {
-  signal(SIGPIPE, SIG_IGN);
-  signal(SIGTERM, main_exit);
-  signal(SIGINT,  main_exit);
-
   int i = 0, pid = 0;
-  #if 1
   for (i = 0; i < 2; i++) // connect in multiple processes when process > 1;
   {
     if ((pid = fork()) < 0) 
@@ -62,102 +56,81 @@ int main(int argc, char *argv[])
     }
   }
   sleep(1); //wait child runing;
+  printf("PARENT: process: i:%d, pid:%d\n", i, getpid());
+  return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGTERM, main_exit);
+  signal(SIGINT,  main_exit);
+
+
+  if(argc < 2)
+  {
+    printf("pls input: %s rtsps_parm.json\n", argv[0]);
+    return -1;
+  }
+  
+  if(json_parm_load(argv[1], &rtsps_parm) < 0)
+  {
+    json_parm_save(argv[1], &rtsps_parm);
+    json_parm_load(argv[1], &rtsps_parm);
+  }
+
+  #if 0
+  //multi_processes();
   #else
   rtsp_st_init();
   #endif
   
-  printf("PARENT: process: i:%d, pid:%d\n", i, getpid());
   
-  char buf[1024] = {0};
-  struct rtsp_st_ctl_t *ctl = (struct rtsp_st_ctl_t *)buf;
-  
-  int cnt = (argc > 1)?atoi(argv[1]):1;
-  
-  for(i = 0; i < cnt; i++)
-  {  
-    ctl->id = RTSP_CTL_C_OPEN;
-    sprintf(ctl->data, "rtsp://admin:12345@192.168.1.2:554/s%02d", i);
-    ctl->size = strlen(ctl->data)+1;
-    rtsp_st_ctl(ctl);
+  while(0)
+  {
+    //register To;
+    GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
+    reg->mid = GSF_MOD_ID_RTSPS;
+    strcpy(reg->uri, GSF_IPC_RTSPS);
+    int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
+    printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
+
+    static int cnt = 3;
+    if(ret == 0)
+      break;
+    if(cnt-- < 0)
+      return -1;
+    sleep(1);
   }
+  
+  GSF_LOG_CONN(0, 100);
+  void* rep = nm_rep_listen(GSF_IPC_RTSPS
+                        , NM_REP_MAX_WORKERS
+                        , NM_REP_OSIZE_MAX
+                        , req_recv);
   
   while(1)
   {
-    sleep(3);
+    if(0)
+    {
+      GSF_MSG_DEF(gsf_rtsp_url_t, ru, 8*1024);
+      sprintf(ru->url, "%s", "rtsp://admin:12345@192.168.1.2:554/1");
+      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0, sizeof(gsf_rtsp_url_t), GSF_IPC_RTSPS, 2000);
+      printf("GSF_ID_RTSPS_C_OPEN ret:%d, size:%d\n", ret, __rsize);
+    }
+    
+    sleep(6);
+    
+    if(0)
+    {
+      GSF_MSG_DEF(gsf_rtsp_url_t, ru, 8*1024);
+      sprintf(ru->url, "%s", "rtsp://admin:12345@192.168.1.2:554/1");
+      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_CLOSE, 0, SET, 0, sizeof(gsf_rtsp_url_t), GSF_IPC_RTSPS, 2000);
+      printf("GSF_ID_RTSPS_C_CLOSE ret:%d, size:%d\n", ret, __rsize);
+    }
+    
   }
+  
+  GSF_LOG_DISCONN();
   return 0;
 }
-#else
-int main(int argc, char *argv[])
-{
-  	signal(SIGPIPE, SIG_IGN);
-  	signal(SIGTERM, main_exit);
-  	signal(SIGINT,  main_exit);
-  
-    if(argc < 2)
-    {
-      printf("pls input: %s rtsps_parm.json\n", argv[0]);
-      return -1;
-    }
-    
-    if(json_parm_load(argv[1], &rtsps_parm) < 0)
-    {
-      json_parm_save(argv[1], &rtsps_parm);
-      json_parm_load(argv[1], &rtsps_parm);
-    }
-    info("parm.en:%d\n", rtsps_parm.en);
-    
-    GSF_LOG_CONN(0, 100);
-
-    int i = 0, pid = 0;
-    #if 1
-    for (i = 0; i < 2; i++) // connect in multiple processes when process > 1;
-    {
-      if ((pid = fork()) < 0) 
-      {
-        printf("WARN: can't create process: fork, i:%d\n", i);
-        break;
-      }
-      if (pid == 0)
-      {
-        printf("CHILD: process: i:%d, pid:%d\n", i, getpid());
-        rtsp_st_init();
-        while(1) sleep(1000);
-        return 0;
-      }
-    }
-    sleep(1); //wait child runing;
-    #else
-    rtsp_st_init();
-    #endif
-
-    printf("PARENT: process: i:%d, pid:%d\n", i, getpid());
-    
-    void* rep = nm_rep_listen(GSF_IPC_RTSPS, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
-
-    while(1)
-    {
-      //register To;
-      GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
-      reg->mid = GSF_MOD_ID_RTSPS;
-      strcpy(reg->uri, GSF_IPC_RTSPS);
-      int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
-      printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
-
-      static int cnt = 3;
-      if(ret == 0)
-        break;
-      if(cnt-- < 0)
-        return -1;
-      sleep(1);
-    }
-    
-    while(1)
-    {
-      sleep(3);
-    }
-      
-    GSF_LOG_DISCONN();
-    return 0;
-}
-#endif

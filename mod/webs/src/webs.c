@@ -48,10 +48,13 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
 void *web_pub, *web_req, *web_sub;
 int upg_stat = 0;
 
-int sbu_recv(char *msg, int size, int err)
+int sub_recv(char *msg, int size, int err)
 {
   char msgstr[64];
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
+
+  if(pmsg->id != GSF_EV_BSP_UPGRADE)
+    return 0;
 
   sprintf(msgstr, "progress:%d", pmsg->err);
   nm_pub_send(web_pub, msgstr, strlen(msgstr));
@@ -75,7 +78,7 @@ int main(void)
                   , NM_REP_OSIZE_MAX
                   , rep_recv); 
   web_sub = nm_sub_conn("ipc:///tmp/bsp_pub"
-                  , sbu_recv);
+                  , sub_recv);
 
   while(1)
   {

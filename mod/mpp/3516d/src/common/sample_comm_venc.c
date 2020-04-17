@@ -1391,7 +1391,7 @@ HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_U32 SnapCnt, HI_BOOL bS
                     return HI_FAILURE;
                 }
                 
-                if(SnapCB)
+                if(SnapCB) //maohw
                 {
                   SnapCB(i, &stStream, SnapU);
                 }

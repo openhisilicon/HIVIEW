@@ -12,10 +12,12 @@
 extern "C" {
 #endif
 
+
 #include "inc/gsf.h"
 
 //for json cfg;
 #include "mod/rec/inc/sjb_rec.h"
+
 
 #define GSF_IPC_REC "ipc:///tmp/rec_rep"
 

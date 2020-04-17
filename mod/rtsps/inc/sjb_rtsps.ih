@@ -3,7 +3,8 @@
 
 STRUCT(gsf_rtsps_t)
 {
-  FIELD(int, en);
+  FIELD(int, port);
+  FIELD(int, auth);
 };
 
 

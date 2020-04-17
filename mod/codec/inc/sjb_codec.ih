@@ -56,20 +56,10 @@ STRUCT(gsf_codec_ipc_t)
   ARRAY(gsf_vmask_t, vmask, GSF_CODEC_VMASK_NUM); 
 };
 
-STRUCT(gsf_src_t)
-{
-  FIELD(bool, en);     // enable
-  STRING(host,256);    // onvif://user:pwd@192.168.1.60:80
-  
-  FIELD(int,  transp); // tcp/udp/mc
-  STRING(st1, 256);    // rtsp://user:pwd@192.168.1.60:554/st1
-  STRING(st2, 256);    // rtsp://user:pwd@192.168.1.60:554/st2
-};
-
 //GSF_CODEC_NVR_CHN
 STRUCT(gsf_codec_nvr_t)
 {
-  ARRAY(gsf_src_t, ch, GSF_CODEC_NVR_CHN);
+  FIELD(int, resolu);
 };
 
 

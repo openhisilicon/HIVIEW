@@ -633,7 +633,7 @@ int NVC_Get_profiles(NVC_Dev_t *dev)
 {
 START:;
 	int ret = 0;
-    int do_again = 0;
+  int do_again = 0;
 	printf("[%s]----------->>>>> in\n", __func__);
 	struct _trt__GetProfiles profile_req;
 	struct _trt__GetProfilesResponse profile_resp;
@@ -4352,14 +4352,13 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     return 0;
 }
 
-int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *msg, void *_msg)
+int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap)
 {
-    printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-	int ret = 0;
-	struct soap *soap = NULL;
-    struct _trt__GetSnapshotUri SnapshotUriReq;
-    struct _trt__GetSnapshotUriResponse SnapshotUriResp;
-    memset(&SnapshotUriResp, 0, sizeof(struct _trt__GetSnapshotUriResponse));
+  int ret = 0;
+  struct soap *soap = NULL;
+  struct _trt__GetSnapshotUri SnapshotUriReq;
+  struct _trt__GetSnapshotUriResponse SnapshotUriResp;
+  memset(&SnapshotUriResp, 0, sizeof(struct _trt__GetSnapshotUriResponse));
 
 	if (dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].v_enc_token) < 1 
@@ -4374,56 +4373,54 @@ int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *msg, void *_msg)
 
 	struct SOAP_ENV__Header header;
 	soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
-    if (soap == NULL)
-    {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
-        return -1;
-    }
+  if (soap == NULL)
+  {
+      printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+      return -1;
+  }
 
 	SnapshotUriReq.ProfileToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
 	memset(SnapshotUriReq.ProfileToken, 0, sizeof(char)*INFO_LENGTH);
-    strncpy(SnapshotUriReq.ProfileToken, dev->profile_tn[dev->st_type].profile_token, sizeof(char)*INFO_LENGTH);
+  strncpy(SnapshotUriReq.ProfileToken, dev->profile_tn[dev->st_type].profile_token, sizeof(char)*INFO_LENGTH);
 	
-    fprintf(stderr, "[%s] token:%s\n", __FUNCTION__, SnapshotUriReq.ProfileToken);
+  fprintf(stderr, "[%s] token:%s\n", __FUNCTION__, SnapshotUriReq.ProfileToken);
 	const char *soap_action = "http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri";
  
-    char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
-    strncpy(soap_endpoint, dev->capa->media_capa->url, sizeof(char)*MAX_URL_LEN);
+  char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
+  strncpy(soap_endpoint, dev->capa->media_capa->url, sizeof(char)*MAX_URL_LEN);
 
-    do
+  do
+  {
+    soap_call___trt__GetSnapshotUri(soap, soap_endpoint, soap_action, &SnapshotUriReq, &SnapshotUriResp);
+    if (soap->error)
     {
-        soap_call___trt__GetSnapshotUri(soap, soap_endpoint, soap_action, &SnapshotUriReq, &SnapshotUriResp);
-        if (soap->error)
-        {
-        	printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-        	ret = soap->error; 
-            msg->size = 0;
-        	break;
-        }
-        else 
-        {
-            printf("[%s][%d]soap_call___trt__GetSnapshotUri ok\n", __func__, __LINE__);
-            if (SnapshotUriResp.MediaUri)
-            {
-                if(SnapshotUriResp.MediaUri->Uri)
-                {
-                    printf("[%s][%d] chs=%d type=%d\n", __func__, __LINE__, dev->ch_num, dev->st_type);
-                    ret = nvc_snap_req(SnapshotUriResp.MediaUri->Uri, dev->ch_num,dev->st_type, _msg);
-                    msg->size = ret;
-                }
-                else
-                {
-                    printf("[%s][%d]=====>>> GetSnapshotUri: Uri = NULL\n", __func__, __LINE__); 
-                }
-            }
-        	break;
-        }
-    }while(0);
+    	printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+    	ret = soap->error; 
+    	break;
+    }
+    else 
+    {
+      printf("[%s][%d]soap_call___trt__GetSnapshotUri ok\n", __func__, __LINE__);
+      if (SnapshotUriResp.MediaUri)
+      {
+          if(SnapshotUriResp.MediaUri->Uri)
+          {
+              printf("[%s][%d] st_type=%d, url:[%s]\n", __func__, __LINE__, dev->st_type, SnapshotUriResp.MediaUri->Uri);
+              strncpy(snap->url, SnapshotUriResp.MediaUri->Uri, sizeof(snap->url)-1);
+          }
+          else
+          {
+              printf("[%s][%d]=====>>> GetSnapshotUri: Uri = NULL\n", __func__, __LINE__); 
+          }
+      }
+  	  break;
+    }
+  }while(0);
 
 	free(soap_endpoint);
 	soap_endpoint = NULL;
 	destroy_soap(soap);
-    return 0;
+  return 0;
 }
 
 int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)

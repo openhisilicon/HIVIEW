@@ -3,10 +3,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <assert.h>
-#include "inc/gsf.h"
-#include "mod/bsp/inc/bsp.h"
-#include "mod/codec/inc/codec.h"
 
+#include "inc/gsf.h"
 #include "mod_call.h"
 
 
@@ -20,6 +18,11 @@ typedef struct {
   int reqs;       // req struct size;
   int rsps, rspn; // rsp struct size, rsp is array have N struct;
 }sjb_cb_t;
+
+#ifdef GSF_DEV_NVR
+#warning "...... GSF_DEV_NVR defined ......"
+#endif
+
 
 sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
 
@@ -38,6 +41,8 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   {GSF_ID_REC_CFG,  "GSF_ID_REC_CFG", GSF_IPC_REC  ,(sjb_cb*)sjb_bind_gsf_rec_cfg_t,(sjb_cb*)sjb_bind_gsf_rec_cfg_t,sizeof(gsf_rec_cfg_t),sizeof(gsf_rec_cfg_t),0},
   {GSF_ID_REC_QREC, "GSF_ID_REC_QREC", GSF_IPC_REC  ,(sjb_cb*)sjb_bind_gsf_rec_q_t,(sjb_cb*)sjb_bind_gsf_file_t,sizeof(gsf_rec_q_t),sizeof(gsf_file_t),1},
 
+//app;
+  {GSF_ID_APP_CHSRC, "GSF_ID_APP_CHSRC", GSF_IPC_APP  ,(sjb_cb*)sjb_bind_gsf_chsrc_t,(sjb_cb*)sjb_bind_gsf_chsrc_t,sizeof(gsf_chsrc_t),sizeof(gsf_chsrc_t),1},
 
 };
 

@@ -3,7 +3,8 @@
 #include "cfg.h"
 
 gsf_rtsps_t rtsps_parm = {
-  .en = 1,
+  .port = 554,
+  .auth = 0,
 };
 
 int json_parm_load(char *filename, gsf_rtsps_t *cfg)

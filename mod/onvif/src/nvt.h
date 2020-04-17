@@ -491,10 +491,10 @@ typedef struct nvt_s{
 
 
 /* NVT 接口 */
-int start_nvt_discovery(void);
+void* start_nvt_discovery(void* parm);
 void stop_nvt_discovery(void);
 
-int start_nvt_serve(void *parm);
+void* start_nvt_serve(void *parm);
 void stop_nvt_serve(void);
 
 /* NVT 上层实现，获取设备配置 */

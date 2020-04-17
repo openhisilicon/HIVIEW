@@ -8,17 +8,18 @@ TARG := bin/rtsps.exe
 
 #============================================================= 
 
-INCS := -I$(HOME) -Isrc -Iinc -Isrc/libbase -Isrc/librtsps -Isrc/st-rtsp \
+INCS := -I$(HOME) -Isrc -Iinc -Isrc/st-rtsp \
         -I$(HOME)/fw/libst/inc \
         -I$(HOME)/fw/libhttp/inc \
         -I$(HOME)/fw/librtp/inc \
-        -I$(HOME)/fw/librtsp/inc 
+        -I$(HOME)/fw/librtsp/inc \
+        -I$(HOME)/fw/h26xbits/inc
         
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lrtsp -lrtp -lhttp -lst -lcfifo -lrt -lnm -lcjson -lm -lpthread
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lh26xbits -lrtsp -lrtp -lhttp -lst -lcfifo -lrt -lnm -lcjson -lm -lpthread
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)

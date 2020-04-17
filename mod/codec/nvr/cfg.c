@@ -3,7 +3,7 @@
 #include "cfg.h"
 
 gsf_codec_nvr_t codec_nvr = {
- .ch[0] = {0,},
+  0
 };
 
 int json_parm_load(char *filename, gsf_codec_nvr_t *cfg)

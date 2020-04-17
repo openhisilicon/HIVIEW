@@ -67,6 +67,7 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
   return NULL;
 }
 
+
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
 {
     SAMPLE_SNS_TYPE_E enSnsType;

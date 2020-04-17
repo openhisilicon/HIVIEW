@@ -80,6 +80,12 @@ int cfifo_get_io(struct cfifo_ex *fifo_ex
 int cfifo_take_fd(struct cfifo_ex *fifo_ex);
 
 
+int cfifo_set_u(struct cfifo_ex *fifo_ex, void *u);
+void* cfifo_get_u(struct cfifo_ex *fifo_ex);
+
+
+
+
 #ifdef __cplusplus
 }
 #endif

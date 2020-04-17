@@ -33,6 +33,7 @@ enum {
     GSF_MOD_ID_ONVIF = 5,
     GSF_MOD_ID_SVP   = 6,
     GSF_MOD_ID_APP   = 7,
+    //user custom mod;
     GSF_MOD_ID_END   = 15
 };
 
@@ -117,11 +118,10 @@ typedef struct {
 }gsf_frm_t;
 
 
-//mod;
+//only include bsp mod;
 #include "mod/bsp/inc/log.h"             
 #include "mod/bsp/inc/bsp.h"
-#include "mod/codec/inc/codec.h"
-#include "mod/rec/inc/rec.h"
+//other mod have been removed;
 
 #ifdef __cplusplus
 }

@@ -270,10 +270,17 @@ typedef enum sample_vi_chn_set_e
 
 typedef enum sample_vo_mode_e
 {
+  #if 0 //maohw
     VO_MODE_1MUX  = 0,
     VO_MODE_4MUX = 1,
     VO_MODE_9MUX = 2,
-    VO_MODE_16MUX = 3,    
+    VO_MODE_16MUX = 3, 
+  #else
+    VO_MODE_1MUX  = 1,
+    VO_MODE_4MUX = 4,
+    VO_MODE_9MUX = 9,
+    VO_MODE_16MUX = 16, 
+  #endif   
     VO_MODE_BUTT
 }SAMPLE_VO_MODE_E;
 

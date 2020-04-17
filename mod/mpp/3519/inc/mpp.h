@@ -45,6 +45,9 @@ typedef struct {
   HI_U32          u32Profile;
   HI_BOOL         bRcnRefShareBuf;
   VENC_GOP_MODE_E enGopMode;
+  HI_U32          u32FrameRate;
+  HI_U32          u32Gop;
+  HI_U32          u32BitRate;
 }gsf_mpp_venc_t;
 
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc);

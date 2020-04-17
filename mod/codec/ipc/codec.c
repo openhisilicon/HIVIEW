@@ -12,6 +12,19 @@
 #include "rgn.h"
 #include "venc.h"
 
+#define PIC_WIDTH(w) \
+            (w >= 3840)?PIC_3840x2160:\
+            (w >= 1920)?PIC_1080P:\
+            (w >= 1280)?PIC_720P: \
+            PIC_D1_NTSC
+            
+#define PT_VENC(t) \
+            (t == GSF_ENC_H264)? PT_H264:\
+            (t == GSF_ENC_H265)? PT_H265:\
+            (t == GSF_ENC_MJPEG)? PT_MJPEG:\
+            PT_H264
+
+
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
@@ -118,17 +131,7 @@ static int getdef(gsf_bsp_def_t *def)
 int venc_start(int start)
 {
   // venc start;
-  #define PIC_WIDTH(w) \
-              (w >= 3840)?PIC_3840x2160:\
-              (w >= 1920)?PIC_1080P:\
-              (w >= 1280)?PIC_720P: \
-              PIC_D1_NTSC
-  #define PT_VENC(t) \
-              (t == GSF_VENC_TYPE_H264)? PT_H264:\
-              (t == GSF_VENC_TYPE_H265)? PT_H265:\
-              (t == GSF_VENC_TYPE_JPEG)? PT_JPEG:\
-              PT_H264
-
+  
   if(!start)
   {
     printf("stop >>> gsf_mpp_venc_dest()\n");

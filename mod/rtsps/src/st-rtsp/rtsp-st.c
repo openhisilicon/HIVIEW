@@ -1,22 +1,94 @@
-﻿#include "rtsp-server-st.h"
+﻿#include "rtsps.h"
+#include "rtsp-st.h"
+
+#include "rtsp-server-st.h"
 #include "rtsp-client-st.h"
 
-#include "rtsp-st.h"
+#include "h26xbits.h"
+
 
 static pthread_t rtsp_st_pid;
 static void* st_rtsp_ctl_listen(char *ip, unsigned short port);
 
-#include "fw/comm/inc/uthash.h"
 struct rtsp_conn_ctx_t
 {
   UT_hash_handle hh;
   char name[256];
+  int  refcnt;
   void* c;
   int video_shmid;
   int audio_shmid;
+  struct cfifo_ex *video_fifo;
+  gsf_frm_t *video_frm; // gsf_frm_t + __data_size__;
+  int packet_cnt;
 };
+
 // muti-rtsps, conn_ctxs in shm memery;
 static struct rtsp_conn_ctx_t *conn_ctxs;
+
+static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
+{
+    unsigned int size = sizeof(gsf_frm_t);
+
+    if(n1 >= size)
+    {
+        gsf_frm_t *rec = (gsf_frm_t*)p1;
+        return  sizeof(gsf_frm_t) + rec->size;
+    }
+    else
+    {
+        gsf_frm_t rec;
+        char *p = (char*)(&rec);
+        memcpy(p, p1, n1);
+        memcpy(p+n1, p2, size-n1);
+        return  sizeof(gsf_frm_t) + rec.size;
+    }
+    
+    return 0;
+}
+
+static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
+{
+    unsigned int size = sizeof(gsf_frm_t);
+
+    if(n1 >= size)
+    {
+        gsf_frm_t *rec = (gsf_frm_t*)p1;
+        return rec->flag & GSF_FRM_FLAG_IDR;
+    }
+    else
+    {
+        gsf_frm_t rec;
+        char *p = (char*)(&rec);
+        memcpy(p, p1, n1);
+        memcpy(p+n1, p2, size-n1);
+        return rec.flag & GSF_FRM_FLAG_IDR;
+    }
+    
+    return 0;
+}
+
+static unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2)
+{
+    return 0;
+}
+
+static unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+{
+  int i = 0, a = 0, l = 0, _n1 = n1;
+  unsigned char *p = NULL, *_p1 = p1, *_p2 = p2;
+  gsf_frm_t *rec = (gsf_frm_t*)u;
+
+  p = (unsigned char*)(rec);
+  a = sizeof(gsf_frm_t) + rec->size;
+  
+  l = CFIFO_MIN(a, _n1);
+  memcpy(_p1, p, l);
+  memcpy(_p2, p+l, a-l);
+  _n1-=l;_p1+=l;_p2+=a-l;
+
+  return 0;
+}
 
 static int onframe(void* param, const char*encoding, const void *packet, int bytes, uint32_t time, int flags)
 {
@@ -25,16 +97,73 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 
   if(flags)
   {
-    //printf("%s => encoding:%s, time:%08u, flags:%08d, drop.\n", ctx->name, encoding, time, flags);
+    printf("%s => encoding:%s, time:%08u, flags:%08d, drop.\n", ctx->name, encoding, time, flags);
   }
 
-
+  //printf("\n------------------\n");
+	struct timespec _ts;  
+  clock_gettime(CLOCK_MONOTONIC, &_ts);
+    
 	if (0 == strcmp("H264", encoding))
 	{
 		uint8_t type = *(uint8_t*)packet & 0x1f;
-		if (type == 7) // !vcl;
+
+		if(!ctx->video_frm)
 		{
-			//printf("%s => encoding:%s, time:%08u, flags:%08d, bytes:%d\n", ctx->name, encoding, time, flags, bytes);
+		  ctx->video_frm = (gsf_frm_t*)malloc(sizeof(gsf_frm_t)+384*1024);
+		  memset(ctx->video_frm, 0, sizeof(gsf_frm_t));
+		  ctx->packet_cnt = 0;
+		}
+		
+    if (type == 7) // sps;
+		{
+      h26x_parse_sps_wh((char*)packet
+          , type
+          , bytes
+          , &ctx->video_frm->video.width
+          , &ctx->video_frm->video.height);
+		}
+
+    if(ctx->video_frm->size + 4 + bytes <= 384*1024)
+    {
+      ctx->video_frm->data[ctx->video_frm->size+0] = 00;
+      ctx->video_frm->data[ctx->video_frm->size+1] = 00;
+      ctx->video_frm->data[ctx->video_frm->size+2] = 00;
+      ctx->video_frm->data[ctx->video_frm->size+3] = 01;
+      
+	    memcpy(ctx->video_frm->data + ctx->video_frm->size + 4, packet, bytes);
+	    ctx->video_frm->video.nal[ctx->packet_cnt] = bytes + 4;
+	    ctx->video_frm->size += bytes + 4;
+	    ctx->packet_cnt++;
+	  }
+	  else
+	  {
+	    ctx->video_frm->size = 0;
+	    ctx->packet_cnt = 0;
+      return 0;
+	  }
+
+		if(type == 5 || type == 1)
+		{
+      ctx->video_frm->type = GSF_FRM_VIDEO;
+      ctx->video_frm->flag = (type == 5)?GSF_FRM_FLAG_IDR:0;
+      ctx->video_frm->seq  = ctx->video_frm->seq + 1;
+      ctx->video_frm->utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
+      ctx->video_frm->pts  = ctx->video_frm->utc;
+      ctx->video_frm->video.encode = GSF_ENC_H264;
+
+      int ret = cfifo_put(ctx->video_fifo,  
+                      ctx->video_frm->size+sizeof(gsf_frm_t),
+                      cfifo_recput, 
+                      (unsigned char*)ctx->video_frm);
+      if(0)                
+      printf("%s => encoding:%s, time:%08u, type:%d, flags:%08d, w:%d, h:%d, packet_cnt:%d\n"
+			      , ctx->name, encoding, time, type, flags
+			      , ctx->video_frm->video.width, ctx->video_frm->video.height
+			      , ctx->packet_cnt);
+			      
+      ctx->video_frm->size = 0;
+	    ctx->packet_cnt = 0;
 		}
 	}
 	else if (0 == strcmp("H265", encoding))
@@ -42,7 +171,7 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 		uint8_t type = (*(uint8_t*)packet >> 1) & 0x3f;
 		if (type > 32) // !vcl;
 		{
-			//printf("%s => encoding:%s, time:%08u, flags:%08d, bytes:%d\n", ctx->name, encoding, time, flags, bytes);
+			printf("%s => encoding:%s, time:%08u, flags:%08d, bytes:%d\n", ctx->name, encoding, time, flags, bytes);
 		}
 	}
   
@@ -127,9 +256,8 @@ int rtsp_st_ctl(struct rtsp_st_ctl_t *ctl)
   {
     struct sockaddr_in from_addr;
     int from_len = sizeof(struct sockaddr_in);
-      
-    char buffer[8*1024] = {0};
-    ret = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&from_addr, &from_len);
+
+    ret = recvfrom(sock, ctl, 8*1024, 0, (struct sockaddr*)&from_addr, &from_len);
     printf("recvfrom ret:%d\n", ret);
     close(sock);
     return 0;
@@ -160,63 +288,76 @@ static void *handle_ctl(void *arg)
     struct rtsp_st_ctl_t *ctl = (struct rtsp_st_ctl_t*)buffer;
     switch(ctl->id)
     {
-      case RTSP_CTL_S_START: {
-          printf("%s => id: RTSP_CTL_S_START \n", __func__);
-          break;
-        }
-      case RTSP_CTL_S_STOP: {
-          printf("%s => id: RTSP_CTL_S_STOP \n", __func__);
-          break;
-        }
-      case RTSP_CTL_C_OPEN: {
+      case GSF_ID_RTSPS_C_OPEN: {
+  
           char *name = ctl->data;
-          printf("%s => id: RTSP_CTL_C_OPEN [%s]\n", __func__, name);
           struct rtsp_conn_ctx_t *ctx = NULL;
           if(strlen(name) == 0 || strlen(name) > 255)
           {
-            printf("%s => id: RTSP_CTL_C_OPEN err name [%s]\n", __func__, name);
+            printf("%s => id: GSF_ID_RTSPS_C_OPEN err name [%s]\n", __func__, name);
+            ctl->size = 0;
             break;
           }
           HASH_FIND_STR(conn_ctxs, name, ctx);
           if (ctx)
           {
-            printf("%s => id: RTSP_CTL_C_OPEN err already [%s]\n", __func__, name);
+            ctx->refcnt++;
+            gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
+            shmid->video_shmid = ctx->video_shmid;
+            shmid->audio_shmid = ctx->audio_shmid;;
+            ctl->size = sizeof(gsf_shmid_t);
+            
+            printf("%s => id: GSF_ID_RTSPS_C_OPEN refcnt:%d [%s]\n", __func__, ctx->refcnt, name);
             break;
           }
           
           ctx = calloc(1, sizeof(*ctx));
-          ctx->video_shmid = -1;
+          ctx->refcnt++;
           ctx->audio_shmid = -1;
+          ctx->video_fifo = cfifo_alloc(1*1024*1024,
+                          cfifo_recsize, 
+                          cfifo_rectag, 
+                          cfifo_recrel, 
+                          &ctx->video_shmid,
+                          0);
           
           struct st_rtsp_client_handler_t handler;
           handler.onframe = onframe;
           handler.param   = (void*)ctx;
           strncpy(ctx->name, name, sizeof(ctx->name)-1);          
+          
+          printf("%s => id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d\n", __func__, name, ctx->video_shmid);
           ctx->c = rtsp_client_connect(name, 0, &handler);
           HASH_ADD_STR(conn_ctxs, name, ctx);
           
+          gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
+          shmid->video_shmid = ctx->video_shmid;
+          shmid->audio_shmid = ctx->audio_shmid;;
+          ctl->size = sizeof(gsf_shmid_t);
+          
           break;
         }
-      case RTSP_CTL_C_CLOSE: {
+      case GSF_ID_RTSPS_C_CLOSE: {
           char *name = ctl->data;
           struct rtsp_conn_ctx_t *ctx = NULL;
           if(strlen(name) == 0 || strlen(name) > 255)
           {
+            ctl->size = 0;
             break;
           }
           HASH_FIND_STR(conn_ctxs, name, ctx);
-          if (ctx)
+          if (ctx && --ctx->refcnt == 0)
           {
             HASH_DEL(conn_ctxs, ctx);
             
+            printf("%s => id: GSF_ID_RTSPS_C_CLOSE 0000 [%s]\n", __func__, name);
             if(ctx->c)
             {
-              printf("%s => id: RTSP_CTL_C_CLOSE [%s]\n", __func__, name);
               rtsp_client_close(ctx->c);
             }
             if(ctx->video_shmid != -1)
             {
-              ;
+              cfifo_free(ctx->video_fifo);
             }
             if(ctx->audio_shmid != -1)
             {
@@ -224,21 +365,53 @@ static void *handle_ctl(void *arg)
             }
             free(ctx);
           }
+          else
+          {
+            printf("%s => id: GSF_ID_RTSPS_C_CLOSE refcnt:%d, [%s]\n", __func__, ctx->refcnt, name);
+          }
+          
+          ctl->size = 0;
           break;
         }
-      case RTSP_CTL_C_LIST: {
-          printf("%s => id: RTSP_CTL_C_LIST \n", __func__);
+      case GSF_ID_RTSPS_C_LIST: {
           struct rtsp_conn_ctx_t *ctx, *tmp;
           HASH_ITER(hh, conn_ctxs, ctx, tmp)
           {
-            //HASH_DEL(conn_ctxs, ctx);
-            //free(ctx);
-            printf("ctx->name:[%s]\n", ctx->name);
+            printf("GSF_ID_RTSPS_C_LIST ctx->name:[%s]\n", ctx->name);
           }
+          
+          ctl->size = 0;
+          break;
+        }
+      case GSF_ID_RTSPS_C_CLEAR: {
+          struct rtsp_conn_ctx_t *ctx, *tmp;
+          HASH_ITER(hh, conn_ctxs, ctx, tmp)
+          {
+            HASH_DEL(conn_ctxs, ctx);
+ 
+            printf("GSF_ID_RTSPS_C_CLEAR ctx->name:[%s]\n", ctx->name);
+            
+            if(ctx->c)
+            {
+              rtsp_client_close(ctx->c);
+            }
+            if(ctx->video_shmid != -1)
+            {
+              cfifo_free(ctx->video_fifo);
+            }
+            if(ctx->audio_shmid != -1)
+            {
+              ;
+            }
+            free(ctx);
+          }
+          
+          ctl->size = 0;
           break;
         }
     }
-    st_sendto(srv_nfd, ctl, sizeof(*ctl)+ctl->size, (struct sockaddr*)&from_addr, from_len, ST_UTIME_NO_TIMEOUT);
+    st_sendto(srv_nfd, ctl, sizeof(*ctl)+ctl->size
+            , (struct sockaddr*)&from_addr, from_len, ST_UTIME_NO_TIMEOUT);
   }
   st_netfd_close(srv_nfd);
 }

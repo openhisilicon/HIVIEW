@@ -5,54 +5,35 @@
 
 //mod
 #include "codec.h"
-#include "cfg.h"
 
 //myself
+#include "cfg.h"
 #include "msg_func.h"
 #include "mpp.h"
+#include "live.h"
 
-static void msg_func_venc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   rsp->err  = -1;
 }
 
-static void msg_func_aenc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  gsf_layout_t *ly = (gsf_layout_t *)req->data;
+  
+  live_ly(ly);
+}
+
+static void msg_func_vomv(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   rsp->err  = -1;
 }
-
-
-static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
-{
-  rsp->err  = -1;
-}
-
-static void msg_func_idr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
-{
-  rsp->err  = -1;
-}
-
-static void msg_func_vmask(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
-{
-  rsp->err  = -1;
-}
-
-
-static void msg_func_src(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
-{
-  rsp->err  = -1;
-}
-
 
 static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
-    [GSF_ID_CODEC_VENC]   = msg_func_venc,
-    [GSF_ID_CODEC_AENC]   = msg_func_aenc,
-    [GSF_ID_CODEC_SDP]    = msg_func_sdp,
-    [GSF_ID_CODEC_IDR]    = msg_func_idr,
-    [GSF_ID_CODEC_OSD]    = NULL,
-    [GSF_ID_CODEC_VMASK]  = msg_func_vmask,
-    [GSF_ID_CODEC_SRC]    = msg_func_src,
+    [GSF_ID_CODEC_VORES]  = msg_func_vores,
+    [GSF_ID_CODEC_VOLY]   = msg_func_voly,
+    [GSF_ID_CODEC_VOMV]   = msg_func_vomv,
  };
 
 

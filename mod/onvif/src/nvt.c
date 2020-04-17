@@ -14,7 +14,7 @@ char *generate_uuid(int type)
 {
     time_t time_n;
     struct tm *tm_t;
-    char uuid[LARGE_INFO_LENGTH];
+    static char uuid[LARGE_INFO_LENGTH];
     unsigned char macaddr[MACH_ADDR_LENGTH];
 
     net_get_hwaddr(ETH_NAME, macaddr);
@@ -1710,7 +1710,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__CreateUsers(struct soap *soap, struct _tds__Cre
     strcpy(passwd, input->User->Password);
     level = input->User->UserLevel;
     
-    add_user_info(&name, &passwd);
+    add_user_info(name, passwd);
     return SOAP_OK;
 }
 
@@ -1754,7 +1754,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetUser(struct soap *soap, struct _tds__SetUser
     strcpy(passwd, input->User->Password);
     level = input->User->UserLevel;
     
-    set_user_info(&name, &passwd);
+    set_user_info(name, passwd);
     return SOAP_OK;
 }
 
@@ -1762,13 +1762,13 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__GetSystemLog(struct soap *soap, struct _tds__Ge
 {
 #if 1
     int ret;
-    if(input->LogType == NULL)
+    if(input->LogType == 0)
     {
         return SOAP_FAULT;
     }
 
     char syslog[MAX_LOG_LEN];
-    ret = get_device_syslog(input->LogType, &syslog);
+    ret = get_device_syslog(input->LogType, syslog);
 
     output->SystemLog = (struct tt__SystemLog *)soap_malloc(soap, sizeof(struct tt__SystemLog));
     output->SystemLog->String = (char *)soap_malloc(soap, sizeof(char) * MAX_LOG_LEN);
@@ -3555,7 +3555,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetAudioSourceConfiguration(struct soap *soap, 
     strncpy(GetASC->Configuration->Name, info->aname, SMALL_INFO_LENGTH);
     GetASC->Configuration->SourceToken = (char *)soap_malloc(soap, sizeof(char) * SMALL_INFO_LENGTH);
     strncpy(GetASC->Configuration->SourceToken, info->sourcetoken, SMALL_INFO_LENGTH);
-    GetASC->Configuration->token = (char *)soap_malloc(1, sizeof(char) * SMALL_INFO_LENGTH);
+    GetASC->Configuration->token = (char *)soap_malloc(soap, sizeof(char) * SMALL_INFO_LENGTH);
     strncpy(GetASC->Configuration->token, info->token, SMALL_INFO_LENGTH);
     GetASC->Configuration->UseCount = info->count;
 
@@ -5228,7 +5228,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trc__GetServiceCapabilities(struct soap *soap, struc
 
 ////////////////////////////////////////////
 
-int start_nvt_discovery(void)
+void* start_nvt_discovery(void* parm)
 {
 START:;
     int ret = -1;
@@ -5256,7 +5256,7 @@ START:;
     {
         fprintf(stderr, "[%s][%d] bind port error!\n", __FUNCTION__, __LINE__);
         soap_print_fault(&soap, stderr);
-        return -1;
+        return NULL;
     }
     mcast.imr_multiaddr.s_addr = inet_addr("239.255.255.250");
     mcast.imr_interface.s_addr = htonl(INADDR_ANY);
@@ -5290,7 +5290,7 @@ START:;
     }
     soap_done(&soap);
     pthread_exit(NULL);
-    return 0;
+    return NULL;
 }
 
 #if 0
@@ -5373,7 +5373,7 @@ SOAP_SOCKET dequeue()
     return sock;
 }
 
-int start_nvt_serve(void *parm)
+void* start_nvt_serve(void *parm)
 {
 START:;
     struct soap soap;
@@ -5474,7 +5474,7 @@ START:;
     {
         goto START;
     }
-    return 0;
+    return NULL;
 }
 #endif
 
@@ -5519,7 +5519,7 @@ void *do_work(void *tsoap)
     pthread_exit(NULL);
 }
 
-int start_nvt_serve(void *parm)
+void* start_nvt_serve(void *parm)
 {
 START:;
     pthread_t tid;

@@ -1,10 +1,10 @@
 export GSF_CPU_ARCH=3536d
 export GSF_DEV_TYPE=nvr
 export GSF_HOME=`pwd`
-export GSF_CC="arm-hisiv610-linux-gcc"
-export GSF_AR=arm-hisiv610-linux-ar
-export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_DEV_TYPE=1 -DGSF_CPU_3536d -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4 -mno-unaligned-access -fno-aggressive-loop-optimizations"
-export GSF_LDFLAGS="-lanl"
+export GSF_CC="arm-hisiv510-linux-gcc"
+export GSF_AR=arm-hisiv510-linux-ar
+export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_DEV_NVR -DGSF_CPU_3536d -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4 -mno-unaligned-access -fno-aggressive-loop-optimizations"
+export GSF_LDFLAGS=""
 
 if [ ! -d ${GSF_HOME}/lib/${GSF_CPU_ARCH} ]
 then

@@ -10,6 +10,7 @@ extern "C" {
 //for json cfg;
 #include "mod/bsp/inc/sjb_bsp.h"
 
+
 #define GSF_IPC_BSP     "ipc:///tmp/bsp_rep"
 #define GSF_PUB_BSP     "ipc:///tmp/bsp_pub"
 
@@ -27,8 +28,9 @@ enum {
 };
 
 enum {
-  GSF_EV_REBOOT = 1,
-  GSF_EV_UPG    = 2,
+  GSF_EV_BSP_REBOOT  = 1, // nil;
+  GSF_EV_BSP_UPGRADE = 2, // nil;
+  GSF_EV_BSP_MOD_REG = 3, // gsf_mod_reg_t;
 };
 
 enum {

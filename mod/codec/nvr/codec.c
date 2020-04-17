@@ -9,8 +9,11 @@
 #include "cfg.h"
 #include "msg_func.h"
 #include "mpp.h"
+#include "live.h"
+
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
+
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -30,9 +33,14 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
+
+
 int main(int argc, char *argv[])
 {
-    gsf_bsp_def_t bsp_def;    
+    gsf_bsp_def_t bsp_def;  
+    
+    #if 0
+      
     if(argc < 2)
     {
       printf("pls input: %s codec_parm.json\n", argv[0]);
@@ -43,7 +51,6 @@ int main(int argc, char *argv[])
       json_parm_save(argv[1], &codec_nvr);
       json_parm_load(argv[1], &codec_nvr);
     }
-    info("parm.ch[0].en:%d\n", codec_nvr.ch[0].en);
     
     while(1)
     {
@@ -75,18 +82,24 @@ int main(int argc, char *argv[])
       bsp_def = *cfg;
     }
     
+    #endif
+    
     GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
     
-    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60);
+    gsf_mpp_cfg("", NULL);
+    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
+    
+    live_mon();
     
     while(1)
     {
       sleep(1);
     }
-
+    
+    gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_NONE, NULL);
     gsf_mpp_vo_stop(VODEV_HD0);
-
+    
     GSF_LOG_DISCONN();
     return 0;
 }

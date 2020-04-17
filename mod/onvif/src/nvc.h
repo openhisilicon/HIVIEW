@@ -172,8 +172,8 @@ typedef struct MVC_Probe_s
 {
 	uint8_t  ip[MAX_IP_LEN];
 	uint32_t port;
-    uint32_t type;	/**NVC_Device_Type_E*/
-    uint32_t ch_num;
+  uint32_t type;	/**NVC_Device_Type_E*/
+  uint32_t ch_num;
 }NVC_Probe_t;
 
 
@@ -358,12 +358,8 @@ typedef struct NVC_Img_attr_s
 
 typedef struct NVC_Snapshot_s
 {
-    uint32_t size;      //snapshort file size
-    uint8_t res[1];
+    char url[MAX_URL_LEN];
 }NVC_Snapshot_t;
-
-
-
 
 typedef struct NVC_time_s{
     uint32_t year;
@@ -373,8 +369,6 @@ typedef struct NVC_time_s{
     uint32_t min;
     uint32_t sec;
 }NVC_time_t;
-
-
 
 /*********** func *******/
 //static SOAP  creat_soap_header(const char *was_To, const char *was_Action);
@@ -412,7 +406,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t *dev, PTZ_Preset_t *preset);
 int NVC_PTZ_Preset_call(NVC_Dev_t *dev, PTZ_Preset_t *preset);
 int NVC_PTZ_Preset_tour(NVC_Dev_t *dev, NVC_PTZ_Preset_t *preset);
 int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time);
-
+int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap);
 
 ///
 extern int nvc_snap_req(char *uri, int chs, int streamtype, void *msg);

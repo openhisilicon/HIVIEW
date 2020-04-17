@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     ntp_set(&bsp_parm.ntp);
 
     
-    system("ifconfig eth0:1 192.168.1.2");
+    //system("ifconfig eth0:1 192.168.1.2");
 
 
     // sadp;

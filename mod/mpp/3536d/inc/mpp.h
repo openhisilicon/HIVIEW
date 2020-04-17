@@ -3,10 +3,13 @@
 
 #include "sample_comm.h"
 
-/*
- * 1, 代码不考虑支持多种芯片系列, 比如3536X系列不考虑3531X; 
- * 2, 为方便更新SDK,尽量复用sample_comm中现有的代码;(可修改,请增加注释);
- */
+//sys;
+typedef struct {
+  int max_vdcnt;
+}gsf_mpp_cfg_t;
+
+int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
+
 
 //vodev;
 enum {
@@ -14,13 +17,10 @@ enum {
 };
 
 //启动视频输出设备
-int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync);
+int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wbc);
+
 //停止视频输出设备
 int gsf_mpp_vo_stop(int vodev);
-//修改视频输出设置分辨率
-int gsf_mpp_vo_resolu(int vodev, VO_INTF_SYNC_E sync);
-//WBC使能
-int gsf_mpp_vo_wbc(int vodev, int en);
 
 //vofb;
 enum {
@@ -39,23 +39,22 @@ int gsf_mpp_fb_draw(int vofb, void *data /* ARGB1555 */, int w, int h);
 enum {
   VOLAYER_HD0 = 0,  // 视频层
   VOLAYER_PIP = 1,  // PIP层
+  VOLAYER_BUTT
 };
 
 // 显示通道布局
 typedef enum {
-  VO_SPLIT_NONE  = 0, VO_SPLIT_10MUX = 10,
-  VO_SPLIT_1MUX  = 1, VO_SPLIT_12MUX = 12,
-  VO_SPLIT_4MUX  = 4, VO_SPLIT_16MUX = 16,
-  VO_SPLIT_6MUX  = 6, VO_SPLIT_25MUX = 25,
-  VO_SPLIT_8MUX  = 8, VO_SPLIT_36MUX = 36,
-  VO_SPLIT_9MUX  = 9, VO_SPLIT_64MUX = 64,
-  VO_SPLIT_BUTT
-}VO_SPLIT_E;
+  VO_LAYOUT_NONE  = 0, VO_LAYOUT_10MUX = 10,
+  VO_LAYOUT_1MUX  = 1, VO_LAYOUT_12MUX = 12,
+  VO_LAYOUT_4MUX  = 4, VO_LAYOUT_16MUX = 16,
+  VO_LAYOUT_6MUX  = 6, VO_LAYOUT_25MUX = 25,
+  VO_LAYOUT_8MUX  = 8, VO_LAYOUT_36MUX = 36,
+  VO_LAYOUT_9MUX  = 9, VO_LAYOUT_64MUX = 64,
+  VO_LAYOUT_BUTT
+}VO_LAYOUT_E;
 
-//创建图像层显示通道
-//创建VPSS/VO通道, split=VO_SPLIT_NONE时,销毁所有显示通道;
-//当vdch!=NULL时,绑定指定解码通道号(用于多个VPSS绑定一个VDEC的场景,如画中画且同一个视频源)
-int gsf_mpp_vo_split(int volayer, VO_SPLIT_E split, RECT_S *rect, int vdch[VO_SPLIT_BUTT]);
+//创建图像层显示通道;
+int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect);
 //移动整个图像层显示区域(位置,大小)
 int gsf_mpp_vo_move(int volayer, RECT_S *rect);
 //设置通道源图像裁剪区域(用于局部放大)
@@ -66,7 +65,7 @@ int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 typedef struct {
     int size;     // data size;
     int ftype;    // frame type;
-    int etype;    // encode type;
+    int etype;    // PAYLOAD_TYPE_E;
     int width;    // width;
     int height;   // height;
     int au_chs;   // audio channels;
@@ -112,6 +111,9 @@ typedef struct {
   HI_U32          u32Profile;
   HI_BOOL         bRcnRefShareBuf;
   VENC_GOP_MODE_E enGopMode;
+  HI_U32          u32FrameRate;
+  HI_U32          u32Gop;
+  HI_U32          u32BitRate;
 }gsf_mpp_venc_t;
 
 //启动编码通道

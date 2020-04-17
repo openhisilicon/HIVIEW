@@ -36,7 +36,8 @@ else ifeq ($(GSF_CPU_ARCH), 3559a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lhive_RES -laacenc -laacdec
 else ifeq ($(GSF_CPU_ARCH), 3536d)
-LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lmpi -lhdmi -laacenc -laacdec -ljpeg6b -ltde -lVoiceEngine -ldnvqe -lupvqe
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lmpi -lhdmi -laacenc -laacdec -ljpeg6b -ltde -lVoiceEngine -ldnvqe -lupvqe \
+        -lpthread
 endif
 
 $(TARG): SJB $(OBJS)

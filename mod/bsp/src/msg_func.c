@@ -14,9 +14,28 @@
 //myself
 #include "msg_func.h"
 
+extern void* bsp_pub;
+
+
 gsf_mod_reg_t gmods[GSF_MOD_ID_END] = {
   [GSF_MOD_ID_BSP] = {.uri = GSF_IPC_BSP},
   };
+
+int pub_mod_reg(gsf_mod_reg_t *reg)
+{
+  char buf[sizeof(gsf_msg_t) + sizeof(gsf_mod_reg_t)];
+  gsf_msg_t *msg = (gsf_msg_t*)buf;
+  
+  memset(msg, 0, sizeof(*msg));
+  msg->id = GSF_EV_BSP_MOD_REG;
+  msg->ts = time(NULL)*1000;
+  msg->sid = 0;
+  msg->err = 0;
+  msg->size = sizeof(gsf_mod_reg_t);
+  memcpy(msg->data, reg, msg->size);
+  nm_pub_send(bsp_pub, (char*)msg, sizeof(*msg)+msg->size);
+  return 0;
+}
 
 static void msg_func_cli(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
@@ -37,10 +56,15 @@ static void msg_func_cli(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
       break;
     case GSF_CLI_REGISTER:
       {
-        // record mod url to gmods;
+        // register mod url to gmods;
         gsf_mod_reg_t *reg = (gsf_mod_reg_t*)req->data;
-        printf("REGISTER [mid:%d, uri:%s]\n", reg->mid, reg->uri);
+        
+        printf("REGISTER [mid:%d, pid:%d, uri:%s]\n"
+                , reg->mid, reg->pid, reg->uri);
+        
         gmods[reg->mid] = *reg;
+        pub_mod_reg(reg);
+        
         rsp->size = sizeof(gmods);
         memcpy(rsp->data, gmods, sizeof(gmods));
       }
@@ -83,13 +107,13 @@ static void msg_func_eth(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   }
 }
 
-extern void* bsp_pub;
+
 
 int upg_cb(int progress, void *u)
 {
   gsf_msg_t msg;
   memset(&msg, 0, sizeof(msg));
-  msg.id = GSF_EV_UPG;
+  msg.id = GSF_EV_BSP_UPGRADE;
   msg.ts = time(NULL)*1000;
   msg.sid = 0;
   msg.err = progress;
