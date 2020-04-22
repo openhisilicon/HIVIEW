@@ -129,7 +129,7 @@ static void* live_task(void *parm)
       if(gmng.ly1.shmid[i].video_shmid != gmng.ly2.shmid[i].video_shmid)
       {
 
-        if(gmng.ly2.shmid[i].video_shmid > 0 && gmng.cfifo[i])
+        if(gmng.ly2.shmid[i].video_shmid >= 0 && gmng.cfifo[i])
         {
           printf("del i:%d, ly2.video_shmid:%d\n"
               , i, gmng.ly2.shmid[i].video_shmid);
@@ -141,17 +141,20 @@ static void* live_task(void *parm)
         
         gmng.ly2.shmid[i].video_shmid = gmng.ly1.shmid[i].video_shmid;
         
-        if(gmng.ly2.shmid[i].video_shmid > 0)
-        {
-          printf("add i:%d, ly2.video_shmid:%d\n"
-              , i, gmng.ly2.shmid[i].video_shmid);
-              
+        if(gmng.ly2.shmid[i].video_shmid >= 0)
+        {   
           gmng.cfifo[i] = cfifo_shmat(cfifo_recsize
                                     , cfifo_rectag
                                     , gmng.ly2.shmid[i].video_shmid);
-
+                                    
+          printf("add i:%d, ly2.video_shmid:%d, cfifo:%p\n"
+              , i, gmng.ly2.shmid[i].video_shmid, gmng.cfifo[i]);
+              
+          if(gmng.cfifo[i] == NULL)
+          {
+            continue;
+          }
           cfifo_set_u(gmng.cfifo[i], (void*)i);
-
           cfifo_newest(gmng.cfifo[i], 1);
           cfifo_ep_ctl(ep, CFIFO_EP_ADD, gmng.cfifo[i]);
         } 

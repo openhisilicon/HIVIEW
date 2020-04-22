@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   #endif
   
   
-  while(0)
+  while(1)
   {
     //register To;
     GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);

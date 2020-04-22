@@ -277,7 +277,9 @@ void* rtsp_client_connect(const char* url, int protol, struct st_rtsp_client_han
 {
   struct rtsp_client_test_t *ctx = calloc(1, sizeof(struct rtsp_client_test_t));
 
-  rtsp_url_parse((char*)url, ctx->host, &ctx->rtsp_port, ctx->file, ctx->user, ctx->pwd);
+  char _url[256] = {0};
+  strcpy(_url, url);
+  rtsp_url_parse(_url, ctx->host, &ctx->rtsp_port, ctx->file, ctx->user, ctx->pwd);
 
   ctx->handler = *_handler;
 	ctx->transport = RTSP_TRANSPORT_RTP_UDP;

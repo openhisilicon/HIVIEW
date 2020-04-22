@@ -100,10 +100,13 @@ void *nvc_dev_open(char *url, int timeout)
   char user[32] = {0};
   char pass[32] = {0};
   char path[64] = {0};
+  char _url[256] = {0};
+  strcpy(_url, url);
+  onvif_url_parse(_url, ip, &port, path, user, pass);
   
-  onvif_url_parse(url, ip, &port, path, user, pass);
-  
-	//printf("[%s]--->>>>  in\n", __func__);
+	printf("[%s]--->>>> ip:[%s], port:%d, user:[%s], pass:[%s]\n"
+	      , __func__, ip, port, user, pass);
+
 	int ret = -1;
 	NVC_Dev_t *dev_handle = (NVC_Dev_t *)calloc(1, sizeof(NVC_Dev_t));
 
@@ -794,34 +797,26 @@ int set_device_factorydefault(int mask);
 
 int32_t nvt_start(void)
 {
-    system("route add -net 239.255.255.0 netmask 255.255.255.0 dev eth0");
-    
-    if (pthread_create(&g_nvt->discovery_id, NULL, start_nvt_discovery, NULL) < 0) 
-    {
-        fprintf(stderr, "[%s]  ====> discovery service failed.........\n", __FUNCTION__);
-        return -1;
-    } 
-    else 
-    {
-        fprintf(stderr, "[%s]  ====> discovery service starting.........\n", __FUNCTION__); 
-    }   
+  system("route add -net 239.255.255.0 netmask 255.255.255.0 dev eth0");
+  
+  if (pthread_create(&g_nvt->discovery_id, NULL, start_nvt_discovery, NULL) < 0) 
+  {
+      return -1;
+  }
 
-    if(pthread_create(&g_nvt->serve_id, NULL, start_nvt_serve, NULL) < 0)
-    {
-        fprintf(stderr, "[%s]  ====> NVT service failed.........\n", __FUNCTION__);
-    }
-    else
-    {
-        fprintf(stderr, "[%s]  ====> NVT service starting.........\n", __FUNCTION__);   
-    }
-
-    return 0;
+  if(pthread_create(&g_nvt->serve_id, NULL, start_nvt_serve, NULL) < 0)
+  {
+      return -1;
+  }
+  printf("%s => start ok.\n", __func__);
+  return 0;
 }
 
 int32_t nvt_stop(void)
 {
-    stop_nvt_discovery();
-    stop_nvt_serve();
+  printf("%s => stop ...\n", __func__);
+  stop_nvt_discovery();
+  stop_nvt_serve();
 }
 
 int set_default_token(int ch_num)
@@ -879,54 +874,53 @@ int set_default_token(int ch_num)
 
 int32_t nvt_init(nvt_parm_t *parm)
 {
-    int i;
-    g_nvt = (nvt_t*)calloc(1, sizeof(nvt_t));
-    if(!g_nvt)
-        return -1;
-    
-    memcpy(&g_nvt->p, parm, sizeof(nvt_parm_t));
+  int i;
+  g_nvt = (nvt_t*)calloc(1, sizeof(nvt_t));
+  if(!g_nvt)
+      return -1;
+  
+  memcpy(&g_nvt->p, parm, sizeof(nvt_parm_t));
 
-    g_nvt->t.dev = (device_info_t*)calloc(1, sizeof(device_info_t));
-    
-    g_nvt->t.nprofiles = MAX_PROFILES;
-    g_nvt->t.profiles = (onvif_profile_t*)calloc(1, g_nvt->t.nprofiles * sizeof(onvif_profile_t));
+  g_nvt->t.dev = (device_info_t*)calloc(1, sizeof(device_info_t));
+  
+  g_nvt->t.nprofiles = MAX_PROFILES;
+  g_nvt->t.profiles = (onvif_profile_t*)calloc(1, g_nvt->t.nprofiles * sizeof(onvif_profile_t));
 
-    for(i = 0; i < MAX_PROFILES; i++)
-    {
-        g_nvt->t.profiles[i].vsc = (video_source_conf_t *)calloc(1, sizeof(video_source_conf_t));
-        g_nvt->t.profiles[i].asc = (audio_source_conf_t *)calloc(1, sizeof(audio_source_conf_t));
-        g_nvt->t.profiles[i].vec = (video_encoder_conf_t *)calloc(1, sizeof(video_encoder_conf_t));
-        g_nvt->t.profiles[i].aec = (audio_encoder_conf_t *)calloc(1, sizeof(audio_encoder_conf_t));
-        g_nvt->t.profiles[i].img = (imaging_conf_t *)calloc(1, sizeof(imaging_conf_t)); 
-
-        //add by lyx
-    	g_nvt->t.profiles[i].PTZc = (PTZ_conf_t *)calloc(1, sizeof(PTZ_conf_t));
-    }
-    //get_dev_profiles(ALL_CHS,  g_nvt->t.profiles, 2, VSC | ASC | VEC | AEC);
-    //get_dev_info();
-    set_default_token(g_nvt->p.ch_num);
-    return 0;
+  for(i = 0; i < MAX_PROFILES; i++)
+  {
+      g_nvt->t.profiles[i].vsc = (video_source_conf_t *)calloc(1, sizeof(video_source_conf_t));
+      g_nvt->t.profiles[i].asc = (audio_source_conf_t *)calloc(1, sizeof(audio_source_conf_t));
+      g_nvt->t.profiles[i].vec = (video_encoder_conf_t *)calloc(1, sizeof(video_encoder_conf_t));
+      g_nvt->t.profiles[i].aec = (audio_encoder_conf_t *)calloc(1, sizeof(audio_encoder_conf_t));
+      g_nvt->t.profiles[i].img = (imaging_conf_t *)calloc(1, sizeof(imaging_conf_t)); 
+      //add by lyx
+  	  g_nvt->t.profiles[i].PTZc = (PTZ_conf_t *)calloc(1, sizeof(PTZ_conf_t));
+  }
+  //get_dev_profiles(ALL_CHS,  g_nvt->t.profiles, 2, VSC | ASC | VEC | AEC);
+  //get_dev_info();
+  set_default_token(g_nvt->p.ch_num);
+  return 0;
 }
 int32_t nvt_uninit(void)
 {
-    int i;    
-    if(g_nvt)   
-    {         
-        for(i = 0; i < MAX_PROFILES; i++)   
-        {   
-            if(g_nvt->t.profiles[i].img) free(g_nvt->t.profiles[i].img);   
-            if(g_nvt->t.profiles[i].vsc) free(g_nvt->t.profiles[i].vsc);     
-            if(g_nvt->t.profiles[i].asc) free(g_nvt->t.profiles[i].asc);     
-            if(g_nvt->t.profiles[i].vec) free(g_nvt->t.profiles[i].vec);      
-            if(g_nvt->t.profiles[i].aec) free(g_nvt->t.profiles[i].aec);
-        }       
-        if(g_nvt->t.profiles) free(g_nvt->t.profiles);
-        
-        if(g_nvt->t.dev) free(g_nvt->t.dev);
+  int i;    
+  if(g_nvt)   
+  {         
+    for(i = 0; i < MAX_PROFILES; i++)   
+    {   
+        if(g_nvt->t.profiles[i].img) free(g_nvt->t.profiles[i].img);   
+        if(g_nvt->t.profiles[i].vsc) free(g_nvt->t.profiles[i].vsc);     
+        if(g_nvt->t.profiles[i].asc) free(g_nvt->t.profiles[i].asc);     
+        if(g_nvt->t.profiles[i].vec) free(g_nvt->t.profiles[i].vec);      
+        if(g_nvt->t.profiles[i].aec) free(g_nvt->t.profiles[i].aec);
+    }       
+    if(g_nvt->t.profiles) free(g_nvt->t.profiles);
+    
+    if(g_nvt->t.dev) free(g_nvt->t.dev);
 
-        free(g_nvt);        
-        g_nvt = NULL;   
-    }
+    free(g_nvt);        
+    g_nvt = NULL;   
+  }
 }
 
 ///////////////////////////////////////////////////////////////
@@ -936,9 +930,9 @@ int32_t nvt_uninit(void)
 
 int get_dev_info()
 {
-  strncpy(g_nvt->t.dev->hwid       , "hi353x" , INFO_LEN);
-  strncpy(g_nvt->t.dev->serial     , "123456", INFO_LEN);
-  strncpy(g_nvt->t.dev->sw         , "1.2.3" , INFO_LEN);
+  strncpy(g_nvt->t.dev->hwid    , "hiview", INFO_LEN);
+  strncpy(g_nvt->t.dev->serial  , "123456", INFO_LEN);
+  strncpy(g_nvt->t.dev->sw      , "1.2.3" , INFO_LEN);
   return 0;
 }
 
@@ -947,7 +941,7 @@ int get_curr_chs()
    return g_nvt->p.ch_num;
 }
 
-int encoding_interval = 1;
+static int encoding_interval = 1;
 
 int get_vsc_profiles(int chs, video_source_conf_t *info, int num)
 {
@@ -970,8 +964,8 @@ int get_vsc_profiles(int chs, video_source_conf_t *info, int num)
     ret = get_dev_portinfo(&port_info);
     if(ret < 0)
     {
-        fprintf(stderr, "[get_vsc_profiles]====> not get port\n\n");
-        port_info.rtsp_port = 554;//set default value
+      fprintf(stderr, "[get_vsc_profiles]====> not get port\n\n");
+      port_info.rtsp_port = 554;//set default value
     }
     
     sprintf(sourcetoken, "CH%02dVideoSourceToken", chs/2);
@@ -986,27 +980,21 @@ int get_vsc_profiles(int chs, video_source_conf_t *info, int num)
     info->x = 0;
     info->y = 0;
     info->width = 1920;
-    info->heigth = 1080;   
+    info->heigth = 1080;
+    
+    return 0;
 }
 
 int get_imaging_conf(int chs, imaging_conf_t *img, int num)
 {
     int ret = -1;
-
     // get dev imgattr;
-    if(ret == 0)
-    {
-      //;
-    }
-    else
-    {
-        img->brightness = 100.00;
-        img->ColorSaturation = 100.00;
-        img->contrast = 100.00;
-        img->sharpness = 100.00;
-    }
+    img->brightness = 100.00;
+    img->ColorSaturation = 100.00;
+    img->contrast = 100.00;
+    img->sharpness = 100.00;
     img->IrCtFilter = 0;
-
+    return 0;
 }
 
 int get_asc_profiles(int chs, audio_source_conf_t *info, int num)
@@ -1026,6 +1014,7 @@ int get_asc_profiles(int chs, audio_source_conf_t *info, int num)
     strcpy(info->token, token);
     strcpy(info->sourcetoken, sourcetoken);
     info->count = num;
+    return 0;
 }
 
 int get_vec_profiles(int chs, video_encoder_conf_t *info, int num)
@@ -1039,29 +1028,26 @@ int get_vec_profiles(int chs, video_encoder_conf_t *info, int num)
     
     if(ret == 0)
     {
-        #if 0
-        sdk_encode_t *videoconf = ((sdk_msg_t*)msg_buf)->data;
         if(chs%2 == 0)
         {          
-            info->BitrateLimit = videoconf->main.bitrate;
-            info->gLength = videoconf->main.gop;
-            info->hProfile = videoconf->main.level;
-            info->quality = videoconf->main.pic_quilty;
-            info->FrameRateLimit = videoconf->main.frame_rate;
+            info->BitrateLimit  = 4000;//main.bitrate;
+            info->gLength       = 30;//main.gop;
+            info->hProfile      = 0;//main.level;
+            info->quality       = 0;//main.pic_quilty;
+            info->FrameRateLimit= 30;//main.frame_rate;
             info->width = 1920;
             info->height = 1080;
         }
         else
         {
-            info->BitrateLimit = videoconf->second.bitrate;
-            info->gLength = videoconf->second.gop;
-            info->hProfile = videoconf->second.level;
-            info->quality = videoconf->second.pic_quilty;
-            info->FrameRateLimit = videoconf->second.frame_rate;
-            info->width = 1280;
-            info->height = 720;
+            info->BitrateLimit    = 2000;//second.bitrate;
+            info->gLength         = 30;//second.gop;
+            info->hProfile        = 0;//second.level;
+            info->quality         = 0;//second.pic_quilty;
+            info->FrameRateLimit  = 30;//second.frame_rate;
+            info->width = 704;
+            info->height = 576;
         }
-        #endif
     }
     else
     {
@@ -1083,12 +1069,11 @@ int get_vec_profiles(int chs, video_encoder_conf_t *info, int num)
     info->SessionTimeout = 720000;
     info->GovLength = 1;
     info->mProfile = SP;
-
-
+    return 0;
 }
 
-int audio_samplerate = 1;
-int audio_bitrate = 64;
+static int audio_samplerate = 1;
+static int audio_bitrate = 64;
 int get_aec_profiles(int chs, audio_encoder_conf_t *info, int num)
 {
     char name[SMALL_INFO_LENGTH];
@@ -1111,12 +1096,12 @@ int get_aec_profiles(int chs, audio_encoder_conf_t *info, int num)
     info->MultiConf.ttl = 0;
     info->SessionTimeout = 72000;
     info->usecount = num;
+    return 0;
 }
 
-#if 1
+
 static int firstGetParamFlag = 1;
 static time_t lastGetParamTm;
-#endif
 
 int get_dev_profiles(int chs, onvif_profile_t *profile, int num, int flag)
 {
@@ -1126,12 +1111,9 @@ int get_dev_profiles(int chs, onvif_profile_t *profile, int num, int flag)
     time_t currTime;
     memset(name, 0, sizeof(SMALL_INFO_LENGTH));
     memset(token, 0, sizeof(SMALL_INFO_LENGTH));
-    
-    printf("[%s]=========> in \n", __FUNCTION__);
 
     printf("[%s]=========> in  firstGetParamFlag=%d\n", __FUNCTION__, firstGetParamFlag);
     
-#if 1
     if(chs == ALL_CHS)
     {
         if(firstGetParamFlag == 1)
@@ -1156,8 +1138,6 @@ int get_dev_profiles(int chs, onvif_profile_t *profile, int num, int flag)
     }
     
     printf("[%s]=========> qqqqqqqq\n", __FUNCTION__);
-    
-#endif
     
     if(chs == ALL_CHS)
     {
@@ -1217,10 +1197,12 @@ int set_vsc_conf(int chs, video_source_conf_t *info)
     if(ret == 0)
     {
        if(chs%2 == 0)
-       {  
+       {
+          ;
        }
        else
        {
+          ;
        }
     }
     else
@@ -1233,7 +1215,7 @@ int set_vsc_conf(int chs, video_source_conf_t *info)
 
 int set_vec_conf(int chs, video_encoder_conf_t *info)
 {
-    int ret = -1;
+    int ret = 0;
 
     if(ret == 0)
     {
@@ -1353,14 +1335,11 @@ int get_dev_netinfo(net_info_t *info)
 int get_dev_portinfo(port_info_t *info)
 {
     int ret = 0;
-#if 0
-	  sdk_net_mng_cfg_t *net_info;
-
-    info->http_port = net_info->http_port;
-    info->rtsp_port = net_info->dvr_data_port;
+    info->http_port = 80;
+    info->rtsp_port = 554;
     info->http_enable = TRUE;
     info->rtsp_enable = TRUE;
-#endif
+
     return ret;
 }
 
@@ -1495,20 +1474,20 @@ int fill_resolutions(device_capability_t *dev_cap, int stream_type, int i, int i
 {
     switch(stream_type)
     {
-      case SUB_STREAM:
-        {
-          dev_cap->videostream[i].resheight[index][0] = 576;
-          dev_cap->videostream[i].reswidth[index][0]  = 704;
-          dev_cap->videostream[i].resheight[index][1] = 288;
-          dev_cap->videostream[i].reswidth[index][1]  = 352;
-        }
-        break;
       case MAIN_STREAM:
         {
           dev_cap->videostream[i].resheight[index][0] = 720;
           dev_cap->videostream[i].reswidth[index][0]  = 1280;
           dev_cap->videostream[i].resheight[index][1] = 1080;
           dev_cap->videostream[i].reswidth[index][1]  = 1920;
+        }
+        break;
+      case SUB_STREAM:
+        {
+          dev_cap->videostream[i].resheight[index][0] = 576;
+          dev_cap->videostream[i].reswidth[index][0]  = 704;
+          dev_cap->videostream[i].resheight[index][1] = 288;
+          dev_cap->videostream[i].reswidth[index][1]  = 352;
         }
         break;
       default:
@@ -1625,7 +1604,7 @@ int get_recording_list(nvt_time_t starttime, nvt_time_t endtime)
         }
         else if(ret < 0)
         {
-            fprintf(stderr, "\n[%s] cannot get SDK_MAIN_MSG_RECORD_QUERY\n", __FUNCTION__);
+            fprintf(stderr, "\n[%s] cannot get recording_list\n", __FUNCTION__);
         }
     }
 #endif

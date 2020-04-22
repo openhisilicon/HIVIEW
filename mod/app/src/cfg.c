@@ -7,15 +7,15 @@ gsf_app_nvr_t app_nvr = {
     .en = 1,
     .host = "onvif://admin:12345@192.168.1.2:8000",
     .transp = 0,
-    .st1  = "rtsp://admin:12345@192.168.1.2:554/1",
-    .st2  = "rtsp://admin:12345@192.168.1.2:554/2",
+    .st1  = "",
+    .st2  = "",
   },
   .chsrc[1] = {
-    .en = 1,
-    .host = "onvif://admin:12345@192.168.1.2:8000",
+    .en = 0,
+    .host = "onvif://admin:admin@192.168.1.101:80",
     .transp = 0,
-    .st1  = "rtsp://admin:12345@192.168.1.2:554/1",
-    .st2  = "rtsp://admin:12345@192.168.1.2:554/2",
+    .st1  = "",
+    .st2  = "",
   },
 };
 

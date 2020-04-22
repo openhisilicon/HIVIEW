@@ -171,7 +171,7 @@ int ntp_set(gsf_ntp_t *ntp)
     
     system("hwclock -s");
     
-    sprintf(cmd, "watch -n %d \"ntpd -qNn; hwclock -w;\" &", ntp->prog);
+    sprintf(cmd, "watch -n %d \"ntpd -qNn &> /dev/null; hwclock -w;\" &> /dev/null &", ntp->prog);
     system(cmd);
   }
   

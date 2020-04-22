@@ -3,64 +3,10 @@
 
 #include <stdint.h>
 
-#define MAX_PRESET_NUM  256
-#define ONVIF_PRESET_NAME_FMT  "PtzName_%d"
+#include "onvif.h"
 
-/*
- * 云台控制消息ID定义
- */
-typedef enum {
-    NVC_PTZ_UP_START = 0x001
-  , NVC_PTZ_UP_STOP
-  , NVC_PTZ_DOWN_START
-  , NVC_PTZ_DOWN_STOP
-  , NVC_PTZ_LEFT_START
-  , NVC_PTZ_LEFT_STOP
-  , NVC_PTZ_RIGHT_START    
-  , NVC_PTZ_RIGHT_STOP
-  , NVC_PTZ_LEFT_UP_START
-  , NVC_PTZ_LEFT_UP_STOP
-  , NVC_PTZ_RIGHT_UP_START
-  , NVC_PTZ_RIGHT_UP_STOP
-  , NVC_PTZ_LEFT_DOWN_START
-  , NVC_PTZ_LEFT_DOWN_STOP
-  , NVC_PTZ_RIGHT_DOWN_START
-  , NVC_PTZ_RITHT_DOWN_STOP
-  , NVC_PTZ_PRESET_SET
-  , NVC_PTZ_PRESET_CALL
-  , NVC_PTZ_PRESET_DEL
-  , NVC_PTZ_ZOOM_ADD_START
-  , NVC_PTZ_ZOOM_ADD_STOP
-  , NVC_PTZ_ZOOM_SUB_START
-  , NVC_PTZ_ZOOM_SUB_STOP
-  , NVC_PTZ_FOCUS_ADD_START
-  , NVC_PTZ_FOCUS_ADD_STOP
-  , NVC_PTZ_FOCUS_SUB_START
-  , NVC_PTZ_FOCUS_SUB_STOP
-  , NVC_PTZ_IRIS_ADD_START
-  , NVC_PTZ_IRIS_ADD_STOP
-  , NVC_PTZ_IRIS_SUB_START
-  , NVC_PTZ_IRIS_SUB_STOP
-  , NVC_PTZ_GOTO_ZERO_PAN
-  , NVC_PTZ_FLIP_180
-  , NVC_PTZ_SET_PATTERN_START
-  , NVC_PTZ_SET_PATTERN_STOP
-  , NVC_PTZ_RUN_PATTERN
-  , NVC_PTZ_SET_AUXILIARY
-  , NVC_PTZ_CLEAR_AUXILIARY
-  , NVC_PTZ_AUTO_SCAN_START
-  , NVC_PTZ_AUTO_SCAN_STOP
-  , NVC_PTZ_RANDOM_SCAN_START
-  , NVC_PTZ_RANDOM_SCAN_STOP
-  , NVC_PTZ_LEFT_OFFSET
-  , NVC_PTZ_RIGHT_OFFSET
-  , NVC_PTZ_DOWN_OFFSET
-  , NVC_PTZ_UP_OFFSET
-  , NVC_PTZ_ZOOM_MULTIPLE
-  , NVC_PTZ_POINT_CENTER
-  , NVC_PTZ_VIEW_CENTER
-  , NVC_PTZ_BUTT
-}NVC_PTZ_ID_E;
+#define MAX_PRESET_NUM  512
+#define ONVIF_PRESET_NAME_FMT  "PtzName_%d"
 
 
 /* probe */
@@ -87,26 +33,16 @@ int32_t nvc_probe(int type, int timeout, NVC_PROBER_CB *cb, void *user_args);
 void *nvc_dev_open(char *url, int timeout /*EVENT_CB*/);
 int32_t nvc_dev_close(void *dev);
 
-
 typedef struct {
-    uint8_t    trans;       /* 0: udp, 1: tcp, 3: rtsp 4: http*/
+    uint8_t    trans;       /* 0: udp, 1: tcp, 2: rtsp 3: http*/
     uint8_t    proto;       /* 0: Unicast, 1: multicast */
     int8_t     url[256];    /* url */
 }nvc_media_url_t;
 
 int32_t nvc_media_url_get(void *dev, int ch, int st, nvc_media_url_t* media);
 
-/*
- * 云台控制命令
- */
-typedef struct {
-    uint8_t    cmd;     /* NVC_PTZ_ID_E */
-    uint8_t    speed;   /* 1 - 100 */
-    uint8_t    res;     /* res */
-    uint8_t    val;     /* preset, track ...  */
-    uint8_t    name[32];/* preset, track name */
-}nvc_ptz_ctl_t;
-
+// NVC_PTZ_ID_E #include "onvif.h"
+// nvc_ptz_ctl_t #include "onvif.h"
 int32_t nvc_ptz_ctl(void *dev, int ch, int st, nvc_ptz_ctl_t *ctl);
 
 /*

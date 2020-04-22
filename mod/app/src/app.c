@@ -33,11 +33,21 @@ static int sub_recv(char *msg, int size, int err)
 {
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
 
-  if(pmsg == GSF_EV_BSP_MOD_REG)
+  if(pmsg->id == GSF_EV_BSP_MOD_REG)
   {
     gsf_mod_reg_t *reg = (gsf_mod_reg_t*) pmsg->data;
+    
     printf("GSF_EV_BSP_MOD_REG mid:%d, pid:%d, uri:%s\n"
           , reg->mid, reg->pid, reg->uri);
+          
+    if(reg->mid == GSF_MOD_ID_RTSPS)
+    {
+      live_chsrc_clear();
+    }
+    else if(reg->mid == GSF_MOD_ID_CODEC)
+    {
+      vo_ly();
+    }
   }
   
   return 0;

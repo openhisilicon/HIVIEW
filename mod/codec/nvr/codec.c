@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 {
     gsf_bsp_def_t bsp_def;  
     
-    #if 0
+    #if 1
       
     if(argc < 2)
     {
@@ -84,13 +84,13 @@ int main(int argc, char *argv[])
     
     #endif
     
-    GSF_LOG_CONN(0, 100);
-    void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
-    
     gsf_mpp_cfg("", NULL);
     gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
     
     live_mon();
+    
+    GSF_LOG_CONN(0, 100);
+    void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
     
     while(1)
     {

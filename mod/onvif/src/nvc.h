@@ -21,7 +21,7 @@
 #define MAX_MAC_ADDR_LEN 32
 #endif
 #ifndef MAX_PRESET_NUM  
-#define MAX_PRESET_NUM  256
+#define MAX_PRESET_NUM  512
 #endif 
 
 #define MACH_ADDR_LENGTH 	  6

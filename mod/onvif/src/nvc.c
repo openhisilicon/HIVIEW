@@ -123,21 +123,21 @@ char *_strcpy(char *deststr, char *srctstr)
 
 static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, const char *was_Action, int timeout, int probe_flag, NVC_Dev_t *dev)
 {
-		struct soap *soap = NULL; 
-        time_t time_n;
-        struct tm *tm_t;
-		unsigned char macaddr[MACH_ADDR_LENGTH] = {0};
-		char _HwId[LARGE_INFO_LENGTH] = {0};
+    struct soap *soap = NULL; 
+    time_t time_n;
+    struct tm *tm_t;
+    unsigned char macaddr[MACH_ADDR_LENGTH] = {0};
+    char _HwId[LARGE_INFO_LENGTH] = {0};
 
-		//printf("[%s]--->>> in\n", __func__);
-		
-	    soap = soap_new();
-		//printf("==============>>>> soap: %p\n", soap);
-	    if(soap==NULL)
-	    {
-	    	printf("[%s][%s][Line: %d]Error: soap = NULL\n", __FILE__, __func__, __LINE__);
-	    	return NULL;
-	    }
+    //printf("[%s]--->>> in\n", __func__);
+
+    soap = soap_new();
+    //printf("==============>>>> soap: %p\n", soap);
+    if(soap==NULL)
+    {
+      printf("[%s][%s][Line: %d]Error: soap = NULL\n", __FILE__, __func__, __LINE__);
+      return NULL;
+    }
 
 		#if 1 /**test*/
 		if (probe_flag == 1)
@@ -172,11 +172,11 @@ static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, cons
     		soap_default_SOAP_ENV__Header(soap, header);
     		    		
     		net_get_hwaddr(ETH_NAME, macaddr);
-            time_n = time(NULL);
-            tm_t = localtime(&time_n);
-            sprintf(_HwId, "uuid:1319d68a-%04d-%04d-%04d-%02x%02x%02x%02x%02x%02x",
-                    tm_t->tm_hour,tm_t->tm_min,tm_t->tm_sec,
-                    macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+        time_n = time(NULL);
+        tm_t = localtime(&time_n);
+        sprintf(_HwId, "uuid:1319d68a-%04d-%04d-%04d-%02x%02x%02x%02x%02x%02x",
+                tm_t->tm_hour,tm_t->tm_min,tm_t->tm_sec,
+                macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
 
     		//sprintf(_HwId,"uuid:1419d68a-1dd2-11b2-a105-%02X%02X%02X%02X%02X%02X",macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
     		header->wsa__MessageID =(char *)soap_malloc(soap, sizeof(char) * INFO_LENGTH);    
@@ -675,15 +675,15 @@ START:;
 		{
 			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error; 
-            if((ret == SOAP_CLI_FAULT) || (ret == SOAP_FAULT))
-            {
-                fprintf(stderr, "[%s] Verify error! Send again!\n", __FUNCTION__);
-                if(!dev->need_verify)
-                {
-                    dev->need_verify = 1;
-                    do_again = 1;
-                }    
-            }
+      if((ret == SOAP_CLI_FAULT) || (ret == SOAP_FAULT) || (ret == 401))
+      {
+          fprintf(stderr, "[%s] Verify error! Send again!\n", __FUNCTION__);
+          if(!dev->need_verify)
+          {
+              dev->need_verify = 1;
+              do_again = 1;
+          }    
+      }
 			break;
 		}
 		else 
@@ -903,11 +903,11 @@ START:;
 		soap_endpoint = NULL;
 	}
 	destroy_soap(soap);
-    fprintf(stderr, "[%s] do again=%d\n", __FUNCTION__, do_again);
-    if(do_again)
-    {
-        goto START;
-    }
+  fprintf(stderr, "[%s] do again=%d\n", __FUNCTION__, do_again);
+  if(do_again)
+  {
+      goto START;
+  }
 	return ret;
 }
 
@@ -2324,7 +2324,8 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
             int i = 0;
             if(tptz_GetPresetresp.Preset != NULL)
             {
-                preset->_size = tptz_GetPresetresp.__sizePreset;
+                preset->_size = (tptz_GetPresetresp.__sizePreset > MAX_PRESET_NUM)?MAX_PRESET_NUM:tptz_GetPresetresp.__sizePreset;
+                  
                 fprintf(stderr, "[%s][%s][Line:%d]--->>> preset->_size: %d\n",__FILE__, __func__, __LINE__,preset->_size); 
                 for (i = 0; i < tptz_GetPresetresp.__sizePreset; i++)
                 {

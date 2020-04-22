@@ -552,7 +552,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__GetDeviceInformation(struct soap *soap, struct 
     DeviceInfo->SerialNumber = (char *)soap_malloc(soap, sizeof(char) * LARGE_INFO_LENGTH);
     DeviceInfo->HardwareId = (char *)soap_malloc(soap, sizeof(char) * LARGE_INFO_LENGTH);
 
-    strcpy(DeviceInfo->Manufacturer, "NVR"/*"Shenzhen GSF Technology Co., LTD."*/);
+    strcpy(DeviceInfo->Manufacturer, "HIVIEW"/*"Shenzhen HIVIEW Technology Co., LTD."*/);
     strcpy(DeviceInfo->Model,  "ONVIF");
     strcpy(DeviceInfo->FirmwareVersion, g_nvt->t.dev->sw);
     strcpy(DeviceInfo->SerialNumber, g_nvt->t.dev->serial);
@@ -1087,7 +1087,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__GetScopes(struct soap *soap, struct _tds__GetSc
 
     GetScopes->Scopes[i].ScopeDef = tt__ScopeDefinition__Fixed;
     GetScopes->Scopes[i].ScopeItem = (char *)soap_malloc(soap, (sizeof(char) * INFO_LENGTH));
-    strcpy(GetScopes->Scopes[i].ScopeItem, "onvif://www.onvif.org/name/NVR");
+    strcpy(GetScopes->Scopes[i].ScopeItem, "onvif://www.onvif.org/name/github.com/openhisilicon");
     i++;
 
     GetScopes->Scopes[i].ScopeDef = tt__ScopeDefinition__Fixed;
@@ -1097,7 +1097,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__GetScopes(struct soap *soap, struct _tds__GetSc
 
     GetScopes->Scopes[i].ScopeDef = tt__ScopeDefinition__Fixed;
     GetScopes->Scopes[i].ScopeItem = (char *)soap_malloc(soap, (sizeof(char) * INFO_LENGTH));
-    strcpy(GetScopes->Scopes[i].ScopeItem, "onvif://www.onvif.org/location/XXX/CHINA");
+    strcpy(GetScopes->Scopes[i].ScopeItem, "onvif://www.onvif.org/location/SHENZHEN/CHINA");
 
     return SOAP_OK;
 }
@@ -4052,7 +4052,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetSnapshotUri(struct soap* soap, struct _trt__
     }
 
     ip.int32 =  net_get_ifaddr(ETH_NAME);
-
+    
     for(i = 0; i < g_nvt->t.nprofiles; i++)
     {
         if(strcmp(input->ProfileToken, g_nvt->t.profiles[i].ptoken) == 0)
@@ -4080,7 +4080,9 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetSnapshotUri(struct soap* soap, struct _trt__
 
     if(flag)
     {
-        sprintf(_IPAddr, "http://%d.%d.%d.%d:80/snap/snap_%d_%d.jpg", ip.str[0], ip.str[1], ip.str[2], ip.str[3], chs, streamtype);
+        //sprintf(_IPAddr, "http://%d.%d.%d.%d:80/snap/snap_%d_%d.jpg", ip.str[0], ip.str[1], ip.str[2], ip.str[3], chs, streamtype);
+        sprintf(_IPAddr, "http://%d.%d.%d.%d:80/snap?args=G0C%dS%d", ip.str[0], ip.str[1], ip.str[2], ip.str[3], chs, streamtype);
+        printf("flag:%d, _IPAddr:%s\n", flag, _IPAddr);
         soap->http_version = "1.0";
         SnapUri->MediaUri = (struct tt__MediaUri *)soap_malloc(soap, sizeof(struct tt__MediaUri));
         memset(SnapUri->MediaUri, 0, sizeof(struct tt__MediaUri));
@@ -4092,7 +4094,9 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetSnapshotUri(struct soap* soap, struct _trt__
     }
     else
     {
-        sprintf(_IPAddr, "http://%d.%d.%d.%d:80/snap/snap_%d_%d.jpg", ip.str[0], ip.str[1], ip.str[2], ip.str[3], chs, streamtype);
+        //sprintf(_IPAddr, "http://%d.%d.%d.%d:80/snap/snap_%d_%d.jpg", ip.str[0], ip.str[1], ip.str[2], ip.str[3], chs, streamtype);
+        sprintf(_IPAddr, "http://%d.%d.%d.%d:80/snap?args=G0C%dS%d", ip.str[0], ip.str[1], ip.str[2], ip.str[3], chs, streamtype);
+        printf("flag:%d, _IPAddr:%s\n", flag, _IPAddr);
         soap->http_version = "1.0";
         SnapUri->MediaUri = (struct tt__MediaUri *)soap_malloc(soap, sizeof(struct tt__MediaUri));
         memset(SnapUri->MediaUri, 0, sizeof(struct tt__MediaUri));

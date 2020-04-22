@@ -19,7 +19,7 @@ enum {
     GSF_ID_ONVIF_C_CLOSE   = 4,  // [gsf_onvif_url_t, nil]
     GSF_ID_ONVIF_C_LIST    = 5,  // [nil, gsf_onvif_conn_t ... N]
     GSF_ID_ONVIF_C_CLEAR   = 6,  // [nil, nil]
-    GSF_ID_ONVIF_C_PTZCTL  = 7,  //
+    GSF_ID_ONVIF_C_PTZCTL  = 7,  // [gsf_onvif_ptz_ctl_t, nil]
     GSF_ID_ONVIF_C_PRESET  = 8,  // 
     GSF_ID_ONVIF_C_SETTIME = 9,  //
     GSF_ID_ONVIF_C_IMGATTR = 10, //
@@ -60,6 +60,74 @@ typedef struct {
   gsf_onvif_media_url_t media_url;
 }gsf_onvif_conn_t;
 
+/*
+ * 云台控制消息ID定义
+ */
+typedef enum {
+    NVC_PTZ_UP_START = 0x001
+  , NVC_PTZ_UP_STOP
+  , NVC_PTZ_DOWN_START
+  , NVC_PTZ_DOWN_STOP
+  , NVC_PTZ_LEFT_START
+  , NVC_PTZ_LEFT_STOP
+  , NVC_PTZ_RIGHT_START    
+  , NVC_PTZ_RIGHT_STOP
+  , NVC_PTZ_LEFT_UP_START
+  , NVC_PTZ_LEFT_UP_STOP
+  , NVC_PTZ_RIGHT_UP_START
+  , NVC_PTZ_RIGHT_UP_STOP
+  , NVC_PTZ_LEFT_DOWN_START
+  , NVC_PTZ_LEFT_DOWN_STOP
+  , NVC_PTZ_RIGHT_DOWN_START
+  , NVC_PTZ_RITHT_DOWN_STOP
+  , NVC_PTZ_PRESET_SET
+  , NVC_PTZ_PRESET_CALL
+  , NVC_PTZ_PRESET_DEL
+  , NVC_PTZ_ZOOM_ADD_START
+  , NVC_PTZ_ZOOM_ADD_STOP
+  , NVC_PTZ_ZOOM_SUB_START
+  , NVC_PTZ_ZOOM_SUB_STOP
+  , NVC_PTZ_FOCUS_ADD_START
+  , NVC_PTZ_FOCUS_ADD_STOP
+  , NVC_PTZ_FOCUS_SUB_START
+  , NVC_PTZ_FOCUS_SUB_STOP
+  , NVC_PTZ_IRIS_ADD_START
+  , NVC_PTZ_IRIS_ADD_STOP
+  , NVC_PTZ_IRIS_SUB_START
+  , NVC_PTZ_IRIS_SUB_STOP
+  , NVC_PTZ_GOTO_ZERO_PAN
+  , NVC_PTZ_FLIP_180
+  , NVC_PTZ_SET_PATTERN_START
+  , NVC_PTZ_SET_PATTERN_STOP
+  , NVC_PTZ_RUN_PATTERN
+  , NVC_PTZ_SET_AUXILIARY
+  , NVC_PTZ_CLEAR_AUXILIARY
+  , NVC_PTZ_AUTO_SCAN_START
+  , NVC_PTZ_AUTO_SCAN_STOP
+  , NVC_PTZ_RANDOM_SCAN_START
+  , NVC_PTZ_RANDOM_SCAN_STOP
+  , NVC_PTZ_LEFT_OFFSET
+  , NVC_PTZ_RIGHT_OFFSET
+  , NVC_PTZ_DOWN_OFFSET
+  , NVC_PTZ_UP_OFFSET
+  , NVC_PTZ_ZOOM_MULTIPLE
+  , NVC_PTZ_POINT_CENTER
+  , NVC_PTZ_VIEW_CENTER
+  , NVC_PTZ_BUTT
+}NVC_PTZ_ID_E;
+
+typedef struct {
+    unsigned char cmd;     /* NVC_PTZ_ID_E */
+    unsigned char speed;   /* 1 - 100 */
+    unsigned char res;     /* res */
+    unsigned char val;     /* preset, track ...  */
+    unsigned char name[32];/* preset, track name */
+}nvc_ptz_ctl_t;
+
+typedef struct {
+  char url[256]; // onvif://admin:12345@192.168.1.60:8000
+  nvc_ptz_ctl_t ctl; // nvc_ptz_ctl_t
+}gsf_onvif_ptz_ctl_t;
 
 
 #ifdef __cplusplus

@@ -6,6 +6,7 @@
 int live_mon();
 
 int live_chsrc_modify(int i, gsf_chsrc_t *chsrc);
+int live_chsrc_clear();
 
 int live_get_shmid(int layout, int voch[GSF_CODEC_NVR_CHN]
                 , gsf_shmid_t shmid[GSF_CODEC_NVR_CHN]);

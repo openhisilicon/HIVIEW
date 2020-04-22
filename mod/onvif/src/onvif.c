@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
 
     {
       nvt_parm_t* parm = (nvt_parm_t*)calloc(1, sizeof(nvt_parm_t));
+      parm->ch_num = 1;
       parm->port = 8000;
       //parm->msg_cb = NULL;
       nvt_init(parm);

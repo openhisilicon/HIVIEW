@@ -21,6 +21,7 @@ struct rtsp_conn_ctx_t
   struct cfifo_ex *video_fifo;
   gsf_frm_t *video_frm; // gsf_frm_t + __data_size__;
   int packet_cnt;
+  int last_time;
 };
 
 // muti-rtsps, conn_ctxs in shm memery;
@@ -100,9 +101,9 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
     printf("%s => encoding:%s, time:%08u, flags:%08d, drop.\n", ctx->name, encoding, time, flags);
   }
 
-  //printf("\n------------------\n");
 	struct timespec _ts;  
   clock_gettime(CLOCK_MONOTONIC, &_ts);
+  ctx->last_time = _ts.tv_sec;
     
 	if (0 == strcmp("H264", encoding))
 	{
@@ -278,14 +279,43 @@ static void *handle_ctl(void *arg)
     struct sockaddr_in from_addr;
     int from_len = sizeof(struct sockaddr_in);
     memset(buffer, 0, sizeof(buffer));
-    int ret = st_recvfrom(srv_nfd, buffer, sizeof(buffer), (struct sockaddr*)&from_addr, &from_len, ST_UTIME_NO_TIMEOUT);
-    if(ret <= 0)
-    {
-      printf("%s => err ret:%d\n", __func__, ret);
-      break;
-    }
+    int ret = st_recvfrom(srv_nfd, buffer, sizeof(buffer)
+              , (struct sockaddr*)&from_addr, &from_len
+              , 3*1000*1000);
     
+    if (ret <= 0)
+    {
+      struct timespec _ts;  
+      clock_gettime(CLOCK_MONOTONIC, &_ts);
+      
+      struct rtsp_conn_ctx_t *ctx, *tmp;
+      HASH_ITER(hh, conn_ctxs, ctx, tmp)
+      {
+        if(_ts.tv_sec - ctx->last_time > 5)
+        {
+          printf("re-connect => ctx->name:[%s], cur:%d, last:%d\n"
+                , ctx->name, _ts.tv_sec, ctx->last_time);
+          
+          if(ctx->c)
+          {
+            rtsp_client_close(ctx->c);
+          }
+          
+          struct st_rtsp_client_handler_t handler;
+          handler.onframe = onframe;
+          handler.param   = (void*)ctx;
+          ctx->c = rtsp_client_connect(ctx->name, 0, &handler);         
+          
+          ctx->last_time = _ts.tv_sec;
+        }
+      }
+      continue;
+    }
+
     struct rtsp_st_ctl_t *ctl = (struct rtsp_st_ctl_t*)buffer;
+    
+    printf("%s => ctl->id:%d\n", __func__, ctl->id);
+    
     switch(ctl->id)
     {
       case GSF_ID_RTSPS_C_OPEN: {
@@ -320,13 +350,16 @@ static void *handle_ctl(void *arg)
                           cfifo_recrel, 
                           &ctx->video_shmid,
                           0);
+          strncpy(ctx->name, name, sizeof(ctx->name)-1);          
+          printf("%s => id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d\n", __func__, name, ctx->video_shmid);
+          
+          struct timespec _ts;  
+          clock_gettime(CLOCK_MONOTONIC, &_ts);
+          ctx->last_time = _ts.tv_sec;
           
           struct st_rtsp_client_handler_t handler;
           handler.onframe = onframe;
           handler.param   = (void*)ctx;
-          strncpy(ctx->name, name, sizeof(ctx->name)-1);          
-          
-          printf("%s => id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d\n", __func__, name, ctx->video_shmid);
           ctx->c = rtsp_client_connect(name, 0, &handler);
           HASH_ADD_STR(conn_ctxs, name, ctx);
           
@@ -410,8 +443,10 @@ static void *handle_ctl(void *arg)
           break;
         }
     }
+    
     st_sendto(srv_nfd, ctl, sizeof(*ctl)+ctl->size
-            , (struct sockaddr*)&from_addr, from_len, ST_UTIME_NO_TIMEOUT);
+            , (struct sockaddr*)&from_addr, from_len
+            , ST_UTIME_NO_TIMEOUT);
   }
   st_netfd_close(srv_nfd);
 }

@@ -5,22 +5,41 @@ GSF_HOME ?= $(PWD)
 GSF_CPU_ARCH ?= XXX
 
 
-SUB_DIRS := fw/nm fw/cfifo fw/cjson fw/comm \
-			fw/tindex fw/libmov fw/libfont fw/libhttp fw/librtp fw/librtsp fw/libflv \
-            mod/bsp   \
-            mod/mpp/${GSF_CPU_ARCH} \
-            mod/codec \
-            mod/rtsps \
-            mod/rec   \
+MOD_DIRS := mod/bsp   \
+			mod/mpp/${GSF_CPU_ARCH} \
+			mod/codec \
+			mod/rtsps \
+			mod/rec   \
+			mod/webs  \
 			mod/onvif \
-			mod/webs
+			mod/app 
 
+FW_DIRS :=  fw/nm       \
+			fw/cfifo    \
+			fw/cjson    \
+			fw/mxml     \
+			fw/comm     \
+			fw/tindex   \
+			fw/libmov   \
+			fw/libfont  \
+			fw/libhttp  \
+			fw/librtp   \
+			fw/librtsp  \
+			fw/libflv   \
+			fw/h26xbits \
+			fw/gsoap   
 
-CLEAN_DIRS := $(addprefix _cls_, $(SUB_DIRS))
+CLEAN_DIRS := $(addprefix _cls_, $(FW_DIRS) $(MOD_DIRS))
 
-.PHONY: ALL_SUB $(SUB_DIRS) CHECK_ENV clean
+.PHONY: mod fw $(FW_DIRS) $(MOD_DIRS) CHECK_ENV SUMMARY clean
 
-ALL_SUB: CHECK_ENV $(SUB_DIRS)
+mod: CHECK_ENV $(MOD_DIRS) SUMMARY
+	@echo "..."
+
+fw: CHECK_ENV $(FW_DIRS) SUMMARY
+	@echo "..."
+
+SUMMARY:
 	@echo ""
 	@echo "================ GSF-IPC ================"
 	@echo "All Done."
@@ -38,7 +57,10 @@ ifeq ($(GSF_CPU_ARCH), XXX)
 	@exit 1
 endif
 
-$(SUB_DIRS):
+$(MOD_DIRS):
+	@$(MAKE) -C $@ || exit "$$?"
+
+$(FW_DIRS):
 	@$(MAKE) -C $@ || exit "$$?"
 	
 clean: $(CLEAN_DIRS)
