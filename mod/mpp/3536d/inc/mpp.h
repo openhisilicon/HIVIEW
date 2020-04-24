@@ -26,13 +26,13 @@ int gsf_mpp_vo_stop(int vodev);
 enum {
   VOFB_GUI   = 0, // GUI Layer
   VOFB_MOUSE = 1, // MOUSE Layer
+  VOFB_BUTT
 };
 // FB²ã²Ù×÷
 int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide);
-int gsf_mpp_fb_stop(int vofb);
-int gsf_mpp_fb_hide(int vofd);
-int gsf_mpp_fb_move(int vofb, int xpos, int ypos);
-int gsf_mpp_fb_draw(int vofb, void *data /* ARGB1555 */, int w, int h);
+int gsf_mpp_fb_hide(int vofb, int hide); //FBIOPUT_SHOW_HIFB
+int gsf_mpp_fb_move(int vofb, int xpos, int ypos); // FBIOPAN_DISPLAY
+int gsf_mpp_fb_draw(int vofb, void *data /* ARGB1555 */, int w, int h); // draw fb-memory;
 
 
 //volayer;
