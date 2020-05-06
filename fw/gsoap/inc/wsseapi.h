@@ -70,6 +70,8 @@ int soap_wsse_verify_Timestamp(struct soap *soap);
 
 int soap_wsse_add_UsernameTokenText(struct soap *soap, const char *id, const char *username, const char *password);
 int soap_wsse_add_UsernameTokenDigest(struct soap *soap, const char *id, const char *username, const char *password);
+int soap_wsse_add_UsernameTokenDigest_c(struct soap *soap, const char *id, const char *username, const char *password, const char *c);
+
 struct _wsse__UsernameToken *soap_wsse_UsernameToken(struct soap *soap, const char *id);
 const char* soap_wsse_get_Username(struct soap *soap);
 int soap_wsse_verify_Password(struct soap *soap, const char *password);

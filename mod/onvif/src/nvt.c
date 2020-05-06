@@ -5,10 +5,61 @@
 #include <unistd.h>
 #include <signal.h>
 #include "nvt.h"
+#include "wsseapi.h"
 
 #include <sys/syscall.h>
 
 #define gettid() syscall(__NR_gettid) 
+
+int nvt_wsse_auth(struct soap *soap)
+{
+  g_nvt->p.auth = 1;
+  
+	if(g_nvt->p.auth == 0)
+	{
+	  printf("%s => check flag auth:%d.\n", __func__, g_nvt->p.auth);
+		return 0;
+	}
+	
+	if(soap && soap->header && soap->header->wsse__Security)
+	{
+  	  if(soap->header->wsse__Security->UsernameToken == NULL 
+      	|| soap->header->wsse__Security->UsernameToken->Nonce == NULL 
+      	|| soap->header->wsse__Security->UsernameToken->wsu__Created == NULL 
+      	|| soap->header->wsse__Security->UsernameToken->Password == NULL 
+      	|| soap->header->wsse__Security->UsernameToken->Password->Type == NULL)
+    	{
+    		int ret = soap_sender_fault_subcode(soap
+    		            , "wsse:FailedAuthentication"
+    		            , "The request requires authorization."
+    		            , NULL);
+        printf("%s => check UsernameToken param err, ret:%d.\n", __func__, ret);
+        return -1;
+    	}
+
+      // find pwd: soap->header->wsse__Security->UsernameToken->Username
+      char pwd[32] = "12345";
+  		{
+  			if(soap_wsse_verify_Password(soap, pwd) == SOAP_OK)
+  			{
+  			  printf("%s => check username:[%s] soap_wsse_verify_Password ok.\n", __func__, soap->header->wsse__Security->UsernameToken->Username);
+  				return 0;
+  			}
+  			else
+  			{
+    			printf("%s => check username:[%s] soap_wsse_verify_Password err.\n", __func__, soap->header->wsse__Security->UsernameToken->Username);
+        	return -1;
+  			}
+  		}
+	}
+	
+	int ret = soap_sender_fault_subcode(soap
+	            , "wsse:FailedAuthentication"
+	            , "The request requires authorization."
+	            , NULL);
+	printf("%s => check wsse__Security param err, ret:%d.\n", __func__, ret);
+	return -1;
+}
 
 char *generate_uuid(int type)
 {
@@ -1831,6 +1882,76 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SystemReboot(struct soap *soap, struct _tds__Sy
 }
 
 
+int ptz_cfg_get(struct soap* soap, int chs, struct tt__PTZConfiguration *pPtz)
+{
+    pPtz->UseCount = 0;
+  	pPtz->Name = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->Name, "Ptz");
+  	pPtz->token = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->token, "PtzToken");
+  	pPtz->NodeToken = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->NodeToken, "PtzNodeToken");
+
+  	pPtz->DefaultAbsolutePantTiltPositionSpace = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->DefaultAbsolutePantTiltPositionSpace, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace");
+  	pPtz->DefaultAbsoluteZoomPositionSpace = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->DefaultAbsoluteZoomPositionSpace, "http://www.onvif.org/ver10/tptz/ZoomSpaces/PositionGenericSpace");
+  	pPtz->DefaultRelativePanTiltTranslationSpace = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->DefaultRelativePanTiltTranslationSpace, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace");
+  	pPtz->DefaultRelativeZoomTranslationSpace = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->DefaultRelativeZoomTranslationSpace, "http://www.onvif.org/ver10/tptz/ZoomSpaces/TranslationGenericSpace");
+  	pPtz->DefaultContinuousPanTiltVelocitySpace = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->DefaultContinuousPanTiltVelocitySpace, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace");
+  	pPtz->DefaultContinuousZoomVelocitySpace = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->DefaultContinuousZoomVelocitySpace, "http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace");
+
+  	pPtz->DefaultPTZSpeed = (struct tt__PTZSpeed *)soap_malloc(soap, sizeof(struct tt__PTZSpeed));
+  	memset(pPtz->DefaultPTZSpeed, 0, sizeof(struct tt__PTZSpeed));
+  	pPtz->DefaultPTZSpeed->PanTilt = (struct tt__Vector2D *)soap_malloc(soap, sizeof(struct tt__Vector2D));
+  	pPtz->DefaultPTZSpeed->Zoom = (struct tt__Vector1D *)soap_malloc(soap, sizeof(struct tt__Vector1D));
+  	memset(pPtz->DefaultPTZSpeed->PanTilt, 0, sizeof(struct tt__Vector2D));
+  	memset(pPtz->DefaultPTZSpeed->Zoom, 0, sizeof(struct tt__Vector1D));
+  	pPtz->DefaultPTZSpeed->PanTilt->space = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	pPtz->DefaultPTZSpeed->Zoom->space = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	memset(pPtz->DefaultPTZSpeed->PanTilt->space, 0, sizeof(char)*SMALL_INFO_LENGTH);
+  	memset(pPtz->DefaultPTZSpeed->Zoom->space, 0, sizeof(char)*SMALL_INFO_LENGTH);
+  	pPtz->DefaultPTZSpeed->PanTilt->x = 0.5;
+  	pPtz->DefaultPTZSpeed->PanTilt->y = 0.5;
+  	pPtz->DefaultPTZSpeed->Zoom->x = 0.5;
+  	strcpy(pPtz->DefaultPTZSpeed->PanTilt->space, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/GenericSpeedSpace");
+  	strcpy(pPtz->DefaultPTZSpeed->Zoom->space, "http://www.onvif.org/ver10/tptz/ZoomSpaces/ZoomGenericSpeedSpace");
+
+  	pPtz->DefaultPTZTimeout = (LONG64 *)soap_malloc(soap, sizeof(LONG64));
+  	*pPtz->DefaultPTZTimeout = 5000;
+
+  	pPtz->PanTiltLimits = (struct tt__PanTiltLimits *)soap_malloc(soap, sizeof(struct tt__PanTiltLimits));
+  	memset(pPtz->PanTiltLimits, 0, sizeof(struct tt__PanTiltLimits));
+  	pPtz->PanTiltLimits->Range = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+  	memset(pPtz->PanTiltLimits->Range, 0, sizeof(struct tt__Space2DDescription));
+  	pPtz->PanTiltLimits->Range->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->PanTiltLimits->Range->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace");
+  	pPtz->PanTiltLimits->Range->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+  	pPtz->PanTiltLimits->Range->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+  	pPtz->PanTiltLimits->Range->XRange->Max = 1.0;
+  	pPtz->PanTiltLimits->Range->XRange->Min = -1.0;
+  	pPtz->PanTiltLimits->Range->YRange->Max = 1.0;
+  	pPtz->PanTiltLimits->Range->YRange->Min = -1.0;
+
+  	pPtz->ZoomLimits = (struct tt__ZoomLimits *)soap_malloc(soap, sizeof(struct tt__ZoomLimits));
+  	memset(pPtz->ZoomLimits, 0, sizeof(struct tt__PanTiltLimits));
+  	pPtz->ZoomLimits->Range = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+  	memset(pPtz->ZoomLimits->Range, 0, sizeof(struct tt__Space1DDescription));
+  	pPtz->ZoomLimits->Range->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+  	strcpy(pPtz->ZoomLimits->Range->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/PositionGenericSpace");
+  	pPtz->ZoomLimits->Range->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+  	pPtz->ZoomLimits->Range->XRange->Max = 1.0;
+  	pPtz->ZoomLimits->Range->XRange->Min = -1.0;   
+  	
+  	return SOAP_OK;
+}
+
+
+
 SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfile(struct soap *soap, struct _trt__GetProfile *input, struct _trt__GetProfileResponse *GetProf)
 {
     int i;
@@ -1981,7 +2102,10 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfile(struct soap *soap, struct _trt__GetP
     GetProf->Profile->VideoAnalyticsConfiguration->RuleEngineConfiguration->Extension = NULL;
 
     // malloc and init for Profile  PTZConfiguration
-    GetProf->Profile->PTZConfiguration = NULL;
+    GetProf->Profile->PTZConfiguration = (struct tt__PTZConfiguration *)soap_malloc(soap, sizeof(struct tt__PTZConfiguration));
+    memset(GetProf->Profile->PTZConfiguration, 0, sizeof(struct tt__PTZConfiguration));
+    ptz_cfg_get(soap, i, GetProf->Profile->PTZConfiguration);
+    
     //extension
     GetProf->Profile->Extension = NULL;
     // malloc and init for Profile  MetadataConfiguration
@@ -2152,10 +2276,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfile(struct soap *soap, struct _trt__GetP
     return SOAP_OK;
 }
 
-#if 0
-static int firstFlag = 1;
-static time_t lastTm;
-#endif
+
 
 SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__GetProfiles *trt__GetProfiles, struct _trt__GetProfilesResponse *GetProfs)
 {
@@ -2170,24 +2291,6 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__Get
     memset(token, 0, sizeof(SMALL_INFO_LENGTH));
     memset(sourcetoken, 0, sizeof(SMALL_INFO_LENGTH));
     
-#if 0    
-    time_t currTime;
-    if(firstFlag == 1)
-    {
-        lastTm = time(((time_t *)NULL));
-        firstFlag = 0;
-        get_dev_profiles(ALL_CHS, g_nvt->t.profiles, 2, VSC | ASC | VEC |AEC);        
-    }
-    else
-    {
-        currTime = time(((time_t *)NULL));      
-        if((currTime - lastTm) > 6*60)
-        {
-            lastTm = currTime;
-            get_dev_profiles(ALL_CHS, g_nvt->t.profiles, 2, VSC | ASC | VEC |AEC);
-        }
-    }
-#endif 
     get_dev_profiles(ALL_CHS, g_nvt->t.profiles, 2, ASC | VEC |AEC);
 
     num = get_curr_chs();
@@ -2232,10 +2335,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__Get
         GetProfs->Profiles[i].VideoSourceConfiguration->Bounds->width  = 1280;
         GetProfs->Profiles[i].VideoSourceConfiguration->Bounds->height = 720;
 
-#if 0
-        // malloc and init for Profiles  AudioSourceConfiguration
-        GetProfs->Profiles[i].AudioSourceConfiguration = NULL;
-#else
+
         GetProfs->Profiles[i].AudioSourceConfiguration = (struct tt__AudioSourceConfiguration *)soap_malloc(soap, sizeof(struct tt__AudioSourceConfiguration));
         memset(GetProfs->Profiles[i].AudioSourceConfiguration, 0, sizeof(struct tt__AudioSourceConfiguration));
         GetProfs->Profiles[i].AudioSourceConfiguration->Name = (char *)soap_malloc(soap, sizeof(char) * SMALL_INFO_LENGTH);
@@ -2245,7 +2345,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__Get
         strcpy(GetProfs->Profiles[i].AudioSourceConfiguration->token, g_nvt->t.profiles[i].asc->token);
         strcpy(GetProfs->Profiles[i].AudioSourceConfiguration->SourceToken, g_nvt->t.profiles[i].asc->sourcetoken);
         GetProfs->Profiles[i].AudioSourceConfiguration->UseCount = g_nvt->t.profiles[i].asc->count;
-#endif
+
         // malloc and init for Profiles  VideoEncoderConfiguration
         //GetProfs->Profiles[i].VideoEncoderConfiguration = NULL;
 #if 1
@@ -2285,9 +2385,6 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__Get
         GetProfs->Profiles[i].VideoEncoderConfiguration->SessionTimeout = g_nvt->t.profiles[i].vec->SessionTimeout;
 #endif
         // malloc and init for Profiles  AudioSourceConfiguration
-#if 0
-        GetProfs->Profiles[i].AudioEncoderConfiguration = NULL;
-#else
         GetProfs->Profiles[i].AudioEncoderConfiguration = (struct tt__AudioEncoderConfiguration *)soap_malloc(soap, sizeof(struct tt__AudioEncoderConfiguration));
         memset(GetProfs->Profiles[i].AudioEncoderConfiguration, 0, sizeof(struct tt__AudioEncoderConfiguration));
         GetProfs->Profiles[i].AudioEncoderConfiguration->Name = (char *)soap_malloc(soap, sizeof(char) * SMALL_INFO_LENGTH);
@@ -2310,7 +2407,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__Get
         GetProfs->Profiles[i].AudioEncoderConfiguration->Multicast->Address->IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char) * INFO_LENGTH);
         strcpy(*GetProfs->Profiles[i].AudioEncoderConfiguration->Multicast->Address->IPv4Address, _IPAddr);
         GetProfs->Profiles[i].AudioEncoderConfiguration->Multicast->Address->IPv6Address = NULL;
-#endif
+        
         // malloc and init for Profiles  VideoAnalyticsConfiguration
         GetProfs->Profiles[i].VideoAnalyticsConfiguration = NULL;
 #if 0
@@ -2331,8 +2428,10 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap *soap, struct _trt__Get
         GetProfs->Profiles[i].VideoAnalyticsConfiguration->RuleEngineConfiguration->Extension = NULL;
 #endif
         // malloc and init for Profiles  PTZConfiguration
-        GetProfs->Profiles[i].PTZConfiguration = NULL;
-
+        GetProfs->Profiles[i].PTZConfiguration = (struct tt__PTZConfiguration *)soap_malloc(soap, sizeof(struct tt__PTZConfiguration));
+        memset(GetProfs->Profiles[i].PTZConfiguration, 0, sizeof(struct tt__PTZConfiguration));
+        ptz_cfg_get(soap, i, GetProfs->Profiles[i].PTZConfiguration);
+        
         // malloc and init for Profiles  MetadataConfiguration
         GetProfs->Profiles[i].MetadataConfiguration = NULL;
 #if 0
@@ -2445,6 +2544,11 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetStreamUri(struct soap *soap, struct _trt__Ge
     char _IPAddr[INFO_LENGTH];
     char _Path[INFO_LENGTH];
     int flag = 0;
+
+    if(nvt_wsse_auth(soap) < 0)
+    {
+      return SOAP_FAULT;
+    }
 
     //get_dev_profiles(ALL_CHS, g_nvt->t.profiles, 2, VSC | ASC | VEC |AEC);
 
@@ -5226,6 +5330,538 @@ SOAP_FMAC5 int SOAP_FMAC6 __trc__GetTrackConfiguration(struct soap *soap, struct
 }
 
 SOAP_FMAC5 int SOAP_FMAC6 __trc__GetServiceCapabilities(struct soap *soap, struct _trc__GetServiceCapabilities *trc__GetServiceCapabilities, struct _trc__GetServiceCapabilitiesResponse *GetRecordingCap)
+{
+    return SOAP_FAULT;    
+}
+
+/////////////////// add ptz part ///////////////////
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetServiceCapabilities(struct soap* soap, struct _tptz__GetServiceCapabilities *tptz__GetServiceCapabilities, struct _tptz__GetServiceCapabilitiesResponse *tptz__GetServiceCapabilitiesResponse)
+{
+	tptz__GetServiceCapabilitiesResponse->Capabilities = (struct tptz__Capabilities *)soap_malloc(soap, sizeof(struct tptz__Capabilities));
+	memset(tptz__GetServiceCapabilitiesResponse->Capabilities, 0, sizeof(struct tptz__Capabilities));
+
+	tptz__GetServiceCapabilitiesResponse->Capabilities->EFlip = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
+	tptz__GetServiceCapabilitiesResponse->Capabilities->Reverse = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
+
+	*tptz__GetServiceCapabilitiesResponse->Capabilities->EFlip = _false;
+	*tptz__GetServiceCapabilitiesResponse->Capabilities->Reverse = _false;
+
+	return SOAP_OK;  
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetConfigurations(struct soap* soap, struct _tptz__GetConfigurations *tptz__GetConfigurations, struct _tptz__GetConfigurationsResponse *tptz__GetConfigurationsResponse)
+{
+	tptz__GetConfigurationsResponse->__sizePTZConfiguration = 1;
+	tptz__GetConfigurationsResponse->PTZConfiguration = (struct tt__PTZConfiguration *)soap_malloc(soap, sizeof(struct tt__PTZConfiguration)*tptz__GetConfigurationsResponse->__sizePTZConfiguration);
+	memset(tptz__GetConfigurationsResponse->PTZConfiguration, 0, sizeof(struct tt__PTZConfiguration)*tptz__GetConfigurationsResponse->__sizePTZConfiguration);
+  
+	int index = 0;
+	for(index = 0; index < tptz__GetConfigurationsResponse->__sizePTZConfiguration; index++)
+	{
+		ptz_cfg_get(soap, index, &tptz__GetConfigurationsResponse->PTZConfiguration[index]);
+	}
+
+	return SOAP_OK;
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetPresets(struct soap* soap, struct _tptz__GetPresets *tptz__GetPresets, struct _tptz__GetPresetsResponse *tptz__GetPresetsResponse)
+{
+  int index = -1;//tptz__GetPresets->ProfileToken
+  
+  int PresetNum = 0;
+  
+  //TODO;
+  PresetNum = 10;
+
+  tptz__GetPresetsResponse->__sizePreset = PresetNum;
+	tptz__GetPresetsResponse->Preset = (struct tt__PTZPreset *)soap_malloc(soap, sizeof(struct tt__PTZPreset)*tptz__GetPresetsResponse->__sizePreset);
+	memset(tptz__GetPresetsResponse->Preset, 0, sizeof(struct tt__PTZPreset)*tptz__GetPresetsResponse->__sizePreset);
+
+	int i = 0;
+	for(i = 0; i < tptz__GetPresetsResponse->__sizePreset; i++)
+	{
+		tptz__GetPresetsResponse->Preset[i].Name = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+		tptz__GetPresetsResponse->Preset[i].token= (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+
+		sprintf(tptz__GetPresetsResponse->Preset[i].token, "Preset%d", i);
+		sprintf(tptz__GetPresetsResponse->Preset[i].Name, "Preset%d", i);
+	}
+
+	return SOAP_OK;   
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__SetPreset(struct soap* soap, struct _tptz__SetPreset *tptz__SetPreset, struct _tptz__SetPresetResponse *tptz__SetPresetResponse)
+{
+  int index = -1;//tptz__SetPreset->ProfileToken
+  int presetIndex = -1;//tptz__SetPreset->PresetToken, tptz__SetPreset->PresetName
+  
+	tptz__SetPresetResponse->PresetToken = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(tptz__SetPresetResponse->PresetToken, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(tptz__SetPresetResponse->PresetToken, tptz__SetPreset->PresetToken);
+
+  printf("%s => index:%d, presetIndex:%d\n", __func__, index, presetIndex);
+
+  return SOAP_OK;   
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__RemovePreset(struct soap* soap, struct _tptz__RemovePreset *tptz__RemovePreset, struct _tptz__RemovePresetResponse *tptz__RemovePresetResponse)
+{
+    int index = -1;//tptz__RemovePreset->ProfileToken
+    int presetIndex = -1;//tptz__RemovePreset->PresetToken
+    
+    printf("%s => index:%d, presetIndex:%d\n", __func__, index, presetIndex);
+    
+    return SOAP_OK;  
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GotoPreset(struct soap* soap, struct _tptz__GotoPreset *tptz__GotoPreset, struct _tptz__GotoPresetResponse *tptz__GotoPresetResponse)
+{
+    int index = -1;//tptz__GotoPreset->ProfileToken
+    int presetIndex = -1;//tptz__GotoPreset->PresetToken
+    
+    printf("%s => index:%d, presetIndex:%d\n", __func__, index, presetIndex);
+    
+    return SOAP_OK;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetStatus(struct soap* soap, struct _tptz__GetStatus *tptz__GetStatus, struct _tptz__GetStatusResponse *tptz__GetStatusResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetConfiguration(struct soap* soap, struct _tptz__GetConfiguration *tptz__GetConfiguration, struct _tptz__GetConfigurationResponse *tptz__GetConfigurationResponse)
+{
+  int index = 0; //tptz__GetConfiguration->PTZConfigurationToken
+	tptz__GetConfigurationResponse->PTZConfiguration = (struct tt__PTZConfiguration *)soap_malloc(soap, sizeof(struct tt__PTZConfiguration));
+	memset(tptz__GetConfigurationResponse->PTZConfiguration, 0, sizeof(struct tt__PTZConfiguration));
+
+	ptz_cfg_get(soap, index, tptz__GetConfigurationResponse->PTZConfiguration);
+
+	return SOAP_OK;   
+}
+
+
+int ptz_node_get(struct soap *soap, int chs, struct tt__PTZNode *pPtzNode)
+{
+
+	pPtzNode->Name = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->Name, "PtzNode");
+	pPtzNode->token = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->token, "PtzNodeToken");
+
+	pPtzNode->SupportedPTZSpaces = (struct tt__PTZSpaces *)soap_malloc(soap, sizeof(struct tt__PTZSpaces));
+	memset(pPtzNode->SupportedPTZSpaces, 0, sizeof(struct tt__PTZSpaces));
+
+	pPtzNode->SupportedPTZSpaces->__sizeAbsolutePanTiltPositionSpace = 1;
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace, 0, sizeof(struct tt__Space2DDescription));
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace");
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange->Min = -1.0;
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizeAbsoluteZoomPositionSpace = 1;
+	pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/PositionGenericSpace");
+	pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->AbsoluteZoomPositionSpace->XRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizeRelativePanTiltTranslationSpace = 1;
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace, 0, sizeof(struct tt__Space2DDescription));
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace");
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange->Min = -1.0;
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizeRelativeZoomTranslationSpace = 1;
+	pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/TranslationGenericSpace");
+	pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->RelativeZoomTranslationSpace->XRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizeContinuousPanTiltVelocitySpace = 1;
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace, 0, sizeof(struct tt__Space2DDescription));
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace");
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->XRange->Min = -1.0;
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->YRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->YRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->ContinuousPanTiltVelocitySpace->YRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizeContinuousZoomVelocitySpace = 1;
+	pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace");
+	pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->ContinuousZoomVelocitySpace->XRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizePanTiltSpeedSpace = 1;
+	pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/GenericSpeedSpace");
+	pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->PanTiltSpeedSpace->XRange->Min = -1.0;
+
+	pPtzNode->SupportedPTZSpaces->__sizeZoomSpeedSpace = 1;
+	pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/ZoomGenericSpeedSpace");
+	pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->XRange->Max = 1.0;
+	pPtzNode->SupportedPTZSpaces->ZoomSpeedSpace->XRange->Min = -1.0;
+
+	pPtzNode->MaximumNumberOfPresets = MAX_PRESET_NUM;
+	pPtzNode->HomeSupported = _true;
+
+	pPtzNode->FixedHomePosition = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
+	*pPtzNode->FixedHomePosition = _false;
+
+	pPtzNode->__sizeAuxiliaryCommands = 0;
+
+	return SOAP_OK;
+}
+
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetNodes(struct soap* soap, struct _tptz__GetNodes *tptz__GetNodes, struct _tptz__GetNodesResponse *tptz__GetNodesResponse)
+{
+	tptz__GetNodesResponse->__sizePTZNode = 1;
+	tptz__GetNodesResponse->PTZNode = (struct tt__PTZNode *)soap_malloc(soap, sizeof(struct tt__PTZNode)*tptz__GetNodesResponse->__sizePTZNode);
+	memset(tptz__GetNodesResponse->PTZNode, 0, sizeof(struct tt__PTZNode)*tptz__GetNodesResponse->__sizePTZNode);
+
+	int index = 0;
+	for(index = 0; index < tptz__GetNodesResponse->__sizePTZNode; index++)
+	{
+		ptz_node_get(soap, index, &tptz__GetNodesResponse->PTZNode[index]);
+	}
+	
+	return SOAP_OK;   
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetNode(struct soap* soap, struct _tptz__GetNode *tptz__GetNode, struct _tptz__GetNodeResponse *tptz__GetNodeResponse)
+{
+	int index = 0; // tptz__GetNode->NodeToken
+	
+	tptz__GetNodeResponse->PTZNode = (struct tt__PTZNode *)soap_malloc(soap, sizeof(struct tt__PTZNode));
+	memset(tptz__GetNodeResponse->PTZNode, 0, sizeof(struct tt__PTZNode));
+
+	ptz_node_get(soap, index, tptz__GetNodeResponse->PTZNode);
+
+	return SOAP_OK;   
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__SetConfiguration(struct soap* soap, struct _tptz__SetConfiguration *tptz__SetConfiguration, struct _tptz__SetConfigurationResponse *tptz__SetConfigurationResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetConfigurationOptions(struct soap* soap, struct _tptz__GetConfigurationOptions *tptz__GetConfigurationOptions, struct _tptz__GetConfigurationOptionsResponse *tptz__GetConfigurationOptionsResponse)
+{
+  // tptz__GetConfigurationOptions->ConfigurationToken
+  
+	tptz__GetConfigurationOptionsResponse->PTZConfigurationOptions = (struct tt__PTZConfigurationOptions *)soap_malloc(soap, sizeof(struct tt__PTZConfigurationOptions));
+	memset(tptz__GetConfigurationOptionsResponse->PTZConfigurationOptions, 0, sizeof(struct tt__PTZConfigurationOptions));
+
+  struct tt__PTZConfigurationOptions *pPtzOptions = tptz__GetConfigurationOptionsResponse->PTZConfigurationOptions;
+	pPtzOptions->Spaces = (struct tt__PTZSpaces *)soap_malloc(soap, sizeof(struct tt__PTZSpaces));
+	memset(pPtzOptions->Spaces, 0, sizeof(struct tt__PTZSpaces));
+
+	pPtzOptions->Spaces->__sizeAbsolutePanTiltPositionSpace = 1;
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+	memset(pPtzOptions->Spaces->AbsolutePanTiltPositionSpace, 0, sizeof(struct tt__Space2DDescription));
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace");
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->XRange->Min = -1.0;
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->YRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->YRange->Max = 1.0;
+	pPtzOptions->Spaces->AbsolutePanTiltPositionSpace->YRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizeAbsoluteZoomPositionSpace = 1;
+	pPtzOptions->Spaces->AbsoluteZoomPositionSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzOptions->Spaces->AbsoluteZoomPositionSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzOptions->Spaces->AbsoluteZoomPositionSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->AbsoluteZoomPositionSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->AbsoluteZoomPositionSpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/PositionGenericSpace");
+	pPtzOptions->Spaces->AbsoluteZoomPositionSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->AbsoluteZoomPositionSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->AbsoluteZoomPositionSpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->AbsoluteZoomPositionSpace->XRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizeRelativePanTiltTranslationSpace = 1;
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+	memset(pPtzOptions->Spaces->RelativePanTiltTranslationSpace, 0, sizeof(struct tt__Space2DDescription));
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->RelativePanTiltTranslationSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->RelativePanTiltTranslationSpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationGenericSpace");
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->RelativePanTiltTranslationSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->XRange->Min = -1.0;
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->RelativePanTiltTranslationSpace->YRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->YRange->Max = 1.0;
+	pPtzOptions->Spaces->RelativePanTiltTranslationSpace->YRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizeRelativeZoomTranslationSpace = 1;
+	pPtzOptions->Spaces->RelativeZoomTranslationSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzOptions->Spaces->RelativeZoomTranslationSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzOptions->Spaces->RelativeZoomTranslationSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->RelativeZoomTranslationSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->RelativeZoomTranslationSpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/TranslationGenericSpace");
+	pPtzOptions->Spaces->RelativeZoomTranslationSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->RelativeZoomTranslationSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->RelativeZoomTranslationSpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->RelativeZoomTranslationSpace->XRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizeContinuousPanTiltVelocitySpace = 1;
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace = (struct tt__Space2DDescription *)soap_malloc(soap, sizeof(struct tt__Space2DDescription));
+	memset(pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace, 0, sizeof(struct tt__Space2DDescription));
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace");
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->XRange->Min = -1.0;
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->YRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->YRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->YRange->Max = 1.0;
+	pPtzOptions->Spaces->ContinuousPanTiltVelocitySpace->YRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizeContinuousZoomVelocitySpace = 1;
+	pPtzOptions->Spaces->ContinuousZoomVelocitySpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzOptions->Spaces->ContinuousZoomVelocitySpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzOptions->Spaces->ContinuousZoomVelocitySpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->ContinuousZoomVelocitySpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->ContinuousZoomVelocitySpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace");
+	pPtzOptions->Spaces->ContinuousZoomVelocitySpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->ContinuousZoomVelocitySpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->ContinuousZoomVelocitySpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->ContinuousZoomVelocitySpace->XRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizePanTiltSpeedSpace = 1;
+	pPtzOptions->Spaces->PanTiltSpeedSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzOptions->Spaces->PanTiltSpeedSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzOptions->Spaces->PanTiltSpeedSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->PanTiltSpeedSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->PanTiltSpeedSpace->URI, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/GenericSpeedSpace");
+	pPtzOptions->Spaces->PanTiltSpeedSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->PanTiltSpeedSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->PanTiltSpeedSpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->PanTiltSpeedSpace->XRange->Min = -1.0;
+
+	pPtzOptions->Spaces->__sizeZoomSpeedSpace = 1;
+	pPtzOptions->Spaces->ZoomSpeedSpace = (struct tt__Space1DDescription *)soap_malloc(soap, sizeof(struct tt__Space1DDescription));
+	memset(pPtzOptions->Spaces->ZoomSpeedSpace, 0, sizeof(struct tt__Space1DDescription));
+	pPtzOptions->Spaces->ZoomSpeedSpace->URI = (char *)soap_malloc(soap, sizeof(char)*SMALL_INFO_LENGTH);
+	memset(pPtzOptions->Spaces->ZoomSpeedSpace->URI, 0, sizeof(char)*SMALL_INFO_LENGTH);
+	strcpy(pPtzOptions->Spaces->ZoomSpeedSpace->URI, "http://www.onvif.org/ver10/tptz/ZoomSpaces/ZoomGenericSpeedSpace");
+	pPtzOptions->Spaces->ZoomSpeedSpace->XRange = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
+	memset(pPtzOptions->Spaces->ZoomSpeedSpace->XRange, 0, sizeof(struct tt__FloatRange));
+	pPtzOptions->Spaces->ZoomSpeedSpace->XRange->Max = 1.0;
+	pPtzOptions->Spaces->ZoomSpeedSpace->XRange->Min = -1.0;
+
+	pPtzOptions->PTZTimeout = (struct tt__DurationRange *)soap_malloc(soap, sizeof(struct tt__DurationRange));
+	memset(pPtzOptions->PTZTimeout, 0, sizeof(struct tt__DurationRange));
+	pPtzOptions->PTZTimeout->Max = 5000;
+	pPtzOptions->PTZTimeout->Min = 1000;
+
+  return SOAP_OK; 
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GotoHomePosition(struct soap* soap, struct _tptz__GotoHomePosition *tptz__GotoHomePosition, struct _tptz__GotoHomePositionResponse *tptz__GotoHomePositionResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__SetHomePosition(struct soap* soap, struct _tptz__SetHomePosition *tptz__SetHomePosition, struct _tptz__SetHomePositionResponse *tptz__SetHomePositionResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__ContinuousMove(struct soap* soap, struct _tptz__ContinuousMove *tptz__ContinuousMove, struct _tptz__ContinuousMoveResponse *tptz__ContinuousMoveResponse)
+{
+  #define VISCA_MAX_SPEED 16
+  int index = -1; //tptz__ContinuousMove->ProfileToken
+  //tptz__ContinuousMove->Timeout
+  
+	float xSpeed = 0, ySpeed = 0, zSpeed = 0;
+  int action = 0, speed = 0;
+  
+	if(tptz__ContinuousMove->Velocity)
+	{
+		if(tptz__ContinuousMove->Velocity->PanTilt)
+		{
+			xSpeed = tptz__ContinuousMove->Velocity->PanTilt->x * VISCA_MAX_SPEED;
+			ySpeed = tptz__ContinuousMove->Velocity->PanTilt->y * VISCA_MAX_SPEED;
+
+			if(xSpeed)
+			{
+				action = (xSpeed > 0)?NVC_PTZ_RIGHT_START:NVC_PTZ_LEFT_START;
+			}
+
+			if(ySpeed)
+			{
+				if(ySpeed > 0)
+				{
+				  action = (action == NVC_PTZ_RIGHT_START)?NVC_PTZ_RIGHT_UP_START:
+				           (action == NVC_PTZ_LEFT_START)?NVC_PTZ_LEFT_UP_START:
+				           NVC_PTZ_UP_START;
+				}
+				else
+				{
+				  action = (action == NVC_PTZ_RIGHT_START)?NVC_PTZ_RIGHT_DOWN_START:
+				           (action == NVC_PTZ_LEFT_START)?NVC_PTZ_LEFT_DOWN_START:
+				           NVC_PTZ_DOWN_START;
+				}
+			}
+      
+      if(action)
+      {
+        xSpeed = (xSpeed < 0)?-xSpeed:xSpeed;
+        ySpeed = (ySpeed < 0)?-ySpeed:ySpeed;
+
+  			speed = xSpeed > ySpeed ? xSpeed : ySpeed;
+        printf("%s => PanTilt action:%d, speed:%d\n", __func__, action, speed);
+      }
+		}
+
+		if(tptz__ContinuousMove->Velocity->Zoom)
+		{
+			zSpeed = tptz__ContinuousMove->Velocity->Zoom->x * VISCA_MAX_SPEED;
+			
+			if(zSpeed)
+			{
+			  action = (zSpeed > 0)?NVC_PTZ_ZOOM_ADD_START:NVC_PTZ_ZOOM_SUB_START;
+			}
+
+      if(action)
+      {
+        speed = (zSpeed < 0)?-zSpeed:zSpeed;
+        printf("%s => Zoom action:%d, speed:%d\n", __func__, action, speed);
+      }
+		}
+	}
+	
+	return SOAP_OK; 
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__RelativeMove(struct soap* soap, struct _tptz__RelativeMove *tptz__RelativeMove, struct _tptz__RelativeMoveResponse *tptz__RelativeMoveResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__SendAuxiliaryCommand(struct soap* soap, struct _tptz__SendAuxiliaryCommand *tptz__SendAuxiliaryCommand, struct _tptz__SendAuxiliaryCommandResponse *tptz__SendAuxiliaryCommandResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__AbsoluteMove(struct soap* soap, struct _tptz__AbsoluteMove *tptz__AbsoluteMove, struct _tptz__AbsoluteMoveResponse *tptz__AbsoluteMoveResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__Stop(struct soap* soap, struct _tptz__Stop *tptz__Stop, struct _tptz__StopResponse *tptz__StopResponse)
+{
+  int index = -1;//tptz__Stop->ProfileToken
+  int action = 0, speed = 0;
+  
+	if(tptz__Stop->PanTilt || tptz__Stop->Zoom)
+	{
+		if(*tptz__Stop->PanTilt == _true)
+		{
+			action = NVC_PTZ_UP_STOP;
+		}
+
+		if(*tptz__Stop->Zoom == _true)
+		{
+			action = NVC_PTZ_UP_STOP;
+		}
+
+		printf("%s => Stop action:%d, speed:%d\n", __func__, action, speed);
+	}
+
+	return SOAP_OK;   
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetPresetTours(struct soap* soap, struct _tptz__GetPresetTours *tptz__GetPresetTours, struct _tptz__GetPresetToursResponse *tptz__GetPresetToursResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetPresetTour(struct soap* soap, struct _tptz__GetPresetTour *tptz__GetPresetTour, struct _tptz__GetPresetTourResponse *tptz__GetPresetTourResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__GetPresetTourOptions(struct soap* soap, struct _tptz__GetPresetTourOptions *tptz__GetPresetTourOptions, struct _tptz__GetPresetTourOptionsResponse *tptz__GetPresetTourOptionsResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__CreatePresetTour(struct soap* soap, struct _tptz__CreatePresetTour *tptz__CreatePresetTour, struct _tptz__CreatePresetTourResponse *tptz__CreatePresetTourResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__ModifyPresetTour(struct soap* soap, struct _tptz__ModifyPresetTour *tptz__ModifyPresetTour, struct _tptz__ModifyPresetTourResponse *tptz__ModifyPresetTourResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__OperatePresetTour(struct soap* soap, struct _tptz__OperatePresetTour *tptz__OperatePresetTour, struct _tptz__OperatePresetTourResponse *tptz__OperatePresetTourResponse)
+{
+    return SOAP_FAULT;    
+}
+
+SOAP_FMAC5 int SOAP_FMAC6 __tptz__RemovePresetTour(struct soap* soap, struct _tptz__RemovePresetTour *tptz__RemovePresetTour, struct _tptz__RemovePresetTourResponse *tptz__RemovePresetTourResponse)
 {
     return SOAP_FAULT;    
 }

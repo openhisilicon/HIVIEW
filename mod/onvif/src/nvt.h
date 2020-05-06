@@ -33,6 +33,11 @@
 
 #define MAX_TOKEN_LEN 64
 
+#ifndef MAX_PRESET_NUM  
+#define MAX_PRESET_NUM  512
+#endif 
+
+
 #ifndef _boolean_e
 #define _boolean_e
 enum _boolean_ {__false = 0, __true = 1};
@@ -283,10 +288,10 @@ typedef struct{
 }PTZextension;
 
 typedef struct PTZ_conf_s{
-    char            *name;
+    char            name[INFO_LEN];
     int             usecount;
-    char            *token;
-    char            *nodetoken;
+    char            token[INFO_LEN];
+    char            nodetoken[INFO_LEN];
     char            *DefAbsolutePanTiltPositionSpace;
     char            *DefAbsoluteZoomPositionSpace;
     char            *DefRelativePanTiltTranslationSpace;
@@ -505,8 +510,8 @@ extern int get_vsc_profiles(int chs, video_source_conf_t *info, int num);//video
 extern int get_asc_profiles(int chs, audio_source_conf_t *info, int num);//audio source configure
 extern int get_vec_profiles(int chs, video_encoder_conf_t *info, int num);//video encoder configure
 extern int get_aec_profiles(int chs, audio_encoder_conf_t *info, int num);//audio encoder configure
-//extern int get_meta_profiles(void);//metadata configure
-//extern int get_PTZ_profiles(void);//PTZ configure profiles
+extern int get_meta_profiles(int chs, metadata_conf_t *info, int num);//metadata configure
+extern int get_ptz_profiles(int chs, PTZ_conf_t *info, int num);//PTZ configure profiles
 extern int get_dev_capability(device_capability_t *dev_cap, int streamtype);
 extern int set_vsc_conf(int chs, video_source_conf_t *info);
 extern int set_vec_conf(int chs, video_encoder_conf_t *info);

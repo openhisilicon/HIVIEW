@@ -97,9 +97,16 @@ static void msg_func_open(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
     nvc_media_url_t me = {0};
   	me.proto = 0; //uc;
   	me.trans = 2; //rtsp;
+    
     int ret = nvc_media_url_get(ctx->dev, 0, 0, &me);
     strcpy(ctx->media_url.st1, me.url);
-    printf("get => name:[%s], st1:[%s]\n", ctx->name, ctx->media_url.st1);
+    
+    int ret2 = nvc_media_url_get(ctx->dev, 0, 1, &me);
+    strcpy(ctx->media_url.st2, me.url);
+    
+    printf("get => name:[%s], st1:[%s], st2:[%s]\n"
+          , ctx->name, ctx->media_url.st1, ctx->media_url.st2);
+          
     if(ret == 0)
     {
       pthread_mutex_lock(&ctxs_mutex);
@@ -205,7 +212,9 @@ static void msg_func_ptzctl(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
  
  if(found)
  {
-    nvc_ptz_ctl(ctx->dev, 0, 0, &ptz->ctl);
+    int ret = nvc_ptz_ctl(ctx->dev, 0, 0, &ptz->ctl);
+    printf("nvc_ptz_ctl ret:%d, cmd:%d, speed:%d, val:%d, name:%s\n",
+            ret, ptz->ctl.cmd, ptz->ctl.speed, ptz->ctl.val, ptz->ctl.name);
     
     pthread_mutex_lock(&ctxs_mutex);
     if (ctx && --ctx->refcnt == 0)

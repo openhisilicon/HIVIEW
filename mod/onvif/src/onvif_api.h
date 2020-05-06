@@ -100,6 +100,7 @@ int32_t nvc_systime_set(void *dev, int ch, int st, nvc_time_t *time);
 /*NVT参数定义*/
 typedef struct nvt_parm_s {
   int ch_num;     //nvt设备通道数
+  int auth;       //auth;
 	uint16_t port;  //nvt监听端口
 }nvt_parm_t;
 

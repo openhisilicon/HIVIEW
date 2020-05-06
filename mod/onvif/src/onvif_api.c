@@ -149,61 +149,62 @@ void *nvc_dev_open(char *url, int timeout)
 		nvc_dev_close(dev_handle);
 		return NULL;
 	}
-    /**************** get ptz pantile's and zoom's space ****************/
-    dev_handle->ptz_conf = calloc(1, sizeof(NVC_PTZ_Configution_t));
-    ret = NVC_PTZ_Get_Configurations(dev_handle, dev_handle->ptz_conf);
-    if (ret != 0)
-    {
-        //printf("[%s][%d]===> NVC_Get_Presets return Error! ret = %d\n", __func__, __LINE__, ret);
-    }
-    else
-    {
-        #if 0
-        printf("[%s][%d]===>PTZ pantilt space: %s\n, zoom space: %s\n"
-                , __func__, __LINE__
-                , dev_handle->ptz_conf->ContinuousPanTiltSpace
-                , dev_handle->ptz_conf->ContinuousZoomSpace);
-        #endif
-    }
-    /**获取预置位*/
-    dev_handle->Preset = calloc(1, sizeof(NVC_PTZ_Preset_t));
-    //dev_handle->Preset->_preset = calloc(MAX_PRESET_NUM, sizeof(PTZ_Preset_t));
-    ret = NVC_PTZ_Get_Presets(dev_handle, dev_handle->Preset);
+  /**************** get ptz pantile's and zoom's space ****************/
+  dev_handle->ptz_conf = calloc(1, sizeof(NVC_PTZ_Configution_t));
+  ret = NVC_PTZ_Get_Configurations(dev_handle, dev_handle->ptz_conf);
+  if (ret != 0)
+  {
+    //printf("[%s][%d]===> NVC_Get_Presets return Error! ret = %d\n", __func__, __LINE__, ret);
+  }
+  else
+  {
+    #if 0
+    printf("[%s][%d]===>PTZ pantilt space: %s\n, zoom space: %s\n"
+            , __func__, __LINE__
+            , dev_handle->ptz_conf->ContinuousPanTiltSpace
+            , dev_handle->ptz_conf->ContinuousZoomSpace);
+    #endif
+  }
+  /**获取预置位*/
+  dev_handle->Preset = calloc(1, sizeof(NVC_PTZ_Preset_t));
+  //dev_handle->Preset->_preset = calloc(MAX_PRESET_NUM, sizeof(PTZ_Preset_t));
+  ret = NVC_PTZ_Get_Presets(dev_handle, dev_handle->Preset);
 
-    if (ret != 0)
-    {
-        //printf("[%s][%d]===> NVC_Get_Presets return Error! ret = %d\n", __func__, __LINE__, ret);
-    }
-    else
-    {
-        #if 0
-        int i = 0;
-        //printf("[%s][%d]===> preset->size: %d\n", __func__, __LINE__, dev_handle->Preset->_size);
-        for (i = 0; i < dev_handle->Preset->_size; i++)
-        {
-            printf("[%s][%d]===> preset[%d].name: %s, token: %s\n"
-                , __func__, __LINE__
-                , i
-                , dev_handle->Preset->_preset[i].name
-                , dev_handle->Preset->_preset[i].token);
+  if (ret != 0)
+  {
+      //printf("[%s][%d]===> NVC_Get_Presets return Error! ret = %d\n", __func__, __LINE__, ret);
+  }
+  else
+  {
+      #if 0
+      int i = 0;
+      //printf("[%s][%d]===> preset->size: %d\n", __func__, __LINE__, dev_handle->Preset->_size);
+      for (i = 0; i < dev_handle->Preset->_size; i++)
+      {
+          printf("[%s][%d]===> preset[%d].name: %s, token: %s\n"
+              , __func__, __LINE__
+              , i
+              , dev_handle->Preset->_preset[i].name
+              , dev_handle->Preset->_preset[i].token);
 
-            printf("[%s][%d]===> preset[%d].speed ==> [ pantilt => x: %f, y: %f, zoom => x: %f ]\n"
-                , __func__, __LINE__
-                , i
-                , dev_handle->Preset->_preset[i].speed.pantilt.x 
-                , dev_handle->Preset->_preset[i].speed.pantilt.y
-                , dev_handle->Preset->_preset[i].speed.zoom.x );
-        }
-        #endif
-    }
+          printf("[%s][%d]===> preset[%d].speed ==> [ pantilt => x: %f, y: %f, zoom => x: %f ]\n"
+              , __func__, __LINE__
+              , i
+              , dev_handle->Preset->_preset[i].speed.pantilt.x 
+              , dev_handle->Preset->_preset[i].speed.pantilt.y
+              , dev_handle->Preset->_preset[i].speed.zoom.x );
+      }
+      #endif
+  }
 #if 0
-    ret = NVC_PTZ_Preset_tour(dev_handle, dev_handle->Preset);
-    if(ret != 0)
-    {
-        printf("[%s][%d]===> NVC_PTZ_Preset_tour return Error! ret = %d\n", __func__, __LINE__, ret);
-    }
+  ret = NVC_PTZ_Preset_tour(dev_handle, dev_handle->Preset);
+  if(ret != 0)
+  {
+      printf("[%s][%d]===> NVC_PTZ_Preset_tour return Error! ret = %d\n", __func__, __LINE__, ret);
+  }
 #endif
-    return dev_handle;
+
+  return dev_handle;
 }
 
 int32_t nvc_dev_close(void *dev)
@@ -770,8 +771,8 @@ int get_vsc_profiles(int chs, video_source_conf_t *info, int num);//video source
 int get_asc_profiles(int chs, audio_source_conf_t *info, int num);//audio source configure
 int get_vec_profiles(int chs, video_encoder_conf_t *info, int num);//video encoder configure
 int get_aec_profiles(int chs, audio_encoder_conf_t *info, int num);//audio encoder configure
-int get_meta_profiles(void);//metadata configure
-int get_PTZ_profiles(void);//PTZ configure profiles
+int get_meta_profiles(int chs, metadata_conf_t *info, int num);//metadata configure
+int get_ptz_profiles(int chs, PTZ_conf_t *info, int num);//PTZ configure profiles
 int get_dev_capability(device_capability_t *dev_cap, int streamtype);
 int set_vsc_conf(int chs, video_source_conf_t *info);
 int set_vec_conf(int chs, video_encoder_conf_t *info);
@@ -1098,6 +1099,21 @@ int get_aec_profiles(int chs, audio_encoder_conf_t *info, int num)
     info->usecount = num;
     return 0;
 }
+
+int get_meta_profiles(int chs, metadata_conf_t *info, int num)
+{
+  return 0;
+}
+int get_ptz_profiles(int chs, PTZ_conf_t *info, int num)
+{
+  
+  return 0;
+}
+
+
+
+
+
 
 
 static int firstGetParamFlag = 1;

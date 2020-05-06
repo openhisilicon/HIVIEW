@@ -309,6 +309,18 @@ typedef struct NVC_Net_info_s
     uint16_t res_port[1];          //±£¡Ù
 }NVC_Net_info_t;
 
+
+typedef struct NVC_time_s{
+    uint32_t year;
+    uint32_t mon;
+    uint32_t day;
+    uint32_t hour;
+    uint32_t min;
+    uint32_t sec;
+    uint32_t zone;
+}NVC_time_t;
+
+
 /******************* Device handle *******************/
 typedef struct NVC_Dev_s
 {
@@ -323,11 +335,14 @@ typedef struct NVC_Dev_s
 
 	NVC_capa_t *capa;
 
-    NVC_PTZ_Configution_t *ptz_conf;
-    NVC_PTZ_Preset_t *Preset;
+  NVC_PTZ_Configution_t *ptz_conf;
+  NVC_PTZ_Preset_t *Preset;
     
 	int timeout;
-    int need_verify;
+  int need_verify;
+  
+  int get_tm;
+  
 }NVC_Dev_t;
 
 /*************** img_attr ****************/
@@ -361,14 +376,6 @@ typedef struct NVC_Snapshot_s
     char url[MAX_URL_LEN];
 }NVC_Snapshot_t;
 
-typedef struct NVC_time_s{
-    uint32_t year;
-    uint32_t mon;
-    uint32_t day;
-    uint32_t hour;
-    uint32_t min;
-    uint32_t sec;
-}NVC_time_t;
 
 /*********** func *******/
 //static SOAP  creat_soap_header(const char *was_To, const char *was_Action);
@@ -376,10 +383,6 @@ typedef struct NVC_time_s{
 
 //int NVC_discovery(NVC_Probe_t *probe, int timeout);
 int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user_args);
-
-int  NVC_Net_info_set(NVC_Net_info_t *net_info, char *name, char *passwd);
-int  NVC_Net_info_get(NVC_Net_info_t *net_info, char *name, char *passwd);
-
 
 int NVC_Get_Capabilities(NVC_Dev_t *dev);//, NVC_capa_t *capa);
 int NVC_Get_profiles(NVC_Dev_t *dev);
@@ -407,7 +410,7 @@ int NVC_PTZ_Preset_call(NVC_Dev_t *dev, PTZ_Preset_t *preset);
 int NVC_PTZ_Preset_tour(NVC_Dev_t *dev, NVC_PTZ_Preset_t *preset);
 int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time);
 int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap);
-
+int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time);
 ///
 extern int nvc_snap_req(char *uri, int chs, int streamtype, void *msg);
 

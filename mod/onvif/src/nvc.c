@@ -121,7 +121,8 @@ char *_strcpy(char *deststr, char *srctstr)
     return strcpy(deststr, srctstr);
 }
 
-static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, const char *was_Action, int timeout, int probe_flag, NVC_Dev_t *dev)
+static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, const char *was_Action, int timeout
+                , int probe_flag, NVC_Dev_t *dev)
 {
     struct soap *soap = NULL; 
     time_t time_n;
@@ -209,10 +210,14 @@ static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, cons
             soap->header = NULL;
             if(dev != NULL)
             {
-                if(dev->need_verify)
+                if(dev->need_verify && dev->get_tm == 0)
                 {
                     fprintf(stderr, "[%s] Add username token digest!\n", __FUNCTION__);
-                    soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
+                    NVC_time_t tm;
+                    NVC_Get_SystemTime(dev, &tm);
+                    char dev_time[64];
+                    sprintf(dev_time, "%04d-%02d-%02dT%02d:%02d:%02dZ", tm);
+                    soap_wsse_add_UsernameTokenDigest_c(soap, "", dev->user, dev->passwd, dev_time);//添加校验
                 }
             }
         }
@@ -701,12 +706,12 @@ START:;
 					{
 						strncpy(dev->profile_tn[i].profile_token, profile_resp.Profiles[i].token, MAX_TOKEN_LEN);
 					}
-                    #if 0
+          #if 0
 					if (profile_resp.Profiles[i].Name != NULL)
 					{
 						strncpy(dev->profile_tn[i].profile_name, profile_resp.Profiles[i].Name, MAX_TOKEN_LEN);
 					}
-                    #endif
+          #endif
 					if (profile_resp.Profiles[i].VideoSourceConfiguration != NULL)
 					{
 						memset(dev->profile_tn[i].v_src_token, 0, MAX_TOKEN_LEN);
@@ -821,12 +826,12 @@ START:;
 						{
 							strncpy(dev->profile_tn[i].PTZ_parm_token, profile_resp.Profiles[i].PTZConfiguration->token, MAX_TOKEN_LEN);
 						}
-                        #if 0
+            #if 0
 						if (profile_resp.Profiles[i].PTZConfiguration->Name != NULL)
 						{
 							strncpy(dev->profile_tn[i].PTZ_parm_name, profile_resp.Profiles[i].PTZConfiguration->Name, MAX_TOKEN_LEN);
 						}
-                        #endif
+            #endif
 						if (profile_resp.Profiles[i].PTZConfiguration->NodeToken != NULL)
 						{
 							strncpy(dev->profile_tn[i].PTZ_parm_nodetoken, profile_resp.Profiles[i].PTZConfiguration->NodeToken, MAX_TOKEN_LEN);
@@ -883,9 +888,11 @@ START:;
 							}
 						}
 					}
-					//printf("i: %d, PTZ_parm_token: %s\n", i, dev->profile_tn[i].PTZ_parm_token);
-					//printf("i: %d, PTZ_parm_nodetoken: %s\n", i, dev->profile_tn[i].PTZ_parm_nodetoken);
-					//printf("i: %d, profiletoken: %s\n", i, dev->profile_tn[i].profile_token);
+					
+					printf("%s => i: %d, PTZ_parm_token: [%s]\n",     __func__, i, dev->profile_tn[i].PTZ_parm_token);
+					printf("%s => i: %d, PTZ_parm_nodetoken: [%s]\n", __func__, i, dev->profile_tn[i].PTZ_parm_nodetoken);
+					printf("%s => i: %d, profiletoken: [%s]\n",       __func__, i, dev->profile_tn[i].profile_token);
+					
 				}
 				else
 				{
@@ -919,8 +926,8 @@ START:;
 	struct soap *soap = NULL;
 	struct _tds__GetCapabilities capaReq;
 	struct _tds__GetCapabilitiesResponse capaResp;
-    memset(&capaResp, 0, sizeof(struct _tds__GetCapabilitiesResponse));
-    int do_again = 0;
+  memset(&capaResp, 0, sizeof(struct _tds__GetCapabilitiesResponse));
+  int do_again = 0;
 
 	printf("[%s]----->>>> in\n", __func__);
 
@@ -1018,22 +1025,22 @@ START:;
 					strncpy(dev->capa->PTZ_capa->url, capaResp.Capabilities->PTZ->XAddr, MAX_URL_LEN);
 				}
 			}
-            #if 1
-            printf("[%s][%d]--->>>ana_capa->url: %s\n",__func__,__LINE__, dev->capa->ana_capa->url);
-			printf("[%s][%d]--->>>dev_capa->url: %s\n",__func__,__LINE__, dev->capa->dev_capa->url);
-            printf("[%s][%d]--->>>img_capa->url: %s\n",__func__,__LINE__, dev->capa->img_capa->url);
-            printf("[%s][%d]--->>>media_capa->url: %s\n",__func__,__LINE__, dev->capa->media_capa->url);
-            printf("[%s][%d]--->>>PTZ_capa->url: %s\n",__func__,__LINE__, dev->capa->PTZ_capa->url);
-            #endif
+      #if 1
+      printf("[%s][%d]--->>>ana_capa->url: %s\n",__func__,__LINE__, dev->capa->ana_capa->url);
+      printf("[%s][%d]--->>>dev_capa->url: %s\n",__func__,__LINE__, dev->capa->dev_capa->url);
+      printf("[%s][%d]--->>>img_capa->url: %s\n",__func__,__LINE__, dev->capa->img_capa->url);
+      printf("[%s][%d]--->>>media_capa->url: %s\n",__func__,__LINE__, dev->capa->media_capa->url);
+      printf("[%s][%d]--->>>PTZ_capa->url: %s\n",__func__,__LINE__, dev->capa->PTZ_capa->url);
+      #endif
 		}
 	}while(0);
 
-    free(soap_endpoint);
+  free(soap_endpoint);
 	soap_endpoint = NULL;
 	destroy_soap(soap);
 	printf("[%s]----->>>> out\n", __func__);
-    if(do_again)
-        goto START;
+  if(do_again)
+    goto START;
 	return retval;
 }
 
@@ -1537,7 +1544,6 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
         return -1;
     }
 
-    //soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
 
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	strncpy(soap_endpoint, dev->capa->media_capa->url, sizeof(char)*MAX_URL_LEN);
@@ -1653,8 +1659,6 @@ int NVC_Set_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
         printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
-	
-    //soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
 
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	strncpy(soap_endpoint, dev->capa->media_capa->url, sizeof(char)*MAX_URL_LEN);
@@ -1793,12 +1797,6 @@ int NVC_Set_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
     }
 	#endif
 
-    fprintf(stderr, "[%s] dev->need_verify:%d\n", __FUNCTION__, dev->need_verify);
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
     fprintf(stderr, "[%s] Encoding:%d FrameRateLimit:%d BitrateLimit:%d GovLength:%d\n", __FUNCTION__, 
                     v_enc_req.Configuration->Encoding, 
                     v_enc_req.Configuration->RateControl->FrameRateLimit,
@@ -1853,7 +1851,7 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)        
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter! dev->profile_tn:%p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -1872,7 +1870,7 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
         return -1;
     }
     
-    //soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
+
 
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	strncpy(soap_endpoint, dev->capa->PTZ_capa->url, sizeof(char)*MAX_URL_LEN);
@@ -1942,7 +1940,7 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 0)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn:%p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -1961,24 +1959,24 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
         return -1;
     }
     
-    //soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
+
 
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	strncpy(soap_endpoint, dev->capa->PTZ_capa->url, sizeof(char)*MAX_URL_LEN);
 
 	const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/ContinuousMove";
 
-    #if 1
-    printf("[%s][%d]===================>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
-    printf("[%s][%d]===>111 profiletoken: %s, pantilt->x: %f, pantile->y: %f, space: %s, zoom->x: %f, space: %s\n"
-        , __func__, __LINE__
-        , dev->profile_tn[dev->st_type].profile_token
-        , ptz_speed->pantilt.x, ptz_speed->pantilt.y
-        , dev->ptz_conf->ContinuousPanTiltSpace
-        , ptz_speed->zoom.x
-        , dev->ptz_conf->ContinuousZoomSpace);
-    printf("====================================================================================\n");
-    #endif
+  #if 1
+  printf("[%s][%d]===================>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
+  printf("[%s][%d]===>111 profiletoken: %s, pantilt->x: %f, pantile->y: %f, space: %s, zoom->x: %f, space: %s\n"
+      , __func__, __LINE__
+      , dev->profile_tn[dev->st_type].profile_token
+      , ptz_speed->pantilt.x, ptz_speed->pantilt.y
+      , dev->ptz_conf->ContinuousPanTiltSpace
+      , ptz_speed->zoom.x
+      , dev->ptz_conf->ContinuousZoomSpace);
+  printf("====================================================================================\n");
+  #endif
     
 	tptz_ContinuousMove_req.ProfileToken = (char *)soap_malloc(soap, sizeof(char) * INFO_LENGTH);
 	memset( tptz_ContinuousMove_req.ProfileToken, 0, sizeof(char) * INFO_LENGTH);
@@ -2097,7 +2095,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2116,7 +2114,6 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
         return -1;
     }
   
-    //soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
   
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	strncpy(soap_endpoint, dev->capa->PTZ_capa->url, sizeof(char)*MAX_URL_LEN);
@@ -2286,7 +2283,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)        
     {
-        printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+        printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
         	, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
         return -1;
     }
@@ -2299,7 +2296,6 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
         return -1;
     }
     
-    //soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
     
   	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
   	strncpy(soap_endpoint, dev->capa->PTZ_capa->url, sizeof(char)*MAX_URL_LEN);
@@ -2398,7 +2394,7 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2491,7 +2487,7 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%p]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2583,7 +2579,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2670,7 +2666,7 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2864,7 +2860,7 @@ int NVC_PTZ_PresetTour_start(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2934,7 +2930,7 @@ int NVC_PTZ_PresetTour_stop(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2999,7 +2995,7 @@ int NVC_PTZ_PresetTour_remove(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -3119,822 +3115,6 @@ int get_masklen_from_submask(char *submask)
     return len;
 }
 
-/*********************************** Network info **************************************/
-int  NVC_Net_info_get(NVC_Net_info_t *net_info, char *name, char *passwd)
-{
-    assert(net_info);
-    printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-    NVC_Dev_t *dev = (NVC_Dev_t *)calloc(1, sizeof(NVC_Dev_t));
-    memset(dev, 0, sizeof(NVC_Dev_t));
-START:;
-    int do_again = 0;
-    int retval = -1;
-    int i = 0;
-    struct soap *soap = NULL;
-    struct SOAP_ENV__Header header;
-    memset(dev->user, 0, sizeof(dev->user));
-    memset(dev->passwd, 0, sizeof(dev->passwd));
-    strcpy(dev->user, name);
-    strcpy(dev->passwd, passwd);
-
-	//soap = creat_soap(&header, was_To, was_Action, dev->timeout, 0);
-    soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
-    if (soap == NULL)
-    {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
-        return -1;
-    }
-
-    struct _tds__GetNetworkInterfaces GetNetIfReq;
-    struct _tds__GetNetworkInterfacesResponse GetNetIfResp;
-    memset(&GetNetIfReq,  0, sizeof(struct _tds__GetNetworkInterfaces));
-    memset(&GetNetIfResp, 0, sizeof(struct _tds__GetNetworkInterfacesResponse));
-    
-    struct _tds__GetNTP GetNTPReq;
-    struct _tds__GetNTPResponse GetNTPResp;
-    memset(&GetNTPResp, 0, sizeof(struct _tds__GetNTPResponse));
-    
-    struct _tds__GetNetworkDefaultGateway GetNetGatewayReq;
-    struct _tds__GetNetworkDefaultGatewayResponse GetNetGatewayResp;
-    memset(&GetNetGatewayResp, 0, sizeof(struct _tds__GetNetworkDefaultGatewayResponse));
-    
-    struct _tds__GetDNS GetDNSReq;
-    struct _tds__GetDNSResponse GetDNSResp;
-    memset(&GetDNSResp, 0, sizeof(struct _tds__GetDNSResponse));
-    
-    struct _tds__GetNetworkProtocols GetNetPortReq;
-    struct _tds__GetNetworkProtocolsResponse GetNetPortResp;
-    memset(&GetNetPortResp, 0, sizeof(struct _tds__GetNetworkProtocolsResponse));
-   
-    const char *if_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetNetworkInterfaces";
-    const char *ntp_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetNTP";
-    const char *gateway_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetNetworkDefaultGateway";
-    const char *dns_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetDNS";
-    const char *port_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetNetworkProtocols";
-
-    char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);
-    sprintf(soap_endpoint, "http://%s/onvif/device_service", net_info->dst_id);
-
-     /********************************* get soap_endpoint **************************************
-    struct _tds__GetCapabilities capaReq;
-	struct _tds__GetCapabilitiesResponse capaResp;
-    memset(&capaResp, 0, sizeof(struct _tds__GetCapabilitiesResponse));
-    char *_soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
-	sprintf(_soap_endpoint, "http://%s/onvif/device_service", net_info->dst_id);
-    const char *_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetCapabilities";
-
-    capaReq.Category = (enum tt__CapabilityCategory *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
-	memset(capaReq.Category, 0, sizeof(char)*INFO_LENGTH);
-    capaReq.__sizeCategory = 1;
-	*(capaReq.Category) = tt__CapabilityCategory__Device;
-        
-    soap_call___tds__GetCapabilities(soap, _soap_endpoint, _soap_action, &capaReq, &capaResp);
-    if (soap->error)
-	{
-		printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-	}
-	else
-	{
-		strncpy(soap_endpoint, capaResp.Capabilities->Device->XAddr, MAX_URL_LEN);
-    }
-    if (_soap_endpoint)
-    {
-        free(_soap_endpoint);
-        _soap_endpoint = NULL;
-    }
-    /******************************** get ip, mac and so on ***********************************/
-    printf("=====================>>>> soap_endpoint: %s\n", soap_endpoint);
-    
-    printf("[%s][%d]=====================>>>> get ip, mac, mask and so on!!!\n", __func__, __LINE__);
-
-    soap_call___tds__GetNetworkInterfaces(soap,  soap_endpoint, if_soap_action, &GetNetIfReq, &GetNetIfResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-        if((retval == SOAP_CLI_FAULT) || (retval == SOAP_FAULT))
-        {
-            fprintf(stderr, "[%s] Verify error! Send again!\n", __FUNCTION__);
-            if(!dev->need_verify)
-            {
-                dev->need_verify = 1;
-                do_again = 1;
-            }    
-        }
-    }
-    else
-    {
-        printf("[%s][%d]===================>>>> __sizeNetworkInterfaces: %d\n", __func__, __LINE__, GetNetIfResp.__sizeNetworkInterfaces);
-        for (i = 0; i < GetNetIfResp.__sizeNetworkInterfaces; i++)
-        {
-            if (GetNetIfResp.NetworkInterfaces[i].Enabled)
-            {
-                if (GetNetIfResp.NetworkInterfaces[i].Info)
-                {
-                    if (GetNetIfResp.NetworkInterfaces[i].Info->Name)
-                    {
-                        strncpy(net_info->ip_info.if_name, GetNetIfResp.NetworkInterfaces[i].Info->Name, sizeof(net_info->ip_info.if_name));
-                    }
-                    if (GetNetIfResp.NetworkInterfaces[i].Info->HwAddress)
-                    {
-                        strncpy(net_info->ip_info.mac, GetNetIfResp.NetworkInterfaces[i].Info->HwAddress, sizeof(net_info->ip_info.mac));
-                    }
-                }
-                if (GetNetIfResp.NetworkInterfaces[i].IPv4 
-                    && GetNetIfResp.NetworkInterfaces[i].IPv4->Enabled == 1)
-                {
-                    if (GetNetIfResp.NetworkInterfaces[i].IPv4->Config)
-                    {
-                        printf("[%s][%d]=========>>> dncp_enable: %d\n", __func__, __LINE__, GetNetIfResp.NetworkInterfaces[i].IPv4->Config->DHCP);
-                        if (GetNetIfResp.NetworkInterfaces[i].IPv4->Config->DHCP == 1)
-                        {
-                            net_info->ip_info.dhcp_enable = 1;
-                            if (GetNetIfResp.NetworkInterfaces[i].IPv4->Config->FromDHCP 
-                                && GetNetIfResp.NetworkInterfaces[i].IPv4->Config->FromDHCP->Address)
-                            {
-                                strncpy(net_info->ip_info.ip_addr, GetNetIfResp.NetworkInterfaces[i].IPv4->Config->FromDHCP->Address, sizeof(net_info->ip_info.ip_addr));
-                                printf("[%s][%d]=========>>>> Manual ip: %s\n", __func__, __LINE__, net_info->ip_info.ip_addr);
-                                get_submask_from_masklen(net_info->ip_info.mask,  GetNetIfResp.NetworkInterfaces[i].IPv4->Config->FromDHCP->PrefixLength);
-                                break;
-                            }
-                            else 
-                            {
-                                printf("[%s][%d]=====>>> Error!!! can not get ip form dhcp even dhcp is enable!!!\n", __func__, __LINE__);
-                            }
-                        }
-                        else
-                        {
-                            int j = 0;
-                            if (GetNetIfResp.NetworkInterfaces[i].IPv4->Config->__sizeManual > 0)
-                            {
-                                for (j = 0; j < GetNetIfResp.NetworkInterfaces[i].IPv4->Config->__sizeManual; j++)
-                                {
-                                    if (GetNetIfResp.NetworkInterfaces[j].IPv4->Config->Manual[j].Address)
-                                    {
-                                         strncpy(net_info->ip_info.ip_addr, GetNetIfResp.NetworkInterfaces[j].IPv4->Config->Manual[j].Address, sizeof(net_info->ip_info.ip_addr));
-                                         printf("[%s][%d]=========>>>> Manual ip: %s\n", __func__, __LINE__, net_info->ip_info.ip_addr);
-                                         printf("[%s][%d]=========>>>> Manual PrefixLength: %d\n", __func__, __LINE__, GetNetIfResp.NetworkInterfaces[j].IPv4->Config->Manual[j].PrefixLength);
-                                         get_submask_from_masklen(net_info->ip_info.mask, GetNetIfResp.NetworkInterfaces[j].IPv4->Config->Manual[j].PrefixLength);
-                                         printf("[%s][%d]=========>>>> Manual mask %s\n", __func__, __LINE__, net_info->ip_info.mask);
-                                         break;
-                                    }
-                                    else 
-                                    {
-                                        printf("[%s][%d]=====>>> Error!!! can not get ip form Manual even dhcp is disable!!!\n", __func__, __LINE__);
-                                    }
-                                }
-                            }
-                            else if (GetNetIfResp.NetworkInterfaces[i].IPv4->Config->LinkLocal 
-                                && GetNetIfResp.NetworkInterfaces[i].IPv4->Config->LinkLocal->Address)
-                            {
-                                strncpy(net_info->ip_info.ip_addr, GetNetIfResp.NetworkInterfaces[i].IPv4->Config->LinkLocal->Address, sizeof(net_info->ip_info.ip_addr));        
-                                get_submask_from_masklen(net_info->ip_info.mask, GetNetIfResp.NetworkInterfaces[i].IPv4->Config->Manual[i].PrefixLength);
-                                break;
-                            }
-                            else
-                            {
-                                printf("[%s][%d]=====>>> Error!!! can not get ip form LinkLocal even (dhcp is disable and Manual is NULL)!!!\n", __func__, __LINE__);
-                            }
-                        }
-                    }
-                }
-                #if 0 /** do not support ipv6 */
-                else if (GetNetIfResp.NetworkInterfaces[i].IPv6
-                    && GetNetIfResp.NetworkInterfaces[i].IPv6->Enabled == 1)
-                #endif
-            }
-        }
-    }
-    /*************** get ntp server **************/
-    printf("[%s][%d]=====================>>>> get ntp!!!\n", __func__, __LINE__);
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__GetNTP(soap, soap_endpoint, ntp_soap_action, &GetNTPReq, &GetNTPResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-    }
-    else
-    {
-        if (GetNTPResp.NTPInformation)
-        {
-            printf("[%s][%d]===================>>>> __sizeNTPFromDHCP: %d, __sizeNTPManual: %d\n", __func__, __LINE__, GetNTPResp.NTPInformation->__sizeNTPFromDHCP, GetNTPResp.NTPInformation->__sizeNTPManual);
-            if (GetNTPResp.NTPInformation->FromDHCP == 1 
-                && GetNTPResp.NTPInformation->__sizeNTPFromDHCP > 0)
-            {
-                for (i = 0; i < GetNTPResp.NTPInformation->__sizeNTPFromDHCP; i++)
-                {
-                    if (GetNTPResp.NTPInformation->NTPFromDHCP[i].Type == tt__NetworkHostType__IPv4)
-                    {
-                        if (GetNTPResp.NTPInformation->NTPFromDHCP[i].IPv4Address)
-                        {
-                            strncpy(net_info->ntp_server, GetNTPResp.NTPInformation->NTPFromDHCP[i].IPv4Address[0], sizeof(net_info->ntp_server));
-                        }
-                    }
-                    #if 0 /** do not support ipv6*/
-                    else if (GetNTPResp.NTPInformation->NTPFromDHCP[i].Type == tt__NetworkHostType__IPv6)
-                    {
-                         strncpy(net_info.ntp_server, GetNTPResp.NTPInformation->NTPFromDHCP[i].IPv6Address, sizeof(net_info.ntp_server));
-                    }
-                    #endif
-                    else
-                    {
-                         printf("[%s][%d]=====>>> Error!!! can not get NTP_Server!!!\n", __func__, __LINE__);
-                    }
-                }
-            }
-            else if (GetNTPResp.NTPInformation->__sizeNTPManual > 0)
-            {
-                for (i = 0; i < GetNTPResp.NTPInformation->__sizeNTPManual; i++)
-                {
-                    if (GetNTPResp.NTPInformation->NTPManual[i].Type == tt__NetworkHostType__IPv4)
-                    {
-                        if (GetNTPResp.NTPInformation->NTPManual[i].IPv4Address 
-                            && GetNTPResp.NTPInformation->NTPManual[i].IPv4Address[0])
-                        {
-                            strncpy(net_info->ntp_server, GetNTPResp.NTPInformation->NTPManual[i].IPv4Address[0], sizeof(net_info->ntp_server));
-                            printf("[%s][%d]========>>> net_server: %s\n", __func__, __LINE__, net_info->ntp_server);
-                        }
-                    }
-                    #if 0 /** do not support ipv6*/
-                    else if (GetNTPResp.NTPInformation->NTPManual[i].Type == tt__NetworkHostType__IPv6)
-                    {
-                         strncpy(net_info.ntp_server, GetNTPResp.NTPInformation->NTPManual[i].IPv6Address, sizeof(net_info.ntp_server));
-                    }
-                    #endif
-                    else
-                    {
-                         printf("[%s][%d]=====>>> Error!!! can not get NTP_Server!!!\n", __func__, __LINE__);
-                    }
-                }
-            }
-        }
-    }
-    /***************** get gateway *******************/
-    printf("[%s][%d]=====================>>>> get gateway!!!\n", __func__, __LINE__);
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__GetNetworkDefaultGateway(soap, soap_endpoint, gateway_soap_action, &GetNetGatewayReq, &GetNetGatewayResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-    }
-    else
-    {
-        if (GetNetGatewayResp.NetworkGateway)
-        {
-            printf("[%s][%d]===================>>>> __sizeIPv4Address: %d\n", __func__, __LINE__, GetNetGatewayResp.NetworkGateway->__sizeIPv4Address);
-        }
-        if (GetNetGatewayResp.NetworkGateway 
-            && GetNetGatewayResp.NetworkGateway->__sizeIPv4Address > 0)
-        {
-            i = 0;
-            if (GetNetGatewayResp.NetworkGateway->IPv4Address[i])
-            {
-                strncpy(net_info->ip_info.gateway, GetNetGatewayResp.NetworkGateway->IPv4Address[i], sizeof(net_info->ip_info.gateway));
-            }
-            #if 0 /** do not support ipv6 */
-            else if (GetNetGatewayResp.NetworkGateway->IPv6Address[i])
-            {}
-            #endif
-            else
-            {
-                printf("[%s][%d]=====>>> Error!!! can not get gateway ip!!!\n", __func__, __LINE__);
-            }
-        }
-    }
-    /******************* get dns *********************/
-    printf("[%s][%d]=====================>>>> get dns!!!\n", __func__, __LINE__);
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__GetDNS(soap, soap_endpoint, dns_soap_action, &GetDNSReq, &GetDNSResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-    }
-    else
-    {
-        if (GetDNSResp.DNSInformation)
-        {
-            #if 0
-            printf("[%s][%d]===================>>>> , dhcp_enable: %d, __sizeDNSFromDHCP: %d, __sizeDNSManual: %d\n"
-                , __func__, __LINE__
-                , GetDNSResp.DNSInformation->FromDHCP
-                , GetDNSResp.DNSInformation->__sizeDNSFromDHCP
-                , GetDNSResp.DNSInformation->__sizeDNSManual);
-            #endif
-            if (GetDNSResp.DNSInformation->FromDHCP == 1)
-            {
-                if (GetDNSResp.DNSInformation->__sizeDNSFromDHCP > 0)
-                {
-                    if (GetDNSResp.DNSInformation->DNSFromDHCP[0].Type == tt__IPType__IPv4
-                        && GetDNSResp.DNSInformation->DNSFromDHCP[0].IPv4Address 
-                        && GetDNSResp.DNSInformation->DNSFromDHCP[0].IPv4Address[0])
-                    {
-                        net_info->ip_info.dns_auto_en = 1;
-                        strncpy(net_info->ip_info.dns1, GetDNSResp.DNSInformation->DNSFromDHCP[0].IPv4Address[0], sizeof(net_info->ip_info.dns1));
-                        if (GetDNSResp.DNSInformation->__sizeDNSFromDHCP > 1)
-                        {
-                            if (GetDNSResp.DNSInformation->DNSFromDHCP[1].Type == tt__IPType__IPv4
-                                && GetDNSResp.DNSInformation->DNSFromDHCP[1].IPv4Address 
-                                && GetDNSResp.DNSInformation->DNSFromDHCP[1].IPv4Address[0])
-                            {
-                                strncpy(net_info->ip_info.dns2, GetDNSResp.DNSInformation->DNSFromDHCP[1].IPv4Address[0], sizeof(net_info->ip_info.dns2));
-                            }
-                        }
-                    }
-                    #if 0 /** do not support ipv4*/
-                    else if (GetDNSResp.DNSInformation->DNSFromDHCP[0].Type == tt__IPType__IPv6
-                        && GetDNSResp.DNSInformation->DNSFromDHCP[0].IPv6Address )
-                    {}
-                    #endif
-                    else
-                    {
-                         printf("[%s][%d]=====>>> Error!!! can not get dns ip!!!\n", __func__, __LINE__);
-                    }
-                }
-                else
-                {
-                     printf("[%s][%d]=====>>> Error!!! can not get dns ip!!! __sizeDNSFromDHCP: %d\n", __func__, __LINE__, GetDNSResp.DNSInformation->__sizeDNSFromDHCP);
-                }
-            }
-            else
-            {
-                if (GetDNSResp.DNSInformation->__sizeDNSManual > 0)
-                {
-                     if (GetDNSResp.DNSInformation->DNSManual[0].Type == tt__IPType__IPv4
-                        && GetDNSResp.DNSInformation->DNSManual[0].IPv4Address)
-                    {
-                        net_info->ip_info.dns_auto_en = 0;
-                        strncpy(net_info->ip_info.dns1, GetDNSResp.DNSInformation->DNSManual[0].IPv4Address[0], sizeof(net_info->ip_info.dns1));
-                        printf("[%s][%d]=====>>> dns1: %s\n", __func__, __LINE__, GetDNSResp.DNSInformation->DNSManual[0].IPv4Address[0]);
-                        if (GetDNSResp.DNSInformation->__sizeDNSManual > 1)
-                        {
-                           if (GetDNSResp.DNSInformation->DNSManual[1].Type == tt__IPType__IPv4
-                                && GetDNSResp.DNSInformation->DNSManual[1].IPv4Address)
-                           {
-                                strncpy(net_info->ip_info.dns2, GetDNSResp.DNSInformation->DNSManual[1].IPv4Address[0], sizeof(net_info->ip_info.dns2));
-                                printf("[%s][%d]=====>>> dns2: %s\n", __func__, __LINE__, GetDNSResp.DNSInformation->DNSManual[1].IPv4Address[0]);
-                           }
-                        }
-                    #if 0 /** do not support ipv4*/
-                    else if (GetDNSResp.DNSInformation->DNSFromDHCP[0].Type == tt__IPType__IPv6
-                        && GetDNSResp.DNSInformation->DNSFromDHCP[0].IPv6Address )
-                    {}
-                    #endif
-                }
-                else
-                {
-                     printf("[%s][%d]=====>>> Error!!! can not get dns ip!!! __sizeDNSFromDHCP: %d\n", __func__, __LINE__, GetDNSResp.DNSInformation->__sizeDNSFromDHCP);
-                }
-                }
-            }
-        }
-    }
-    /*********************** get port *************************/
-    printf("[%s][%d]=====================>>>>get port!!!\n", __func__, __LINE__);
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__GetNetworkProtocols(soap, soap_endpoint, port_soap_action, &GetNetPortReq, &GetNetPortResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-    }
-    else
-    {
-        printf("[%s][%d]=====>>>> port => size: %d\n", __func__, __LINE__, GetNetPortResp.__sizeNetworkProtocols);
-        if (GetNetPortResp.__sizeNetworkProtocols > 0 
-            && GetNetPortResp.NetworkProtocols)
-        {
-            printf("[%s][%d]======>>> i : %d, name: %d, port: %d\n", __func__, __LINE__, i, GetNetPortResp.NetworkProtocols[i].Name, GetNetPortResp.NetworkProtocols[i].Port[0]);
-            for (i = 0; i < GetNetPortResp.__sizeNetworkProtocols; i++)
-            {
-                if (GetNetPortResp.NetworkProtocols[i].Name == tt__NetworkProtocolType__HTTP)
-                {
-                    if (GetNetPortResp.NetworkProtocols[i].__sizePort > 0)
-                    {
-                        net_info->http_port = GetNetPortResp.NetworkProtocols[i].Port[0];
-                    }
-                }
-                else if (GetNetPortResp.NetworkProtocols[i].Name == tt__NetworkProtocolType__RTSP)
-                {
-                    if (GetNetPortResp.NetworkProtocols[i].__sizePort > 0)
-                    {
-                        net_info->data_port = GetNetPortResp.NetworkProtocols[i].Port[0];
-                    }
-                }
-            }            
-        }
-        printf("[%s][%d]==========>>> http_port: %d, data_port: %d, cmd_port: %d\n", __func__, __LINE__, net_info->http_port, net_info->data_port, net_info->cmd_port);
-    }
-
-    if (soap_endpoint)
-    {
-        free(soap_endpoint);
-        soap_endpoint = NULL;
-    }
-    destroy_soap(soap);
-    if(do_again)
-    {
-        fprintf(stderr, "[%s][%d] Error occur! Do again!\n", __FUNCTION__, __LINE__);
-        goto START;
-    }
-    printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
-    return 0;
-}
-
-int  NVC_Net_info_set(NVC_Net_info_t *net_info, char *name, char *passwd)
-{
-    assert(net_info);
-    printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-    NVC_Dev_t *dev = (NVC_Dev_t *)calloc(1, sizeof(NVC_Dev_t));
-    memset(dev, 0, sizeof(NVC_Dev_t));
-
-START:;
-    int retval = -1;
-    struct soap *soap = NULL;
-    struct SOAP_ENV__Header header;
-    int do_again = 0;
-    memset(dev->user, 0, sizeof(dev->user));
-    memset(dev->passwd, 0, sizeof(dev->passwd));
-    strcpy(dev->user, name);
-    strcpy(dev->passwd, passwd);
-
-    soap = creat_soap(&header, NULL, NULL, 5, 0, dev); 
-    if (soap == NULL)
-    {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
-        return -1;
-    }
-    
-    struct _tds__SetNetworkInterfaces SetNetIfReq;
-    struct _tds__SetNetworkInterfacesResponse SetNetIfResp;
-
-    struct _tds__SetNTP SetNTPReq;
-    struct _tds__SetNTPResponse SetNTPResp;
-
-    struct _tds__SetNetworkDefaultGateway SetNetGatewayReq;
-    struct _tds__SetNetworkDefaultGatewayResponse SetNetGatewayResp;
-
-    struct _tds__SetDNS SetDNSReq;
-    struct _tds__SetDNSResponse SetDNSResp;
-
-    struct _tds__SetNetworkProtocols SetNetPortReq;
-    struct _tds__SetNetworkProtocolsResponse SetNetPortResp;
-    
-    const char *if_soap_action = "http://www.onvif.org/ver10/device/wsdl/SetNetworkInterfaces";
-    const char *ntp_soap_action = "http://www.onvif.org/ver10/device/wsdl/SetNTP";
-    const char *gateway_soap_action = "http://www.onvif.org/ver10/device/wsdl/SetNetworkDefaultGateway";
-    const char *dns_soap_action = "http://www.onvif.org/ver10/device/wsdl/SetDNS";
-    const char *port_soap_action = "http://www.onvif.org/ver10/device/wsdl/SetNetworkProtocols";
-
-    char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);
-    sprintf(soap_endpoint, "http://%s/onvif/device_service", net_info->dst_id);
-    
-    /********************************* get soap_endpoint **************************************
-    struct _tds__GetCapabilities capaReq;
-	struct _tds__GetCapabilitiesResponse capaResp;
-    memset(&capaResp, 0, sizeof(struct _tds__GetCapabilitiesResponse));
-    char *_soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
-	sprintf(_soap_endpoint, "http://%s/onvif/device_service", net_info->dst_id);
-    const char *_soap_action = "http://www.onvif.org/ver10/device/wsdl/GetCapabilities";
-
-    capaReq.Category = (enum tt__CapabilityCategory *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
-	memset(capaReq.Category, 0, sizeof(char)*INFO_LENGTH);
-    capaReq.__sizeCategory = 1;
-	*(capaReq.Category) = tt__CapabilityCategory__Device;
-        
-    soap_call___tds__GetCapabilities(soap, _soap_endpoint, _soap_action, &capaReq, &capaResp);
-    if (soap->error)
-	{
-		printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-		retval = soap->error;
-	}
-	else
-	{
-		strncpy(soap_endpoint, capaResp.Capabilities->Device->XAddr, MAX_URL_LEN);
-    }
-    if (_soap_endpoint)
-    {
-        free(_soap_endpoint);
-        _soap_endpoint = NULL;
-    }
-    /********************************** set port **********************************/
-    printf("[%s][%d]=============>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
-
-    #if 1
-    printf("[%s][%d]=============>>> set  port!!!\n", __func__, __LINE__);
-    SetNetPortReq.__sizeNetworkProtocols = 2;
-    SetNetPortReq.NetworkProtocols = (struct tt__NetworkProtocol *)soap_malloc(soap, sizeof(struct tt__NetworkProtocol)*SetNetPortReq.__sizeNetworkProtocols);
-    memset(SetNetPortReq.NetworkProtocols, 0, sizeof(SetNetPortReq.NetworkProtocols));
-    SetNetPortReq.NetworkProtocols[0].Name = tt__NetworkProtocolType__HTTP;
-    SetNetPortReq.NetworkProtocols[0].Enabled = _true;
-    SetNetPortReq.NetworkProtocols[0].__sizePort = 1;
-    SetNetPortReq.NetworkProtocols[0].Port = (int *)soap_malloc(soap, sizeof(int)*SetNetPortReq.NetworkProtocols[0].__sizePort);
-    memset(SetNetPortReq.NetworkProtocols[0].Port, 0, sizeof(SetNetPortReq.NetworkProtocols[0].Port));
-    SetNetPortReq.NetworkProtocols[0].Port[0] = net_info->http_port;
-    SetNetPortReq.NetworkProtocols[0].Extension = NULL;
-    SetNetPortReq.NetworkProtocols[0].__anyAttribute = NULL;
-
-    SetNetPortReq.NetworkProtocols[1].Name = tt__NetworkProtocolType__RTSP;
-    SetNetPortReq.NetworkProtocols[1].Enabled = _true;
-    SetNetPortReq.NetworkProtocols[1].__sizePort = 1;
-    SetNetPortReq.NetworkProtocols[1].Port = (int *)soap_malloc(soap, sizeof(int)*SetNetPortReq.NetworkProtocols[1].__sizePort);
-    memset(SetNetPortReq.NetworkProtocols[1].Port, 0, sizeof(SetNetPortReq.NetworkProtocols[1].Port));
-    SetNetPortReq.NetworkProtocols[1].Port[0] = net_info->data_port;
-    SetNetPortReq.NetworkProtocols[1].Extension = NULL;
-    SetNetPortReq.NetworkProtocols[1].__anyAttribute = NULL;   
-    printf("[%s][%d]===========>>>> http_port: %d, data_port: %d\n", __func__, __LINE__, net_info->http_port, net_info->data_port);
-    printf("[%s][%d]===========>>>> http_port: %d, rtsp_port: %d\n", __func__, __LINE__, SetNetPortReq.NetworkProtocols[0].Port[0], SetNetPortReq.NetworkProtocols[1].Port[0]);
-    soap_call___tds__SetNetworkProtocols(soap, soap_endpoint, port_soap_action, &SetNetPortReq, &SetNetPortResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-    	retval = soap->error;
-        if((retval == SOAP_CLI_FAULT) || (retval == SOAP_FAULT))
-        {
-            fprintf(stderr, "[%s] Verify error! Send again!\n", __FUNCTION__);
-            if(!dev->need_verify)
-            {
-                dev->need_verify = 1;
-                do_again = 1;
-            }    
-        }
-    }
-
-    /************************  set NTP service ****************************/
-    printf("[%s][%d]=============>>> set  NTP!!!\n", __func__, __LINE__);
-    SetNTPReq.FromDHCP = net_info->ip_info.dhcp_enable;
-    SetNTPReq.__sizeNTPManual = 1;
-    SetNTPReq.NTPManual = (struct tt__NetworkHost *)soap_malloc(soap, sizeof(struct tt__NetworkHost)*SetNTPReq.__sizeNTPManual);
-    memset(SetNTPReq.NTPManual, 0, sizeof(SetNTPReq.NTPManual));
-    
-    SetNTPReq.NTPManual[0].Type = tt__NetworkHostType__IPv4;
-    SetNTPReq.NTPManual[0].IPv4Address = (char **)soap_malloc(soap, sizeof(char *));
-    memset(SetNTPReq.NTPManual[0].IPv4Address, 0, sizeof(char*));
-    SetNTPReq.NTPManual[0].IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char)*LARGE_INFO_LENGTH);
-    memset(SetNTPReq.NTPManual[0].IPv4Address[0], 0, sizeof(char)*LARGE_INFO_LENGTH);
-    strncpy(SetNTPReq.NTPManual[0].IPv4Address[0], net_info->ntp_server, sizeof(char)*LARGE_INFO_LENGTH);
-    SetNTPReq.NTPManual[0].DNSname = NULL;
-    SetNTPReq.NTPManual[0].IPv6Address = NULL;
-    SetNTPReq.NTPManual[0].Extension = NULL;
-    SetNTPReq.NTPManual[0].__anyAttribute = NULL;
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__SetNTP(soap, soap_endpoint, ntp_soap_action, &SetNTPReq, &SetNTPResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-    	retval = soap->error;
-    }
-    
-    /******************************* set dns **********************************/
-    printf("[%s][%d]=============>>> set  dns!!!\n", __func__, __LINE__);
-    SetDNSReq.FromDHCP = net_info->ip_info.dns_auto_en;
-    SetDNSReq.__sizeSearchDomain = 0;
-    SetDNSReq.SearchDomain = NULL;
-    printf("[%s][%d]=====>>> SetDNSReq.FromDHCP: %d\n", __func__,__LINE__, SetDNSReq.FromDHCP);
-    if (SetDNSReq.FromDHCP == 0)
-    {
-        if (strlen(net_info->ip_info.dns2))
-        {
-            SetDNSReq.__sizeDNSManual = 2;
-        }
-        else
-        {
-            SetDNSReq.__sizeDNSManual = 1;
-        }
-        SetDNSReq.DNSManual = (struct tt__IPAddress *)soap_malloc(soap, sizeof(struct tt__IPAddress)*SetDNSReq.__sizeDNSManual);
-        memset(SetDNSReq.DNSManual, 0, sizeof(struct tt__IPAddress)*SetDNSReq.__sizeDNSManual);
-
-        SetDNSReq.DNSManual[0].Type = tt__NetworkHostType__IPv4;
-        SetDNSReq.DNSManual[0].IPv4Address = (char **)soap_malloc(soap, sizeof(char *));
-        memset(SetDNSReq.DNSManual[0].IPv4Address, 0, sizeof(char*));
-        SetDNSReq.DNSManual[0].IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char)*LARGE_INFO_LENGTH);
-        memset(SetDNSReq.DNSManual[0].IPv4Address[0], 0, sizeof(char)*LARGE_INFO_LENGTH);
-        strncpy(SetDNSReq.DNSManual[0].IPv4Address[0], net_info->ip_info.dns1, sizeof(char)*LARGE_INFO_LENGTH);
-        printf("[%s][%d]=============>>> dns1: %s\n", __func__, __LINE__, SetDNSReq.DNSManual[0].IPv4Address[0]);
-        if (strlen(net_info->ip_info.dns2))
-        {
-            SetDNSReq.DNSManual[1].Type = tt__NetworkHostType__IPv4;
-            SetDNSReq.DNSManual[1].IPv4Address = (char **)soap_malloc(soap, sizeof(char *));
-            memset(SetDNSReq.DNSManual[1].IPv4Address, 0, sizeof(char*));
-            SetDNSReq.DNSManual[1].IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char)*LARGE_INFO_LENGTH);
-            memset(SetDNSReq.DNSManual[1].IPv4Address[0], 0, sizeof(char)*LARGE_INFO_LENGTH);
-            strncpy(SetDNSReq.DNSManual[1].IPv4Address[0], net_info->ip_info.dns2, sizeof(char)*LARGE_INFO_LENGTH);
-        }
-        SetDNSReq.DNSManual[0].IPv6Address = NULL;
-    }
-    else
-    {
-        printf("[%s][%d]=====>>> Error!!! ==> SetDNSReq.FromDHCP: %d\n", __func__,__LINE__, SetDNSReq.FromDHCP);
-        SetDNSReq.__sizeDNSManual = 0;
-        SetDNSReq.DNSManual = NULL;
-    }
-    if (strlen(SetDNSReq.DNSManual[0].IPv4Address[0]) > 0)
-    {
-        if(dev->need_verify)
-        {
-            soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-        }
-
-        soap_call___tds__SetDNS(soap, soap_endpoint, dns_soap_action, &SetDNSReq, &SetDNSResp);
-        if (soap->error)
-        {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-        	retval = soap->error;
-        }
-    }    
-
-   /**************************** set gatway *******************************/
-    printf("[%s][%d]=============>>> set  gateway!!!\n", __func__, __LINE__);
-    
-    SetNetGatewayReq.__sizeIPv4Address = 1;
-    SetNetGatewayReq.IPv4Address = (char **)soap_malloc(soap, sizeof(char *)*SetNetGatewayReq.__sizeIPv4Address);
-    memset(SetNetGatewayReq.IPv4Address, 0, sizeof(char*)*SetNetGatewayReq.__sizeIPv4Address);
-    SetNetGatewayReq.IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
-    memset(SetNetGatewayReq.IPv4Address[0], 0, sizeof(char)*INFO_LENGTH);
-    strncpy(SetNetGatewayReq.IPv4Address[0], net_info->ip_info.gateway, sizeof(char)*INFO_LENGTH);
-    SetNetGatewayReq.__sizeIPv6Address = 0;
-    SetNetGatewayReq.IPv6Address = NULL;
-    printf("[%s][%d]=========>>>> Manual gatewayip1: %s, gatewayip2: %s\n"
-       , __func__, __LINE__
-       , net_info->ip_info.gateway
-       , SetNetGatewayReq.IPv4Address[0]);
-     
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__SetNetworkDefaultGateway(soap, soap_endpoint, gateway_soap_action, &SetNetGatewayReq, &SetNetGatewayResp);
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-    	retval = soap->error;
-    }
-    #endif
-    
-    /************************ set mac,ip and so on ************************/
-#if 1
-    //set before get some parameter
-    struct _tds__GetNetworkInterfaces GetNetIfReq;
-    struct _tds__GetNetworkInterfacesResponse GetNetIfResp;
-    memset(&GetNetIfResp, 0, sizeof(struct _tds__GetNetworkInterfacesResponse));
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__GetNetworkInterfaces(soap,  soap_endpoint, if_soap_action, &GetNetIfReq, &GetNetIfResp);
-#endif
-    printf("[%s][%d]=============>>> set  ip, mac, submask and so on!!!\n", __func__, __LINE__);
-    SetNetIfReq.InterfaceToken = (char *)soap_malloc(soap, sizeof(char)*MAX_TOKEN_LEN);
-    memset(SetNetIfReq.InterfaceToken, 0, sizeof(char)*MAX_TOKEN_LEN);
-#if 0
-    strncpy(SetNetIfReq.InterfaceToken, net_info->ip_info.if_name, sizeof(char)*MAX_TOKEN_LEN); /***/
-#endif
-    if(GetNetIfResp.NetworkInterfaces)
-    {
-        if(GetNetIfResp.NetworkInterfaces->token)
-        {
-            strncpy(SetNetIfReq.InterfaceToken, GetNetIfResp.NetworkInterfaces->token, sizeof(char)*MAX_TOKEN_LEN);
-        }
-    }
-    SetNetIfReq.NetworkInterface = (struct tt__NetworkInterfaceSetConfiguration *)soap_malloc(soap, sizeof(struct tt__NetworkInterfaceSetConfiguration));
-    memset(SetNetIfReq.NetworkInterface, 0, sizeof(struct tt__NetworkInterfaceSetConfiguration));
-    
-    SetNetIfReq.NetworkInterface->Enabled = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
-    memset(SetNetIfReq.NetworkInterface->Enabled, 0, sizeof(enum xsd__boolean_));
-    *(SetNetIfReq.NetworkInterface->Enabled) = _true;
-
-    SetNetIfReq.NetworkInterface->IPv4 = (struct tt__IPv4NetworkInterfaceSetConfiguration *)soap_malloc(soap, sizeof(struct tt__IPv4NetworkInterfaceSetConfiguration));
-    memset(SetNetIfReq.NetworkInterface->IPv4, 0, sizeof(struct tt__IPv4NetworkInterfaceSetConfiguration));
-    SetNetIfReq.NetworkInterface->IPv4->Enabled = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
-    memset(SetNetIfReq.NetworkInterface->IPv4->Enabled, 0, sizeof(enum xsd__boolean_));
-    *(SetNetIfReq.NetworkInterface->IPv4->Enabled) = _true;
-    SetNetIfReq.NetworkInterface->IPv4->__sizeManual = 1;
-    #if 0
-    SetNetIfReq.NetworkInterface->IPv4->Manual = (struct tt__PrefixedIPv4Address *)soap_malloc(soap, sizeof(struct tt__PrefixedIPv4Address));
-    memset(SetNetIfReq.NetworkInterface->IPv4->Manual, 0, sizeof(struct tt__PrefixedIPv4Address));
-    SetNetIfReq.NetworkInterface->IPv4->Manual->Address = (char *)soap_malloc(soap, sizeof(char)*MAX_IP_LEN);
-    memset(SetNetIfReq.NetworkInterface->IPv4->Manual->Address, 0, sizeof(char)*MAX_IP_LEN);
-    #endif
-    SetNetIfReq.NetworkInterface->IPv4->Manual = (struct tt__PrefixedIPv4Address *)soap_malloc(soap, sizeof(struct tt__PrefixedIPv4Address) * SetNetIfReq.NetworkInterface->IPv4->__sizeManual);
-    memset(SetNetIfReq.NetworkInterface->IPv4->Manual, 0, sizeof(struct tt__PrefixedIPv4Address) * SetNetIfReq.NetworkInterface->IPv4->__sizeManual);
-    SetNetIfReq.NetworkInterface->IPv4->Manual[0].Address = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
-    memset(SetNetIfReq.NetworkInterface->IPv4->Manual[0].Address, 0, sizeof(sizeof(char)*INFO_LENGTH));
-    strncpy(SetNetIfReq.NetworkInterface->IPv4->Manual[0].Address, net_info->ip_info.ip_addr, sizeof(char)*INFO_LENGTH);
-    SetNetIfReq.NetworkInterface->IPv4->Manual[0].PrefixLength = get_masklen_from_submask(net_info->ip_info.mask);
-    printf("[%s][%d]111=========>>>> Manual ip: %s, mask: %s\n" ,__func__, __LINE__, net_info->ip_info.ip_addr, net_info->ip_info.mask);
-    printf("[%s][%d]222=========>>>> Manual ip: %s, PrefixLength: %d\n"
-        , __func__, __LINE__
-        , SetNetIfReq.NetworkInterface->IPv4->Manual[0].Address
-        , SetNetIfReq.NetworkInterface->IPv4->Manual[0].PrefixLength);
-    
-    SetNetIfReq.NetworkInterface->IPv4->DHCP = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
-    memset(SetNetIfReq.NetworkInterface->IPv4->DHCP, 0, sizeof(enum xsd__boolean_));
-    *(SetNetIfReq.NetworkInterface->IPv4->DHCP) = net_info->ip_info.dhcp_enable; //(net_info->ip_info.dhcp_enable == 0)?_false:_true;
-
-    SetNetIfReq.NetworkInterface->MTU = (int *)soap_malloc(soap, sizeof(int));
-    memset(SetNetIfReq.NetworkInterface->MTU, 0, sizeof(int));
-    *(SetNetIfReq.NetworkInterface->MTU) = 1500;
-
-    SetNetIfReq.NetworkInterface->Link = NULL;
-    SetNetIfReq.NetworkInterface->IPv6 = NULL;
-    SetNetIfReq.NetworkInterface->Extension = NULL;
-    SetNetIfReq.NetworkInterface->__anyAttribute = NULL;
-    #if 0
-    int k = 0;
-    for (k = 0; k <45; k++)
-    {
-        printf("=========>>> Namespace->id: \t%s; \tnamespace->ns: %s\n", soap->namespaces[k].id, soap->namespaces[k].ns);
-    }      
-    #endif
-
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
-    soap_call___tds__SetNetworkInterfaces(soap, soap_endpoint, if_soap_action, &SetNetIfReq, &SetNetIfResp);    
-    if (soap->error)
-    {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-    	retval = soap->error;
-    }
-    else
-    {
-        if (SetNetIfResp.RebootNeeded == _true)
-        {
-            printf("[%s][%d]===============>>> SetNetIfResp.RebootNeeded: %d, will call SystemReboot!!!\n", __func__, __LINE__, SetNetIfResp.RebootNeeded);
-            struct _tds__SystemReboot SysRebootReq;
-            struct _tds__SystemRebootResponse SysRebootResp;
-            const char *sys_soap_action = "http://www.onvif.org/ver10/device/wsdl/SystemReboot";
-            if(dev->need_verify)
-            {
-                soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-            }
-            soap_call___tds__SystemReboot(soap, soap_endpoint, sys_soap_action, &SysRebootReq, &SysRebootResp);
-            if (soap->error)
-            {
-                printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-            	retval = soap->error;
-            }
-        }
-    }
-    #if 0
-    printf("###########################################################################\n\n");
-    for (k = 0; k <45; k++)
-    {
-        printf("=========>>> Namespace->id: \t%s; \tnamespace->ns: %s\n", soap->namespaces[k].id, soap->namespaces[k].ns);
-    }
-    #endif
-    /*****************************************************************/
-    if (soap_endpoint)
-    {
-        free(soap_endpoint);
-        soap_endpoint = NULL;
-    }
-    if (retval == 0)
-    {
-        printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
-    }
-    
-    destroy_soap(soap);
-    if(do_again)
-    {
-        fprintf(stderr, "[%s][%d] Error occur! Do again!\n", __FUNCTION__, __LINE__);
-        goto START;
-    }
-    return  0;
-}
 
 /***************************************** Img attr *******************************************/
 int NVC_Get_Img_options(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
@@ -4328,11 +3508,6 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
 #endif
     }
 
-    if(dev->need_verify)
-    {
-        soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-    }
-
     soap_call___timg__SetImagingSettings(soap, soap_endpoint, soap_action, &SetImgReq, &SetImgResp);
     if (soap->error)
     {
@@ -4424,6 +3599,103 @@ int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap)
   return 0;
 }
 
+
+int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
+{
+  int retval = -1;
+  struct soap *soap = NULL;
+  struct SOAP_ENV__Header header;
+  const char *soap_action = NULL;
+  
+  dev->get_tm = 1;
+  soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
+  if (soap == NULL)
+  {
+    printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+    return -1;
+  }
+  dev->get_tm = 0;
+  
+  printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
+  
+  if (strlen(dev->ip) < 1 || dev->port == 0)
+	{
+		printf("[%s][%s]--->>> Error: Invalid parameter! ip:[%s], port:[%d]\n"
+			, __FILE__, __func__, dev->ip, dev->port);	
+		return -1;
+	}
+    
+  char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);
+	sprintf(soap_endpoint, "http://%s:%d/onvif/device_service", dev->ip, dev->port);
+
+#if 1
+  struct _tds__GetSystemDateAndTime GetSystemTime;
+  struct _tds__GetSystemDateAndTimeResponse GetSystemTimeResp;
+  memset(&GetSystemTimeResp, 0, sizeof(struct _tds__GetSystemDateAndTimeResponse));
+  do
+  {
+    soap_call___tds__GetSystemDateAndTime_(soap, soap_endpoint, soap_action, &GetSystemTime, &GetSystemTimeResp);
+    if (soap->error)
+    {
+      printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+      retval = soap->error;
+      free(soap_endpoint);
+      soap_endpoint = NULL;
+      destroy_soap(soap);
+      return retval;
+    }
+    else
+    {
+      if(GetSystemTimeResp.SystemDateAndTime)
+      {
+       if(GetSystemTimeResp.SystemDateAndTime->TimeZone)
+       { 
+          if(GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ != NULL)
+          {
+            printf("[%s]--->>> TZ=[%s]\n", __func__, GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ);
+          }
+       }
+       
+       if(GetSystemTimeResp.SystemDateAndTime->UTCDateTime)
+       {
+        
+          if(GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Date)
+          {
+            time->year = GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Date->Year;
+            time->mon  = GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Date->Month;
+            time->day  = GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Date->Day;
+          }
+          if(GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Time)
+          {
+            time->hour = GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Time->Hour;
+            time->min = GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Time->Minute;
+            time->sec = GetSystemTimeResp.SystemDateAndTime->UTCDateTime->Time->Second;
+          }
+       }
+       
+      }
+
+    }
+  }while(0);
+#endif
+  
+  printf("[%s][%d] ===>>> [%d-%d-%dT%d:%d:%dZ] TZ[%d]\n", __func__, __LINE__
+        , time->year, time->mon, time->day
+        , time->hour, time->min, time->sec
+        , time->zone);
+  
+  if (soap_endpoint)
+  {
+    free(soap_endpoint);
+    soap_endpoint = NULL;
+  }
+  destroy_soap(soap);
+  printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
+  return 0;
+}
+
+
+
 int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
 {
   int retval = -1;
@@ -4440,14 +3712,10 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
 
   printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
   
-  if (dev->profile_tn == NULL 
-      || strlen(dev->profile_tn[dev->st_type].v_src_sourcetoken) < 1 
-      || dev->capa == NULL 
-      || dev->capa->img_capa == NULL
-      || strlen(dev->capa->img_capa->url) < 1)
+  if (strlen(dev->ip) < 1 || dev->port == 0)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
-			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].profile_token);	
+		printf("[%s][%s]--->>> Error: Invalid parameter! ip:[%s], port:[%d]\n"
+			, __FILE__, __func__, dev->ip, dev->port);	
 		return -1;
 	}
     
@@ -4527,11 +3795,6 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
       ,SetSystemDateAndTime.UTCDateTime->Time->Hour
       ,SetSystemDateAndTime.UTCDateTime->Time->Minute
       ,SetSystemDateAndTime.UTCDateTime->Time->Second);
-      
-  if(dev->need_verify)
-  {
-    soap_wsse_add_UsernameTokenDigest(soap, "", dev->user, dev->passwd);//添加校验
-  }
   
   soap_call___tds__SetSystemDateAndTime_(soap, soap_endpoint, soap_action, &SetSystemDateAndTime, &SetSystemDateAndTimeResp);
   if (soap->error)
@@ -4575,7 +3838,7 @@ int NVC_PTZ_Cruise_Begin(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
