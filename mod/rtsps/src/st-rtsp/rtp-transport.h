@@ -8,6 +8,7 @@ struct rtp_transport_t
 {
   int istcp;
   int(*send)(struct rtp_transport_t *t, int rtcp, const void* data, size_t bytes);
+  int(*recv)(struct rtp_transport_t *t, int rtcp, const void* data, size_t bytes);
   void(*free)(struct rtp_transport_t *t);
 };
 

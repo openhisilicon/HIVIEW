@@ -164,6 +164,12 @@ static void *live_send_task(void *arg)
     //get stream;
     if(m->track[MEDIA_TRACK_VIDEO].m_transport)
     {
+      if(i%60 == 0)
+      {
+        char rr[1024] = {0};
+        int r = m->track[MEDIA_TRACK_VIDEO].m_transport->recv(m->track[MEDIA_TRACK_VIDEO].m_transport, 1, rr, sizeof(rr));
+      }
+      
       struct timeval tv1, tv2;
       
       // wait data;
@@ -208,6 +214,11 @@ static void *live_send_task(void *arg)
     //get stream;
     if(m->track[MEDIA_TRACK_AUDIO].m_transport)
     {
+      if(i%60 == 0)
+      {
+        char rr[1024] = {0};
+        int r = m->track[MEDIA_TRACK_AUDIO].m_transport->recv(m->track[MEDIA_TRACK_AUDIO].m_transport, 1, rr, sizeof(rr));
+      }
       // get data;
       // send data;  
       //printf("send MEDIA_TRACK_AUDIO.\n");
@@ -216,12 +227,18 @@ static void *live_send_task(void *arg)
     //get stream;
     if(m->track[MEDIA_TRACK_META].m_transport)
     {
+      if(i%60 == 0)
+      {
+        char rr[1024] = {0};
+        int r = m->track[MEDIA_TRACK_META].m_transport->recv(m->track[MEDIA_TRACK_META].m_transport, 1, rr, sizeof(rr));
+      }
+      
       // get data;
       // send data;  
       printf("send MEDIA_TRACK_META.\n");
     }
     
-    //st_poll(fds, 2, 5*1000) //recv rtcp;
+    i++;
     //st_usleep(5*1000);
   }
   free(ptr);

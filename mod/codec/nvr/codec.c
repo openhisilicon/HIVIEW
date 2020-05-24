@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
     
     gsf_mpp_cfg("", NULL);
     gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
+    gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1280x1024_60, 0);
     
     live_mon();
     
@@ -97,6 +98,7 @@ int main(int argc, char *argv[])
       sleep(1);
     }
     
+    gsf_mpp_fb_hide(VOFB_GUI, 1);
     gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_NONE, NULL);
     gsf_mpp_vo_stop(VODEV_HD0);
     

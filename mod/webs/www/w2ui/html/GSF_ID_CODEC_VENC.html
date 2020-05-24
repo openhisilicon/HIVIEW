@@ -8,8 +8,8 @@
 
 <div id="req-id" style="width: 400px; height: 200px;"></div>
 <div id="res-id" style="position:relative;left:500px;top:-200px;width:400px;height:200px"></div>
-<button class="w2ui-btn" style="position:relative;left:300px;top:-180px;" onclick="json_get()">GET</button>
-<button class="w2ui-btn" style="position:relative;left:440px;top:-180px;" onclick="json_set()">SET</button>
+<button id="get-id" class="w2ui-btn" style="position:relative;left:300px;top:-180px;">GET</button>
+<button id="set-id" class="w2ui-btn" style="position:relative;left:440px;top:-180px;">SET</button>
 <div id="rsp-id" style="position:relative;left:0px;top:-160px;width:900px;height:400px"></div>
 
 <!--CODE-->
@@ -45,73 +45,56 @@ $(function () {
     const rsp_ele = document.getElementById("rsp-id")
     const rsp_edit = new JSONEditor(rsp_ele, options)
     // set json
-    const rsp_init = [{
-    	"type":	0,
-    	"width":	1920,
-    	"height":	1080,
-    	"gop":	50,
-    	"flow":	1,
-    	"bitrate":	4000,
-    	"profile":	0,
-    	"qp":	51
-    }]
+    const rsp_init = {
+    	"code": 0
+    }
     rsp_edit.set(rsp_init);
 
-    // get json
-    //const updatedJson = req_edit.get();
+    $("#get-id").click(function(){
+      
+      const req = req_edit.get();
+      
+      $.ajax({
+        async: true,
+        type: "post",
+        url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+        data: JSON.stringify(req.data),
+        contentType: 'application/json', // req body type;
+        dataType: "json", // rsp body type;
+        success: function (data) {
+          rsp_edit.set(data);
+        },
+        error: function () {
+          //TODO;
+        }
+      });
+
+    });
+
+
+    $("#set-id").click(function(){
+     
+      const req = req_edit.get();
+      const rsp = rsp_edit.get();
+      var args = req.args;
+      
+      $.ajax({
+        async: true,
+        type: "post",
+        url:  '/config?id=' + req.id + '&' + 'args=' + args.replace("G0","G1"),
+        data: JSON.stringify(rsp.data),
+        contentType: 'application/json', // req body type;
+        dataType: "json", // rsp body type;
+        success: function (data) {
+          res_edit.set(data);
+        },
+        error: function () {
+          //TODO;
+        }
+      });
+    
+    
+    });
 
 });
-
-function json_get(){
-  
-    var input = document.getElementById('req-id')
-		//nanomsg
-		// Milliseconds between reconnects.
-		nanomsg.reconnectTime = 10 * 1000;
-		// Show some debug logging in the console.
-		nanomsg.debug = true;
-		// Receives ArrayBuffer objects instead of strings. Default is `false`.
-		nanomsg.receiveArrayBuffer = false;
-  
-		const sock = new nanomsg.Socket(nanomsg.REQ);
-		// const sock = new nanomsg.Socket(nanomsg.PAIR);
-		sock.connect('ws://' + window.location.hostname + ':7790')
-		// old school more streamy approach
-
-		sock.on('data', function (msg) {
-		  //console.log('got =>', msg);
-		  document.getElementById('rsp-id').value = msg /* <-- an improvement from FileReader :) */
-		});
-  
-    sock.send(input.value)
-}
-
-
-function json_set(){
-  
-    var input = document.getElementById('rsp-id')
-
-		//nanomsg
-		// Milliseconds between reconnects.
-		nanomsg.reconnectTime = 10 * 1000;
-		// Show some debug logging in the console.
-		nanomsg.debug = true;
-		// Receives ArrayBuffer objects instead of strings. Default is `false`.
-		nanomsg.receiveArrayBuffer = false;
-  
-		const sock = new nanomsg.Socket(nanomsg.REQ);
-		// const sock = new nanomsg.Socket(nanomsg.PAIR);
-		sock.connect('ws://' + window.location.hostname + ':7790')
-		// old school more streamy approach
-
-		sock.on('data', function (msg) {
-		  //console.log('got =>', msg);
-		  document.getElementById('res-id').value = msg /* <-- an improvement from FileReader :) */
-		});
-  
-    sock.send(input.value)
-}
-
-
-
 </script>

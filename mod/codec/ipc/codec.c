@@ -21,6 +21,7 @@
 #define PT_VENC(t) \
             (t == GSF_ENC_H264)? PT_H264:\
             (t == GSF_ENC_H265)? PT_H265:\
+            (t == GSF_ENC_JPEG)? PT_JPEG:\
             (t == GSF_ENC_MJPEG)? PT_MJPEG:\
             PT_H264
 
@@ -208,12 +209,15 @@ int main(int argc, char *argv[])
     info("parm.venc[0].type:%d, width:%d\n", codec_ipc.venc[0].type, codec_ipc.venc[0].width);
 
     // register to bsp && get bsp_def;
+    #if 1
     if(reg2bsp() < 0)
       return -1;
 
     if(getdef(&bsp_def) < 0)
       return -1;
-
+    #else
+    sprintf(bsp_def.board.sensor[0], "%s", "sc2335");
+    #endif
     //init listen;
     GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
@@ -227,8 +231,16 @@ int main(int argc, char *argv[])
         .snscnt = 1,
         .lane = 0,
         .wdr  = 0,
+        #ifdef GSF_CPU_3519a // imx334-0-0-8-60
         .res  = 8,
         .fps  = 60,
+        #elif defined(GSF_CPU_3516d)
+        .res  = 4,          // imx335-0-0-4-30
+        .fps  = 30,
+        #else
+        .res  = 2,          // sc2335-0-0-2-30
+        .fps  = 30,
+        #endif
     };
     
     strcpy(cfg.snsname, bsp_def.board.sensor[0]);
@@ -239,6 +251,10 @@ int main(int argc, char *argv[])
     gsf_mpp_vi_t vi = {
         .bLowDelay = HI_FALSE,
         .u32SupplementConfig = 0,
+        #ifdef GSF_CPU_3516e
+        .vpss_en = {1, 1,},
+        .vpss_sz = {PIC_1080P, PIC_720P,},
+        #endif
     };
     gsf_mpp_vi_start(&vi);
     
@@ -248,7 +264,13 @@ int main(int argc, char *argv[])
         .ViPipe  = 0,
         .ViChn   = 0, 
         .enable  = {1, 1,},
+        #ifdef GSF_CPU_3519a          // 4K
         .enSize  = {PIC_3840x2160, PIC_720P,},
+        #elif defined(GSF_CPU_3516d)  // 4M
+        .enSize  = {PIC_2592x1536, PIC_720P,},
+        #else
+        .enSize  = {PIC_1080P, PIC_720P,},
+        #endif
     };
     gsf_mpp_vpss_start(&vpss);
 

@@ -8,10 +8,10 @@ typedef struct {
   pthread_cond_t cond;
 
   int onvif[GSF_CODEC_NVR_CHN];
-  int rtsp[GSF_CODEC_NVR_CHN];
-
+  int rtsp[GSF_CODEC_NVR_CHN][2];
+  
   gsf_chsrc_t chsrc[GSF_CODEC_NVR_CHN];
-  gsf_shmid_t shmid[GSF_CODEC_NVR_CHN];
+  gsf_shmid_t shmid[GSF_CODEC_NVR_CHN][2];
   
 }live_mng_t;
 
@@ -29,7 +29,8 @@ int live_mon()
 	
 	for(i = 0; i < GSF_CODEC_NVR_CHN; i++)
   {
-    gmng.shmid[i].video_shmid = gmng.shmid[i].audio_shmid = -1;
+    gmng.shmid[i][0].video_shmid = gmng.shmid[i][0].audio_shmid = -1;
+    gmng.shmid[i][1].video_shmid = gmng.shmid[i][1].audio_shmid = -1;
   }
 	
   return pthread_create(&gmng.tid, NULL, live_task, (void*)NULL);
@@ -46,29 +47,40 @@ int live_chsrc_modify(int i, gsf_chsrc_t *chsrc)
   return 0;
 }
 
-int live_chsrc_clear()
+int live_clear_rtsp()
 {
   int i = 0;
   pthread_mutex_lock(&gmng.mutex);
-  
   for(i = 0; i < GSF_CODEC_NVR_CHN; i++)
   {
-    gmng.chsrc[i].st1[0] = gmng.chsrc[i].st1[1] = '\0';
+    gmng.chsrc[i].st1[0] = gmng.chsrc[i].st2[0] = '\0';
+  }
+  pthread_cond_signal(&gmng.cond);
+  pthread_mutex_unlock(&gmng.mutex);
+}
+
+int live_clear_onvif()
+{
+  int i = 0;
+  pthread_mutex_lock(&gmng.mutex);
+  for(i = 0; i < GSF_CODEC_NVR_CHN; i++)
+  {
+    gmng.chsrc[i].host[0] = '\0';
   }
   pthread_cond_signal(&gmng.cond);
   pthread_mutex_unlock(&gmng.mutex);
 }
 
 
-
 int live_get_shmid(int layout, int voch[GSF_CODEC_NVR_CHN]
-                , gsf_shmid_t shmid[GSF_CODEC_NVR_CHN])
+                , int st, gsf_shmid_t shmid[GSF_CODEC_NVR_CHN])
 {
   int i = 0;
   for(i = 0; i < layout; i++)
   {
-    shmid[i] = gmng.shmid[voch[i]];
-    printf("i:%d, video_shmid:%d\n", i, gmng.shmid[i].video_shmid);
+    shmid[i] = gmng.shmid[voch[i]][st];
+    printf("i:%d, ch:%d, st:%d, video_shmid:%d\n",
+            i, voch[i], st, shmid[i].video_shmid);
   }
   return 0;
 }
@@ -120,21 +132,32 @@ static void* live_task(void *parm)
     {
       if(memcmp(&gmng.chsrc[i], &app_nvr.chsrc[i], sizeof(gsf_chsrc_t)))
       {
-        printf("i:%d, gmng.chsrc != app_nvr.chsrc\n", i);
-        
-        if(gmng.rtsp[i])
+        if(gmng.rtsp[i][0])
         {
+          printf("close >>>>>> i:%d, st1[%s]\n", i, gmng.chsrc[i].st1);
           GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
           rtsp_url->transp = 0;
           strcpy(rtsp_url->url, gmng.chsrc[i].st1);
           int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_CLOSE, 0, SET, 0
                                 , sizeof(gsf_rtsp_url_t)
                                 , GSF_IPC_RTSPS, 2000);
-          gmng.rtsp[i] = 0;
+          gmng.rtsp[i][0] = 0;
+        }
+        if(gmng.rtsp[i][1])
+        {
+          printf("close >>>>>> i:%d, st2[%s]\n", i, gmng.chsrc[i].st2);
+          GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
+          rtsp_url->transp = 0;
+          strcpy(rtsp_url->url, gmng.chsrc[i].st2);
+          int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_CLOSE, 0, SET, 0
+                                , sizeof(gsf_rtsp_url_t)
+                                , GSF_IPC_RTSPS, 2000);
+          gmng.rtsp[i][1] = 0;
         }
         
         if(gmng.onvif[i])
         {
+          printf("close >>>>>> i:%d, host[%s]\n", i, gmng.chsrc[i].host);
           GSF_MSG_DEF(gsf_onvif_url_t, onvif_url, 8*1024);
           strcpy(onvif_url->url, gmng.chsrc[i].host);
           int ret = GSF_MSG_SENDTO(GSF_ID_ONVIF_C_CLOSE, 0, SET, 0
@@ -148,17 +171,13 @@ static void* live_task(void *parm)
         pthread_mutex_unlock(&gmng.mutex);
         
         // unref shmid;
-        gmng.shmid[i].video_shmid = gmng.shmid[i].audio_shmid = -1;
-        extern int vo_ly(); vo_ly();
+        gmng.shmid[i][0].video_shmid = gmng.shmid[i][0].audio_shmid = -1;
+        gmng.shmid[i][1].video_shmid = gmng.shmid[i][1].audio_shmid = -1;
+        extern int vo_ly(int num); vo_ly(0);
       }
       
       if(gmng.chsrc[i].en)
       {
-        #if 0
-        printf("i:%d, onvif:%d, rtsp:%d, host:[%s], st1:[%s]\n"
-              , i,  gmng.onvif[i], gmng.rtsp[i], gmng.chsrc[i].host, gmng.chsrc[i].st1);
-        #endif
-         
         if(strlen(gmng.chsrc[i].host) > 0 && gmng.onvif[i] == 0)
         {
           GSF_MSG_DEF(gsf_onvif_url_t, onvif_url, 8*1024);
@@ -167,17 +186,24 @@ static void* live_task(void *parm)
           int ret = GSF_MSG_SENDTO(GSF_ID_ONVIF_C_OPEN, 0, SET, 0
                                 , sizeof(gsf_onvif_url_t)
                                 , GSF_IPC_ONVIF, 6000);
-          printf("i:%d, get ret:%d, err:%d\n", i, ret, __pmsg->err);
+
+          printf("open >>>>>> i:%d, host[%s], ret:%d, err:%d\n", 
+                i, gmng.chsrc[i].host, ret, __pmsg->err);
+                
           if(ret == 0 && __pmsg->err == 0)
           {
             gsf_onvif_media_url_t *murl = (gsf_onvif_media_url_t*)__pmsg->data;
             
             char user_pwd[128] = {0};
             url_get_user_pwd(gmng.chsrc[i].host, user_pwd);
+            
             url_add_user_pwd(murl->st1, user_pwd);
-                  
             strcpy(gmng.chsrc[i].st1, murl->st1);
-            printf("i:%d, get st1[%s]\n", i, gmng.chsrc[i].st1); 
+            
+            url_add_user_pwd(murl->st2, user_pwd);
+            strcpy(gmng.chsrc[i].st2, murl->st2);
+   
+            printf("i:%d, get st1[%s], st2[%s]\n", i, gmng.chsrc[i].st1, gmng.chsrc[i].st2); 
             
             gmng.onvif[i] = 1;
             
@@ -187,7 +213,7 @@ static void* live_task(void *parm)
           }
         }
         
-        if(strlen(gmng.chsrc[i].st1) > 0 && gmng.rtsp[i] == 0)
+        if(strlen(gmng.chsrc[i].st1) > 0 && gmng.rtsp[i][0] == 0)
         {
           GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
           rtsp_url->transp = 0;
@@ -195,16 +221,41 @@ static void* live_task(void *parm)
           int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
                                 , sizeof(gsf_rtsp_url_t)
                                 , GSF_IPC_RTSPS, 3000); 
+                                
+          printf("open >>>>>> i:%d, st1[%s], ret:%d, err:%d\n", 
+                i, gmng.chsrc[i].st1, ret, __pmsg->err);
+                                
           if(ret == 0 && __pmsg->err == 0)
           {
             // ref shmid;
             gsf_shmid_t *shmid = (gsf_shmid_t*)__pmsg->data;
-            gmng.shmid[i] = *shmid;
-            gmng.rtsp[i]  = 1;
-            extern int vo_ly(); vo_ly();
+            gmng.shmid[i][0] = *shmid;
+            gmng.rtsp[i][0]  = 1;
+            extern int vo_ly(int num); vo_ly(0);
           }
         }
         
+        if(strlen(gmng.chsrc[i].st2) > 0 && gmng.rtsp[i][1] == 0)
+        {
+          GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
+          rtsp_url->transp = 0;
+          strcpy(rtsp_url->url, gmng.chsrc[i].st2);
+          int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
+                                , sizeof(gsf_rtsp_url_t)
+                                , GSF_IPC_RTSPS, 3000); 
+                                
+          printf("open >>>>>> i:%d, st2[%s], ret:%d, err:%d\n", 
+                i, gmng.chsrc[i].st1, ret, __pmsg->err);
+                                
+          if(ret == 0 && __pmsg->err == 0)
+          {
+            // ref shmid;
+            gsf_shmid_t *shmid = (gsf_shmid_t*)__pmsg->data;
+            gmng.shmid[i][1] = *shmid;
+            gmng.rtsp[i][1]  = 1;
+            extern int vo_ly(int num); vo_ly(0);
+          }
+        }
       }
       
     }

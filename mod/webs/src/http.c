@@ -27,7 +27,7 @@ extern unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 #define FLV_TYPE_VDIEO 9
 #define FLV_TYPE_SCRIPT 18
 
-#define MAX_FRAME_SIZE (300*1024)
+#define MAX_FRAME_SIZE (500*1024)
 typedef struct {
   struct cfifo_ex* video;
   unsigned char* data;
@@ -67,10 +67,15 @@ static void on_stdin_read(struct mg_connection *nc, int ev, void *p) {
   if(1)//for (c = mg_next(nc->mgr, NULL); c != NULL; c = mg_next(nc->mgr, c)) 
   {
     
+    #ifdef GSF_CPU_3516e
+    #define SBUF_MAX_SIZE 0.5*1024*1024 
+    #else
+    #define SBUF_MAX_SIZE 2*1024*1024
+    #endif
     if (c->user_data != NULL) {
       if (c->user_data == sess) {
         //printf("%s => sess:%p, rd:%u, len:%d\n", __func__, sess, sess->rd, sess->wsbuf_len[(sess->rd)%2]);
-        if (sess->wsbuf_len[(sess->rd)%2] == 0 || c->send_mbuf.len >= 2*1024*1024 ) {
+        if (sess->wsbuf_len[(sess->rd)%2] == 0 || c->send_mbuf.len >= SBUF_MAX_SIZE ) {
           // EOF is received from stdin. Schedule the connection to close
           c->flags |= MG_F_SEND_AND_CLOSE;
           if (c->send_mbuf.len <= 0) {
@@ -272,15 +277,17 @@ static void *send_thread_func(void *param) {
   if(sess)
   {
     if(sess->data)
+    {
+      printf("sess:%p, free data:%p\n", sess, sess->data);
       free(sess->data);
-        
+    }    
     for(i = 0; i < 2; i++)
     { 
       if(sess->wsbuf[i])
       {
         free(sess->wsbuf[i]);
         sess->wsbuf_len[i] = 0;
-        printf("sess:%p, free:%p\n", sess, sess->wsbuf[i]);
+        printf("sess:%p, free wsbuf:%p\n", sess, sess->wsbuf[i]);
       }
     }
     if(sess->video)
@@ -421,6 +428,7 @@ struct file_writer_data {
 };
 
 extern int upg_stat;
+extern int upg_progress;
 
 void handle_upload(struct mg_connection *nc, int ev, void *p) {
   struct file_writer_data *data = (struct file_writer_data *) nc->user_data;
@@ -655,6 +663,53 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
   return;
 }
 
+void handle_stat(struct mg_connection *nc, int ev, void *pp)
+{
+  struct http_message* hm = (struct http_message*)pp;
+
+  if(ev == MG_EV_CLOSE)
+    return;
+ 
+  if(hm->query_string.len == 0)
+    return;
+
+  char req[128] = {0};
+  char args[128] = {0};
+  char *p = NULL;
+
+  char *qs = (char*)malloc(hm->query_string.len + 1);
+  sprintf(qs, "%.*s", hm->query_string.len, hm->query_string.p);
+  
+  // GET /stat?id=GSF_ID_BSP_UPG&args=G0C0S0&body=
+  
+  if(p = strstr(qs, "id="))
+    sscanf(p, "id=%127[^&]", req);
+  if(p = strstr(qs, "args="))
+    sscanf(p, "args=%127[^&]", args);
+ 
+  printf("qs >>> id:[%s], args:[%s]\n", req, args);
+ 
+  char out[8*1024] = {0};
+  
+  //TODO;
+  if(strstr(req, "GSF_ID_BSP_UPG"))
+  {
+    sprintf(out, "{\"progress\":%d}", upg_progress);
+  }
+  
+  if(qs)
+    free(qs);
+
+  mg_printf(nc, "HTTP/1.1 200 OK\r\n");
+  mg_printf(nc, "Content-Length: %lu\r\n\r\n", strlen(out));
+  mg_printf(nc, out);
+  
+  nc->flags |= MG_F_SEND_AND_CLOSE;
+}
+
+
+
+
 
 static void* ws_task(void* parm)
 {
@@ -682,9 +737,10 @@ static void* ws_task(void* parm)
   s_http_server_opts.auth_domain = "MyRealm";
   s_http_server_opts.document_root = "/var/app/www";  // Serve current directory
   
-  mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL));
-  mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL));
-  mg_register_http_endpoint(c, "/snap", handle_snap MG_UD_ARG(NULL));
+  mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL)); // upgrade;
+  mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL)); // config;
+  mg_register_http_endpoint(c, "/snap", handle_snap MG_UD_ARG(NULL));     // snap picture;
+  mg_register_http_endpoint(c, "/stat", handle_stat MG_UD_ARG(NULL));     // stat (eg. upg_progress);
   
   // Set up HTTP server parameters
   mg_set_protocol_http_websocket(c);

@@ -8,12 +8,31 @@
 
 #include "http.h"
 #include "mod_call.h"
-
+#include "msg_func.h"
+#include "cfg.h"
+#include "webs.h"
 
 GSF_LOG_GLOBAL_INIT("WEBS", 8*1024);
 
+static int req_recv(char *in, int isize, char *out, int *osize, int err)
+{
+    int ret = 0;
+    gsf_msg_t *req = (gsf_msg_t*)in;
+    gsf_msg_t *rsp = (gsf_msg_t*)out;
 
-int rep_recv(char *in, int isize, char *out, int *osize, int err)
+    *rsp  = *req;
+    rsp->err  = 0;
+    rsp->size = 0;
+
+    ret = msg_func_proc(req, isize, rsp, osize);
+
+    rsp->err = (ret == TRUE)?rsp->err:GSF_ERR_MSG;
+    *osize = sizeof(gsf_msg_t)+rsp->size;
+
+    return 0;
+}
+
+int ws_recv(char *in, int isize, char *out, int *osize, int err)
 { 
   int ret = 0, i = 0;
   
@@ -25,17 +44,19 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
   memcpy(pin, in, isize);
   pin[isize] = '\0';
   
-  if(p = strstr(pin, "id:"))
-    sscanf(p, "id:%127[^, \r]", req);
-  if(p = strstr(pin, "args:"))
-    sscanf(p, "args:%127[^, \r]", args);
+  printf(">>> pin:[%s]\n", pin);
+  
+  if(p = strstr(pin, "\"id\":"))
+    sscanf(p, "\"id\":\"%127[^, \"\r]", req);
+  if(p = strstr(pin, "\"args\":"))
+    sscanf(p, "\"args\":\"%127[^, \"\r]", args);
   
   printf("parse => id:[%s], args:[%s]\n", req, args);
   
-  body = strstr(pin, "data:");
-  if(body)body+=strlen("data:");
+  body = strstr(pin, "\"data\":");
+  if(body)body+=strlen("\"data\":");
   
-  printf("parse => request:%s, data:\n%s\n"
+  printf("parse => request:[%s], data:[\n%s\n]"
         , req, body);
   
   ret = mod_call(req, args, body, out, *osize);
@@ -45,9 +66,9 @@ int rep_recv(char *in, int isize, char *out, int *osize, int err)
   return 0;
 }
 
-void *web_pub, *web_req, *web_sub;
+void *web_pub, *web_rep, *web_sub, *_rep;
 int upg_stat = 0;
-
+int upg_progress = 0;
 int sub_recv(char *msg, int size, int err)
 {
   char msgstr[64];
@@ -56,6 +77,7 @@ int sub_recv(char *msg, int size, int err)
   if(pmsg->id != GSF_EV_BSP_UPGRADE)
     return 0;
 
+  upg_progress = pmsg->err;
   sprintf(msgstr, "progress:%d", pmsg->err);
   nm_pub_send(web_pub, msgstr, strlen(msgstr));
 
@@ -67,19 +89,37 @@ int sub_recv(char *msg, int size, int err)
   return 0;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
-  // You can use chrome to open index.html to test;
+  if(argc < 2)
+  {
+    printf("pls input: %s webs_parm.json\n", argv[0]);
+    return -1;
+  }
+  strncpy(webs_parm_path, argv[1], sizeof(webs_parm_path)-1);
   
-  //nanomsg port;
+  if(json_parm_load(webs_parm_path, &webs_cfg) < 0)
+  {
+    json_parm_save(webs_parm_path, &webs_cfg);
+    json_parm_load(webs_parm_path, &webs_cfg);
+  }
+  info("cfg.port:%d, cfg.auth:%d\n", webs_cfg.port, webs_cfg.auth);
+
+  //nanomsg port; you can use chrome to open index.html to test;
   web_pub  = nm_pub_listen("ws://*:7789");
-  web_req  = nm_rep_listen("ws://*:7790"
+  web_rep  = nm_rep_listen("ws://*:7790"
                   , NM_REP_MAX_WORKERS
                   , NM_REP_OSIZE_MAX
-                  , rep_recv); 
+                  , ws_recv); 
   web_sub = nm_sub_conn("ipc:///tmp/bsp_pub"
                   , sub_recv);
 
+  //local listen;
+  GSF_LOG_CONN(0, 100);
+  _rep = nm_rep_listen(GSF_IPC_WEBS
+                  , 1
+                  , NM_REP_OSIZE_MAX
+                  , req_recv);
   while(1)
   {
     //register To;
@@ -97,7 +137,6 @@ int main(void)
     sleep(1);
   }
 
-
   // udpsend port;
   //rawudp_open("192.168.1.104", 5555);
 
@@ -105,13 +144,13 @@ int main(void)
   //ws_flv_open(7788);
   
   //mongoose http&ws port;
-  http_open(80);
+  http_open(webs_cfg.port);
 
   while(1)
   {
     sleep(1);
   }
   
-__err:
+  GSF_LOG_DISCONN();
   return 0;
 }

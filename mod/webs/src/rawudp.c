@@ -54,6 +54,8 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
     unsigned int len = cfifo_recsize(p1, n1, p2);
     unsigned int l = CFIFO_MIN(len, n1);
     
+    //printf("len:%d, l1:%d\n", len, l);
+    
     char *p = (char*)u;
     memcpy(p, p1, l);
     memcpy(p+l, p2, len-l);

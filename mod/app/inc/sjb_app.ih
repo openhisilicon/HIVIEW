@@ -9,10 +9,29 @@ STRUCT(gsf_chsrc_t)
   STRING(st2, 256);    // rtsp://user:pwd@192.168.1.60:554/st2
 };
 
+STRUCT(gsf_md_t)
+{
+  FIELD(bool, en); // enable
+  FIELD(int, level);
+  ARRAY(int, rect, 4);
+  // joint;
+};
+
+STRUCT(gsf_lpr_t)
+{
+  FIELD(bool, en); // enable
+  FIELD(int, level);
+  ARRAY(int, rect, 4);
+  // joint;
+};
+
+
 STRUCT(gsf_app_nvr_t)
 {
   FIELD(int, layout);
   ARRAY(gsf_chsrc_t, chsrc, GSF_CODEC_NVR_CHN);
+  ARRAY(gsf_md_t   , mdcfg, GSF_CODEC_NVR_CHN);
+  ARRAY(gsf_lpr_t  , lprcfg, GSF_CODEC_NVR_CHN);
 };
 
 #pragma pack(pop)

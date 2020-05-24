@@ -16,7 +16,8 @@
 #include "rtsp-client-st.h"
 
 enum {
-  RTSP_CLIENT_STAT_PLAY = 1,
+  RTSP_CLIENT_STAT_SETUP = 1,
+  RTSP_CLIENT_STAT_PLAY = 2,
 };
 
 
@@ -98,6 +99,7 @@ static int onsetup(void* param)
 	struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
 	assert(0 == rtsp_client_play(ctx->rtsp, &npt, NULL));
 	
+	ctx->stat = RTSP_CLIENT_STAT_SETUP;
 	printf("%s => media_count:%d\n", __func__, rtsp_client_media_count(ctx->rtsp));
 	
 	for (i = 0; i < rtsp_client_media_count(ctx->rtsp); i++)
@@ -218,8 +220,10 @@ void* handle_connect(void *arg)
 		}
 		#endif
 	}
-
-	assert(0 == rtsp_client_teardown(ctx->rtsp));
+  
+  if(ctx->stat >= RTSP_CLIENT_STAT_SETUP)
+	  assert(0 == rtsp_client_teardown(ctx->rtsp));
+	
 	rtsp_client_destroy(ctx->rtsp);
 	
 __exit:

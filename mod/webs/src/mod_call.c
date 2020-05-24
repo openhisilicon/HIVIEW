@@ -70,7 +70,7 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
   
   if(j < 0)
   {
-    sprintf(out, "code:%d\r\n", ret);
+    sprintf(out, "{\"code\":%d\r\n}", ret);
     printf("rsp => \n%s\n", out);
     return ret;
   }
@@ -98,13 +98,14 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
         , cb->uri, ret, __pmsg->size);
   
 
-  sprintf(out, "code:%d\r\n", ret);
+  sprintf(out, "{\"code\":%d,\r\n", ret);
+  strncat(out, "\"data\": ", osize-strlen(out)-1);
 
   if(cb->rspn)
     strncat(out, "[\r\n", osize-strlen(out)-1);
     
   if(ret == 0 && __pmsg->size > 0 && cb->rsp_serialize)
-  {
+  {    
     for(i = 0; i < __pmsg->size/cb->rsps; i++)
     {
       cJSON* json2 = cJSON_CreateObject();
@@ -118,9 +119,15 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
         strncat(out, ",\r\n", osize-strlen(out)-1);
     }
   }
+  else
+  {
+    strncat(out, "{}\r\n", osize-strlen(out)-1);
+  }
   
   if(cb->rspn)
     strncat(out, "]\r\n", osize-strlen(out)-1);
+    
+  strncat(out, "}", osize-strlen(out)-1);
   printf("rsp => \n%s\n", out);
   return ret;
 }

@@ -23,6 +23,7 @@ static void* live_task(void *parm);
 #define PT_VENC(t) \
             (t == GSF_ENC_H264)? PT_H264:\
             (t == GSF_ENC_H265)? PT_H265:\
+            (t == GSF_ENC_JPEG)? PT_JPEG:\
             (t == GSF_ENC_MJPEG)? PT_MJPEG:\
             PT_H264
 
@@ -92,6 +93,14 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 
 int live_mon()
 {
+  int i = 0;
+  memset(&gmng, 0, sizeof(gmng));
+  for(i = 0; i < GSF_CODEC_NVR_CHN; i++)
+  {
+    gmng.ly1.shmid[i].video_shmid = gmng.ly1.shmid[i].audio_shmid = -1;
+    gmng.ly2.shmid[i].video_shmid = gmng.ly2.shmid[i].audio_shmid = -1;
+  }
+  
   pthread_mutex_init(&gmng.mutex, NULL);
   return pthread_create(&gmng.tid, NULL, live_task, (void*)NULL);
 }
@@ -116,38 +125,48 @@ static void* live_task(void *parm)
   
   while(1)
   {
-    pthread_mutex_lock(&gmng.mutex);
     
-    if(gmng.ly1.layout != gmng.ly2.layout)
+    pthread_mutex_lock(&gmng.mutex);
+    //setp 1: close ly2;
+    for(i = 0; i < gmng.ly2.layout; i++)
+    {
+      if( gmng.ly2.shmid[i].video_shmid != gmng.ly1.shmid[i].video_shmid)
+      {
+        if(gmng.ly2.shmid[i].video_shmid >= 0 && gmng.cfifo[i])
+        {
+          printf("close >>>>> i:%d, ly2.video_shmid:%d\n"
+              , i, gmng.ly2.shmid[i].video_shmid);
+              
+          void* ch = cfifo_get_u(gmng.cfifo[i]);
+          gsf_mpp_vo_clear(VOLAYER_HD0, (int)ch);
+          
+          cfifo_ep_ctl(ep, CFIFO_EP_DEL, gmng.cfifo[i]);
+          cfifo_free(gmng.cfifo[i]);
+          gmng.cfifo[i] = NULL;
+          gmng.ly2.shmid[i].video_shmid = -1;
+        }
+      }
+    }
+    //setp 2: do ly1;
+    if(gmng.ly2.layout != gmng.ly1.layout)
     {
       gmng.ly2.layout = gmng.ly1.layout;
       gsf_mpp_vo_layout(VOLAYER_HD0, gmng.ly2.layout, NULL);
     }
-    
-    for(i = 0; i < GSF_CODEC_NVR_CHN; i++)
+    //setp 3: open ly1;
+    for(i = 0; i < gmng.ly2.layout; i++)
     {
-      if(gmng.ly1.shmid[i].video_shmid != gmng.ly2.shmid[i].video_shmid)
+      if(gmng.ly2.shmid[i].video_shmid != gmng.ly1.shmid[i].video_shmid)
       {
-
-        if(gmng.ly2.shmid[i].video_shmid >= 0 && gmng.cfifo[i])
-        {
-          printf("del i:%d, ly2.video_shmid:%d\n"
-              , i, gmng.ly2.shmid[i].video_shmid);
-              
-          cfifo_ep_ctl(ep, CFIFO_EP_DEL, gmng.cfifo[i]);
-          cfifo_free(gmng.cfifo[i]);
-          gmng.cfifo[i] = NULL;
-        }
-        
         gmng.ly2.shmid[i].video_shmid = gmng.ly1.shmid[i].video_shmid;
         
         if(gmng.ly2.shmid[i].video_shmid >= 0)
-        {   
+        {
           gmng.cfifo[i] = cfifo_shmat(cfifo_recsize
                                     , cfifo_rectag
                                     , gmng.ly2.shmid[i].video_shmid);
                                     
-          printf("add i:%d, ly2.video_shmid:%d, cfifo:%p\n"
+          printf("open >>>>> i:%d, ly2.video_shmid:%d, cfifo:%p\n"
               , i, gmng.ly2.shmid[i].video_shmid, gmng.cfifo[i]);
               
           if(gmng.cfifo[i] == NULL)

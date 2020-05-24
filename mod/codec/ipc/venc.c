@@ -208,10 +208,15 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
   
   for(i = 0; i < venc_ini.st_num; i++)
   {
+    #ifdef GSF_CPU_3516e
+    int size = (i == 0)? 1*1024*1024:
+               (i == 1)? 0.5*1024*1024:
+               (i == 2)? 0.3*1024*1024: 0;
+    #else
     int size = (i == 0)? 2*1024*1024:
                (i == 1)? 1*1024*1024:
                (i == 2)? 0.5*1024*1024: 0;
-    
+    #endif
     if(size > 0)
     {
       venc_mgr[i].video_fifo 

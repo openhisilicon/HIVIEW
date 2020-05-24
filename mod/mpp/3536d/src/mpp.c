@@ -608,13 +608,6 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   stStream.bEndOfStream = HI_FALSE;   
   s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
 
-  #if 0
-  /* send the flag of stream end */
-  memset(&stStream, 0, sizeof(VDEC_STREAM_S) );
-  stStream.bEndOfStream = HI_TRUE;
-  HI_MPI_VDEC_SendStream(ch, &stStream, -1);
-  #endif
-
   return err;
 }
 
@@ -622,21 +615,39 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 int gsf_mpp_vo_stat(int volayer, int ch, gsf_mpp_vo_stat_t *stat)
 {
   int err = 0;
-  // 
+  //HI_S32 HI_MPI_VO_QueryChnStat(VO_LAYER VoLayer, VO_CHN VoChn, VO_QUERY_STATUS_S *pstStatus);
   return err;
 }
 //设置解码显示FPS
 int gsf_mpp_vo_setfps(int volayer, int ch, int fps)
 {
   int err = 0;
-  // 
+  // HI_S32 HI_MPI_VO_SetChnFrameRate(VO_LAYER VoLayer, VO_CHN VoChn, HI_S32 s32ChnFrmRate);
   return err;
 }
 //清除解码显示BUFF
 int gsf_mpp_vo_clear(int volayer, int ch)
 {
   int err = 0;
-  // 
+  
+  #if 0
+  /* send the flag of stream end */
+  VDEC_STREAM_S stStream = {0};
+  stStream.bEndOfStream = HI_TRUE;
+  err = HI_MPI_VDEC_SendStream(ch, &stStream, -1);
+  printf("HI_MPI_VDEC_SendStream err:%d, ch:%d\n", err, ch);
+  #endif
+
+  // reset vdec;
+  err = HI_MPI_VDEC_StopRecvStream(ch); 
+  err = HI_MPI_VDEC_ResetChn(ch);
+  err = HI_MPI_VDEC_StartRecvStream(ch);
+  
+  // clear vo;
+  HI_BOOL bClearAll = HI_TRUE;
+  err = HI_MPI_VO_ClearChnBuffer(volayer, ch, bClearAll);
+  printf("HI_MPI_VO_ClearChnBuffer err:%d, ch:%d\n", err, ch);
+  
   return err;
 }
 

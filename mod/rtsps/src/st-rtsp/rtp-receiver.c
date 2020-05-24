@@ -61,7 +61,15 @@ static int rtp_read(struct rtp_context_t* ctx, st_netfd_t s)
       
       exit(0);
     }
-  	assert(0 == memcmp(&((struct sockaddr_in*)&ss)->sin_addr, &((struct sockaddr_in*)&ctx->ss)->sin_addr, 4));
+    
+  	if(0)//if(memcmp(&((struct sockaddr_in*)&ss)->sin_addr, &((struct sockaddr_in*)&ctx->ss)->sin_addr, 4))
+  	{
+  	   char ssip[64] = {0};
+  	   char ctxip[64] = {0};
+  	   inet_ntop(AF_INET, &((struct sockaddr_in*)&ss)->sin_addr, ssip, sizeof(ssip));
+  	   inet_ntop(AF_INET, &((struct sockaddr_in*)&ctx->ss)->sin_addr, ctxip, sizeof(ctxip));
+  	   printf("%s => ctxip:%s, ssip:%s\n", __func__, ctxip, ssip);
+  	}
   	rtp_payload_decode_input(ctx->payload, ctx->rtp_buffer, r);
   	rtp_onreceived(ctx->rtp, ctx->rtp_buffer, r);
     #endif

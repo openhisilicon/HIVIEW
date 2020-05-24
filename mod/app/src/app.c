@@ -8,6 +8,7 @@
 #include "cfg.h"
 #include "msg_func.h"
 #include "nvr_live.h"
+#include "kbd.h"
 
 GSF_LOG_GLOBAL_INIT("APP", 8*1024);
 
@@ -29,6 +30,46 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
+int vo_ly(int num)
+{
+  static int lt = 1;
+  static int voch[GSF_CODEC_NVR_CHN] = {0,1,2,3};
+  
+  GSF_MSG_DEF(gsf_layout_t, ly, 8*1024);
+  
+  if(num >= 1 && num <= 4)
+  {
+    lt = 1;
+    voch[0] = num -1;
+  }
+  else if(num >= 5)
+  {
+    lt = 4;
+    voch[0] = 0; voch[1] = 1; voch[2] = 2; voch[3] = 3;
+  }
+  else if (num <= 0)
+  {
+    ;//keep it;
+  }
+  printf("lt:%d, voch[%d,%d,%d,%d]\n", lt, voch[0], voch[1], voch[2], voch[3]);
+
+  ly->layout = lt;
+  live_get_shmid(ly->layout, voch, lt>1?1:0, ly->shmid);
+  int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VOLY, 0, SET, 0
+                        , sizeof(gsf_layout_t)
+                        , GSF_IPC_CODEC, 2000);
+
+  if(ly->layout == 1 
+    && voch[0] >= 0 && voch[0] <= GSF_CODEC_NVR_CHN)
+  {
+    kbd_set_url(app_nvr.chsrc[voch[0]].host);
+  } 
+                       
+  return ret;
+}
+
+
+
 static int sub_recv(char *msg, int size, int err)
 {
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
@@ -42,11 +83,15 @@ static int sub_recv(char *msg, int size, int err)
           
     if(reg->mid == GSF_MOD_ID_RTSPS)
     {
-      live_chsrc_clear();
+      live_clear_rtsp();
+    }
+    else if(reg->mid == GSF_MOD_ID_ONVIF)
+    {
+      live_clear_onvif();
     }
     else if(reg->mid == GSF_MOD_ID_CODEC)
     {
-      vo_ly();
+      vo_ly(0);
     }
   }
   
@@ -76,21 +121,6 @@ static int reg2bsp()
   return 0;
 }
 
-int vo_ly()
-{
-  int voch[GSF_CODEC_NVR_CHN] = {3, 2, 1, 0,};
-  GSF_MSG_DEF(gsf_layout_t, ly, 8*1024);
-  
-  ly->layout = 4;
-  live_get_shmid(ly->layout, voch, ly->shmid);
-  int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VOLY, 0, SET, 0
-                        , sizeof(gsf_layout_t)
-                        , GSF_IPC_CODEC, 2000);
-  return ret;
-}
-
-
-
 int main(int argc, char *argv[])
 {
     if(argc < 2)
@@ -111,6 +141,7 @@ int main(int argc, char *argv[])
     
     #ifdef GSF_DEV_NVR
     live_mon();
+    kbd_mon("/dev/ttyAMA2");
     #endif
      
     //init listen;
@@ -122,16 +153,13 @@ int main(int argc, char *argv[])
     reg2bsp();
     
     void* sub = nm_sub_conn(GSF_PUB_BSP, sub_recv);
-       
-       
-
-       
-                    
+         
     while(1)
-    {
-      sleep(1);
+    {                        
+      sleep(5);
     }
-      
+    
+    
     GSF_LOG_DISCONN();
 
   return 0;

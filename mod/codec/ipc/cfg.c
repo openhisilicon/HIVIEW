@@ -10,8 +10,13 @@ gsf_codec_ipc_t codec_ipc = {
     [0] = {
         .en     = 1,
         .type   = 0,
+        #ifdef GSF_CPU_3519a
         .width  = 3840,
         .height = 2160,
+        #else
+        .width  = 1920,
+        .height = 1080,
+        #endif
         .fps    = 60,
         .gop    = 60,
         .flow   = 0,
@@ -33,9 +38,14 @@ gsf_codec_ipc_t codec_ipc = {
     },
     [2] = {
         .en     = 1,
-        .type   = 4,
+        .type   = 3,
+        #ifdef GSF_CPU_3519a
         .width  = 3840,
         .height = 2160,
+        #else
+        .width  = 1920,
+        .height = 1080,
+        #endif
         .fps    = 30,
         .gop    = 30,
         .flow   = 0,

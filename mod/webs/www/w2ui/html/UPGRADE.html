@@ -36,43 +36,43 @@ function updateProgress(evt) {
 
 function uploadFile() {
   var file_data = new FormData(document.getElementById('filename'));
+  var timer;
   $.ajax({
-	url: 'http://' + window.location.hostname + '/upload',
-	type: "POST",
-	data: file_data,
-	processData: false,
-	contentType: false,
-	cache: false,
-	xhr: function() {
-	  myXhr = $.ajaxSettings.xhr();
-	  if(myXhr.upload){
-		myXhr.upload.addEventListener('progress',updateProgress, false); // for handling the progress of the upload
-	  }
-	  return myXhr;
-	},
-  }).done(function(data) {
-	  
-	  document.getElementById("upprog").textContent = "Result: " + data;
-    window.setInterval(function(){$.ajax(getting)},3000);   //每三秒调用一次ajax
-	  
-  });
+  	url: 'http://' + window.location.hostname + '/upload',
+  	type: "POST",
+  	data: file_data,
+  	processData: false,
+  	contentType: false,
+  	cache: false,
+  	xhr: function() {
+  	  myXhr = $.ajaxSettings.xhr();
+  	  if(myXhr.upload){
+  		  myXhr.upload.addEventListener('progress',updateProgress, false); // for handling the progress of the upload
+  	  }
+  	  return myXhr;
+  	},
+    }).done(function(data) {
+      document.getElementById("upprog").textContent = "Result: " + data;
+      timer = window.setInterval(function(){$.ajax(getting)},3000);   //每三秒调用一次ajax
+    });
   return false;
 }
 
  var getting = {
-     url : "${pageContext.request.contextPath}/Test1", //后台查询验证的方法
-     dataTpye : "json",
-     data : {
-         
-     }, 
      type : "post",
-     success : function(msg) {
-     	
-     	$("#wrprog").text(msg);
-     	
+     url :  "/stat?id=GSF_ID_BSP_UPG&args=G0C0S0",
+     contentType: 'application/json', // req body type;
+     data : {},
+     dataTpye : "json", // rsp body type
+     success : function(data) {
+     	  $("#wrprog").text(JSON.stringify(data));
+     	  if(data.progress < 0 || data.progress >= 100)
+     	  {
+     	    window.clearInterval(timer);
+     	  }
      },
-     error:function(){  //请求失败的回调方法
-     	alert("ajax request faild!");
+     error:function(){
+     	window.clearInterval(timer);
      }
  };
 

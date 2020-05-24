@@ -332,12 +332,13 @@ static void *handle_ctl(void *arg)
           if (ctx)
           {
             ctx->refcnt++;
+            
+            printf("%s => id: GSF_ID_RTSPS_C_OPEN refcnt:%d [%s]\n", __func__, ctx->refcnt, name);
+            
             gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
             shmid->video_shmid = ctx->video_shmid;
             shmid->audio_shmid = ctx->audio_shmid;;
             ctl->size = sizeof(gsf_shmid_t);
-            
-            printf("%s => id: GSF_ID_RTSPS_C_OPEN refcnt:%d [%s]\n", __func__, ctx->refcnt, name);
             break;
           }
           
@@ -383,7 +384,7 @@ static void *handle_ctl(void *arg)
           {
             HASH_DEL(conn_ctxs, ctx);
             
-            printf("%s => id: GSF_ID_RTSPS_C_CLOSE 0000 [%s]\n", __func__, name);
+            printf("%s => id: GSF_ID_RTSPS_C_CLOSE free [%s]\n", __func__, name);
             if(ctx->c)
             {
               rtsp_client_close(ctx->c);
@@ -398,7 +399,7 @@ static void *handle_ctl(void *arg)
             }
             free(ctx);
           }
-          else
+          else if(ctx)
           {
             printf("%s => id: GSF_ID_RTSPS_C_CLOSE refcnt:%d, [%s]\n", __func__, ctx->refcnt, name);
           }
