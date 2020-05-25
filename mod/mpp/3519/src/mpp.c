@@ -405,6 +405,11 @@ int gsf_mpp_venc_dest()
   return 0;
 }
 
+int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+{
+  return -1;
+}
+
 int gsf_mpp_scene_start(char *path, int scenemode)
 {
   int ret = -1;

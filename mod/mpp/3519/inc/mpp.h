@@ -63,6 +63,7 @@ typedef struct {
 
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv);
 int gsf_mpp_venc_dest();
+int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
 
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
@@ -111,6 +112,8 @@ int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap);
 
 //private for mpp;
 extern int SENSOR_TYPE;
-extern ISP_SNS_OBJ_S *g_pstSnsObj[2];
+extern int SENSOR0_TYPE;
+extern int SENSOR1_TYPE;
+extern ISP_SNS_OBJ_S *g_pstSnsObj[MAX_SENSOR_NUM];
 
 #endif

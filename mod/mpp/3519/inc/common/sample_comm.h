@@ -44,7 +44,6 @@
 
 ///maohw 
 #include "hi_sns_ctrl.h"
-#include "mpp.h"
 
 #define ALIGN_UP(x, a)           ( ( ((x) + ((a) - 1) ) / a ) * a )
 #define ALIGN_DOWN(x, a)         ( ( (x) / (a)) * (a) )
@@ -501,6 +500,14 @@ HI_S32 SAMPLE_COMM_AUDIO_StopAdec(ADEC_CHN AdChn);
 HI_VOID SAMPLE_COMM_SYS_Exit(void);
 HI_S32 SAMPLE_SYS_SetReg(HI_U32 u32Addr, HI_U32 u32Value);
 HI_S32 SAMPLE_SYS_GetReg(HI_U32 u32Addr, HI_U32 *pu32Value);
+
+
+//maohw
+#define MAX_SENSOR_NUM      2
+#define ISP_MAX_DEV_NUM     2
+#include "mpp.h"
+////////////
+
 
 #ifdef __cplusplus
 #if __cplusplus

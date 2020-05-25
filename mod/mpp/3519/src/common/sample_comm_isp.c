@@ -28,7 +28,10 @@ extern "C" {
 #include <signal.h>
 #include "sample_comm.h"
 
+#if 0 //maohw
 #define MAX_SENSOR_NUM    2
+#endif
+
 /*******************For ISP**************************************/
 static pthread_t g_IspPid[ISP_MAX_DEV_NUM] = {0};
 static HI_BOOL g_bIspInit[ISP_MAX_DEV_NUM] = {HI_FALSE};
