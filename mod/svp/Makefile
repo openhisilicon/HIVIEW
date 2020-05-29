@@ -8,14 +8,16 @@ TARG := bin/svp.exe
 
 #============================================================= 
 
-INCS := -I$(HOME) -Isrc -Iinc -Isrc/common -Isrc/ive/sample -Isrc/nnie/sample -Isrc/nnie/sample_nnie_software \
+INCS := -I$(HOME) -I$(GSF_CPU_ARCH) -Iinc -I$(GSF_CPU_ARCH)/common -I$(GSF_CPU_ARCH)/ive/sample \
+        -I$(GSF_CPU_ARCH)/nnie/sample -I$(GSF_CPU_ARCH)/nnie/sample_nnie_software \
+        -I$(GSF_CPU_ARCH)/dsp/encapsulation/include -I$(GSF_CPU_ARCH)/dsp/sample \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/hisisdk \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/common \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc \
         -I$(HOME)/fw/comm/inc
         
 #SRCS := $(shell ls src/*.c)
-SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
+SRCS := $(shell find $(GSF_CPU_ARCH) -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lmpp -lrt -lnm -lcjson -lm -lpthread
@@ -29,6 +31,12 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_
 else ifeq ($(GSF_CPU_ARCH), 3516d)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie
+else ifeq ($(GSF_CPU_ARCH), 3519a)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -lhive_RES -laacenc -laacdec -ldsp
+else ifeq ($(GSF_CPU_ARCH), 3559a)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -lhive_RES -laacenc -laacdec -ldsp
 endif
 
 
@@ -40,8 +48,8 @@ $(TARG): SJB $(OBJS)
 	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
 
 SJB:
-	touch src/sjb_svp.c;touch src/cfg.c
+	touch $(GSF_CPU_ARCH)/sjb_svp.c;touch $(GSF_CPU_ARCH)/cfg.c
   
 .Phony: clean
 clean:
-	-rm $(TARG) $(OBJS) src/*.bak -rf
+	-rm $(TARG) $(OBJS) $(GSF_CPU_ARCH)/*.bak -rf

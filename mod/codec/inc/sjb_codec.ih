@@ -29,6 +29,7 @@ STRUCT(gsf_osd_t)
   FIELD(int, type);
   FIELD(int, fontsize);
   ARRAY(int, point, 2);
+  ARRAY(int, wh, 2);
   STRING(text, 4096);
 };
 

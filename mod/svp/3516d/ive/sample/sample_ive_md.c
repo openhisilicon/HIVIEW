@@ -12,6 +12,9 @@
 #include <pthread.h>
 #include <sys/prctl.h>
 
+#include "svp.h"
+extern void* svp_pub;
+
 #include "sample_comm_ive.h"
 #include "ivs_md.h"
 
@@ -103,7 +106,7 @@ static HI_VOID * SAMPLE_IVE_MdProc(HI_VOID * pArgs)
     HI_S32 s32Ret;
     SAMPLE_IVE_MD_S *pstMd;
     MD_ATTR_S *pstMdAttr;
-    VIDEO_FRAME_INFO_S stBaseFrmInfo;
+    //VIDEO_FRAME_INFO_S stBaseFrmInfo;
     VIDEO_FRAME_INFO_S stExtFrmInfo;
     HI_S32 s32VpssGrp = 0;
     HI_S32 as32VpssChn[] = {VPSS_CHN0, VPSS_CHN1};
@@ -116,16 +119,22 @@ static HI_VOID * SAMPLE_IVE_MdProc(HI_VOID * pArgs)
     HI_BOOL bFirstFrm = HI_TRUE;
     pstMd = (SAMPLE_IVE_MD_S *)(pArgs);
     pstMdAttr = &(pstMd->stMdAttr);
-    //Create chn
-    s32Ret = HI_IVS_MD_CreateChn(MdChn,&(pstMd->stMdAttr));
-    if (HI_SUCCESS != s32Ret)
+    
+    SIZE_S stSize;
+    PIC_SIZE_E enSize = PIC_CIF;
+
+    s32Ret = SAMPLE_COMM_SYS_GetPicSize(enSize, &stSize);
+    if(HI_SUCCESS != s32Ret)
     {
-        SAMPLE_PRT("HI_IVS_MD_CreateChn fail,Error(%#x)\n",s32Ret);
-        return NULL;
+      SAMPLE_PRT("Error(%#x),SAMPLE_COMM_SYS_GetPicSize failed, enSize:%d, w:%d, h:%d\n",
+            s32Ret, enSize, stSize.u32Width, stSize.u32Height);
+      return NULL;
     }
 
     while (HI_FALSE == s_bStopSignal)
     {
+        usleep(100*1000);
+        
         s32Ret = HI_MPI_VPSS_GetChnFrame(s32VpssGrp, as32VpssChn[1], &stExtFrmInfo, s32MilliSec);
         if(HI_SUCCESS != s32Ret)
         {
@@ -134,21 +143,48 @@ static HI_VOID * SAMPLE_IVE_MdProc(HI_VOID * pArgs)
             continue;
         }
 
-        s32Ret = HI_MPI_VPSS_GetChnFrame(s32VpssGrp, as32VpssChn[0], &stBaseFrmInfo, s32MilliSec);
-        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS!=s32Ret, EXT_RELEASE,
-            "Error(%#x),HI_MPI_VPSS_GetChnFrame failed, VPSS_GRP(%d), VPSS_CHN(%d)!\n",
-            s32Ret,s32VpssGrp, as32VpssChn[0]);
+        if(stExtFrmInfo.stVFrame.u32Width != stSize.u32Width 
+          || stExtFrmInfo.stVFrame.u32Height != stSize.u32Height)
+        {
+
+            SAMPLE_IVE_Md_Uninit(&(s_stMd));
+            memset(&s_stMd,0,sizeof(s_stMd));
+            
+            stSize.u32Width = stExtFrmInfo.stVFrame.u32Width;
+            stSize.u32Height = stExtFrmInfo.stVFrame.u32Height;
+            
+            bFirstFrm = HI_TRUE;
+            
+            /******************************************
+             step 2: Init Md
+             ******************************************/
+            s32Ret = SAMPLE_IVE_Md_Init(&s_stMd,stSize.u32Width,stSize.u32Height);
+            if (HI_SUCCESS != s32Ret)
+            {
+                SAMPLE_PRT("Error(%#x),SAMPLE_IVE_Md_Init failed!\n", s32Ret);
+                return NULL;
+            }
+                
+            //Create chn
+            s32Ret = HI_IVS_MD_CreateChn(MdChn,&(pstMd->stMdAttr));
+            if (HI_SUCCESS != s32Ret)
+            {
+                SAMPLE_PRT("HI_IVS_MD_CreateChn fail,Error(%#x)\n",s32Ret);
+                return NULL;
+            }
+        }
+
 
         if (HI_TRUE != bFirstFrm)
         {
             s32Ret = SAMPLE_COMM_IVE_DmaImage(&stExtFrmInfo,&pstMd->astImg[s32CurIdx],bInstant);
-            SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, BASE_RELEASE,
+            SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, EXT_RELEASE,
                             "SAMPLE_COMM_IVE_DmaImage fail,Error(%#x)\n",s32Ret);
         }
         else
         {
             s32Ret = SAMPLE_COMM_IVE_DmaImage(&stExtFrmInfo,&pstMd->astImg[1 - s32CurIdx],bInstant);
-            SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, BASE_RELEASE,
+            SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, EXT_RELEASE,
                             "SAMPLE_COMM_IVE_DmaImage fail,Error(%#x)\n",s32Ret);
 
             bFirstFrm = HI_FALSE;
@@ -156,31 +192,71 @@ static HI_VOID * SAMPLE_IVE_MdProc(HI_VOID * pArgs)
         }
 
         s32Ret = HI_IVS_MD_Process(MdChn,&pstMd->astImg[s32CurIdx],&pstMd->astImg[1 - s32CurIdx],NULL,&pstMd->stBlob);
-        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, BASE_RELEASE,
+        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, EXT_RELEASE,
                         "HI_IVS_MD_Process fail,Error(%#x)\n",s32Ret);
-        SAMPLE_COMM_IVE_BlobToRect(SAMPLE_COMM_IVE_CONVERT_64BIT_ADDR(IVE_CCBLOB_S,pstMd->stBlob.u64VirAddr),&(pstMd->stRegion),IVE_RECT_NUM,8,
-            pstMdAttr->u32Width,pstMdAttr->u32Height,stBaseFrmInfo.stVFrame.u32Width,stBaseFrmInfo.stVFrame.u32Height);
+                        
+        SAMPLE_COMM_IVE_BlobToRect(SAMPLE_COMM_IVE_CONVERT_64BIT_ADDR(IVE_CCBLOB_S,pstMd->stBlob.u64VirAddr)
+                                , &(pstMd->stRegion)
+                                , IVE_RECT_NUM
+                                , 8
+                                , pstMdAttr->u32Width
+                                , pstMdAttr->u32Height
+                                , pstMdAttr->u32Width
+                                , pstMdAttr->u32Height);
+        
+        int i = 0, j = 0;
+        SAMPLE_RECT_ARRAY_S* pstRect = &pstMd->stRegion;
+                   
+        gsf_svp_mds_t mds;
 
-         //Draw rect
-        s32Ret = SAMPLE_COMM_VGS_FillRect(&stBaseFrmInfo, &pstMd->stRegion, 0x0000FF00);
-        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, BASE_RELEASE,
-        				"SAMPLE_COMM_VGS_FillRect fail,Error(%#x)\n",s32Ret);
+        mds.cnt = 0;
+        mds.pts = stExtFrmInfo.stVFrame.u64PTS/1000;
+        mds.w = pstMdAttr->u32Width;
+        mds.h = pstMdAttr->u32Height;
 
-        s32Ret = HI_MPI_VO_SendFrame(voLayer,voChn,&stBaseFrmInfo,s32MilliSec);
-        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, BASE_RELEASE,
-        				"HI_MPI_VO_SendFrame fail,Error(%#x)\n",s32Ret);
+        for (i = 0; i < pstRect->u16Num; i++)
+        {
+            if(pstRect->astRect[i].astPoint[1].s32X - pstRect->astRect[i].astPoint[0].s32X < 80
+              || pstRect->astRect[i].astPoint[3].s32Y - pstRect->astRect[i].astPoint[0].s32Y < 80)
+              continue;
+              
+            mds.result[j].thr = 0;
+            mds.result[j].rect[0] = pstRect->astRect[i].astPoint[0].s32X;
+            mds.result[j].rect[1] = pstRect->astRect[i].astPoint[0].s32Y;
+            mds.result[j].rect[2] = pstRect->astRect[i].astPoint[1].s32X - pstRect->astRect[i].astPoint[0].s32X;
+            mds.result[j].rect[3] = pstRect->astRect[i].astPoint[3].s32Y - pstRect->astRect[i].astPoint[0].s32Y;
+            printf(" MD => j:%d, w:%d, h:%d rect: [x:%d, y:%d, w:%d, h:%d]\n"
+                  , j, pstMdAttr->u32Width, pstMdAttr->u32Height
+                  , mds.result[j].rect[0]
+                  , mds.result[j].rect[1]
+                  , mds.result[j].rect[2]
+                  , mds.result[j].rect[3]
+                  );
+            j++;
+        }
+        
+        mds.cnt = j;
+        if(mds.cnt > 0)
+        {
+          printf("publish GSF_EV_SVP_MD cnt:%d \n\n", mds.cnt);
+
+          char buf[sizeof(gsf_msg_t) + sizeof(gsf_svp_mds_t)];
+          gsf_msg_t *msg = (gsf_msg_t*)buf;
+          
+          memset(msg, 0, sizeof(*msg));
+          msg->id = GSF_EV_SVP_MD;
+          msg->ts = time(NULL)*1000;
+          msg->sid = 0;
+          msg->err = 0;
+          msg->size = sizeof(gsf_svp_mds_t);
+          memcpy(msg->data, &mds, msg->size);
+          nm_pub_send(svp_pub, (char*)msg, sizeof(*msg)+msg->size); 
+        }
+
 
         CHANGE_IDX:
             //Change reference and current frame index
             s32CurIdx =    1 - s32CurIdx;
-
-        BASE_RELEASE:
-            s32Ret = HI_MPI_VPSS_ReleaseChnFrame(s32VpssGrp,as32VpssChn[0], &stBaseFrmInfo);
-            if (HI_SUCCESS != s32Ret)
-            {
-                SAMPLE_PRT("Error(%#x),HI_MPI_VPSS_ReleaseChnFrame failed,Grp(%d) chn(%d)!\n",
-                    s32Ret,s32VpssGrp,as32VpssChn[0]);
-            }
 
         EXT_RELEASE:
             s32Ret = HI_MPI_VPSS_ReleaseChnFrame(s32VpssGrp,as32VpssChn[1], &stExtFrmInfo);
@@ -189,7 +265,7 @@ static HI_VOID * SAMPLE_IVE_MdProc(HI_VOID * pArgs)
                 SAMPLE_PRT("Error(%#x),HI_MPI_VPSS_ReleaseChnFrame failed,Grp(%d) chn(%d)!\n",
                     s32Ret,s32VpssGrp,as32VpssChn[1]);
             }
-     }
+    }
 
      //destroy
      s32Ret = HI_IVS_MD_DestroyChn(MdChn);
@@ -217,12 +293,6 @@ HI_VOID SAMPLE_IVE_Md(HI_VOID)
     s32Ret = SAMPLE_COMM_IVE_StartViVpssVencVo(&s_stViConfig,&s_stMdSwitch,&enSize);
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, END_MD_0,
         "Error(%#x),SAMPLE_COMM_IVE_StartViVpssVencVo failed!\n", s32Ret);
-    #else
-    s32Ret = SAMPLE_COMM_IVE_StartVo();
-    SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, END_MD_0,
-        "Error(%#x),SAMPLE_COMM_IVE_StartVo failed!\n", s32Ret);
-    #endif  
-    
     
     enSize = PIC_D1_PAL;
     s32Ret = SAMPLE_COMM_SYS_GetPicSize(enSize, &stSize);
@@ -236,6 +306,9 @@ HI_VOID SAMPLE_IVE_Md(HI_VOID)
     s32Ret = SAMPLE_IVE_Md_Init(&s_stMd,stSize.u32Width,stSize.u32Height);
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, END_MD_0,
         " Error(%#x),SAMPLE_IVE_Md_Init failed!\n", s32Ret);
+        
+    #endif
+        
     s_bStopSignal = HI_FALSE;
     /******************************************
       step 3: Create work thread
@@ -244,6 +317,7 @@ HI_VOID SAMPLE_IVE_Md(HI_VOID)
     prctl(PR_SET_NAME, (unsigned long)acThreadName, 0,0,0);
     pthread_create(&s_hMdThread, 0, SAMPLE_IVE_MdProc, (HI_VOID *)&s_stMd);
 
+#if 0 //maohw
     SAMPLE_PAUSE();
     s_bStopSignal = HI_TRUE;
     pthread_join(s_hMdThread, HI_NULL);
@@ -254,10 +328,8 @@ HI_VOID SAMPLE_IVE_Md(HI_VOID)
 
 END_MD_0:
   
-  #if 0 //maohw
+
     SAMPLE_COMM_IVE_StopViVpssVencVo(&s_stViConfig,&s_stMdSwitch);
-  #else
-    SAMPLE_COMM_IVE_StopVo();
   #endif
   
   return ;
@@ -277,7 +349,9 @@ HI_VOID SAMPLE_IVE_Md_HandleSig(HI_VOID)
     SAMPLE_IVE_Md_Uninit(&(s_stMd));
     memset(&s_stMd,0,sizeof(s_stMd));
 
+#if 0 // maohw
     SAMPLE_COMM_IVE_StopViVpssVencVo(&s_stViConfig,&s_stMdSwitch);
+#endif
 }
 
 

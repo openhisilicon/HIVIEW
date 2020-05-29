@@ -259,6 +259,22 @@ static int gsf_bitmap_make_edge(BITMAP_S* bitMap)
 }
 
 
+static unsigned short argb8888_1555(unsigned int color)
+{
+  unsigned char a = (color >> 24) & 0xff;
+	unsigned char r = (color >> 16) & 0xff;
+	unsigned char g = (color >> 8) & 0xff;
+	unsigned char b = color & 0xff;
+
+  a = a?1:0;
+	r >>= 3;
+	g >>= 3;
+	b >>= 3;
+
+  return (unsigned short)(a << 15 | r<<(10) | g<<5 | b);
+}
+
+
 
 int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
 {
@@ -271,7 +287,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00ff00ff;
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
@@ -285,7 +301,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = ALIGN_UP(osd->point[0], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32Y = ALIGN_UP(osd->point[1], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer   = idx;
-    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = (osd->wh[0] && osd->wh[1])?80:0;//0;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
     
     if(rgn_obj[handle].osd_info == NULL)
@@ -302,12 +318,20 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
     
-    info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
-    info->osdH = info->fontH * info->lineN + 1;
+    
+    if(osd->wh[0] && osd->wh[1])
+    {
+       info->osdW = ALIGN_UP(osd->wh[0], 2);
+       info->osdH = ALIGN_UP(osd->wh[1], 2);
+    }
+    else
+    {
+      info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
+      info->osdH = info->fontH * info->lineN + 1;
+    }
     
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(info->osdW, 2);
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(info->osdH, 2);
-    
     
     //check;
     if(rgn_obj[handle].stat >= GSF_RGN_OBJ_ATTACH)
@@ -347,12 +371,15 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     }
     
     // bitmap;
+    if(1)
     {
         BITMAP_S  bitMap;
+        
       	memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+      	
       	int l = 0;
       	for (l = 0; l < info->lineN; l++)
-      	{		
+      	{
       	    gsf_font_utf8_draw_line(info->fontW,
       	          info->osdW,
                   info->fontS,
@@ -360,13 +387,15 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
           		    info->lines[l], "",
           		    0xffff, 0x0000, 0xffff, 0x0000);
       	}
-
+        
         bitMap.u32Width	    = info->osdW;
       	bitMap.u32Height	  = info->osdH;
       	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
       	bitMap.pData        = rgn_obj[handle].osd_bmp;
          
-      	gsf_bitmap_make_edge(&bitMap);
+      	if(osd->wh[0] == 0 && osd->wh[1] == 0)
+      	  gsf_bitmap_make_edge(&bitMap);
+        
         gsf_mpp_rgn_bitmap(handle, &bitMap);
     }
     

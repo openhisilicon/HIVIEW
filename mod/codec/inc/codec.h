@@ -31,6 +31,12 @@ enum {
     GSF_CODEC_ERR = -1,
 };
 
+
+enum {
+  GSF_OSD_TYPE_TXT  = 0,
+  GSF_OSD_TYPE_BIN  = 1,
+};
+
 typedef struct {
   int resolu;
 }gsf_resolu_t;

@@ -1,0 +1,9 @@
+#pragma pack(push, 4)
+
+STRUCT(gsf_svp_t)
+{
+  FIELD(int, md_alg);
+  FIELD(int, lpr_alg);
+};
+
+#pragma pack(pop)

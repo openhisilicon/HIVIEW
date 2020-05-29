@@ -4,7 +4,7 @@
 
 #include "inc/gsf.h"
 #include "mod/bsp/inc/bsp.h"
-
+#include "mod/svp/inc/svp.h"
 #include "codec.h"
 #include "cfg.h"
 #include "msg_func.h"
@@ -46,8 +46,65 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
+
+/////////////////////////////////////
+
+static int osd_keepalive[GSF_CODEC_OSD_NUM] = {3,3,3,3,3,3,3,3};
+
+static int sub_recv(char *msg, int size, int err)
+{
+  gsf_msg_t *pmsg = (gsf_msg_t*)msg;
+  
+  printf("pmsg->id:%d\n", pmsg->id);
+  
+  if(pmsg->id == GSF_EV_SVP_MD)
+  {
+    gsf_svp_mds_t *mds = (gsf_svp_mds_t*) pmsg->data;
+    
+    int i = 0;
+    for(i = 0; i < 4 && i < mds->cnt; i++)
+    {
+      
+      osd_keepalive[i] = 3;
+      
+      gsf_osd_t osd;
+
+      osd.en = 1;
+      osd.type = 0;
+      osd.fontsize = 0;
+      osd.point[0] = (unsigned int)((float)mds->result[i].rect[0]/(float)mds->w*1920)&(-1);
+      osd.point[1] = (unsigned int)((float)mds->result[i].rect[1]/(float)mds->h*1080)&(-1);
+      osd.wh[0]    = (unsigned int)((float)mds->result[i].rect[2]/(float)mds->w*1920)&(-1);
+      osd.wh[1]    = (unsigned int)((float)mds->result[i].rect[3]/(float)mds->h*1080)&(-1);
+      
+      sprintf(osd.text, "ID: %d", i);
+      
+      printf("GSF_EV_SVP_MD idx: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
+            , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1]);
+            
+      gsf_rgn_osd_set(0, i, &osd);
+    }
+  }
+  
+  return 0;
+}
+
 static int rgn_timer_func(void *u)
 {
+  int i = 0;
+  for(i = 0; i < GSF_CODEC_OSD_NUM; i++)
+  {
+    if(--osd_keepalive[i] > 0)
+      continue;
+    
+    gsf_osd_t osd;
+    memset(&osd, 0, sizeof(gsf_osd_t));          
+    gsf_rgn_osd_set(0, i, &osd);
+  }
+  return 0;
+  
+  /////////////////////////////////////
+  
   static gsf_osd_t osd;
   if(!osd.en)
   {
@@ -90,6 +147,7 @@ static int rgn_timer_func(void *u)
   return 0;
 }
 
+/////////////////////////////////////
 
 static int reg2bsp()
 {
@@ -281,9 +339,15 @@ int main(int argc, char *argv[])
 
     venc_start(1);
     
-    // rgn test;
-    //void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
-
+    
+    //test osd;
+    /////////////////////////////////////
+    void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
+    void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
+    printf("nm_sub_conn sub:%p\n", sub);
+    /////////////////////////////////////
+    
+    
     while(1)
     {
       sleep(1);

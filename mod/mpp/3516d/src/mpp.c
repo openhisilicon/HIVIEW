@@ -75,6 +75,23 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
     return g_pstSnsObj[u32SnsId];
 }
 
+#include <signal.h>
+void SAMPLE_VENC_HandleSig2(HI_S32 signo)
+{
+    signal(SIGINT, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
+
+    if (SIGINT == signo || SIGTERM == signo)
+    {
+        SAMPLE_COMM_VENC_StopGetStream();
+        SAMPLE_COMM_All_ISP_Stop();
+        SAMPLE_COMM_SYS_Exit();
+    }
+    exit(-1);
+}
+
+
+
 static void * dl = NULL;
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
@@ -122,6 +139,9 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   }
   printf("%s => snsstr:%s, sensor_type:%d, load:%s\n"
         , __func__, snsstr, SENSOR_TYPE, sns->lib?:"");
+  
+  signal(SIGINT, SAMPLE_VENC_HandleSig2);
+  signal(SIGTERM, SAMPLE_VENC_HandleSig2);
   
   return 0;
 __err:
