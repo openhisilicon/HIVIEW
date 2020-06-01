@@ -3,6 +3,7 @@
 ## Business cooperation, contact Email: thomas@hiview-tech.cn  
 ## We provide hisilicon chip solutions with hardware customization and software services to support customers' rapid product development.
 ##   
+![fw](/fw.png)
 ![webs](/webs.jpg)
 ![rtsps1](/rtspserv1.jpg)
 ![rtsps2](/rtspserv2.jpg)
