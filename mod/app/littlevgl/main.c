@@ -7,7 +7,26 @@
 #include <time.h>
 #include <sys/time.h>
 
-int main(void)
+static pthread_t tid;
+static int lv_running = 0, lv_w = 1280, lv_h = 1024;
+static void* lvgl_main(void* p);
+
+int lvgl_stop(void)
+{
+  lv_running = 0;
+  return pthread_join(tid, NULL);
+}
+
+int lvgl_start(int w, int h)
+{
+  lv_w = w;
+  lv_h = h;
+  lv_running = 1;
+  return pthread_create(&tid, NULL, lvgl_main, NULL);
+}
+
+
+static void* lvgl_main(void* p)
 {
     /*LittlevGL init*/
     lv_init();
@@ -20,9 +39,9 @@ int main(void)
     lv_disp_drv_init(&disp_drv);
     
     /*Set the resolution of the display*/
-    disp_drv.hor_res = 1280;
-    disp_drv.ver_res = 1024;
-    #define DISP_BUF_SIZE (80*1280)
+    disp_drv.hor_res = lv_w; //1280
+    disp_drv.ver_res = lv_h; //1024
+    #define DISP_BUF_SIZE (80*LV_HOR_RES_MAX/*1280*/)
     
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -52,12 +71,12 @@ int main(void)
     demo_create();
 
     /*Handle LitlevGL tasks (tickless mode)*/
-    while(1) {
+    while(lv_running) {
         lv_task_handler();
         usleep(5000);
     }
-
-    return 0;
+    
+    return NULL;
 }
 
 

@@ -142,7 +142,14 @@ int main(int argc, char *argv[])
     #ifdef GSF_DEV_NVR
     live_mon();
     kbd_mon("/dev/ttyAMA2");
+    
+    extern int lvgl_stop(void);
+    extern int lvgl_start(int w, int h);
+    
+    lvgl_start(1280, 1024);
     #endif
+     
+     
      
     //init listen;
     GSF_LOG_CONN(0, 100);

@@ -1,11 +1,15 @@
 #
 # Makefile
 #
-CC ?= arm-hisiv510-linux-gcc
+
+#CC ?= arm-hisiv510-linux-gcc
+CC := $(shell echo ${GSF_CC})
+AR := $(shell echo ${GSF_AR})
+
 LVGL_DIR ?= ${shell pwd}
 CFLAGS ?= -Wall -Wshadow -Wundef -Wmaybe-uninitialized -O3 -g0 -I$(LVGL_DIR)/
 LDFLAGS ?= -lpthread
-BIN = demo
+BIN = liblittlevgl.a
 
 
 #Collect the files to compile
@@ -33,9 +37,9 @@ all: default
 	@$(CC)  $(CFLAGS) -c $< -o $@
 	@echo "CC $<"
     
+#$(CC) -o $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) $(LDFLAGS)
 default: $(AOBJS) $(COBJS) $(MAINOBJ)
-	$(CC) -o $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) $(LDFLAGS)
-
+	$(AR) -rcs $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) 
 clean: 
 	rm -f $(BIN) $(AOBJS) $(COBJS) $(MAINOBJ)
 
