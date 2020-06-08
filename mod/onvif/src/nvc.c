@@ -130,10 +130,8 @@ static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, cons
     unsigned char macaddr[MACH_ADDR_LENGTH] = {0};
     char _HwId[LARGE_INFO_LENGTH] = {0};
 
-    //printf("[%s]--->>> in\n", __func__);
-
     soap = soap_new();
-    //printf("==============>>>> soap: %p\n", soap);
+    //printf(" => soap: %p\n", soap);
     if(soap==NULL)
     {
       printf("[%s][%s][Line: %d]Error: soap = NULL\n", __FILE__, __func__, __LINE__);
@@ -147,13 +145,13 @@ static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, cons
 		}
 		else
 		{
-		    #if 0
-            int k = 0;
-		    for (k = 0; k <45; k++)
-            {
-                printf("=========>>> Namespace->id: \t%s; \tnamespace->ns: %s\n", namespaces[k].id, namespaces[k].ns);
-            }      
-            #endif
+      #if 0
+      int k = 0;
+      for (k = 0; k <45; k++)
+      {
+        printf(" => Namespace->id: \t%s; \tnamespace->ns: %s\n", namespaces[k].id, namespaces[k].ns);
+      }      
+      #endif
 			soap_set_namespaces(soap, namespaces);
 		}
 		#endif
@@ -224,19 +222,18 @@ static SOAP creat_soap(struct SOAP_ENV__Header *header, const char *was_To, cons
 
 		//printf("was_Action: %s\n", soap->header->wsa__Action);
 		//printf("was_To: %s\n", soap->header->wsa__To);
-		//printf("[%s]--->>> out\n", __func__);
+
 		return soap;
 } 
 
 static void destroy_soap(struct soap *soap)
 {
-    //printf("[%s]-------->>>> in\n", __func__); 
     soap_destroy(soap); 
     soap_end(soap); 
     soap_done(soap);
     if(soap)
     {
-      	//printf("[%s]---------->>> soap: %p\n", __func__, soap);
+      	//printf("[%s] => soap: %p\n", __func__, soap);
 		#if 0 /* NOTE */
 		soap_free(struct soap *soap)
 		{
@@ -246,9 +243,8 @@ static void destroy_soap(struct soap *soap)
 		#endif
         free(soap);
         soap = NULL;
-      	//printf("[%s]---------->>> soap: %p\n", __func__, soap);
+      	//printf("[%s] => soap: %p\n", __func__, soap);
     }
-    //printf("[%s]---->>>> out\n", __func__);
 }
 
 /******************************************************************************************
@@ -339,7 +335,7 @@ SOAP_FMAC5 int SOAP_FMAC6 nvc_discovery_recv(struct soap *soap, struct d__ProbeM
 {  
         if (!d__ProbeMatches)  
         {
-                printf("[%s][%s][Line:%d]--->>> param error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
+                printf("[%s][%s][Line:%d] => param error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
                 soap_closesock(soap);  
                 return -1;  
         }
@@ -351,13 +347,13 @@ SOAP_FMAC5 int SOAP_FMAC6 nvc_discovery_recv(struct soap *soap, struct d__ProbeM
                         || soap_recv_header(soap)  
                         || soap_body_begin_in(soap))
         {  
-                printf("[%s][%s][Line:%d]--->>> begin error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
+                printf("[%s][%s][Line:%d] => begin error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
                 return soap_closesock(soap);  
         }
         soap_get_d__ProbeMatchesType(soap, d__ProbeMatches, "d:ProbeMatches", "d:ProbeMatchesType");  
         if (soap->error)  
         {
-                printf("[%s][%s][Line:%d]--->>> analys error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
+                printf("[%s][%s][Line:%d] => analys error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
                 soap_recv_fault(soap, 0);  
                 return -1;  
         }  
@@ -365,7 +361,7 @@ SOAP_FMAC5 int SOAP_FMAC6 nvc_discovery_recv(struct soap *soap, struct d__ProbeM
                         || soap_envelope_end_in(soap)  
                         || soap_end_recv(soap))  
         {
-                printf("[%s][%s][Line:%d]--->>> end error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
+                printf("[%s][%s][Line:%d] => end error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
                 soap_closesock(soap);  
                 return -1;  
         }
@@ -388,7 +384,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
   char *was_Action = "http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe";
   char *soap_endpoint = "soap.udp://239.255.255.250:3702/";
 
-  //printf("==========>>>> soap: %p\n", soap);
+  //printf(" => soap: %p\n", soap);
   //soap = (struct soap *)malloc(sizeof(struct soap));
   //memset(soap, 0, sizeof(struct soap));
   struct SOAP_ENV__Header header;
@@ -403,7 +399,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
   soap = creat_soap(&header, was_To, was_Action, timeout, 1, dev);
   if (soap == NULL)
   {
-    printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+    printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
     return -1;
   }
 
@@ -438,7 +434,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
       printf("retval == soap_ok\n");
       if (soap->error)
       {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+        printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
         retval = soap->error;
       }
       else
@@ -459,7 +455,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
           item.port = probe->port;
           strncpy(item.ip, probe->ip, MAX_IP_LEN);
           sprintf(item.dst_id, "%s:%d", probe->ip, probe->port);
-          printf("[%s][%d]===> item.type: %d, ip: %s, port: %d, dst_id: %s\n"
+          printf("[%s][%d] => item.type: %d, ip: %s, port: %d, dst_id: %s\n"
               , __func__, __LINE__
               , item.type, item.ip, item.port, item.dst_id);
 #if 0 
@@ -475,7 +471,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
             memset(capaReq.Category, 0, sizeof(char)*INFO_LENGTH);
             *(capaReq.Category) = Media;
             capaReq.__sizeCategory = 1;
-            printf("aaaaaaaa========>>>>> capaReq.__sizeCategory: %d, Category: %d\n"
+            printf("aaaaaaaa => capaReq.__sizeCategory: %d, Category: %d\n"
                 , capaReq.__sizeCategory, *(capaReq.Category));
             soap_call___tds__GetCapabilities(_soap, _soap_endpoint, _soap_action, &capaReq, &capaResp);
             if (_soap_endpoint)
@@ -485,7 +481,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
             }
             if (_soap->error)
             {
-          		printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, _soap->error, *soap_faultcode(_soap), *soap_faultstring(_soap)); 
+          		printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, _soap->error, *soap_faultcode(_soap), *soap_faultstring(_soap)); 
           		item.ch_num = 2;
             }
             else
@@ -503,7 +499,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
                 soap_call___trt__GetProfiles(_soap, __soap_endpoint, __soap_action, &profile_req, &profile_resp);
                 if (_soap->error)
                 {
-                  printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, _soap->error, *soap_faultcode(_soap), *soap_faultstring(_soap)); 
+                  printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, _soap->error, *soap_faultcode(_soap), *soap_faultstring(_soap)); 
                   item.ch_num = 2;
                 }
                 else
@@ -518,7 +514,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
                   {
                       item.ch_num = 2;
                   }
-                  printf("[%s][%d]===> item.ch_num: %d\n",__func__, __LINE__, item.ch_num);
+                  printf("[%s][%d] => item.ch_num: %d\n",__func__, __LINE__, item.ch_num);
                 }
                 if (__soap_endpoint) 
                 {
@@ -528,7 +524,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
               }
               else
               {
-                printf("[%s][%s][Line:%d]--->>> ch_num: %d\n",__FILE__, __func__, item.ch_num);
+                printf("[%s][%s][Line:%d] => ch_num: %d\n",__FILE__, __func__, item.ch_num);
                 item.ch_num = 2;
               }                            
             }
@@ -536,7 +532,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
           }
 #endif
           item.ch_num = 2;
-          printf("[%s][%d]===> item.type: %d, ip: %s, port: %d, ch_num: %d\n"
+          printf("[%s][%d] => item.type: %d, ip: %s, port: %d, ch_num: %d\n"
               , __func__, __LINE__
               , item.type, item.ip, item.port, item.ch_num);
           if(strcmp(item.ip, _IPAddr))//NVR不显示在onvif的搜索结果列表中                 
@@ -547,7 +543,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout, NVC_PROBER_CB *cb, void *user
     else if (soap->error)  
     {  
       printf("retval == soap_error\n");
-      printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+      printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
       retval = soap->error;  
     }  
   }
@@ -568,7 +564,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout)
 	char *was_Action = "http://schemas.xmllocal_soap.org/ws/2005/04/discovery/Probe";
 	char *soap_endpoint = "soap.udp://239.255.255.250:3702/";
 
-   	//printf("==========>>>> soap: %p\n", soap);
+   	//printf(" => soap: %p\n", soap);
   	/*soap = (struct soap *)malloc(sizeof(struct soap));
  	memset(soap, 0, sizeof(struct soap));*/
 	struct SOAP_ENV__Header header;
@@ -596,7 +592,7 @@ int NVC_discovery(NVC_Probe_t *probe, int timeout)
 		soap_call___dndl__Probe(soap, soap_endpoint, NULL, &req, &resp); 
 		if (soap->error)
 		{ 
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		} 
@@ -639,7 +635,7 @@ int NVC_Get_profiles(NVC_Dev_t *dev)
 START:;
 	int ret = 0;
   int do_again = 0;
-	printf("[%s]----------->>>>> in\n", __func__);
+
 	struct _trt__GetProfiles profile_req;
 	struct _trt__GetProfilesResponse profile_resp;
 	memset(&profile_resp, 0, sizeof(struct _trt__GetProfilesResponse));
@@ -653,7 +649,7 @@ START:;
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     
@@ -663,7 +659,7 @@ START:;
         || dev->capa->media_capa->url == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%d]--->>>Error: Invaild parameter! dev->capa: %p, soap_endpoint: %p\n", __func__, __LINE__, dev->capa, dev->capa->media_capa->url);
+		printf("[%s][%d] =>Error: Invaild parameter! dev->capa: %p, soap_endpoint: %p\n", __func__, __LINE__, dev->capa, dev->capa->media_capa->url);
 		destroy_soap(soap);
 		return -1;
 	}
@@ -678,7 +674,7 @@ START:;
 		soap_call___trt__GetProfiles(soap, soap_endpoint, soap_action, &profile_req, &profile_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error; 
       if((ret == SOAP_CLI_FAULT) || (ret == SOAP_FAULT) || (ret == 401))
       {
@@ -697,7 +693,7 @@ START:;
 			dev->profile_tn = (Profile_info_t *)calloc(profile_resp.__sizeProfiles, sizeof(Profile_info_t));
 			for (i = 0; i < profile_resp.__sizeProfiles; i++)
 			{
-				//printf("--->>> i: %d\n", i);
+				//printf(" => i: %d\n", i);
 				if (profile_resp.Profiles != NULL)
 				{
 					memset(dev->profile_tn[i].profile_token, 0, MAX_TOKEN_LEN);
@@ -896,14 +892,13 @@ START:;
 				}
 				else
 				{
-					printf("[%s][%s][%d]----->>>>> can not get profile, profile_resp.Profile = NULL\n", __FILE__, __func__, __LINE__);
+					printf("[%s][%s][%d] => can not get profile, profile_resp.Profile = NULL\n", __FILE__, __func__, __LINE__);
 				}
 			}
 			break;
 		}
 	}while(0);
 
-	printf("[%s]---------->>> out\n", __func__);
 	if (soap_endpoint) 
 	{
 		free(soap_endpoint);
@@ -929,8 +924,6 @@ START:;
   memset(&capaResp, 0, sizeof(struct _tds__GetCapabilitiesResponse));
   int do_again = 0;
 
-	printf("[%s]----->>>> in\n", __func__);
-
 	//const char *was_To = "";//"http://www.onvif.org/ver10/device/wsdl/Device/GetCapabilitiesResponse";
 	//const char *was_Action = "";//"http://www.onvif.org/ver10/device/wsdl/Device/GetCapabilities";
 	
@@ -940,17 +933,17 @@ START:;
 
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	sprintf(soap_endpoint, "http://%s:%d/onvif/device_service", dev->ip, dev->port);
-	printf("[%s][%d]--->>>soap_endpoint: %s\n", __func__,__LINE__, soap_endpoint);
+	printf("[%s][%d] =>soap_endpoint: %s\n", __func__,__LINE__, soap_endpoint);
 	
 	const char *soap_action = "http://www.onvif.org/ver10/device/wsdl/GetCapabilities";
 	
-	//printf("[%s][%d]--->>>get capabilities type: %d\n", __func__, __LINE__, dev->capa->capa_type);;
+	//printf("[%s][%d] =>get capabilities type: %d\n", __func__, __LINE__, dev->capa->capa_type);;
 	
 	if (dev->capa->capa_type < 0 || dev->capa->capa_type > 6)	/**capa_type is not one of enum _capabilities_type*/
 	{
@@ -971,7 +964,7 @@ START:;
 		{
                 //soap error: 1, SOAP-ENV:Sender, Server authentication failed
                 // soap error: 12, SOAP-ENV:Sender, The action requested requires authorization and the sender is not authorized
-				printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+				printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 				retval = soap->error;
                 if((retval == SOAP_CLI_FAULT) || (retval == SOAP_FAULT))
                 {
@@ -1026,11 +1019,11 @@ START:;
 				}
 			}
       #if 1
-      printf("[%s][%d]--->>>ana_capa->url: %s\n",__func__,__LINE__, dev->capa->ana_capa->url);
-      printf("[%s][%d]--->>>dev_capa->url: %s\n",__func__,__LINE__, dev->capa->dev_capa->url);
-      printf("[%s][%d]--->>>img_capa->url: %s\n",__func__,__LINE__, dev->capa->img_capa->url);
-      printf("[%s][%d]--->>>media_capa->url: %s\n",__func__,__LINE__, dev->capa->media_capa->url);
-      printf("[%s][%d]--->>>PTZ_capa->url: %s\n",__func__,__LINE__, dev->capa->PTZ_capa->url);
+      printf("[%s][%d] =>ana_capa->url: %s\n",__func__,__LINE__, dev->capa->ana_capa->url);
+      printf("[%s][%d] =>dev_capa->url: %s\n",__func__,__LINE__, dev->capa->dev_capa->url);
+      printf("[%s][%d] =>img_capa->url: %s\n",__func__,__LINE__, dev->capa->img_capa->url);
+      printf("[%s][%d] =>media_capa->url: %s\n",__func__,__LINE__, dev->capa->media_capa->url);
+      printf("[%s][%d] =>PTZ_capa->url: %s\n",__func__,__LINE__, dev->capa->PTZ_capa->url);
       #endif
 		}
 	}while(0);
@@ -1038,7 +1031,6 @@ START:;
   free(soap_endpoint);
 	soap_endpoint = NULL;
 	destroy_soap(soap);
-	printf("[%s]----->>>> out\n", __func__);
   if(do_again)
     goto START;
 	return retval;
@@ -1047,8 +1039,6 @@ START:;
 int NVC_GetStreamUri(NVC_Dev_t *dev, NVC_Stream_Uri_t *nvc_stream_url)
 {
 	//NVC_Dev_t dev_handle = (NVC_Dev_t *)dev;
-	printf("[%s]----->>>> in\n", __func__);
-
 	struct soap *soap = NULL; 
   	int  retval = 0; 
 	struct _trt__GetStreamUri StreamUri_req;
@@ -1062,7 +1052,7 @@ int NVC_GetStreamUri(NVC_Dev_t *dev, NVC_Stream_Uri_t *nvc_stream_url)
         || dev->capa->media_capa == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].profile_token);	
 		return -1;
 	}
@@ -1077,14 +1067,14 @@ int NVC_GetStreamUri(NVC_Dev_t *dev, NVC_Stream_Uri_t *nvc_stream_url)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
 	char *soap_endpoint = (char *)calloc(1, sizeof(char)*MAX_URL_LEN);//"soap.udp://239.255.255.250:3702/";
 	strncpy(soap_endpoint, dev->capa->media_capa->url, sizeof(char)*MAX_URL_LEN);
 	
-	//printf("[%s][%d]--->>> soap_endpoint: %s\n", __func__,__LINE__, soap_endpoint);
+	//printf("[%s][%d] => soap_endpoint: %s\n", __func__,__LINE__, soap_endpoint);
 
 	const char *soap_action ="http://www.onvif.org/ver10/media/wsdl/GetStreamUri";
 
@@ -1099,11 +1089,11 @@ int NVC_GetStreamUri(NVC_Dev_t *dev, NVC_Stream_Uri_t *nvc_stream_url)
 	memset(StreamUri_req.ProfileToken, 0, sizeof(char)*INFO_LENGTH);
 	strncpy(StreamUri_req.ProfileToken, dev->profile_tn[dev->st_type].profile_token, sizeof(char)*INFO_LENGTH);
 
-	//printf("-->>> profiletoken: %s\n", StreamUri_req.ProfileToken);
+	//printf(" => profiletoken: %s\n", StreamUri_req.ProfileToken);
 	
 	if ((dev->st_type != 0) && (dev->st_type != 1))
 	{
-		printf("[%s][%s]--->>> Error: Invalid st_type! do not support such st_type now! st_type: %d\n", __FILE__, __func__, dev->st_type);
+		printf("[%s][%s] => Error: Invalid st_type! do not support such st_type now! st_type: %d\n", __FILE__, __func__, dev->st_type);
 		free(soap_endpoint);
 		soap_endpoint = NULL;
 		destroy_soap(soap);
@@ -1115,7 +1105,7 @@ int NVC_GetStreamUri(NVC_Dev_t *dev, NVC_Stream_Uri_t *nvc_stream_url)
 		soap_call___trt__GetStreamUri(soap, soap_endpoint, soap_action, &StreamUri_req, &StreamUri_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -1137,7 +1127,6 @@ int NVC_GetStreamUri(NVC_Dev_t *dev, NVC_Stream_Uri_t *nvc_stream_url)
 	free(soap_endpoint);
 	soap_endpoint = NULL;
 	destroy_soap(soap);
-	printf("[%s]----->>>> out\n", __func__);	
   return  retval; 
 }
 
@@ -1192,7 +1181,7 @@ static int s_parse_a_enc_type(int is_set, int enc_type)
 	}
 	if (ret < 0)
 	{
-		printf("[%s][%s]---->>> do not support such encoding type now! enc_type: %d\n",__FILE__, __func__, enc_type);
+		printf("[%s][%s] => do not support such encoding type now! enc_type: %d\n",__FILE__, __func__, enc_type);
 	}
 	return ret;
 }
@@ -1212,7 +1201,7 @@ int NVC_Get_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
         || dev->capa->media_capa == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].a_enc_token);	
 		return -1;
 	}
@@ -1224,7 +1213,7 @@ int NVC_Get_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
 	soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -1242,7 +1231,7 @@ int NVC_Get_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
 		soap_call___trt__GetAudioEncoderConfiguration(soap, soap_endpoint, soap_action, &a_enc_req, &a_enc_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error; 
 			break;
 		}
@@ -1254,7 +1243,7 @@ int NVC_Get_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
             }
             else
             {
-                printf("[%s][%d]=====>>> soap_call___trt__GetAudioEncoderConfiguration: Configuration = NULL\n", __func__, __LINE__);
+                printf("[%s][%d] => soap_call___trt__GetAudioEncoderConfiguration: Configuration = NULL\n", __func__, __LINE__);
             }
 			break;
 		}
@@ -1282,7 +1271,7 @@ int NVC_Set_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
         || dev->capa->media_capa == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].a_enc_token);	
 		return -1;
 	}
@@ -1294,7 +1283,7 @@ int NVC_Set_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
 	soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     
@@ -1318,7 +1307,7 @@ int NVC_Set_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
 		soap_call___trt__GetAudioEncoderConfiguration(soap, soap_endpoint, soap_action, &a_get_enc_req, &a_get_enc_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error;
 			free(soap_endpoint);
 			soap_endpoint = NULL;
@@ -1395,7 +1384,7 @@ int NVC_Set_Audio_info(NVC_Dev_t *dev, Audio_Enc_t *audio)
 		soap_call___trt__SetAudioEncoderConfiguration(soap, soap_endpoint, soap_action, &a_enc_req, &a_enc_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error; 
 			break;
 		}
@@ -1455,7 +1444,7 @@ static int s_parse_v_enc_type(int is_set, int enc_type)
 	}
 	if (ret < 0)
 	{
-		printf("[%s][%s]---->>> do not support such encoding type now! enc_type: %d\n",__FILE__, __func__, enc_type);
+		printf("[%s][%s] => do not support such encoding type now! enc_type: %d\n",__FILE__, __func__, enc_type);
 	}
 	return ret;
 }
@@ -1504,7 +1493,7 @@ static int s_parse_v_enc_level(int is_set, int level)
 	}
 	if (ret < 0)
 	{
-		printf("[%s][%s]---->>> do not support such stream level! level: %d\n",__FILE__, __func__, level);
+		printf("[%s][%s] => do not support such stream level! level: %d\n",__FILE__, __func__, level);
 	}
 	return ret;
 }
@@ -1524,7 +1513,7 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
         || dev->capa->media_capa == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].v_enc_token);	
 		return -1;
 	}
@@ -1540,7 +1529,7 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
 	soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -1560,7 +1549,7 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
 		soap_call___trt__GetVideoEncoderConfiguration(soap, soap_endpoint, soap_action, &v_enc_req, &v_enc_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error; 
 			break;
 		}
@@ -1573,12 +1562,12 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
                 {
                     video->resolution.width = v_enc_resp.Configuration->Resolution->Width;
         			      video->resolution.height = v_enc_resp.Configuration->Resolution->Height;
-                    //printf("[%s][%d]=====>>> width%d height%d\n", __func__, __LINE__, video->resolution.width, video->resolution.height);
+                    //printf("[%s][%d] => width%d height%d\n", __func__, __LINE__, video->resolution.width, video->resolution.height);
 
                 }
                 else
                 {
-                    printf("[%s][%d]=====>>> soap_call___trt__GetVideoEncoderConfiguration: Resolution = NULL\n", __func__, __LINE__);
+                    printf("[%s][%d] => soap_call___trt__GetVideoEncoderConfiguration: Resolution = NULL\n", __func__, __LINE__);
                 }
     			//video->pic_quilty = ((v_enc_resp.Configuration->Quality * 6) / 101);
                 video->pic_quilty = v_enc_resp.Configuration->Quality;
@@ -1589,7 +1578,7 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
                 }
                 else
                 {
-                    printf("[%s][%d]=====>>> soap_call___trt__GetVideoEncoderConfiguration: RateControl = NULL\n", __func__, __LINE__);
+                    printf("[%s][%d] => soap_call___trt__GetVideoEncoderConfiguration: RateControl = NULL\n", __func__, __LINE__);
                 }
                 if (v_enc_resp.Configuration->H264)
                 {
@@ -1598,12 +1587,12 @@ int NVC_Get_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
                 }
                 else
                 {
-                    printf("[%s][%d]=====>>> soap_call___trt__GetVideoEncoderConfiguration: H264 = NULL\n", __func__, __LINE__);
+                    printf("[%s][%d] => soap_call___trt__GetVideoEncoderConfiguration: H264 = NULL\n", __func__, __LINE__);
                 }
             }
             else
             {
-                printf("[%s][%d]=====>>> soap_call___trt__GetVideoEncoderConfiguration: Configuration = NULL\n", __func__, __LINE__);
+                printf("[%s][%d] => soap_call___trt__GetVideoEncoderConfiguration: Configuration = NULL\n", __func__, __LINE__);
             }
 			break;
 		}
@@ -1635,14 +1624,14 @@ int NVC_Set_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
         || dev->capa->media_capa == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].v_enc_token);	
 		return -1;
 	}
 
 	if (strlen(dev->profile_tn->v_enc_token) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!input profile_token = NULL\n", __FILE__, __func__);	
+		printf("[%s][%s] => Error: Invalid parameter!input profile_token = NULL\n", __FILE__, __func__);	
 		return -1;
 	}
 	
@@ -1656,7 +1645,7 @@ int NVC_Set_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -1676,7 +1665,7 @@ int NVC_Set_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
 		soap_call___trt__GetVideoEncoderConfiguration(soap, soap_endpoint, soap_action, &v_get_enc_req, &v_get_enc_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error;
 			free(soap_endpoint);
 			soap_endpoint = NULL;
@@ -1816,7 +1805,7 @@ int NVC_Set_Video_info(NVC_Dev_t *dev, Video_Enc_t *video)
 		soap_call___trt__SetVideoEncoderConfiguration(soap, soap_endpoint, _soap_action, &v_enc_req, &v_enc_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			ret = soap->error; 
 			break;
 		}
@@ -1841,8 +1830,6 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
 	struct _tptz__GetConfiguration  tptz_GetConfreq;
     struct _tptz__GetConfigurationResponse tptz_GetConfresp;
     memset(&tptz_GetConfresp, 0, sizeof(struct _tptz__GetConfigurationsResponse));
-
-    printf("[%s]----->>>> in\n", __func__);
     
     if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -1851,7 +1838,7 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)        
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter! dev->profile_tn:%p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter! dev->profile_tn:%p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -1866,7 +1853,7 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     
@@ -1877,7 +1864,7 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
 
     const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/GetConfigurations";
     
-    printf("[%s][%d]===> profiletoken: %s\n", __func__, __LINE__, dev->profile_tn[dev->st_type].profile_token);
+    printf("[%s][%d] => profiletoken: %s\n", __func__, __LINE__, dev->profile_tn[dev->st_type].profile_token);
     tptz_GetConfreq.PTZConfigurationToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(tptz_GetConfreq.PTZConfigurationToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(tptz_GetConfreq.PTZConfigurationToken, dev->profile_tn[dev->st_type].PTZ_parm_token, sizeof(char)*INFO_LENGTH);
@@ -1887,7 +1874,7 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
         soap_call___tptz__GetConfiguration(soap, soap_endpoint, soap_action, &tptz_GetConfreq, &tptz_GetConfresp);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -1915,8 +1902,6 @@ int NVC_PTZ_Get_Configurations(NVC_Dev_t * dev, NVC_PTZ_Configution_t * ptz_conf
 	}
     destroy_soap(soap);
     
-    printf("[%s]----->>>> out\n", __func__);
-    
     return retval;
 }
 
@@ -1929,8 +1914,6 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
 	struct _tptz__ContinuousMove tptz_ContinuousMove_req; 
 	struct _tptz__ContinuousMoveResponse tptz_ContinuousMove_resp;
     memset(&tptz_ContinuousMove_resp, 0, sizeof(struct _tptz__ContinuousMoveResponse));
-
-    printf("[%s]----->>>> in\n", __func__);
     
 	if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -1940,7 +1923,7 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 0)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn:%p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn:%p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -1955,7 +1938,7 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     
@@ -1967,8 +1950,8 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
 	const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/ContinuousMove";
 
   #if 1
-  printf("[%s][%d]===================>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
-  printf("[%s][%d]===>111 profiletoken: %s, pantilt->x: %f, pantile->y: %f, space: %s, zoom->x: %f, space: %s\n"
+  printf("[%s][%d] => soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
+  printf("[%s][%d] =>111 profiletoken: %s, pantilt->x: %f, pantile->y: %f, space: %s, zoom->x: %f, space: %s\n"
       , __func__, __LINE__
       , dev->profile_tn[dev->st_type].profile_token
       , ptz_speed->pantilt.x, ptz_speed->pantilt.y
@@ -1988,12 +1971,12 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
     tptz_ContinuousMove_req.Timeout = (LONG64 *)soap_malloc(soap, sizeof(LONG64));
 	memset(tptz_ContinuousMove_req.Timeout, 0, sizeof(LONG64));
 	*(tptz_ContinuousMove_req.Timeout) = 5*1000;
-    printf("================>>> *(tptz_ContinuousMove_req.Timeout): %lld\n", *(tptz_ContinuousMove_req.Timeout));
+    printf(" => *(tptz_ContinuousMove_req.Timeout): %lld\n", *(tptz_ContinuousMove_req.Timeout));
     #endif
     tptz_ContinuousMove_req.Velocity = (struct tt__PTZSpeed *)soap_malloc(soap, sizeof(struct tt__PTZSpeed));
     memset(tptz_ContinuousMove_req.Velocity, 0, sizeof(struct tt__PTZSpeed));
 
-    printf("[%s][%d]===>111  pantilt->x: %f, pantile->y: %f,zoom->x: %f\n"
+    printf("[%s][%d] =>111  pantilt->x: %f, pantile->y: %f,zoom->x: %f\n"
         , __func__, __LINE__
         , fabs(ptz_speed->pantilt.x), fabs(ptz_speed->pantilt.y)
         , fabs(ptz_speed->zoom.x));
@@ -2042,7 +2025,7 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
     #if 0
     printf("####################################################################################\n");
     
-    printf("[%s][%d]===>222 profiletoken: %s, pantilt->x: %f, pantile->y: %f, space: %s, zoom->x: %f, space: %s\n"
+    printf("[%s][%d] =>222 profiletoken: %s, pantilt->x: %f, pantile->y: %f, space: %s, zoom->x: %f, space: %s\n"
         , __func__, __LINE__
         , tptz_ContinuousMove_req.ProfileToken
         , tptz_ContinuousMove_req.Velocity->PanTilt->x, tptz_ContinuousMove_req.Velocity->PanTilt->y
@@ -2060,7 +2043,7 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
 		soap_call___tptz__ContinuousMove(soap, soap_endpoint, soap_action, &tptz_ContinuousMove_req, &tptz_ContinuousMove_resp);
 		if (soap->error)
 		{
-			printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+			printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -2074,7 +2057,6 @@ int NVC_PTZ_ContinusMove(NVC_Dev_t *dev, NVC_PTZ_Speed_t *ptz_speed)
 	soap_endpoint = NULL;
 	destroy_soap(soap);
 
-    printf("[%s]----->>>> out\n", __func__);
 	return 0;
 }
 
@@ -2085,8 +2067,6 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
 	struct _tptz__Stop tptz_Stop_req; 
 	struct _tptz__StopResponse tptz_Stop_resp;
     memset(&tptz_Stop_resp, 0, sizeof(struct _tptz__StopResponse));
-
-    printf("[%s]----->>>> in\n", __func__);
     
 	if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -2095,7 +2075,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2110,7 +2090,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
   
@@ -2121,7 +2101,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
 	const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/Stop";
 
     #if 1
-    printf("[%s][%d]===>111 profiletoken: %s, en_pant: %d, en_zoom: %d\n"
+    printf("[%s][%d] =>111 profiletoken: %s, en_pant: %d, en_zoom: %d\n"
         , __func__, __LINE__
         , dev->profile_tn[dev->st_type].profile_token
         , ptz_stop->en_pant
@@ -2143,7 +2123,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
     #if 1
     printf("####################################################################################\n");
     
-    printf("[%s][%d]===>222 profiletoken: %s, PanTilt: %d, Zoom: %d\n"
+    printf("[%s][%d] =>222 profiletoken: %s, PanTilt: %d, Zoom: %d\n"
         , __func__, __LINE__
         , tptz_Stop_req.ProfileToken
         , *(tptz_Stop_req.PanTilt)
@@ -2155,7 +2135,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
         soap_call___tptz__Stop(soap, soap_endpoint, soap_action, &tptz_Stop_req, &tptz_Stop_resp);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -2168,9 +2148,7 @@ int NVC_PTZ_Stop(NVC_Dev_t *dev, NVC_PTZ_Stop_t *ptz_stop)
     free(soap_endpoint);
 	soap_endpoint = NULL;
 	destroy_soap(soap);
-    
-    printf("[%s]----->>>> out\n", __func__);
-    
+
     return 0;
 }
 
@@ -2182,11 +2160,9 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
 	struct _tptz__GetNodes tptz__GetNodes;
     struct _tptz__GetNodesResponse tptz__GetNodesResponse;
 
-    printf("[%s]----->>>> in\n", __func__);
-    
 	if (dev->profile_tn == NULL || strlen(dev->capa->PTZ_capa->url) < 2)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn->PTZ_parm_token);	
 		return -1;
 	}
@@ -2202,13 +2178,13 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
     
 	if (dev->capa == NULL || dev->capa->PTZ_capa->url == NULL)
 	{
-		printf("[%s][%d]--->>>Error: Invaild parameter! dev->capa: %p, soap_endpoint: %p\n", __func__, __LINE__, dev->capa, dev->capa->PTZ_capa->url);
+		printf("[%s][%d] =>Error: Invaild parameter! dev->capa: %p, soap_endpoint: %p\n", __func__, __LINE__, dev->capa, dev->capa->PTZ_capa->url);
 		destroy_soap(soap);
 		return -1;
 	}
 	if (strlen(dev->capa->PTZ_capa->url) == 0)
 	{
-		printf("[%s][%d]--->>>Error: do not know soap_endpoint\n", __func__, __LINE__);
+		printf("[%s][%d] =>Error: do not know soap_endpoint\n", __func__, __LINE__);
 		destroy_soap(soap);
 		return -1;
 	}
@@ -2222,7 +2198,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
         soap_call___tptz__GetNodes(soap, soap_endpoint, soap_action, &tptz__GetNodes, &tptz__GetNodesResponse);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -2260,8 +2236,6 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
 	}
     destroy_soap(soap);
     
-    printf("[%s]----->>>> out\n", __func__);
-    
     return retval;
 }
 #else
@@ -2274,8 +2248,6 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
     memset(&tptz_GetPresetreq,  0, sizeof(struct _tptz__GetPresets));
     memset(&tptz_GetPresetresp, 0, sizeof(struct _tptz__GetPresetsResponse));
 
-    //printf("[%s]----->>>> in\n", __func__);
-
     if (dev == NULL 
         || dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].PTZ_parm_token) < 1
@@ -2283,7 +2255,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)        
     {
-        printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+        printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
         	, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
         return -1;
     }
@@ -2292,7 +2264,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     
@@ -2301,7 +2273,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
   	strncpy(soap_endpoint, dev->capa->PTZ_capa->url, sizeof(char)*MAX_URL_LEN);
     const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/GetPresets";
     
-    printf("[%s][%d]===> profiletoken: %s\n", __func__, __LINE__, dev->profile_tn[dev->st_type].profile_token);
+    printf("[%s][%d] => profiletoken: %s\n", __func__, __LINE__, dev->profile_tn[dev->st_type].profile_token);
     tptz_GetPresetreq.ProfileToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(tptz_GetPresetreq.ProfileToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(tptz_GetPresetreq.ProfileToken, dev->profile_tn[dev->st_type].profile_token, sizeof(char)*INFO_LENGTH);
@@ -2311,7 +2283,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
         soap_call___tptz__GetPresets(soap, soap_endpoint, soap_action, &tptz_GetPresetreq, &tptz_GetPresetresp);
         if (soap->error)
         {
-            fprintf(stderr, "[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            fprintf(stderr, "[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
             retval = soap->error; 
             break;
         }
@@ -2322,7 +2294,7 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
             {
                 preset->_size = (tptz_GetPresetresp.__sizePreset > MAX_PRESET_NUM)?MAX_PRESET_NUM:tptz_GetPresetresp.__sizePreset;
                   
-                fprintf(stderr, "[%s][%s][Line:%d]--->>> preset->_size: %d\n",__FILE__, __func__, __LINE__,preset->_size); 
+                fprintf(stderr, "[%s][%s][Line:%d] => preset->_size: %d\n",__FILE__, __func__, __LINE__,preset->_size); 
                 for (i = 0; i < tptz_GetPresetresp.__sizePreset; i++)
                 {
                     memset(preset->_preset[i].name, 0, sizeof(preset->_preset[i].name));
@@ -2369,8 +2341,6 @@ int NVC_PTZ_Get_Presets(NVC_Dev_t * dev, NVC_PTZ_Preset_t * preset)
     }
     destroy_soap(soap);
 
-    printf("[%s]----->>>> out\n", __func__);
-
     return retval;
 }
 #endif
@@ -2384,8 +2354,6 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 
 	memset(&tptz_SetPresetreq,  0, sizeof(struct _tptz__SetPreset));
     memset(&tptz_SetPresetresp, 0, sizeof(struct _tptz__SetPresetResponse));
-
-    printf("[%s]----->>>> in\n", __func__);
     
 	if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -2394,7 +2362,7 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2409,7 +2377,7 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -2418,7 +2386,7 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 
     const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/SetPreset";
     
-    printf("[%s][%d]===> profiletoken: %s, preset => name: %s, token: %s\n"
+    printf("[%s][%d] => profiletoken: %s, preset => name: %s, token: %s\n"
         , __func__, __LINE__
         , dev->profile_tn[dev->st_type].profile_token
         , preset->name
@@ -2436,7 +2404,7 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     memset(tptz_SetPresetreq.PresetToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(tptz_SetPresetreq.PresetToken, preset->token, sizeof(char)*INFO_LENGTH);
 
-    printf("[%s][%d]===> tptz_SetPresetreq => profiletoken: %s, name: %s\n"    
+    printf("[%s][%d] => tptz_SetPresetreq => profiletoken: %s, name: %s\n"    
         , __func__, __LINE__
         , tptz_SetPresetreq.ProfileToken
         , tptz_SetPresetreq.PresetName);
@@ -2446,7 +2414,7 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         soap_call___tptz__SetPreset(soap, soap_endpoint, soap_action, &tptz_SetPresetreq, &tptz_SetPresetresp);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -2465,8 +2433,6 @@ int NVC_PTZ_Preset_set(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 	soap_endpoint = NULL;
 	destroy_soap(soap);
     
-    printf("[%s]----->>>> out\n", __func__);
-    
     return 0;
 }
 
@@ -2478,8 +2444,6 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     struct _tptz__GotoPresetResponse tptz_GotoPresetresp;
     memset(&tptz_GotoPresetresp, 0, sizeof(struct _tptz__GotoPresetResponse));
 
-    printf("[%s]----->>>> in\n", __func__);
-    
 	if (dev == NULL 
         || dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].PTZ_parm_token) < 1
@@ -2487,7 +2451,7 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%p]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%p]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2502,7 +2466,7 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -2511,7 +2475,7 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 
     const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/GotoPreset";
     
-    printf("[%s][%d]===> profiletoken: %s\n", __func__, __LINE__, dev->profile_tn[dev->st_type].profile_token);
+    printf("[%s][%d] => profiletoken: %s\n", __func__, __LINE__, dev->profile_tn[dev->st_type].profile_token);
 
     tptz_GotoPresetreq.ProfileToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(tptz_GotoPresetreq.ProfileToken, 0, sizeof(char)*INFO_LENGTH);
@@ -2544,7 +2508,7 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         soap_call___tptz__GotoPreset(soap, soap_endpoint, soap_action, &tptz_GotoPresetreq, &tptz_GotoPresetresp);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
 			retval = soap->error; 
 			break;
 		}
@@ -2558,8 +2522,6 @@ int NVC_PTZ_Preset_call(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 	soap_endpoint = NULL;
 	destroy_soap(soap);
     
-    printf("[%s]----->>>> out\n", __func__);
-    
     return retval;
 }
 
@@ -2570,7 +2532,6 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 	struct _tptz__RemovePreset tptz_RemovePresetreq;
     struct _tptz__RemovePresetResponse tptz_RemovePresetresp;
     memset(&tptz_RemovePresetresp, 0, sizeof(struct _tptz__RemovePresetResponse));
-    printf("[%s]----->>>> in\n", __func__);
     
 	if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -2579,7 +2540,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2594,7 +2555,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     
@@ -2603,7 +2564,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 
     const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/RemovePreset";
     
-    printf("[%s][%d]===> profiletoken: %s, preset => name: %s, token: %s\n"
+    printf("[%s][%d] => profiletoken: %s, preset => name: %s, token: %s\n"
         , __func__, __LINE__
         , dev->profile_tn[dev->st_type].profile_token
         , preset->name
@@ -2617,7 +2578,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     memset(tptz_RemovePresetreq.PresetToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(tptz_RemovePresetreq.PresetToken, preset->token, sizeof(char)*INFO_LENGTH);
 
-    printf("[%s][%d]===> tptz_RemovePresetreq => profiletoken: %s, token: %s\n"    
+    printf("[%s][%d] => tptz_RemovePresetreq => profiletoken: %s, token: %s\n"    
         , __func__, __LINE__
         , tptz_RemovePresetreq.ProfileToken
         , tptz_RemovePresetreq.PresetToken);
@@ -2627,7 +2588,7 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         soap_call___tptz__RemovePreset(soap, soap_endpoint, soap_action, &tptz_RemovePresetreq, &tptz_RemovePresetresp);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
     		retval = soap->error; 
     		break;
     	}
@@ -2640,8 +2601,6 @@ int NVC_PTZ_Preset_del(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     free(soap_endpoint);
 	soap_endpoint = NULL;
 	destroy_soap(soap);
-    
-    printf("[%s]----->>>> out\n", __func__);
     
     return retval;
 }
@@ -2657,8 +2616,6 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
     int i;
     char name[MAX_NAME_LEN];
 
-    printf("[%s]----->>>> in\n", __func__);
-
 	if (dev == NULL 
         || dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].PTZ_parm_token) < 1
@@ -2666,7 +2623,7 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -2674,7 +2631,7 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -2695,14 +2652,14 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         soap_call___tptz__GetPresetTours(soap, soap_endpoint, soap_action, &GetPresetTours, &GetPresetToursResp);
         if (soap->error)
         {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+            printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
             retval = soap->error; 
             break;
         }
         else 
         {
-            printf("[%s][%s][Line:%d]--->>> size:%d \n",__FILE__, __func__, __LINE__, GetPresetToursResp.__sizePresetTour); 
-            printf("[%s][%s][Line:%d]--->>> ok\n",__FILE__, __func__, __LINE__); 
+            printf("[%s][%s][Line:%d] => size:%d \n",__FILE__, __func__, __LINE__, GetPresetToursResp.__sizePresetTour); 
+            printf("[%s][%s][Line:%d] => ok\n",__FILE__, __func__, __LINE__); 
             if(GetPresetToursResp.__sizePresetTour > 0)
             {
                 memset(preset->ptz_tour_token, 0, sizeof(preset->ptz_tour_token));
@@ -2732,7 +2689,7 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
         if (soap == NULL)
         {
-            printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+            printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
             free(soap_endpoint);
             soap_endpoint = NULL;         
             return -1;
@@ -2752,13 +2709,13 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
             soap_call___tptz__CreatePresetTour(soap, soap_endpoint, soap_action, &CreatePresetTour, &CreatePresetTourResp);
             if (soap->error)
             {
-                printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+                printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
                 retval = soap->error; 
                 break;
             }
             else 
             {
-                printf("[%s][%s][Line:%d]--->>> token%s\n",__FILE__, __func__, __LINE__, CreatePresetTourResp.PresetTourToken); 
+                printf("[%s][%s][Line:%d] => token%s\n",__FILE__, __func__, __LINE__, CreatePresetTourResp.PresetTourToken); 
                 if(CreatePresetTourResp.PresetTourToken)
                 {
                     memset(preset->ptz_tour_token, 0, sizeof(preset->ptz_tour_token));
@@ -2774,7 +2731,7 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
         if (soap == NULL)
         {
-            printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+            printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
             free(soap_endpoint);
             soap_endpoint = NULL;         
             return -1;
@@ -2829,7 +2786,7 @@ int NVC_PTZ_Preset_tour(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
             soap_call___tptz__ModifyPresetTour(soap, soap_endpoint, soap_action, &ModifyPresetTour, &ModifyPresetTourResp);
             if (soap->error)
             {
-                printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+                printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
                 retval = soap->error; 
                 break;
             }
@@ -2851,8 +2808,6 @@ int NVC_PTZ_PresetTour_start(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
     const char *soap_action = NULL;
     char *soap_endpoint;
     
-    printf("[%s]----->>>> in\n", __func__);
-
 	if (dev == NULL 
         || dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].PTZ_parm_token) < 1
@@ -2860,21 +2815,21 @@ int NVC_PTZ_PresetTour_start(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
     
     if(strlen(preset->ptz_tour_token) < 1)
     {
-        printf("[%s][%d]===================>>> PTZ preset tour token is NULL!\n", __func__, __LINE__);
+        printf("[%s][%d] => PTZ preset tour token is NULL!\n", __func__, __LINE__);
         return -1;
     }
 
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     struct _tptz__OperatePresetTour OperatePresetTour;
@@ -2898,7 +2853,7 @@ int NVC_PTZ_PresetTour_start(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
          
          if (soap->error)
          {
-             printf("[%s][%s][Line:%d][profiletoken :%s, tour_token :%s]--->>> soap error: %d, %s, %s, %s\n",
+             printf("[%s][%s][Line:%d][profiletoken :%s, tour_token :%s] => soap error: %d, %s, %s, %s\n",
              	__FILE__, __func__, __LINE__, OperatePresetTour.ProfileToken, 
              	OperatePresetTour.PresetTourToken, soap->error, *soap_faultcode(soap), 
              	*soap_faultstring(soap), *soap_faultdetail(soap)); 
@@ -2921,7 +2876,6 @@ int NVC_PTZ_PresetTour_stop(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
     const char *soap_action = NULL;
     char *soap_endpoint;
     
-    printf("[%s]----->>>> in\n", __func__);
 
 	if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -2930,21 +2884,21 @@ int NVC_PTZ_PresetTour_stop(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
     
     if(strlen(preset->ptz_tour_token) < 1)
     {
-        printf("[%s][%d]===================>>> PTZ preset tour token is NULL!\n", __func__, __LINE__);
+        printf("[%s][%d] => PTZ preset tour token is NULL!\n", __func__, __LINE__);
         return -1;
     }
 
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
     struct _tptz__OperatePresetTour OperatePresetTour;
@@ -2966,7 +2920,7 @@ int NVC_PTZ_PresetTour_stop(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
          soap_call___tptz__OperatePresetTour(soap, soap_endpoint, soap_action, &OperatePresetTour, &OperatePresetTourResp);
          if (soap->error)
          {
-             printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+             printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
              retval = soap->error; 
              break;
          }
@@ -2986,7 +2940,6 @@ int NVC_PTZ_PresetTour_remove(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
     const char *soap_action = NULL;
     char *soap_endpoint;
     
-    printf("[%s]----->>>> in\n", __func__);
 
 	if (dev == NULL 
         || dev->profile_tn == NULL 
@@ -2995,21 +2948,21 @@ int NVC_PTZ_PresetTour_remove(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
     
     if(strlen(preset->ptz_tour_token) < 1)
     {
-        printf("[%s][%d]===================>>> PTZ preset tour token is NULL!\n", __func__, __LINE__);
+        printf("[%s][%d] => PTZ preset tour token is NULL!\n", __func__, __LINE__);
         return -1;
     }
 
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -3030,7 +2983,7 @@ int NVC_PTZ_PresetTour_remove(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
          soap_call___tptz__GetPresetTour(soap, soap_endpoint, soap_action, &GetPresetTour, &GetPresetTourResp);
          if (soap->error)
          {
-             printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+             printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
              retval = soap->error; 
              break;
          }
@@ -3042,7 +2995,7 @@ int NVC_PTZ_PresetTour_remove(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
         soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
         if (soap == NULL)
         {
-            printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+            printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
             return -1;
         }
         struct _tptz__RemovePresetTour RemovePresetTour;
@@ -3059,7 +3012,7 @@ int NVC_PTZ_PresetTour_remove(NVC_Dev_t * dev, NVC_PTZ_Preset_t *preset)
             soap_call___tptz__RemovePresetTour(soap, soap_endpoint, soap_action, &RemovePresetTour, &RemovePresetTourResp);
              if (soap->error)
              {
-                 printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+                 printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
                  retval = soap->error; 
                  break;
              }
@@ -3076,7 +3029,7 @@ int get_submask_from_masklen(char *submask, int len) /**masklen为子网掩码的长度*
 {
     if (len < 0 || len > 32)
     {
-        printf("[%s][%d]=====>>> Invalid parameter!!! len: %d, is not between 0~32\n", __func__, __LINE__, len);
+        printf("[%s][%d] => Invalid parameter!!! len: %d, is not between 0~32\n", __func__, __LINE__, len);
         return -1;
     }
     
@@ -3097,7 +3050,7 @@ int get_masklen_from_submask(char *submask)
     if (submask == NULL ||
         strlen(submask) == 0)
     {
-        printf("[%s][%d]=====>>> Invalid parameter!!! sunmask: %s, is not between 0~32\n", __func__, __LINE__, submask);
+        printf("[%s][%d] => Invalid parameter!!! sunmask: %s, is not between 0~32\n", __func__, __LINE__, submask);
         return -1;
     }
     unsigned int mask[4] = {0};
@@ -3119,15 +3072,13 @@ int get_masklen_from_submask(char *submask)
 /***************************************** Img attr *******************************************/
 int NVC_Get_Img_options(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
 {
-    printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-    
     if (dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].v_src_sourcetoken) < 1 
         || dev->capa == NULL 
         || dev->capa->img_capa == NULL
         || strlen(dev->capa->img_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].profile_token);	
 		return -1;
 	}
@@ -3142,7 +3093,7 @@ int NVC_Get_Img_options(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -3153,14 +3104,14 @@ int NVC_Get_Img_options(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     img_GetOptionsReq.VideoSourceToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(img_GetOptionsReq.VideoSourceToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(img_GetOptionsReq.VideoSourceToken, dev->profile_tn[dev->st_type].v_src_sourcetoken, sizeof(char)*INFO_LENGTH);
-    //printf("[%s][%d]=============>>> VideoSourceToken: %s\n", __func__, __LINE__, GetImgReq.VideoSourceToken);
-    //printf("[%s][%d]=============>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
+    //printf("[%s][%d] => VideoSourceToken: %s\n", __func__, __LINE__, GetImgReq.VideoSourceToken);
+    //printf("[%s][%d] => soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
 
     soap_call___timg__GetOptions(soap, soap_endpoint, soap_action, &img_GetOptionsReq, &img_GetOptionsResp);
     if (soap->error)
     {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-    	retval = soap->error;
+        printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+    	  retval = soap->error;
     }
     else
     {
@@ -3191,7 +3142,7 @@ int NVC_Get_Img_options(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
         }
     }
     #if 1
-    printf("[%s][%d]======>>> brightness: %d--%d, contrast: %d--%d, saturation: %d--%d, sharpness: %d--%d\n"
+    printf("[%s][%d] => brightness: %d--%d, contrast: %d--%d, saturation: %d--%d, sharpness: %d--%d\n"
                 ,__func__, __LINE__
                 , img_attr->min_brihtness
                 , img_attr->max_brihtness
@@ -3208,22 +3159,19 @@ int NVC_Get_Img_options(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
         soap_endpoint = NULL;
     }
     destroy_soap(soap);
-    printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
     return 0;
 }
 
 
 int NVC_Get_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
-{
-    printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-    
+{    
     if (dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].v_src_sourcetoken) < 1 
         || dev->capa == NULL 
         || dev->capa->img_capa == NULL
         || strlen(dev->capa->img_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].profile_token);	
 		return -1;
 	}
@@ -3238,7 +3186,7 @@ int NVC_Get_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -3249,14 +3197,14 @@ int NVC_Get_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     GetImgReq.VideoSourceToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(GetImgReq.VideoSourceToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(GetImgReq.VideoSourceToken, dev->profile_tn[dev->st_type].v_src_sourcetoken, sizeof(char)*INFO_LENGTH);
-    //printf("[%s][%d]=============>>> VideoSourceToken: %s\n", __func__, __LINE__, GetImgReq.VideoSourceToken);
-    //printf("[%s][%d]=============>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
+    //printf("[%s][%d] => VideoSourceToken: %s\n", __func__, __LINE__, GetImgReq.VideoSourceToken);
+    //printf("[%s][%d] => soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
 
     soap_call___timg__GetImagingSettings(soap, soap_endpoint, soap_action, &GetImgReq, &GetImgResp);
     if (soap->error)
     {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-    	retval = soap->error;
+        printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+    	  retval = soap->error;
     }
     else
     {
@@ -3304,25 +3252,22 @@ int NVC_Get_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
         soap_endpoint = NULL;
     }
     destroy_soap(soap);
-    printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
     return 0;
 }
 
 int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
 {
-    printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-
-     if (dev->profile_tn == NULL 
-        || strlen(dev->profile_tn[dev->st_type].v_src_sourcetoken) < 1 
-        || dev->capa == NULL 
-        || dev->capa->img_capa == NULL
-        || strlen(dev->capa->img_capa->url) < 1)
-	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
-			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].profile_token);	
-		return -1;
-	}
-     
+   if (dev->profile_tn == NULL 
+      || strlen(dev->profile_tn[dev->st_type].v_src_sourcetoken) < 1 
+      || dev->capa == NULL 
+      || dev->capa->img_capa == NULL
+      || strlen(dev->capa->img_capa->url) < 1)
+  	{
+  		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %s\n"
+  			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].profile_token);	
+  		return -1;
+  	}
+       
     int retval = -1;
     struct _timg__SetImagingSettings SetImgReq;
     struct _timg__SetImagingSettingsResponse SetImgResp;
@@ -3333,7 +3278,7 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -3348,16 +3293,16 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     GetImgReq.VideoSourceToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(GetImgReq.VideoSourceToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(GetImgReq.VideoSourceToken, dev->profile_tn[dev->st_type].v_src_sourcetoken, sizeof(char)*INFO_LENGTH);
-    //printf("[%s][%d]=============>>> VideoSourceToken: %s\n", __func__, __LINE__, GetImgReq.VideoSourceToken);
-    //printf("[%s][%d]=============>>> soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
+    //printf("[%s][%d] => VideoSourceToken: %s\n", __func__, __LINE__, GetImgReq.VideoSourceToken);
+    //printf("[%s][%d] => soap_endpoint: %s\n", __func__, __LINE__, soap_endpoint);
     const char *_soap_action =  "http://www.onvif.org/ver20/imaging/wsdl/GetImagingSettings";
 
     soap_call___timg__GetImagingSettings(soap, soap_endpoint, _soap_action, &GetImgReq, &GetImgResp);
     if (soap->error)
     {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+        printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
     	retval = soap->error;
-        printf("[%s][%d]============>>> before set, get Img attr, get failed!!!, return %d\n", __func__, __LINE__, retval);
+        printf("[%s][%d] => before set, get Img attr, get failed!!!, return %d\n", __func__, __LINE__, retval);
         if (soap_endpoint)
         {
             free(soap_endpoint);
@@ -3372,7 +3317,7 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     SetImgReq.VideoSourceToken = (char *)soap_malloc(soap, sizeof(char)*INFO_LENGTH);
     memset(SetImgReq.VideoSourceToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(SetImgReq.VideoSourceToken, dev->profile_tn[dev->st_type].v_src_sourcetoken, sizeof(char)*INFO_LENGTH);
-    //printf("[%s][%d]==============>>> VideoSourceToken: %s\n", __func__, __LINE__, SetImgReq.VideoSourceToken);
+    //printf("[%s][%d] => VideoSourceToken: %s\n", __func__, __LINE__, SetImgReq.VideoSourceToken);
     
     SetImgReq.ForcePersistence_x0020 = (enum xsd__boolean_ *)soap_malloc(soap, sizeof(enum xsd__boolean_));
     *(SetImgReq.ForcePersistence_x0020) = _true;
@@ -3398,7 +3343,7 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     *(SetImgReq.ImagingSettings->Sharpness) = ((img_attr->max_sharpness - img_attr->min_sharpness) * (img_attr->sharpness / 255.0)) + 0.5;
         
     #if 1
-     fprintf(stderr, "[%s][%d]======>>> brightness: %f, contrast: %f, saturation: %f, sharpness: %f\n"
+     fprintf(stderr, "[%s][%d] => brightness: %f, contrast: %f, saturation: %f, sharpness: %f\n"
                 ,__func__, __LINE__
                 , *(SetImgReq.ImagingSettings->Brightness)
                 , *(SetImgReq.ImagingSettings->Contrast)
@@ -3511,7 +3456,7 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     soap_call___timg__SetImagingSettings(soap, soap_endpoint, soap_action, &SetImgReq, &SetImgResp);
     if (soap->error)
     {
-        printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+        printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
     	retval = soap->error;
     }
 
@@ -3523,7 +3468,7 @@ int NVC_Set_Img_attr_info(NVC_Dev_t *dev, NVC_Img_attr_t *img_attr)
     destroy_soap(soap);
     if (retval == 0)
     {
-        printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
+        printf("[%s][%d] => out OK!\n", __func__, __LINE__);
     }
     return 0;
 }
@@ -3542,7 +3487,7 @@ int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap)
         || dev->capa->media_capa == NULL
         || strlen(dev->capa->media_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token: %p\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].v_enc_token);	
 		return -1;
 	}
@@ -3551,7 +3496,7 @@ int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap)
 	soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
   if (soap == NULL)
   {
-      printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+      printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
       return -1;
   }
 
@@ -3570,7 +3515,7 @@ int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap)
     soap_call___trt__GetSnapshotUri(soap, soap_endpoint, soap_action, &SnapshotUriReq, &SnapshotUriResp);
     if (soap->error)
     {
-    	printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+    	printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
     	ret = soap->error; 
     	break;
     }
@@ -3586,7 +3531,7 @@ int NVC_Get_SnapshotUri(NVC_Dev_t *dev, NVC_Snapshot_t *snap)
           }
           else
           {
-              printf("[%s][%d]=====>>> GetSnapshotUri: Uri = NULL\n", __func__, __LINE__); 
+              printf("[%s][%d] => GetSnapshotUri: Uri = NULL\n", __func__, __LINE__); 
           }
       }
   	  break;
@@ -3611,16 +3556,14 @@ int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
   soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
   if (soap == NULL)
   {
-    printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+    printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
     return -1;
   }
   dev->get_tm = 0;
   
-  printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-  
   if (strlen(dev->ip) < 1 || dev->port == 0)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter! ip:[%s], port:[%d]\n"
+		printf("[%s][%s] => Error: Invalid parameter! ip:[%s], port:[%d]\n"
 			, __FILE__, __func__, dev->ip, dev->port);	
 		return -1;
 	}
@@ -3637,7 +3580,7 @@ int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
     soap_call___tds__GetSystemDateAndTime_(soap, soap_endpoint, soap_action, &GetSystemTime, &GetSystemTimeResp);
     if (soap->error)
     {
-      printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+      printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
       retval = soap->error;
       free(soap_endpoint);
       soap_endpoint = NULL;
@@ -3652,7 +3595,7 @@ int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
        { 
           if(GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ != NULL)
           {
-            printf("[%s]--->>> TZ=[%s]\n", __func__, GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ);
+            printf("[%s] => TZ=[%s]\n", __func__, GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ);
           }
        }
        
@@ -3679,7 +3622,7 @@ int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
   }while(0);
 #endif
   
-  printf("[%s][%d] ===>>> [%d-%d-%dT%d:%d:%dZ] TZ[%d]\n", __func__, __LINE__
+  printf("[%s][%d]  => [%d-%d-%dT%d:%d:%dZ] TZ[%d]\n", __func__, __LINE__
         , time->year, time->mon, time->day
         , time->hour, time->min, time->sec
         , time->zone);
@@ -3690,7 +3633,6 @@ int NVC_Get_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
     soap_endpoint = NULL;
   }
   destroy_soap(soap);
-  printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
   return 0;
 }
 
@@ -3706,15 +3648,13 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
   soap = creat_soap(&header, NULL, NULL, 5, 0, dev);
   if (soap == NULL)
   {
-    printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+    printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
     return -1;
   }
 
-  printf("[%s][%d]=====================>>> in\n", __func__, __LINE__);
-  
   if (strlen(dev->ip) < 1 || dev->port == 0)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter! ip:[%s], port:[%d]\n"
+		printf("[%s][%s] => Error: Invalid parameter! ip:[%s], port:[%d]\n"
 			, __FILE__, __func__, dev->ip, dev->port);	
 		return -1;
 	}
@@ -3759,7 +3699,7 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
     soap_call___tds__GetSystemDateAndTime_(soap, soap_endpoint, soap_action, &GetSystemTime, &GetSystemTimeResp);
     if (soap->error)
     {
-      printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+      printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
       retval = soap->error;
       free(soap_endpoint);
       soap_endpoint = NULL;
@@ -3774,7 +3714,7 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
        { 
           if(GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ != NULL)
           {
-            printf("[%s]--->>> IPC TZ=[%s]\n", GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ);
+            printf("[%s] => IPC TZ=[%s]\n", GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ);
             strcpy(SetSystemDateAndTime.TimeZone->TZ, GetSystemTimeResp.SystemDateAndTime->TimeZone->TZ);
           }
           else
@@ -3799,12 +3739,12 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
   soap_call___tds__SetSystemDateAndTime_(soap, soap_endpoint, soap_action, &SetSystemDateAndTime, &SetSystemDateAndTimeResp);
   if (soap->error)
   {
-    printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+    printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
     retval = soap->error;
   }
   else
   {
-    printf("[%s][%s][Line:%d]--->>>Set system time OK!\n", __FILE__, __func__, __LINE__); 
+    printf("[%s][%s][Line:%d] =>Set system time OK!\n", __FILE__, __func__, __LINE__); 
   }
 
   if (soap_endpoint)
@@ -3813,7 +3753,6 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
     soap_endpoint = NULL;
   }
   destroy_soap(soap);
-  printf("[%s][%d]=====================>>> out OK!\n", __func__, __LINE__);
   return 0;
 }
 
@@ -3821,16 +3760,15 @@ int NVC_Set_SystemTime(NVC_Dev_t *dev, NVC_time_t *time)
 int NVC_PTZ_Cruise_Begin(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 {
 
-    struct soap *soap = NULL;
+  struct soap *soap = NULL;
 	int retval = 0;
 	struct _tptz__SetPreset tptz_SetPresetreq;
-    struct _tptz__SetPresetResponse tptz_SetPresetresp;
+  struct _tptz__SetPresetResponse tptz_SetPresetresp;
 
 	memset(&tptz_SetPresetreq,  0, sizeof(struct _tptz__SetPreset));
-    memset(&tptz_SetPresetresp, 0, sizeof(struct _tptz__SetPresetResponse));
+  memset(&tptz_SetPresetresp, 0, sizeof(struct _tptz__SetPresetResponse));
 
-    printf("[%s]----->>>> in\n", __func__);
-    
+
 	if (dev == NULL 
         || dev->profile_tn == NULL 
         || strlen(dev->profile_tn[dev->st_type].PTZ_parm_token) < 1
@@ -3838,7 +3776,7 @@ int NVC_PTZ_Cruise_Begin(NVC_Dev_t * dev, PTZ_Preset_t * preset)
         || dev->capa->PTZ_capa == NULL 
         || strlen(dev->capa->PTZ_capa->url) < 1)
 	{
-		printf("[%s][%s]--->>> Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
+		printf("[%s][%s] => Error: Invalid parameter!dev->profile_tn: %p, dev->profile_tn->profile_token:[%s]\n"
 			, __FILE__, __func__, dev->profile_tn, dev->profile_tn[dev->st_type].PTZ_parm_token);	
 		return -1;
 	}
@@ -3848,7 +3786,7 @@ int NVC_PTZ_Cruise_Begin(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     soap = creat_soap(&header, NULL, NULL, dev->timeout, 0, dev);
     if (soap == NULL)
     {
-        printf("[%s][%d]===================>>> creat_soap failed!\n", __func__, __LINE__);
+        printf("[%s][%d] => creat_soap failed!\n", __func__, __LINE__);
         return -1;
     }
 
@@ -3857,7 +3795,7 @@ int NVC_PTZ_Cruise_Begin(NVC_Dev_t * dev, PTZ_Preset_t * preset)
 
     const char *soap_action = "http://www.onvif.org/ver20/ptz/wsdl/SetPreset";
     
-    printf("[%s][%d]===> profiletoken: %s, preset => name: %s, token: %s\n"
+    printf("[%s][%d] => profiletoken: %s, preset => name: %s, token: %s\n"
         , __func__, __LINE__
         , dev->profile_tn[dev->st_type].profile_token
         , preset->name
@@ -3875,38 +3813,34 @@ int NVC_PTZ_Cruise_Begin(NVC_Dev_t * dev, PTZ_Preset_t * preset)
     memset(tptz_SetPresetreq.PresetToken, 0, sizeof(char)*INFO_LENGTH);
     strncpy(tptz_SetPresetreq.PresetToken, preset->token, sizeof(char)*INFO_LENGTH);
 
-    printf("[%s][%d]===> tptz_SetPresetreq => profiletoken: %s, name: %s\n"    
+    printf("[%s][%d] => tptz_SetPresetreq => profiletoken: %s, name: %s\n"    
         , __func__, __LINE__
         , tptz_SetPresetreq.ProfileToken
         , tptz_SetPresetreq.PresetName);
 
     do
     {
-        soap_call___tptz__SetPreset(soap, soap_endpoint, soap_action, &tptz_SetPresetreq, &tptz_SetPresetresp);
-        if (soap->error)
-        {
-            printf("[%s][%s][Line:%d]--->>> soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
-			retval = soap->error; 
-			break;
-		}
-		else 
-		{
-		    #if 0
-		    strncpy(tptz_SetPresetreq.PresetToken, tptz_SetPresetresp.PresetToken, sizeof(char)*INFO_LENGTH);
-		    memset(preset->token, 0, sizeof(preset->token));
-            strncpy(preset->token, tptz_SetPresetreq.PresetToken, sizeof(preset->token));
-            #endif
-			break;
-		}
+      soap_call___tptz__SetPreset(soap, soap_endpoint, soap_action, &tptz_SetPresetreq, &tptz_SetPresetresp);
+      if (soap->error)
+      {
+          printf("[%s][%s][Line:%d] => soap error: %d, %s, %s\n",__FILE__, __func__, __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap)); 
+    			retval = soap->error; 
+    			break;
+  		}
+  		else 
+  		{
+  		    #if 0
+  		    strncpy(tptz_SetPresetreq.PresetToken, tptz_SetPresetresp.PresetToken, sizeof(char)*INFO_LENGTH);
+  		    memset(preset->token, 0, sizeof(preset->token));
+              strncpy(preset->token, tptz_SetPresetreq.PresetToken, sizeof(preset->token));
+          #endif
+  			  break;
+  		}
     }while(0);
 
     free(soap_endpoint);
-	soap_endpoint = NULL;
-	destroy_soap(soap);
-    
-    printf("[%s]----->>>> out\n", __func__);
-
-    
+	  soap_endpoint = NULL;
+	  destroy_soap(soap);
     return 0;
 }
 #endif
