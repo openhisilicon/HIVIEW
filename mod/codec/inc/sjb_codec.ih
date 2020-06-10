@@ -47,17 +47,20 @@ STRUCT(gsf_vi_t)
   FIELD(int, res);
 };
 
-//GSF_CODEC_IPC_CHN
+
 STRUCT(gsf_codec_ipc_t)
 {
+  //1
   FIELD(gsf_vi_t,    vi);
   FIELD(gsf_aenc_t,  aenc);
+  //2
   ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
   ARRAY(gsf_osd_t,   osd,   GSF_CODEC_OSD_NUM);
   ARRAY(gsf_vmask_t, vmask, GSF_CODEC_VMASK_NUM); 
+  //3
 };
 
-//GSF_CODEC_NVR_CHN
+
 STRUCT(gsf_codec_nvr_t)
 {
   FIELD(int, resolu);

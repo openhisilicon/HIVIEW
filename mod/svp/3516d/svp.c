@@ -57,7 +57,10 @@ HI_VOID SAMPLE_IVE_HandleSig2(HI_S32 s32Signo)
 {
   signal(SIGINT,SIG_IGN);
   signal(SIGTERM,SIG_IGN);
-  SAMPLE_IVE_Md_HandleSig();
+  
+  //SAMPLE_IVE_Md_HandleSig();
+  extern int lpr_stop(); lpr_stop();
+  
   exit(-1);
 }
 
@@ -84,7 +87,9 @@ int main(int argc, char *argv[])
     svp_pub = nm_pub_listen(GSF_PUB_SVP);
     
     printf("init algorithm library...\n");
-    SAMPLE_IVE_Md();
+    //SAMPLE_IVE_Md();
+    
+    extern int lpr_start(); lpr_start();
     
     //init listen;
     GSF_LOG_CONN(0, 100);

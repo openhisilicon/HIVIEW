@@ -18,6 +18,7 @@ extern void* svp_pub;
 #include "sample_comm_ive.h"
 #include "ivs_md.h"
 
+
 #define SAMPLE_IVE_MD_IMAGE_NUM 2
 
 typedef struct hiSAMPLE_IVE_MD_S
@@ -113,7 +114,7 @@ static HI_VOID * SAMPLE_IVE_MdProc(HI_VOID * pArgs)
     HI_S32 s32MilliSec = 20000;
     MD_CHN MdChn = 0;
     VO_LAYER voLayer = 0;
-	VO_CHN voChn = 0;
+	  VO_CHN voChn = 0;
     HI_BOOL bInstant = HI_TRUE;
     HI_S32 s32CurIdx = 0;
     HI_BOOL bFirstFrm = HI_TRUE;

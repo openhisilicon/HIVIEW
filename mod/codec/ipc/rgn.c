@@ -318,16 +318,13 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
     
-    
+    info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
+    info->osdH = info->fontH * info->lineN + 1;
+      
     if(osd->wh[0] && osd->wh[1])
     {
-       info->osdW = ALIGN_UP(osd->wh[0], 2);
-       info->osdH = ALIGN_UP(osd->wh[1], 2);
-    }
-    else
-    {
-      info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
-      info->osdH = info->fontH * info->lineN + 1;
+       info->osdW = (osd->wh[0] > info->osdW)?ALIGN_UP(osd->wh[0], 2):info->osdW;
+       info->osdH = (osd->wh[1] > info->osdH)?ALIGN_UP(osd->wh[1], 2):info->osdH;
     }
     
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(info->osdW, 2);
