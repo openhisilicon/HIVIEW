@@ -70,10 +70,10 @@ static void* lpr_task(void* p)
       HI_CHAR* pVirAddr = (HI_CHAR*) HI_MPI_SYS_Mmap(stExtFrmInfo.stVFrame.u64PhyAddr[0], u32Size); 
 
       LPR_RECT rcRange;
-    	rcRange.m_iLeft= 0;
-    	rcRange.m_iTop= 0;
-    	rcRange.m_iRight = stExtFrmInfo.stVFrame.u32Width;	
-    	rcRange.m_iBottom = stExtFrmInfo.stVFrame.u32Height;
+    	rcRange.m_iLeft= 0 + 200;
+    	rcRange.m_iTop= 0 + 200;
+    	rcRange.m_iRight = stExtFrmInfo.stVFrame.u32Width - 200;	
+    	rcRange.m_iBottom = stExtFrmInfo.stVFrame.u32Height - 200;
 
       LPR_Result LPRResult[3];
   	  int PlateNum = 3;
