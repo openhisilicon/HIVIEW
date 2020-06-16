@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     }
     info("parm.ipaddr:%s\n", bsp_parm.eth.ipaddr);
 
-    wdg_open();    
+    // maohw wdg_open();    
     netinf_init();
     rtc_init();
     zone_set(bsp_parm.base.zone);

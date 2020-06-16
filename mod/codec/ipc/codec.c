@@ -90,6 +90,7 @@ static int sub_recv(char *msg, int size, int err)
     gsf_svp_lprs_t *lprs = (gsf_svp_lprs_t*) pmsg->data;
     
     int i = 0;
+    //lprs->cnt = 1;
     for(i = 0; i < 4 && i < lprs->cnt; i++)
     {
       
@@ -101,13 +102,14 @@ static int sub_recv(char *msg, int size, int err)
       osd.type = 0;
       osd.fontsize = 1;
 
-      osd.point[0] = (unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
-      osd.point[1] = (unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
+      osd.point[0] = 0;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
+      osd.point[1] = 800+i*100;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
       osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*1920)&(-1);
       osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*1080)&(-1);
       
       char utf8str[32] = {0};
-      sprintf(osd.text, "%s", gsf_gb2312_to_utf8(lprs->result[i].number, strlen(lprs->result[i].number), utf8str));
+      gsf_gb2312_to_utf8(lprs->result[i].number, strlen(lprs->result[i].number), utf8str);
+      sprintf(osd.text, "%s", utf8str);
       
       printf("GSF_EV_SVP_LPR idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
             , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);

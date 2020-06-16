@@ -32,7 +32,12 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 
 int vo_ly(int num)
 {
+  #if defined(GSF_CPU_3559a)
+  static int lt = 4;
+  #else
   static int lt = 1;
+  #endif
+  
   static int voch[GSF_CODEC_NVR_CHN] = {0,1,2,3};
   
   GSF_MSG_DEF(gsf_layout_t, ly, 8*1024);
@@ -54,7 +59,13 @@ int vo_ly(int num)
   printf("lt:%d, voch[%d,%d,%d,%d]\n", lt, voch[0], voch[1], voch[2], voch[3]);
 
   ly->layout = lt;
+  
+  #if defined(GSF_CPU_3559a)
+  live_get_shmid(ly->layout, voch, 0, ly->shmid);
+  #else
   live_get_shmid(ly->layout, voch, lt>1?1:0, ly->shmid);
+  #endif
+  
   int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VOLY, 0, SET, 0
                         , sizeof(gsf_layout_t)
                         , GSF_IPC_CODEC, 2000);
@@ -140,13 +151,16 @@ int main(int argc, char *argv[])
     // joint multiple mods to works;
     
     #ifdef GSF_DEV_NVR
+    #warning "...... GSF_DEV_NVR defined ......"
+    
     live_mon();
-    kbd_mon("/dev/ttyAMA2");
+    
+    //kbd_mon("/dev/ttyAMA2");
     
     extern int lvgl_stop(void);
     extern int lvgl_start(int w, int h);
+    //lvgl_start(1280, 1024);
     
-    lvgl_start(1280, 1024);
     #endif
      
      
@@ -160,12 +174,11 @@ int main(int argc, char *argv[])
     reg2bsp();
     
     void* sub = nm_sub_conn(GSF_PUB_BSP, sub_recv);
-         
+
     while(1)
-    {                        
+    {
       sleep(5);
     }
-    
     
     GSF_LOG_DISCONN();
 

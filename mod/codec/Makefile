@@ -18,7 +18,7 @@ INCS := -I$(HOME) -I$(GSF_DEV_TYPE) -Iinc \
 SRCS := $(shell find $(GSF_DEV_TYPE) -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lm
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lpthread -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lm
          
 ifeq ($(GSF_CPU_ARCH), 3516a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog -l_iniparser \
@@ -34,7 +34,7 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lh
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lhive_RES -laacenc -laacdec
 else ifeq ($(GSF_CPU_ARCH), 3559a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
-        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lhive_RES -laacenc -laacdec
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lhive_RES -laacenc -laacdec -ltde
 else ifeq ($(GSF_CPU_ARCH), 3536d)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lmpi -lhdmi -laacenc -laacdec -ljpeg6b -ltde -lVoiceEngine -ldnvqe -lupvqe \
         -lpthread

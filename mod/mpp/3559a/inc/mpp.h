@@ -42,7 +42,7 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 //HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 
-
+//venc;
 typedef struct {
   VENC_CHN        VencChn;
   VPSS_GRP        VpssGrp;
@@ -119,6 +119,87 @@ typedef struct {
 
 int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn);
 int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap);
+
+
+
+//vodev;
+enum {
+  VODEV_HD0 = 0,  // UHD视频设备
+  VODEV_HD1 = 1,  // HD视频设备
+};
+
+//启动视频输出设备;
+int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wbc);
+
+//停止视频输出设备
+int gsf_mpp_vo_stop(int vodev);
+
+//vofb;
+enum {
+  VOFB_GUI   = 0, // GUI Layer
+  VOFB_GUI1  = 1, // GUI1 Layer
+  VOFB_MOUSE = 2, // MOUSE Layer
+  VOFB_BUTT
+};
+// FB层操作
+int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide);
+
+//volayer;
+enum {
+  VOLAYER_HD0 = 0,  // 视频层0
+  VOLAYER_HD1 = 1,  // 视频层1
+  VOLAYER_PIP = 2,  // PIP层
+  VOLAYER_BUTT
+};
+
+// 显示通道布局
+typedef enum {
+  VO_LAYOUT_NONE  = 0, VO_LAYOUT_10MUX = 10,
+  VO_LAYOUT_1MUX  = 1, VO_LAYOUT_12MUX = 12,
+  VO_LAYOUT_4MUX  = 4, VO_LAYOUT_16MUX = 16,
+  VO_LAYOUT_6MUX  = 6, VO_LAYOUT_25MUX = 25,
+  VO_LAYOUT_8MUX  = 8, VO_LAYOUT_36MUX = 36,
+  VO_LAYOUT_9MUX  = 9, VO_LAYOUT_64MUX = 64,
+  VO_LAYOUT_BUTT
+}VO_LAYOUT_E;
+
+//创建图像层显示通道;
+int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect);
+
+
+//vdec;
+//解码数据帧属性
+typedef struct {
+    int size;     // data size;
+    int ftype;    // frame type;
+    int etype;    // PAYLOAD_TYPE_E;
+    int width;    // width;
+    int height;   // height;
+    int au_chs;   // audio channels;
+    unsigned long long pts; // timestamp;
+}gsf_mpp_frm_attr_t;
+
+//发送视频数据到显示通道(创建VDEC通道)
+int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+
+//解码状态;
+typedef struct {
+    int left_byte;    // vdec
+    int left_frame;   // vdec
+    int left_pics;    // vdec
+    int bufused;      // vo
+}gsf_mpp_vo_stat_t;
+
+//获取解码显示状态
+int gsf_mpp_vo_stat(int volayer, int ch, gsf_mpp_vo_stat_t *stat);
+//设置解码显示FPS
+int gsf_mpp_vo_setfps(int volayer, int ch, int fps);
+//清除解码显示BUFF
+int gsf_mpp_vo_clear(int volayer, int ch);
+
+
+
+
 
 
 //private for mpp;

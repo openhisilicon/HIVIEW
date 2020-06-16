@@ -176,6 +176,8 @@ static void* live_task(void *parm)
         extern int vo_ly(int num); vo_ly(0);
       }
       
+      //printf("i:%d, en:%d, host:[%s], onvif:%d, rtsp:%d\n", i, gmng.chsrc[i].en, gmng.chsrc[i].host, gmng.onvif[i], gmng.rtsp[i][0]);
+            
       if(gmng.chsrc[i].en)
       {
         if(strlen(gmng.chsrc[i].host) > 0 && gmng.onvif[i] == 0)

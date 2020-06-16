@@ -83,10 +83,14 @@ int main(int argc, char *argv[])
     }
     
     #endif
-    
-    gsf_mpp_cfg("", NULL);
-    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
-    gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1280x1024_60, 0);
+    #if defined(GSF_CPU_3559a)
+    gsf_mpp_cfg("/mnt/app/59a", NULL);
+	#else
+	gsf_mpp_cfg("/vap/app", NULL);
+	#endif
+    //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
+    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
+    gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
     
     live_mon();
     
