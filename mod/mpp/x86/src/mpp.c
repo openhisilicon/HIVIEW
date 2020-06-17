@@ -8,7 +8,7 @@ int SENSOR_TYPE;
 int (*sensor_set_inifile_path)(const char *pcPath);
 int (*sensor_register_callback)(void);
 
-int gsf_mpp_cfg(gsf_mpp_cfg_t *cfg)
+int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
   SENSOR_TYPE = cfg->sensor_type;
   sensor_set_inifile_path  = NULL;

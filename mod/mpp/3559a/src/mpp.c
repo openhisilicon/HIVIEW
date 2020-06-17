@@ -846,7 +846,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     /*** enable vpss chn, with frame ***/
     stChnAttr.u32Width                    = ALIGN_UP(attr->width,  16);
     stChnAttr.u32Height                   = ALIGN_UP(attr->height, 16);
-    stChnAttr.enChnMode                   = VPSS_CHN_MODE_AUTO;
+    stChnAttr.enChnMode                   = VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER;
     stChnAttr.enCompressMode              = COMPRESS_MODE_SEG;
     stChnAttr.enDynamicRange              = DYNAMIC_RANGE_SDR8;
     stChnAttr.enPixelFormat               = PIXEL_FORMAT_YVU_SEMIPLANAR_420;

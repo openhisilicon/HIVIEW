@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "inc/gsf.h"
+#include "fw/comm/inc/proc.h"
 #include "mod/bsp/inc/bsp.h"
 
 #include "codec.h"
@@ -83,11 +84,13 @@ int main(int argc, char *argv[])
     }
     
     #endif
-    #if defined(GSF_CPU_3559a)
-    gsf_mpp_cfg("/mnt/app/59a", NULL);
-	#else
-	gsf_mpp_cfg("/vap/app", NULL);
-	#endif
+    
+    char home_path[256] = {0};
+    proc_absolute_path(home_path);
+    sprintf(home_path, "%s/../", home_path);
+    printf("home_path:[%s]\n", home_path);
+    gsf_mpp_cfg(home_path, NULL);
+    
     //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
     gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
     gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);

@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "inc/gsf.h"
+#include "fw/comm/inc/proc.h"
 #include "mod/bsp/inc/bsp.h"
 #include "mod/svp/inc/svp.h"
 #include "codec.h"
@@ -334,8 +335,12 @@ int main(int argc, char *argv[])
     };
     
     strcpy(cfg.snsname, bsp_def.board.sensor[0]);
-    
-    gsf_mpp_cfg(NULL, &cfg);
+
+    char home_path[256] = {0};
+    proc_absolute_path(home_path);
+    sprintf(home_path, "%s/../", home_path);
+    printf("home_path:[%s]\n", home_path);
+    gsf_mpp_cfg(home_path, &cfg);
     
     // vi start;
     gsf_mpp_vi_t vi = {
@@ -365,8 +370,10 @@ int main(int argc, char *argv[])
     gsf_mpp_vpss_start(&vpss);
 
     // scene start;
-    char scene_ini[128];
-    sprintf(scene_ini, "/var/app/cfg/%s.ini", bsp_def.board.sensor[0]);
+    char scene_ini[128] = {0};
+    proc_absolute_path(scene_ini);
+    sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, bsp_def.board.sensor[0]);
+    
     gsf_mpp_scene_start(scene_ini, 0);
 
     venc_start(1);

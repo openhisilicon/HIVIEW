@@ -77,8 +77,8 @@ static int layer2vdev[VO_MAX_LAYER_NUM] = {
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
   
-  char loadstr[64];
-  sprintf(loadstr, "/var/app/ko/load3536dv100 -i");
+  char loadstr[128];
+  sprintf(loadstr, "%s/ko/load3536dv100 -i", path);
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   

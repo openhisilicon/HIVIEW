@@ -11,7 +11,7 @@ typedef struct {
   int   fps;          // frame rate
 }gsf_mpp_cfg_t;
 
-int gsf_mpp_cfg(gsf_mpp_cfg_t *cfg);
+int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
 
 int gsf_mpp_isp_init();
 int gsf_mpp_isp_run();

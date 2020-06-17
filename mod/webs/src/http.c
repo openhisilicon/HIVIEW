@@ -10,6 +10,7 @@
 #include <stdarg.h>
 
 #include "inc/gsf.h"  // "fw/comm/inc/list.h" define LIST_HEAD;
+#include "fw/comm/inc/proc.h"
 #include "fw/libflv/inc/flv-muxer.h"
 #include "mongoose.h" // src/mongoose.h:2644:0: warning: "LIST_HEAD" redefined
 
@@ -733,9 +734,12 @@ static void* ws_task(void* parm)
     return NULL;
   }
   
-  
+  char www_path[128] = {0};
+  proc_absolute_path(www_path);
+  sprintf(www_path, "%s/../www", www_path);
+  printf("www_path:[%s]\n", www_path);
   s_http_server_opts.auth_domain = "MyRealm";
-  s_http_server_opts.document_root = "/var/app/www";  // Serve current directory
+  s_http_server_opts.document_root = www_path;  // Serve current directory
   
   mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL)); // upgrade;
   mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL)); // config;

@@ -60,7 +60,7 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
 
 static void * dl = NULL;
 
-int gsf_mpp_cfg(gsf_mpp_cfg_t *cfg)
+int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
   char snsstr[64];
   sprintf(snsstr, "%s-%d-0-%d-%d"

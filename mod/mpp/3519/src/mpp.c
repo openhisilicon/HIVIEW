@@ -90,8 +90,8 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
     return -1;
   } 
   
-  char loadstr[64];
-  sprintf(loadstr, "/var/app/ko/load3519v101 -i -sensor0 %s -offline", cfg->snsname);
+  char loadstr[128];
+  sprintf(loadstr, "%s/ko/load3519v101 -i -sensor0 %s -offline", path, cfg->snsname);
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
