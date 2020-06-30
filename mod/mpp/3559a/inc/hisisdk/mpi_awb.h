@@ -1,19 +1,10 @@
-/******************************************************************************
+/*
+* Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+* Description:
+* Author: Hisilicon multimedia software group
+* Create: 2011/06/28
+*/
 
-  Copyright (C), 2016, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : mpi_awb.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 2012/12/19
-  Description   :
-  History       :
-  1.Date        : 2012/12/19
-    Author      :
-    Modification: Created file
-
-******************************************************************************/
 #ifndef __MPI_AWB_H__
 #define __MPI_AWB_H__
 
@@ -54,7 +45,8 @@ HI_S32 HI_MPI_ISP_SetSpecAwbAttr(VI_PIPE ViPipe, const ISP_SPECAWB_ATTR_S *pstSp
 HI_S32 HI_MPI_ISP_SetCaaControlAttr(VI_PIPE ViPipe, const ISP_SPECAWB_CAA_CONTROl_S *pstSpecAwbCaaAttr);
 HI_S32 HI_MPI_ISP_GetCaaControlAttr(VI_PIPE ViPipe, ISP_SPECAWB_CAA_CONTROl_S *pstSpecAwbCaaAttr);
 HI_S32 HI_MPI_ISP_GetSpecAwbAttr(VI_PIPE ViPipe, ISP_SPECAWB_ATTR_S *pstSpecAwbAttr);
-
+HI_S32 HI_MPI_ISP_SetSpecAwbControlAttr(VI_PIPE ViPipe, ISP_SPECAWB_CONTROL_ATTR_S *pstSpecAwbControlAttr);
+HI_S32 HI_MPI_ISP_GetSpecAwbControlAttr(VI_PIPE ViPipe, ISP_SPECAWB_CONTROL_ATTR_S *pstSpecAwbControlAttr);
 
 #ifdef __cplusplus
 #if __cplusplus

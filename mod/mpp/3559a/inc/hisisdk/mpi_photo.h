@@ -23,21 +23,17 @@
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
-
-
-HI_S32 HI_MPI_PHOTO_AlgInit(PHOTO_ALG_TYPE_E enAlgType, const PHOTO_ALG_INIT_S* pstPhotoInit);
+HI_S32 HI_MPI_PHOTO_AlgInit(PHOTO_ALG_TYPE_E enAlgType, const PHOTO_ALG_INIT_S *pstPhotoInit);
 HI_S32 HI_MPI_PHOTO_AlgDeinit(PHOTO_ALG_TYPE_E enAlgType);
 
-HI_S32 HI_MPI_PHOTO_AlgProcess(PHOTO_ALG_TYPE_E enAlgType, const PHOTO_ALG_ATTR_S* pstPhotoAttr);
+HI_S32 HI_MPI_PHOTO_AlgProcess(PHOTO_ALG_TYPE_E enAlgType, const PHOTO_ALG_ATTR_S *pstPhotoAttr);
 
-HI_S32 HI_MPI_PHOTO_SetAlgCoef(PHOTO_ALG_TYPE_E enAlgType, const PHOTO_ALG_COEF_S* pstAlgCoef);
-HI_S32 HI_MPI_PHOTO_GetAlgCoef(PHOTO_ALG_TYPE_E enAlgType, PHOTO_ALG_COEF_S* pstAlgCoef);
-
-
+HI_S32 HI_MPI_PHOTO_SetAlgCoef(PHOTO_ALG_TYPE_E enAlgType, const PHOTO_ALG_COEF_S *pstAlgCoef);
+HI_S32 HI_MPI_PHOTO_GetAlgCoef(PHOTO_ALG_TYPE_E enAlgType, PHOTO_ALG_COEF_S *pstAlgCoef);
 
 #ifdef __cplusplus
 #if __cplusplus

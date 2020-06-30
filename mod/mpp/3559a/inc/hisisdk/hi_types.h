@@ -1,7 +1,7 @@
 /******************************************************************************
  Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
 ******************************************************************************
-File Name     : hi_type.h
+File Name     : hi_types.h
 Version       : Initial Draft
 Author        : Hisilicon multimedia software group
 Created       : 2005/4/23
@@ -17,7 +17,7 @@ History       :
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
@@ -27,12 +27,6 @@ extern "C"{
 /*************************** Structure Definition ****************************/
 /** \addtogroup      Common_TYPE */
 /** @{ */  /** <!-- [Common_TYPE] */
-
-
-typedef unsigned long           HI_SIZE_T;
-typedef unsigned long           HI_LENGTH_T;
-
-typedef HI_U32                  HI_HANDLE;
 
 /**
 
@@ -46,7 +40,7 @@ bit31                                                           bit0
 mod defined data: private data define by each module(for example: sub-mod id), usually, set to 0.
 */
 
-#define HI_HANDLE_MAKEHANDLE(mod, privatedata, chnid)  (HI_HANDLE)( (((mod)& 0xffff) << 16) | ((((privatedata)& 0xff) << 8) ) | (((chnid) & 0xff)) )
+#define HI_HANDLE_MAKEHANDLE(mod, privatedata, chnid)  (hi_handle)( (((mod)& 0xffff) << 16) | ((((privatedata)& 0xff) << 8) ) | (((chnid) & 0xff)) )
 
 #define HI_HANDLE_GET_MODID(handle)     (((handle) >> 16) & 0xffff)
 #define HI_HANDLE_GET_PriDATA(handle)   (((handle) >> 8) & 0xff)

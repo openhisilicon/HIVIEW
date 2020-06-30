@@ -36,15 +36,16 @@ static int rtsp_ondescribe(void* ptr, rtsp_server_t* rtsp, const char* uri)
 		"t=0 0\n"
 		"a=control:*\n";
 
-  int sid = 0;
+  int ch = 0, sid = 0;
   char filename[256] = {0};
 	rtsp_uri_parse(uri, filename);
 	printf("%s => ptr:%p, uri:[%s], filename[%s]\n", __func__, ptr, uri, filename);
-  sscanf(filename, "/%d", &sid);
-  sid = (sid-1 > 0)?sid-1:0; 
+  sscanf(filename, "/%d/%d", &ch, &sid);
+  ch  = (ch < 0 || ch > 255)?0:ch;
+  sid = (sid < 0 || sid > 255)?0:sid; 
   
   if(!sess->media)
-    sess->media = rtp_media_live_new(0, sid);
+    sess->media = rtp_media_live_new(ch, sid);
   	
   char sdp[2048] = {0};
   snprintf(sdp, sizeof(sdp), pattern_live, ntp64_now(), ntp64_now(), "0.0.0.0", uri);

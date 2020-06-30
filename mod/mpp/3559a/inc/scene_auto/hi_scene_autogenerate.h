@@ -50,6 +50,7 @@ typedef struct hiSCENE_MODULE_STATE_S
     HI_BOOL bStaticCSC;
     HI_BOOL bDyanamicGamma;
     HI_BOOL bDynamicShading;
+    HI_BOOL bDynamicIsoVenc;
     HI_BOOL bDynamicLdci;
     HI_BOOL bDynamicAE;
     HI_BOOL bDynamicDehaze;
@@ -254,6 +255,14 @@ typedef struct hiSCENE_DYNAMIC_SHADING_S
     HI_U16 au16ManualStrength[HI_SCENE_SHADING_EXPOSURE_MAX_COUNT];
 } HI_SCENE_DYNAMIC_SHADING_S;
 
+typedef struct hiSCENE_DYNAMIC_VENCBITRATE_S
+{
+    HI_BOOL bEnable;
+    HI_U32 u32IsoThreshCnt;
+    HI_U32 au32IsoThreshLtoH[HI_SCENE_SHADING_EXPOSURE_MAX_COUNT];
+    HI_U16 au16ManualPercent[HI_SCENE_SHADING_EXPOSURE_MAX_COUNT];
+} HI_SCENE_DYNAMIC_VENCBITRATE_S;
+
 typedef struct hiSCENE_DYNAMIC_LDCI_S
 {
     HI_U32 u32EnableCnt;
@@ -350,6 +359,7 @@ typedef struct hiSCENE_PIPE_PARAM_S
     HI_SCENE_STATIC_SATURATION_S stStaticSaturation;
     HI_SCENE_DYNAMIC_AE_S stDynamicAe;
     HI_SCENE_DYNAMIC_SHADING_S stDynamicShading;
+    HI_SCENE_DYNAMIC_VENCBITRATE_S stDynamicVencBitrate;
     HI_SCENE_DYNAMIC_LDCI_S stDynamicLDCI;
     HI_SCENE_DYNAMIC_DEHAZE_S stDynamicDehaze;
     HI_SCENE_DYNAMIC_FSWDR_S stDynamicFSWDR;
@@ -405,6 +415,8 @@ HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI
 
 HI_S32 HI_SCENE_SetDynamicShading_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64ISO, HI_U64 u64LastISO, HI_U8 u8Index);
 
+HI_S32 HI_SCENE_SetDynamicVencBitrate_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64ISO, HI_U64 u64LastISO, HI_U8 u8Index);
+
 HI_S32 HI_SCENE_SetDynamicLDCI_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI_U64 u64LastExposure, HI_U8 u8Index);
 
 HI_S32 HI_SCENE_SetDynamicFalseColor_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI_U64 u64LastExposure, HI_U8 u8Index);
@@ -433,7 +445,7 @@ HI_S32 HI_SCENE_SetPause_AutoGenerate(HI_BOOL bPause);
 
 HI_S32 HI_SCENE_GetPipeAERoute_AutoGenerate(HI_S32 s32PipeIndex, HI_U8 au8AEWeight[][AE_ZONE_COLUMN]);
 
-
+HI_S32 HI_SCENE_SetRCParam_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index);
 
 #ifdef __cplusplus
 #if __cplusplus

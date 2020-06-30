@@ -79,7 +79,11 @@ int main(int argc, char *argv[])
 
     {
       nvt_parm_t* parm = (nvt_parm_t*)calloc(1, sizeof(nvt_parm_t));
+      #if defined(GSF_CPU_3559a)
+      parm->ch_num = 4;
+      #else
       parm->ch_num = 1;
+      #endif
       parm->port = 8000;
       //parm->msg_cb = NULL;
       nvt_init(parm);

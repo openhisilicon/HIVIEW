@@ -140,6 +140,7 @@ extern "C" {
 typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
+    PIC_360P,      /* 640 * 360 */
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
     PIC_720P,	   /* 1280 * 720  */
@@ -152,6 +153,7 @@ typedef enum hiPIC_SIZE_E
     PIC_3000x3000,
     PIC_4000x3000,
     PIC_7680x4320,
+    PIC_7680x1080,  //maohw
     PIC_3840x8640,
     PIC_BUTT
 } PIC_SIZE_E;
@@ -160,6 +162,7 @@ typedef enum hiSAMPLE_SNS_TYPE_E
 {
     SONY_IMX477_MIPI_12M_30FPS_12BIT,
     SONY_IMX477_MIPI_9M_50FPS_10BIT,
+    SONY_IMX477_MIPI_9M_60FPS_10BIT,
     SONY_IMX477_MIPI_8M_60FPS_12BIT,
     SONY_IMX477_MIPI_8M_30FPS_12BIT,
     SONY_IMX290_MIPI_2M_30FPS_12BIT,
@@ -172,6 +175,7 @@ typedef enum hiSAMPLE_SNS_TYPE_E
     SONY_IMX277_SLVS_8M_60FPS_12BIT,
     SONY_IMX277_SLVS_12M_30FPS_12BIT,
     SONY_IMX277_SLVS_2M_240FPS_12BIT,
+    COMSIS_SHARP8K_SLVDS_8K_30FPS_12BIT,
     SAMPLE_SNS_TYPE_BUTT,
 } SAMPLE_SNS_TYPE_E;
 
@@ -368,8 +372,8 @@ typedef struct hiVDEC_THREAD_PARAM_S
 
 typedef struct hiSAMPLE_VDEC_BUF
 {
-    HI_U32  u32PicBufSzie;
-    HI_U32  u32TmvBufSzie;
+    HI_U32  u32PicBufSize;
+    HI_U32  u32TmvBufSize;
     HI_BOOL bPicBufAlloc;
     HI_BOOL bTmvBufAlloc;
 }SAMPLE_VDEC_BUF;
@@ -404,17 +408,6 @@ typedef struct hiSAMPLE_VDEC_ATTR
     };
 }SAMPLE_VDEC_ATTR;
 
-typedef struct hiSAMPLE_VB_BASE_INFO_S
-{
-    PIXEL_FORMAT_E      enPixelFormat;
-    HI_U32              u32Width;
-    HI_U32              u32Height;
-    HI_U32              u32Align;
-    DYNAMIC_RANGE_E     enDynamicRange;
-    COMPRESS_MODE_E     enCompressMode;
-    VIDEO_FORMAT_E      enVideoFormat;
-    HI_BOOL             b3DNRBuffer;
-}SAMPLE_VB_BASE_INFO_S;
 
 typedef struct hiSAMPLE_VB_CAL_CONFIG_S
 {
@@ -536,6 +529,7 @@ HI_S32 SAMPLE_COMM_VO_StartVO(SAMPLE_VO_CONFIG_S *pstVoConfig);
 HI_S32 SAMPLE_COMM_VO_GetDefLayerConfig(SAMPLE_COMM_VO_LAYER_CONFIG_S * pstVoLayerConfig);
 HI_S32 SAMPLE_COMM_VO_StartLayerChn(SAMPLE_COMM_VO_LAYER_CONFIG_S * pstVoLayerConfig);
 HI_S32 SAMPLE_COMM_VO_StopLayerChn(SAMPLE_COMM_VO_LAYER_CONFIG_S * pstVoLayerConfig);
+HI_VOID SAMPLE_COMM_VO_Exit(void);
 
 HI_S32 SAMPLE_COMM_VENC_MemConfig(HI_VOID);
 HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE_E enSize, SAMPLE_RC_E enRcMode, HI_U32  u32Profile, VENC_GOP_ATTR_S *pstGopAttr);
@@ -543,16 +537,19 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType, PIC_SIZE_
 HI_S32 SAMPLE_COMM_VENC_Stop(VENC_CHN VencChn);
 HI_S32 SAMPLE_COMM_VENC_SnapStart(VENC_CHN VencChn, SIZE_S* pstSize, HI_BOOL bSupportDCF);
 HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_U32 SnapCnt, HI_BOOL bSaveJpg, HI_BOOL bSaveThm);
+
 //maohw 
 HI_S32 SAMPLE_COMM_VENC_SnapProcessCB(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
 
 HI_S32 SAMPLE_COMM_VENC_SaveJpeg(VENC_CHN VencChn, HI_U32 SnapCnt);
 HI_S32 SAMPLE_COMM_VENC_SnapStop(VENC_CHN VencChn);
 HI_S32 SAMPLE_COMM_VENC_StartGetStream(VENC_CHN VeChn[],HI_S32 s32Cnt);
+HI_S32 SAMPLE_COMM_VENC_StopGetStream(void);
+
 //maohw
 HI_S32 SAMPLE_COMM_VENC_StartGetStreamCb(VENC_CHN VeChn[],HI_S32 s32Cnt, int (*cb)(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs), void *uargs);
 
-HI_S32 SAMPLE_COMM_VENC_StopGetStream(void);
+
 HI_S32 SAMPLE_COMM_VENC_StartGetStream_Svc_t(HI_S32 s32Cnt);
 HI_S32 SAMPLE_COMM_VENC_GetGopAttr(VENC_GOP_MODE_E enGopMode,VENC_GOP_ATTR_S *pstGopAttr);
 HI_S32 SAMPLE_COMM_VENC_QpmapSendFrame(VPSS_GRP VpssGrp,VPSS_CHN VpssChn,VENC_CHN VeChn[],HI_S32 s32Cnt,SIZE_S stSize);
@@ -602,6 +599,17 @@ HI_VOID SAMPLE_COMM_VDEC_StopGetPic(HI_S32 s32ChnNum, VDEC_THREAD_PARAM_S *pstVd
 HI_S32 SAMPLE_COMM_VDEC_Start(HI_S32 s32ChnNum, SAMPLE_VDEC_ATTR *pastSampleVdec);
 HI_S32 SAMPLE_COMM_VDEC_Stop(HI_S32 s32ChnNum);
 
+HI_S32 SAMPLE_COMM_VPSS_Bind_MCF(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, MCF_GRP MCFGrp, MCF_PIPE MCFPipe);
+HI_S32 SAMPLE_COMM_VPSS_UnBind_MCF(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, MCF_GRP MCFGrp, MCF_PIPE MCFPipe);
+HI_S32 SAMPLE_COMM_MCF_Bind_VI( MCF_GRP McfGrp, MCF_PIPE McfPipe, VI_PIPE ViPipe, VI_CHN ViChn);
+HI_S32 SAMPLE_COMM_MCF_UnBind_VI( MCF_GRP McfGrp, MCF_PIPE McfPipe, VI_PIPE ViPipe, VI_CHN ViChn);
+HI_S32 SAMPLE_COMM_VI_Bind_MCF(VI_PIPE ViPipe, VI_CHN ViChn, MCF_GRP McfGrp, MCF_PIPE McfPipe);
+HI_S32 SAMPLE_COMM_VI_UnBind_MCF(VI_PIPE ViPipe, VI_CHN ViChn, MCF_GRP McfGrp, MCF_PIPE McfPipe);
+HI_S32 SAMPLE_COMM_MCF_Bind_VO(MCF_GRP MCFGrp, MCF_CHN MCFChn, VO_LAYER VoLayer, VO_CHN VoChn);
+HI_S32 SAMPLE_COMM_MCF_UnBind_VO( MCF_GRP MCFGrp, MCF_CHN MCFChn, VO_LAYER VoLayer, VO_CHN VoChn);
+
+ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
+
 
 
 //maohw
@@ -609,6 +617,7 @@ HI_S32 SAMPLE_COMM_VDEC_Stop(HI_S32 s32ChnNum);
 #define ISP_MAX_DEV_NUM     8
 #include "mpp.h"
 ////////////
+
 
 
 #ifdef __cplusplus

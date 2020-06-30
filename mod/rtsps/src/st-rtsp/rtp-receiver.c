@@ -133,6 +133,7 @@ static int rtp_receiver(struct rtp_context_t* ctx, st_netfd_t rtp[2], int timeou
 			r = rtp_rtcp_report(ctx->rtp, ctx->rtcp_buffer, sizeof(ctx->rtcp_buffer));
 			r = st_write(rtp[1], ctx->rtcp_buffer, r, timeout*1000);
 			clock = time64_now();
+			printf("ctx:%p, interval:%d, clock:%lld, send RR.\n", ctx, interval, clock);
 		}
 		#endif
 

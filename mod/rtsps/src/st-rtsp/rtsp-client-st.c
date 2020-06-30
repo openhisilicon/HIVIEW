@@ -31,7 +31,8 @@ struct rtsp_client_test_t
   int   stat;
 	void* rtsp;
 	st_netfd_t socket;
-  int keepalive;
+  int last_keeptime;
+  int ses_timeout;
 	int transport;
 	st_netfd_t rtp[5][2];
 	unsigned short port[5][2];
@@ -77,8 +78,13 @@ static void onrtp(void* param, uint8_t channel, const void* data, uint16_t bytes
 {
 	struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
 	rtp_tcp_receiver_input(ctx->receiver[channel/2], channel, data, bytes);
-	if (++ctx->keepalive % 5000 == 0)
+	
+  struct timespec _ts;
+	clock_gettime(CLOCK_MONOTONIC, &_ts);
+	if(_ts.tv_sec - ctx->last_keeptime >= ctx->ses_timeout*0.8)
 	{
+	  ctx->last_keeptime = _ts.tv_sec; 
+    printf("ctx:%p, ses_timeout:%d, GET_PARAMETER.\n", ctx, ctx->ses_timeout);
 	  extern int rtsp_client_get_parameter(struct rtsp_client_t *rtsp, int media, const char* parameter);
 		rtsp_client_get_parameter(ctx->rtsp, 2, NULL);
 	}
@@ -101,6 +107,15 @@ static int onsetup(void* param)
 	
 	ctx->stat = RTSP_CLIENT_STAT_SETUP;
 	printf("%s => media_count:%d\n", __func__, rtsp_client_media_count(ctx->rtsp));
+	
+	// Session: 813629027556073;timeout=6
+  char *session = rtsp_client_get_header(ctx->rtsp, "Session");
+  if(session)
+  {
+    char *p = strstr(session, "timeout=");
+    int ses_timeout = (p)?(int)(atof(p+8)):0;
+    ctx->ses_timeout = (ses_timeout >= 3 && ses_timeout <= 3*60)?ses_timeout:ctx->ses_timeout;
+  }
 	
 	for (i = 0; i < rtsp_client_media_count(ctx->rtsp); i++)
 	{
@@ -202,12 +217,11 @@ void* handle_connect(void *arg)
 	assert(ctx->rtsp);
 	assert(0 == rtsp_client_describe(ctx->rtsp));
 
-
 	r = st_read(ctx->socket, packet, packet_size, ST_UTIME_NO_TIMEOUT);
 	while(r > 0)
 	{
 		assert(0 == rtsp_client_input(ctx->rtsp, packet, r));
-		r = st_read(ctx->socket, packet, packet_size, ST_UTIME_NO_TIMEOUT);
+		r = st_read(ctx->socket, packet, packet_size, ST_UTIME_NO_TIMEOUT);		
 		
 		#if 0 // io-collect
 		if(ctx->stat == RTSP_CLIENT_STAT_PLAY 
@@ -219,6 +233,9 @@ void* handle_connect(void *arg)
 		  }
 		}
 		#endif
+		
+
+
 	}
   
   if(ctx->stat >= RTSP_CLIENT_STAT_SETUP)
@@ -288,6 +305,12 @@ void* rtsp_client_connect(const char* url, int protol, struct st_rtsp_client_han
   ctx->handler = *_handler;
 	ctx->transport = RTSP_TRANSPORT_RTP_UDP;
   //ctx->transport = RTSP_TRANSPORT_RTP_TCP;
+  
+  //init last_keeptime, ses_timeout;
+  struct timespec _ts;
+	clock_gettime(CLOCK_MONOTONIC, &_ts);
+  ctx->last_keeptime = _ts.tv_sec;
+  ctx->ses_timeout = 60;
   
   int sock = 0;
   if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {

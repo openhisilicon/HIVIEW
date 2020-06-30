@@ -2,8 +2,11 @@
 #define __rgn_h__
 
 #include "codec.h"
+#include "fw/libfont/inc/gsf_font_draw.h"
+#include "fw/libfont/inc/gsf_character_conv.h"
 
 typedef struct {
+  int ch_num;
   int st_num;
 }gsf_rgn_ini_t;
 

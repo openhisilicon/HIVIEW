@@ -45,7 +45,6 @@ extern "C" {
 /** CIPHER set IV for first package */
 #define CIPHER_IV_CHANGE_ALL_PKG        (2)
 
-//typedef unsigned long           HI_SIZE_T;
 /** Cipher work mode */
 typedef enum hiHI_UNF_CIPHER_WORK_MODE_E
 {
@@ -154,7 +153,7 @@ typedef struct hiHI_UNF_CIPHER_CTRL_S
     HI_U32 u32Key[8];                               /**< Key input */
     HI_U32 u32IV[4];                                /**< Initialization vector (IV) */
     HI_BOOL bKeyByCA;                               /**< Encryption using advanced conditional access (CA) or decryption using keys */
-    HI_UNF_CIPHER_CA_TYPE_E enCaType;                   /**< Select keyladder type when using advanced CA */
+    HI_UNF_CIPHER_CA_TYPE_E enCaType;               /**< Select keyladder type when using advanced CA */
     HI_UNF_CIPHER_ALG_E enAlg;                      /**< Cipher algorithm */
     HI_UNF_CIPHER_BIT_WIDTH_E enBitWidth;           /**< Bit width for encryption or decryption */
     HI_UNF_CIPHER_WORK_MODE_E enWorkMode;           /**< Operating mode */
@@ -407,8 +406,8 @@ HI_S32 HI_UNF_CIPHER_DeInit(HI_VOID);
 /**
 \brief Obtain a cipher handle for encryption and decryption.
 
-\param[in] cipher attributes
 \param[out] phCipher Cipher handle
+\param[in] cipher attributes
 \retval ::HI_SUCCESS Call this API successful.
 \retval ::HI_FAILURE Call this API fails.
 \retval ::HI_ERR_CIPHER_NOT_INIT  The cipher device is not initialized.
@@ -518,7 +517,7 @@ This API is used to perform encryption by using the cipher module.
 The length of the encrypted data should be a multiple of 8 in TDES mode and 16 in AES mode. Besides, the length can not be bigger than 0xFFFFF.After this operation, the result will affect next operation.If you want to remove vector, you need to config IV(config pstCtrl->stChangeFlags.bit1IV with 1) by transfering HI_UNF_CIPHER_ConfigHandle.
 \param[in] hCipher Cipher handle
 \param[in] pu8SrcData: buffer of the source data.
-\param[in] pu8DestData: buffer of the target data
+\param[out] pu8DestData: buffer of the target data
 \param[in] u32ByteLength   Length of the encrypted data
 \retval ::HI_SUCCESS  Call this API successful.
 \retval ::HI_FAILURE  Call this API fails.
@@ -528,7 +527,7 @@ The length of the encrypted data should be a multiple of 8 in TDES mode and 16 i
 \see \n
 N/A
 */
-HI_S32 HI_UNF_CIPHER_EncryptVir(HI_HANDLE hCipher, const HI_U8 *pu8SrcData, const HI_U8 *pu8DestData, HI_U32 u32ByteLength);
+HI_S32 HI_UNF_CIPHER_EncryptVir(HI_HANDLE hCipher, const HI_U8 *pu8SrcData, HI_U8 *pu8DestData, HI_U32 u32ByteLength);
 
 /**
 \brief Performs decryption.
@@ -538,7 +537,7 @@ This API is used to perform decryption by using the cipher module.
 The length of the decrypted data should be a multiple of 8 in TDES mode and 16 in AES mode. Besides, the length can not be bigger than 0xFFFFF.After this operation, the result will affect next operation.If you want to remove vector, you need to config IV(config pstCtrl->stChangeFlags.bit1IV with 1) by transfering HI_UNF_CIPHER_ConfigHandle.
 \param[in] hCipher Cipher handle.
 \param[in] pu8SrcData: buffer of the source data.
-\param[in] pu8DestData: buffer of the target data
+\param[out] pu8DestData: buffer of the target data
 \param[in] u32ByteLength Length of the decrypted data
 \retval ::HI_SUCCESS Call this API successful.
 \retval ::HI_FAILURE Call this API fails.
@@ -548,7 +547,7 @@ The length of the decrypted data should be a multiple of 8 in TDES mode and 16 i
 \see \n
 N/A
 */
-HI_S32 HI_UNF_CIPHER_DecryptVir(HI_HANDLE hCipher, const HI_U8 *pu8SrcData, const HI_U8 *pu8DestData, HI_U32 u32ByteLength);
+HI_S32 HI_UNF_CIPHER_DecryptVir(HI_HANDLE hCipher, const HI_U8 *pu8SrcData, HI_U8 *pu8DestData, HI_U32 u32ByteLength);
 
 /**
 \brief Encrypt multiple packaged data.

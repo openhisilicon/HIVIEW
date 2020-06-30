@@ -118,22 +118,22 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
     {
         if(PT_H265 == pastSampleVdec[i].enType)
         {
-            astSampleVdecBuf[i].u32PicBufSzie = VDEC_GetPicBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
+            astSampleVdecBuf[i].u32PicBufSize = VDEC_GetPicBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
                                                     PIXEL_FORMAT_YVU_SEMIPLANAR_420, pastSampleVdec[i].stSapmleVdecVideo.enBitWidth, 0);
-            astSampleVdecBuf[i].u32TmvBufSzie = VDEC_GetTmvBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height);
+            astSampleVdecBuf[i].u32TmvBufSize = VDEC_GetTmvBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height);
         }
         else if(PT_H264 == pastSampleVdec[i].enType)
         {
-            astSampleVdecBuf[i].u32PicBufSzie = VDEC_GetPicBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
+            astSampleVdecBuf[i].u32PicBufSize = VDEC_GetPicBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
                                                     PIXEL_FORMAT_YVU_SEMIPLANAR_420, pastSampleVdec[i].stSapmleVdecVideo.enBitWidth, 0);
             if(VIDEO_DEC_MODE_IPB == pastSampleVdec[i].stSapmleVdecVideo.enDecMode)
             {
-                astSampleVdecBuf[i].u32TmvBufSzie = VDEC_GetTmvBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height);
+                astSampleVdecBuf[i].u32TmvBufSize = VDEC_GetTmvBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height);
             }
         }
         else
         {
-            astSampleVdecBuf[i].u32PicBufSzie = VDEC_GetPicBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
+            astSampleVdecBuf[i].u32PicBufSize = VDEC_GetPicBufferSize(pastSampleVdec[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
                                                     pastSampleVdec[i].stSapmleVdecPicture.enPixelFormat, DATA_BITWIDTH_8, 0);
         }
     }
@@ -144,9 +144,9 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
         bFindFlag = HI_FALSE;
         for(i=0; i<ChnNum; i++)
         {
-            if((HI_FALSE == bFindFlag) && (0 != astSampleVdecBuf[i].u32PicBufSzie) && (HI_FALSE == astSampleVdecBuf[i].bPicBufAlloc) )
+            if((HI_FALSE == bFindFlag) && (0 != astSampleVdecBuf[i].u32PicBufSize) && (HI_FALSE == astSampleVdecBuf[i].bPicBufAlloc) )
             {
-                stVbConf.astCommPool[j].u64BlkSize = astSampleVdecBuf[i].u32PicBufSzie;
+                stVbConf.astCommPool[j].u64BlkSize = astSampleVdecBuf[i].u32PicBufSize;
                 stVbConf.astCommPool[j].u32BlkCnt  = pastSampleVdec[i].u32FrameBufCnt;
                 astSampleVdecBuf[i].bPicBufAlloc   = HI_TRUE;
                 bFindFlag                          = HI_TRUE;
@@ -154,7 +154,7 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
             }
 
             if((HI_TRUE == bFindFlag) && (HI_FALSE == astSampleVdecBuf[i].bPicBufAlloc)
-                && (stVbConf.astCommPool[j].u64BlkSize == astSampleVdecBuf[i].u32PicBufSzie) )
+                && (stVbConf.astCommPool[j].u64BlkSize == astSampleVdecBuf[i].u32PicBufSize) )
             {
                 stVbConf.astCommPool[j].u32BlkCnt += pastSampleVdec[i].u32FrameBufCnt;
                 astSampleVdecBuf[i].bPicBufAlloc   = HI_TRUE;
@@ -168,9 +168,9 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
         bFindFlag = HI_FALSE;
         for(i=0; i<ChnNum; i++)
         {
-            if((HI_FALSE == bFindFlag) && (0 != astSampleVdecBuf[i].u32TmvBufSzie) && (HI_FALSE == astSampleVdecBuf[i].bTmvBufAlloc) )
+            if((HI_FALSE == bFindFlag) && (0 != astSampleVdecBuf[i].u32TmvBufSize) && (HI_FALSE == astSampleVdecBuf[i].bTmvBufAlloc) )
             {
-                stVbConf.astCommPool[j].u64BlkSize = astSampleVdecBuf[i].u32TmvBufSzie;
+                stVbConf.astCommPool[j].u64BlkSize = astSampleVdecBuf[i].u32TmvBufSize;
                 stVbConf.astCommPool[j].u32BlkCnt  = pastSampleVdec[i].stSapmleVdecVideo.u32RefFrameNum+1;
                 astSampleVdecBuf[i].bTmvBufAlloc   = HI_TRUE;
                 bFindFlag                          = HI_TRUE;
@@ -178,7 +178,7 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
             }
 
             if((HI_TRUE == bFindFlag) && (HI_FALSE == astSampleVdecBuf[i].bTmvBufAlloc)
-                && (stVbConf.astCommPool[j].u64BlkSize == astSampleVdecBuf[i].u32TmvBufSzie) )
+                && (stVbConf.astCommPool[j].u64BlkSize == astSampleVdecBuf[i].u32TmvBufSize) )
             {
                 stVbConf.astCommPool[j].u32BlkCnt += pastSampleVdec[i].stSapmleVdecVideo.u32RefFrameNum+1;
                 astSampleVdecBuf[i].bTmvBufAlloc   = HI_TRUE;
@@ -203,10 +203,10 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
     {
         for (i = 0; i < ChnNum; i++)
         {
-            if ( (0 != astSampleVdecBuf[i].u32PicBufSzie) && (0 != pastSampleVdec[i].u32FrameBufCnt))
+            if ( (0 != astSampleVdecBuf[i].u32PicBufSize) && (0 != pastSampleVdec[i].u32FrameBufCnt))
             {
                 memset(&stVbPoolCfg, 0, sizeof(VB_POOL_CONFIG_S));
-                stVbPoolCfg.u64BlkSize  = astSampleVdecBuf[i].u32PicBufSzie;
+                stVbPoolCfg.u64BlkSize  = astSampleVdecBuf[i].u32PicBufSize;
                 stVbPoolCfg.u32BlkCnt   = pastSampleVdec[i].u32FrameBufCnt;
                 stVbPoolCfg.enRemapMode = VB_REMAP_MODE_NONE;
                 g_ahPicVbPool[i] = HI_MPI_VB_CreatePool(&stVbPoolCfg);
@@ -215,10 +215,10 @@ HI_S32 SAMPLE_COMM_VDEC_InitVBPool(HI_U32 ChnNum, SAMPLE_VDEC_ATTR *pastSampleVd
                     goto fail;
                 }
             }
-            if (0 != astSampleVdecBuf[i].u32TmvBufSzie)
+            if (0 != astSampleVdecBuf[i].u32TmvBufSize)
             {
                 memset(&stVbPoolCfg, 0, sizeof(VB_POOL_CONFIG_S));
-                stVbPoolCfg.u64BlkSize  = astSampleVdecBuf[i].u32TmvBufSzie;
+                stVbPoolCfg.u64BlkSize  = astSampleVdecBuf[i].u32TmvBufSize;
                 stVbPoolCfg.u32BlkCnt   = pastSampleVdec[i].stSapmleVdecVideo.u32RefFrameNum+1;
                 stVbPoolCfg.enRemapMode = VB_REMAP_MODE_NONE;
                 g_ahTmvVbPool[i] = HI_MPI_VB_CreatePool(&stVbPoolCfg);
@@ -561,24 +561,26 @@ static void SAMPLE_COMM_VDEC_SaveYUVFile_Linear8Bit(FILE* pfd, VIDEO_FRAME_S* pV
     HI_U8* pMemContent;
     HI_U8 *pTmpBuff=HI_NULL;
     HI_U64 phy_addr;
-    HI_U32 u32Size;
+    HI_U32 u32Size, s32Ysize;
     PIXEL_FORMAT_E  enPixelFormat = pVBuf->enPixelFormat;
     HI_U32 u32UvHeight;
 
     if (PIXEL_FORMAT_YVU_SEMIPLANAR_420 == enPixelFormat)
     {
-        u32Size = (pVBuf->u32Stride[0]) * (pVBuf->u32Height) * 3 / 2;
+        s32Ysize = (pVBuf->u64PhyAddr[1] - pVBuf->u64PhyAddr[0]);
+        u32Size = s32Ysize*3/2;
         u32UvHeight = pVBuf->u32Height / 2;
     }
     else if(PIXEL_FORMAT_YVU_SEMIPLANAR_422 == enPixelFormat)
     {
-        u32Size = (pVBuf->u32Stride[0]) * (pVBuf->u32Height) * 2;
+        s32Ysize = (pVBuf->u64PhyAddr[1] - pVBuf->u64PhyAddr[0]);
+        u32Size = s32Ysize*2;
         u32UvHeight = pVBuf->u32Height;
     }
     else if(PIXEL_FORMAT_YUV_400 == enPixelFormat)
     {
-        u32Size = (pVBuf->u32Stride[0]) * (pVBuf->u32Height);
-        u32UvHeight = pVBuf->u32Height;
+        u32Size = s32Ysize = (pVBuf->u32Stride[0]) * ALIGN_UP(pVBuf->u32Height, 16);
+        u32UvHeight = 0;
     }
     else
     {
@@ -595,7 +597,7 @@ static void SAMPLE_COMM_VDEC_SaveYUVFile_Linear8Bit(FILE* pfd, VIDEO_FRAME_S* pV
         return;
     }
 
-    pC_map = pY_map + (pVBuf->u32Stride[0]) * (pVBuf->u32Height);
+    pC_map = pY_map + s32Ysize;
 
     fprintf(stderr, "saving......Y......");
     fflush(stderr);
@@ -788,9 +790,9 @@ WHILE:
                     pstVdecSend[i].eThreadCtrl = THREAD_CTRL_START;
                 }
 
-                for (VoLayer=0; VoLayer<VO_MAX_LAYER_NUM; VoLayer++)
+                for (VoLayer=0; VoLayer < (VO_MAX_LAYER_NUM - VO_MAX_VIRT_DEV_NUM); VoLayer++)
                 {
-                    for (VoChn=0; VoChn<VO_MAX_CHN_NUM; VoChn++)
+                    for (VoChn=0; VoChn<s32ChnNum; VoChn++)
                     {
                         s32Ret = HI_MPI_VO_ResumeChn(VoLayer, VoChn);
                         if(HI_SUCCESS != s32Ret)
@@ -812,9 +814,9 @@ WHILE:
                     pstVdecSend[i].eThreadCtrl = THREAD_CTRL_PAUSE;
                 }
 
-                for (VoLayer=0; VoLayer<VO_MAX_LAYER_NUM; VoLayer++)
+                for (VoLayer=0; VoLayer<(VO_MAX_LAYER_NUM - VO_MAX_VIRT_DEV_NUM); VoLayer++)
                 {
-                    for (VoChn=0; VoChn<VO_MAX_CHN_NUM; VoChn++)
+                    for (VoChn=0; VoChn<s32ChnNum; VoChn++)
                     {
                         s32Ret = HI_MPI_VO_PauseChn(VoLayer, VoChn);
                         if(HI_SUCCESS != s32Ret)
@@ -928,6 +930,11 @@ HI_VOID * SAMPLE_COMM_VDEC_GetPic(HI_VOID *pArgs)
             else
             {
                 SAMPLE_PRT("chn %d enPixelFormat %d do not suport save file!\n", pstVdecThreadParam->s32ChnId, stVFrame.stVFrame.enPixelFormat);
+                s32Ret=HI_MPI_VDEC_ReleaseFrame(pstVdecThreadParam->s32ChnId, &stVFrame);
+                if (HI_SUCCESS != s32Ret)
+                {
+                    SAMPLE_PRT("chn %d HI_MPI_VDEC_ReleaseFrame fail for s32Ret=0x%x!\n", pstVdecThreadParam->s32ChnId, s32Ret);
+                }
                 break;
             }
             s32Ret=HI_MPI_VDEC_ReleaseFrame(pstVdecThreadParam->s32ChnId, &stVFrame);
@@ -1011,6 +1018,8 @@ HI_S32 SAMPLE_COMM_VDEC_Start(HI_S32 s32ChnNum, SAMPLE_VDEC_ATTR *pastSampleVdec
             }
             stChnAttr[i].u32FrameBufSize  = VDEC_GetPicBufferSize(stChnAttr[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height,
                     PIXEL_FORMAT_YVU_SEMIPLANAR_420, pastSampleVdec[i].stSapmleVdecVideo.enBitWidth, 0);
+
+            stChnAttr[i].stVdecVideoAttr.u32TmvBufSize = VDEC_GetTmvBufferSize(stChnAttr[i].enType, pastSampleVdec[i].u32Width, pastSampleVdec[i].u32Height);
         }
         else if (PT_JPEG == pastSampleVdec[i].enType || PT_MJPEG == pastSampleVdec[i].enType)
         {

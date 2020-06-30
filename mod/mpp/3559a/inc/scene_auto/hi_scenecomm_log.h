@@ -51,7 +51,7 @@ extern "C" {
         if ((level <= HI_LOG_LEVEL_ERROR)&&(g_bLogOn)) {\
             HI_U32 nTemp = g_uart_fputc_en;  \
             g_uart_fputc_en = 1; \
-            dprintf(module "(%s-%d:%d): " fmt, __FUNCTION__, __LINE__, level, ##args);\
+            printf(module "(%s-%d:%d): " fmt, __FUNCTION__, __LINE__, level, ##args);\
             g_uart_fputc_en = nTemp;  \
         }\
         else if ((level <= HI_LOG_LEVEL)&&(g_bLogOn)) {\

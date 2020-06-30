@@ -116,13 +116,21 @@ static HI_S32 CONFACCESS_Init(const HI_CHAR *pszCfgName, const HI_CHAR *pszCfgPa
     snprintf(pstCfgPos->stModule.szIniFile, HI_CONFACCESS_PATH_MAX_LEN, "%s", pszCfgPath);
 
     strncpy(aszCfgPath, pszCfgPath, strlen(pszCfgPath));
+#ifndef __HuaweiLite__
     dirname(aszCfgPath);
+#else
+    HI_CHAR* pszDirPtr = strrchr(pszCfgPath, CONFACCESS_PATH_SEPARATOR);
+    memcpy(aszCfgPath, pszCfgPath, pszDirPtr-pszCfgPath);
+    aszCfgPath[pszDirPtr-pszCfgPath+1] = 0;
+    MLOGD("file path: %s\n", aszCfgPath);
+#endif
 
     /* Get Module Count and Default Path */
     HI_S32 s32ModuleNum = iniparser_getint(pstCfgPos->stModule.pstIniDir, (HI_CHAR *)"module:module_num", 0);;
     *pu32ModuleNum = s32ModuleNum;
+#ifndef __HuaweiLite__
     MLOGD("ModuleNum[%d], DefaultPath[%s]\n", s32ModuleNum, pazModuleDefPath);
-
+#endif
     /* Get All Module Information */
     HI_S32 s32Idx;
     HI_S32 s32ModuleCnt = 0;

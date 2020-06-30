@@ -7,6 +7,7 @@
 #include "msg_func.h"
 
 typedef struct {
+  int ch_num;
   int st_num;
 }gsf_venc_ini_t;
 

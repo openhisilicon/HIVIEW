@@ -39,6 +39,19 @@ extern HI_S32 SAMPLE_VENC_CheckSensor(SAMPLE_SNS_TYPE_E   enSnsType,SIZE_S  stSi
 extern HI_S32 SAMPLE_VENC_ModifyResolution(SAMPLE_SNS_TYPE_E   enSnsType,PIC_SIZE_E *penSize,SIZE_S *pstSize);
 extern HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RANGE_E enDynamicRange,PIXEL_FORMAT_E enPixelFormat,SIZE_S stSize[],SAMPLE_SNS_TYPE_E enSnsType);
 
+// from sample_avs.c
+typedef struct hiSAMPLE_AVS_CONFIG_S
+{
+    HI_U32                u32OutW;
+    HI_U32                u32OutH;
+    AVS_GRP_ATTR_S        stGrpAttr;
+    COMPRESS_MODE_E       enOutCmpMode;
+    HI_BOOL               benChn1;
+    HI_CHAR               pLUTName[AVS_PIPE_NUM][64];
+} SAMPLE_AVS_CONFIG_S;
+extern HI_S32 SAMPLE_AVS_StartAVS(AVS_GRP AVSGrp, SAMPLE_AVS_CONFIG_S* pstAVSConfig);
+extern HI_S32 SAMPLE_AVS_StopAVS(AVS_GRP AVSGrp, HI_BOOL benChn1);
+
 
 
 typedef struct {
@@ -97,8 +110,8 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
     return g_pstSnsObj[u32SnsId];
 }
 
-static void * dl = NULL;
-
+static void *dl = NULL;
+static int snscnt = 0;
 int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 {
   char snsstr[64];
@@ -112,17 +125,20 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
     return -1;
   } 
   
-  char loadstr[64];
+  snscnt = cfg->snscnt;
+  char loadstr[256];
   sprintf(loadstr, "%s/ko/load3559av100_multicore -i -sensor0 %s", path, cfg->snsname);
+  int i = 0;
+  for(i = 1; i < snscnt; i++)
+  {
+    sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
+  }
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
   signal(SIGINT, SAMPLE_VENC_HandleSig);
   signal(SIGTERM, SAMPLE_VENC_HandleSig);
-  
-  
-  
-  
+
   
   SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = SENSOR2_TYPE = SENSOR3_TYPE 
               = SENSOR4_TYPE = SENSOR5_TYPE = SENSOR6_TYPE = SENSOR7_TYPE = sns->type;
@@ -142,7 +158,9 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
       goto __err;
     }
     
-    g_pstSnsObj[0] = g_pstSnsObj[1] = dlsym(dl, sns->obj);
+    g_pstSnsObj[0] = g_pstSnsObj[1] = g_pstSnsObj[2] = g_pstSnsObj[3] 
+    = g_pstSnsObj[4] = g_pstSnsObj[5] = g_pstSnsObj[6] = dlsym(dl, sns->obj);
+    
     if(NULL != dlerror())
     {
         printf("err dlsym %s\n", sns->obj);
@@ -315,16 +333,28 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   VI_DEV  ViDev = 0;
   VI_PIPE ViPipe = 0;
   VI_CHN  ViChn = 0;
-  SAMPLE_VI_CONFIG_S stViConfig;
+  static SAMPLE_VI_CONFIG_S stViConfig; // static for SAMPLE_COMM_ISP_Thread(void* param);
   memset(&stViConfig, 0, sizeof(stViConfig));
   SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
   
-  stViConfig.s32WorkingViNum       = 1;
-  stViConfig.astViInfo[0].stDevInfo.ViDev     = ViDev;
-  stViConfig.astViInfo[0].stPipeInfo.aPipe[0] = ViPipe;
-  stViConfig.astViInfo[0].stChnInfo.ViChn     = ViChn;
-  stViConfig.astViInfo[0].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
-  stViConfig.astViInfo[0].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+  stViConfig.s32WorkingViNum  = snscnt;
+  
+  // SAMPLE_COMM_VI_SetMipiHsMode(LANE_DIVIDE_MODE_7)
+  // Mode  DEV0  DEV1 DEV2  DEV3  DEV4   DEV5  DEV6   DEV7
+  //  7    L0~L3  N   L4~L7  N    L8~L11  N   L12~L15  N
+  
+  int i = 0;
+  for(i = 0; i < snscnt; i++)
+  {
+    stViConfig.astViInfo[i].stDevInfo.ViDev     = i;//ViDev 0, 2, 4, 6;
+    stViConfig.astViInfo[i].stPipeInfo.aPipe[0] = i;//ViPipe 0, 1, 2, 3;
+    stViConfig.astViInfo[i].stChnInfo.ViChn     = 0;//ViChn  0, 0, 0, 0;
+    stViConfig.astViInfo[i].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
+    stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+  }
+  
+  extern VI_STITCH_GRP_ATTR_S gstStitchGrpAttr;
+  gstStitchGrpAttr = vi->stStitchGrpAttr;
 
   s32Ret = SAMPLE_VENC_VI_Init(&stViConfig, vi->bLowDelay,vi->u32SupplementConfig);
   if(s32Ret != HI_SUCCESS)
@@ -345,6 +375,12 @@ int gsf_mpp_vi_stop()
   SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
   SAMPLE_COMM_VI_StopVi(&stViConfig);
   
+  VI_STITCH_GRP StitchGrp = 0;
+  VI_STITCH_GRP_ATTR_S stStitchGrpAttr;
+  
+  stStitchGrpAttr.bStitch = HI_FALSE;
+  HI_MPI_VI_SetStitchGrpAttr(StitchGrp, &stStitchGrpAttr);
+    
   SAMPLE_COMM_SYS_Exit();
   return s32Ret;
 }
@@ -432,6 +468,77 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
 }
 
 
+int gsf_mpp_avs_start(gsf_mpp_avs_t *avs)
+{
+    int i = 0, s32Ret = 0;
+    VPSS_GRP VpssGrp = 0;
+    VPSS_CHN VpssChn = 0;
+    AVS_PIPE AVSPipe = 0;
+    AVS_GRP AVSGrp = avs->AVSGrp;
+    SAMPLE_AVS_CONFIG_S  stAVSConfig = {0};
+  
+    stAVSConfig.u32OutW                   = avs->u32OutW;
+    stAVSConfig.u32OutH                   = avs->u32OutH;
+    stAVSConfig.stGrpAttr.u32PipeNum      = avs->u32PipeNum;
+    stAVSConfig.stGrpAttr.enMode          = avs->enMode;
+    stAVSConfig.enOutCmpMode              = COMPRESS_MODE_SEG;
+    stAVSConfig.benChn1                   = avs->benChn1;    
+    
+    s32Ret = SAMPLE_AVS_StartAVS(AVSGrp, &stAVSConfig);
+
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("SAMPLE_AVS_StartAVS failed with %d\n", s32Ret);
+        return HI_FAILURE;
+    }
+
+
+    /******************************************
+    step   8: bind
+    ******************************************/
+    for (i = 0; i < avs->u32PipeNum; i++)
+    {
+        AVSPipe = i;
+        VpssGrp = i;
+        s32Ret = SAMPLE_COMM_VPSS_Bind_AVS(VpssGrp, VpssChn, AVSGrp, AVSPipe);
+
+        if (HI_SUCCESS != s32Ret)
+        {
+            SAMPLE_PRT("AVS bind VPSS fail with %#x!\n", s32Ret);
+            return HI_FAILURE;
+        }
+    }
+
+    return 0;
+}
+
+int gsf_mpp_avs_stop(gsf_mpp_avs_t *avs)
+{
+  AVS_PIPE AVSPipe = 0;
+  VPSS_GRP VpssGrp = 0;
+  VPSS_CHN VpssChn = 0;
+  AVS_GRP AVSGrp = avs->AVSGrp;
+  
+  int i = 0, s32Ret = 0;
+  for (i = 0; i < avs->u32PipeNum; i++)
+  {
+      AVSPipe = i;
+      VpssGrp = i;
+      s32Ret = SAMPLE_COMM_VPSS_UnBind_AVS(VpssGrp, VpssChn, AVSGrp, AVSPipe);
+
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("VPSS unbind AVS fail with %#x", s32Ret);
+          return HI_FAILURE;
+      }
+  }
+  
+  SAMPLE_AVS_StopAVS(AVSGrp, avs->benChn1);
+  
+  return 0;
+}
+
+
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
 {
   HI_S32 s32Ret;
@@ -457,19 +564,29 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
       goto EXIT_VI_VPSS_UNBIND;
   }
 
-  s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(venc->VpssGrp, venc->VpssChn,venc->VencChn);
+  // bind;
+  printf("%s => bind srcModId: %s\n", __func__, (venc->srcModId == HI_ID_AVS)?"HI_ID_AVS":"HI_ID_VPSS");
+  if(venc->srcModId == HI_ID_AVS)
+    s32Ret = SAMPLE_COMM_AVS_Bind_VENC(venc->AVSGrp,venc->AVSChn,venc->VencChn);
+  else
+    s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
+    
   if (HI_SUCCESS != s32Ret)
   {
-      SAMPLE_PRT("Venc Get GopAttr failed for %#x!\n", s32Ret);
+      SAMPLE_PRT("Venc bind failed for %#x!\n", s32Ret);
       goto EXIT_VENC_STOP;
   }
 
   return s32Ret;
 
 EXIT_VENC_UnBind:
+  if(venc->srcModId == HI_ID_AVS)
+    SAMPLE_COMM_AVS_UnBind_VENC(venc->AVSGrp,venc->AVSChn,venc->VencChn);
+  else
     SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
+    
 EXIT_VENC_STOP:
-    SAMPLE_COMM_VENC_Stop(venc->VencChn);
+  SAMPLE_COMM_VENC_Stop(venc->VencChn);
 EXIT_VI_VPSS_UNBIND:
   return s32Ret;
 }
@@ -479,7 +596,12 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
 {
   HI_S32 s32Ret;
   
-  SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
+  // unbind;
+  if(venc->srcModId == HI_ID_AVS)
+    SAMPLE_COMM_AVS_UnBind_VENC(venc->AVSGrp,venc->AVSChn,venc->VencChn);
+  else
+    SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
+    
   SAMPLE_COMM_VENC_Stop(venc->VencChn);
   return s32Ret;
 }
@@ -618,7 +740,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
 {
     HI_S32 i, s32Ret = HI_SUCCESS;
     SIZE_S stDispSize;
-    PIC_SIZE_E enDispPicSize;
+    PIC_SIZE_E enDispPicSize = PIC_1080P;
     SAMPLE_VO_CONFIG_S stVoConfig;
     
     HI_U32 u32VoFrmRate = 0;
@@ -635,7 +757,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.VoDev                 = vodev;
     stVoConfig.enVoIntfType          = type;
     stVoConfig.enIntfSync            = sync;
-    stVoConfig.enPicSize             = 0;//enDispPicSize;
+    stVoConfig.enPicSize             = enDispPicSize; // unused;
     stVoConfig.u32BgColor            = COLOR_RGB_BLUE;
     stVoConfig.u32DisBufLen          = 3;
     stVoConfig.enDstDynamicRange     = DYNAMIC_RANGE_SDR8;
@@ -647,7 +769,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.stDispRect.u32Height  = stDispSize.u32Height;
     stVoConfig.stImageSize.u32Width  = stDispSize.u32Width;
     stVoConfig.stImageSize.u32Height = stDispSize.u32Height;
-    stVoConfig.enVoPartMode          = VO_PART_MODE_SINGLE;
+    stVoConfig.enVoPartMode          = VO_PART_MODE_MULTI;//VO_PART_MODE_SINGLE;
 
     
     s32Ret = SAMPLE_COMM_VO_StartVO(&stVoConfig);
@@ -659,7 +781,8 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     
     vo_mng[vodev].intf = stVoConfig.enVoIntfType;
     vo_mng[vodev].sync = stVoConfig.enIntfSync;
-  
+    printf("vodev:%d, intf:%d, sync:%d, u32Width:%d, u32Height:%d\n"
+            , vodev, vo_mng[vodev].intf, vo_mng[vodev].sync, stDispSize.u32Width, stDispSize.u32Height);
     return s32Ret;
 }
 
@@ -715,7 +838,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
   
   vdev->layer[volayer].cnt = layout;
   SAMPLE_COMM_VO_StartChn(volayer, vdev->layer[volayer].cnt);
-
+  
   pthread_mutex_unlock(&vdev->lock);
   
   return err;
@@ -769,6 +892,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     
     // start vdec;
     {
+    
+    printf("ch:%d, etype:%d, width:%d, height:%d\n", ch, attr->etype, attr->width, attr->height);
     
     VDEC_CHN_ATTR_S stChnAttr;
     VDEC_CHN_POOL_S stPool;
@@ -842,17 +967,18 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     stGrpAttr.enPixelFormat  = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
     stGrpAttr.bNrEn   = HI_FALSE;
     s32Ret = HI_MPI_VPSS_CreateGrp(ch, &stGrpAttr);
+
     
     /*** enable vpss chn, with frame ***/
     stChnAttr.u32Width                    = ALIGN_UP(attr->width,  16);
     stChnAttr.u32Height                   = ALIGN_UP(attr->height, 16);
-    stChnAttr.enChnMode                   = VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER;
+    stChnAttr.enChnMode                   = VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER - vdec fps err vpss no data; //
     stChnAttr.enCompressMode              = COMPRESS_MODE_SEG;
     stChnAttr.enDynamicRange              = DYNAMIC_RANGE_SDR8;
     stChnAttr.enPixelFormat               = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
     stChnAttr.stFrameRate.s32SrcFrameRate = -1;
     stChnAttr.stFrameRate.s32DstFrameRate = -1;
-    stChnAttr.u32Depth                    = 0;
+    stChnAttr.u32Depth                    = 1; // 0;
     stChnAttr.bMirror                     = HI_FALSE;
     stChnAttr.bFlip                       = HI_FALSE;
     stChnAttr.stAspectRatio.enMode        = ASPECT_RATIO_NONE;
@@ -878,8 +1004,9 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   stStream.u32Len  = attr->size;
   stStream.bEndOfFrame  = HI_TRUE;
   stStream.bEndOfStream = HI_FALSE;   
+  stStream.bDisplay = 1;
   s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
-
+  //printf("HI_MPI_VDEC_SendStream ret:0x%x\n", s32Ret);
   return err;
 }
 

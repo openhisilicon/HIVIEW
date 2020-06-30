@@ -144,6 +144,11 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
             pstSize->u32Height = 288;
             break;
 
+        case PIC_360P:   /* 640 * 360 */
+            pstSize->u32Width  = 640;
+            pstSize->u32Height = 360;
+            break;
+
         case PIC_D1_PAL:   /* 720 * 576 */
             pstSize->u32Width  = 720;
             pstSize->u32Height = 576;
@@ -197,6 +202,10 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
         case PIC_7680x4320:
             pstSize->u32Width  = 7680;
             pstSize->u32Height = 4320;
+            break;
+        case PIC_7680x1080:
+            pstSize->u32Width  = 7680;
+            pstSize->u32Height = 1080;
             break;
         case PIC_3840x8640:
             pstSize->u32Width = 3840;
@@ -320,7 +329,25 @@ HI_S32 SAMPLE_COMM_SYS_MemConfig(HI_VOID)
         }
     }
 
+#ifdef CONFIG_HI_MONO_COLOR_FUSION_SUPPORT
+    /*config memory for mcf*/
+    for (i = 0; i < MCF_MAX_GRP_NUM; i++)
+    {
+        for (j = 0; j < MCF_MAX_CHN_NUM; j++)
+        {
+            stMppChn.enModId    = HI_ID_MCF;
+            stMppChn.s32DevId = i;
+            stMppChn.s32ChnId = j;
+            s32Ret = HI_MPI_SYS_SetMemConfig(&stMppChn, pcMmzName);
 
+            if (s32Ret)
+            {
+                SAMPLE_PRT("HI_MPI_SYS_SetMemConfig ERR !\n");
+                return HI_FAILURE;
+            }
+        }
+    }
+#endif
     return s32Ret;
 }
 
@@ -554,6 +581,41 @@ HI_S32 SAMPLE_COMM_VPSS_Bind_AVS(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, AVS_GRP Avs
     stDestChn.s32ChnId = AvsPipe;
 
     CHECK_RET(HI_MPI_SYS_Bind(&stSrcChn, &stDestChn), "HI_MPI_SYS_Bind(VPSS-AVS)");
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SAMPLE_COMM_VPSS_Bind_MCF(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, MCF_GRP MCFGrp, MCF_PIPE MCFPipe)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_VPSS;
+    stSrcChn.s32DevId  = VpssGrp;
+    stSrcChn.s32ChnId  = VpssChn;
+
+    stDestChn.enModId  = HI_ID_MCF;
+    stDestChn.s32DevId = MCFGrp;
+    stDestChn.s32ChnId = MCFPipe;
+
+    CHECK_RET(HI_MPI_SYS_Bind(&stSrcChn, &stDestChn), "HI_MPI_SYS_Bind(VPSS-MCF)");
+
+    return HI_SUCCESS;
+}
+HI_S32 SAMPLE_COMM_VPSS_UnBind_MCF(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, MCF_GRP MCFGrp, MCF_PIPE MCFPipe)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_VPSS;
+    stSrcChn.s32DevId  = VpssGrp;
+    stSrcChn.s32ChnId  = VpssChn;
+
+    stDestChn.enModId  = HI_ID_MCF;
+    stDestChn.s32DevId = MCFGrp;
+    stDestChn.s32ChnId = MCFPipe;
+
+    CHECK_RET(HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn), "HI_MPI_SYS_UnBind(VPSS-MCF)");
 
     return HI_SUCCESS;
 }
@@ -850,6 +912,114 @@ HI_S32 SAMPLE_COMM_VO_UnBind_VO(VO_LAYER DstVoLayer, VO_CHN DstVoChn)
     stDestChn.s32ChnId  = DstVoChn;
 
     return HI_MPI_SYS_UnBind(NULL, &stDestChn);
+}
+
+HI_S32 SAMPLE_COMM_MCF_Bind_VI( MCF_GRP McfGrp, MCF_CHN McfChn, VI_PIPE ViPipe, VI_CHN ViChn)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_MCF;
+    stSrcChn.s32DevId  = McfGrp;
+    stSrcChn.s32ChnId  = McfChn;
+
+    stDestChn.enModId  = HI_ID_VI;
+    stDestChn.s32DevId = ViPipe;
+    stDestChn.s32ChnId = ViChn;
+
+    CHECK_RET(HI_MPI_SYS_Bind(&stSrcChn, &stDestChn), "HI_MPI_SYS_Bind(MCF-VI)");
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SAMPLE_COMM_MCF_UnBind_VI( MCF_GRP McfGrp, MCF_CHN McfChn, VI_PIPE ViPipe, VI_CHN ViChn)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_MCF;
+    stSrcChn.s32DevId  = McfGrp;
+    stSrcChn.s32ChnId  = McfChn;
+
+    stDestChn.enModId  = HI_ID_VI;
+    stDestChn.s32DevId = ViPipe;
+    stDestChn.s32ChnId = ViChn;
+
+    CHECK_RET(HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn), "HI_MPI_SYS_UnBind(MCF-VI)");
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SAMPLE_COMM_VI_Bind_MCF(VI_PIPE ViPipe, VI_CHN ViChn, MCF_GRP McfGrp, MCF_PIPE McfPipe)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_VI;
+    stSrcChn.s32DevId  = ViPipe;
+    stSrcChn.s32ChnId  = ViChn;
+
+    stDestChn.enModId  = HI_ID_MCF;
+    stDestChn.s32DevId = McfGrp;
+    stDestChn.s32ChnId = McfPipe;
+
+    CHECK_RET(HI_MPI_SYS_Bind(&stSrcChn, &stDestChn), "HI_MPI_SYS_Bind(VI-MCF)");
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SAMPLE_COMM_VI_UnBind_MCF(VI_PIPE ViPipe, VI_CHN ViChn, MCF_GRP McfGrp, MCF_PIPE McfPipe)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_VI;
+    stSrcChn.s32DevId  = ViPipe;
+    stSrcChn.s32ChnId  = ViChn;
+
+    stDestChn.enModId  = HI_ID_MCF;
+    stDestChn.s32DevId = McfGrp;
+    stDestChn.s32ChnId = McfPipe;
+
+    CHECK_RET(HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn), "HI_MPI_SYS_UnBind(VI-MCF)");
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SAMPLE_COMM_MCF_Bind_VO(MCF_GRP MCFGrp, MCF_CHN MCFChn, VO_LAYER VoLayer, VO_CHN VoChn)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_MCF;
+    stSrcChn.s32DevId  = MCFGrp;
+    stSrcChn.s32ChnId  = MCFChn;
+
+    stDestChn.enModId  = HI_ID_VO;
+    stDestChn.s32DevId = VoLayer;
+    stDestChn.s32ChnId = VoChn;
+
+    CHECK_RET(HI_MPI_SYS_Bind(&stSrcChn, &stDestChn), "HI_MPI_SYS_Bind(MCF-VO)");
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SAMPLE_COMM_MCF_UnBind_VO( MCF_GRP MCFGrp, MCF_CHN MCFChn, VO_LAYER VoLayer, VO_CHN VoChn)
+{
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+
+    stSrcChn.enModId   = HI_ID_MCF;
+    stSrcChn.s32DevId  = MCFGrp;
+    stSrcChn.s32ChnId  = MCFChn;
+
+    stDestChn.enModId  = HI_ID_VO;
+    stDestChn.s32DevId = VoLayer;
+    stDestChn.s32ChnId = VoChn;
+
+    CHECK_RET(HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn), "HI_MPI_SYS_UnBind(MCF-VO)");
+
+    return HI_SUCCESS;
 }
 
 

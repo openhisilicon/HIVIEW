@@ -1,19 +1,10 @@
-/******************************************************************************
+/*
+* Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+* Description:
+* Author: Hisilicon multimedia software group
+* Create: 2011/06/28
+*/
 
-  Copyright (C), 2016, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : hi_awb_comm.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 2012/12/19
-  Description   :
-  History       :
-  1.Date        : 2012/12/19
-    Author      :
-    Modification: Created file
-
-******************************************************************************/
 #ifndef __HI_ISP_DEHAZE_H__
 #define __HI_ISP_DEHAZE_H__
 
@@ -25,13 +16,12 @@ extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#define FRAMECNT 12
-#define DEHAZE_CURVE_NUM        16
-#define DEHAZE_CURVE_MAX_NODE   256
+#define FRAMECNT              12
+#define DEHAZE_CURVE_NUM      16
+#define DEHAZE_CURVE_MAX_NODE 256
 
 
-typedef enum hiDehze_CTRL_CMD_E
-{
+typedef enum hiDehze_CTRL_CMD_E {
 
     DEHAZE_DEBUG_ATTR_SET,
     DEHAZE_DEBUG_ATTR_GET,
@@ -40,16 +30,14 @@ typedef enum hiDehze_CTRL_CMD_E
 
 } DEHAZE_CTRL_CMD_E;
 
-typedef struct hiDEHAZE_DBG_ATTR_S
-{
+typedef struct hiDEHAZE_DBG_ATTR_S {
     HI_U32 hblk_num;
     HI_U32 vblk_num;
     HI_U32 u32ImageHeight;
     HI_U32 u32ImageWidth;
 } DEHAZE_DBG_ATTR_S;
 
-typedef struct hiDEHAZE_DBG_STATUS_S
-{
+typedef struct hiDEHAZE_DBG_STATUS_S {
     HI_U16  AirPre[FRAMECNT][3];
     HI_U16  maxdc;
     HI_U32  u32CurFrmNum;
@@ -71,8 +59,7 @@ typedef struct hiDEHAZE_DBG_STATUS_S
 } DEHAZE_DBG_STATUS_S;
 
 
-typedef struct hiDEHAZE_DBG_CTRL_S
-{
+typedef struct hiDEHAZE_DBG_CTRL_S {
     HI_BOOL bPreDebugEn;
     HI_U64  u64PrePhyAddr;
     HI_U32  u32PreDepth;
@@ -100,9 +87,3 @@ typedef struct hiDEHAZE_DBG_CTRL_S
 #endif /* End of #ifdef __cplusplus */
 
 #endif
-
-
-
-
-
-

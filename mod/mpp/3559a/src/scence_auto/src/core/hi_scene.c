@@ -15,6 +15,7 @@
 #include "mpi_awb.h"
 #include "mpi_ae.h"
 #include "mpi_isp.h"
+#include "mpi_venc.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -507,6 +508,12 @@ static HI_S32 SCENE_SetPipeDynamicParam(HI_VOID)
         HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
     }
 
+    if (s_stModuleState.bDynamicIsoVenc == HI_TRUE) {
+        SCENE_SET_DYNAMIC_BYPARAM_CALLBACK_FN_PTR pFuncVencBitrate = HI_SCENE_SetDynamicVencBitrate_AutoGenerate;
+        s32Ret = SCENE_SetDynamicParam_byParam(pFuncVencBitrate, SCENE_THREAD_TYPE_NORMAL, SCENE_DYNAMIC_CHANGE_TYPE_ISO);
+        HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER); 
+    }
+
     if (HI_TRUE == s_stModuleState.bDynamicDehaze)
     {
         SCENE_SET_DYNAMIC_BYPARAM_CALLBACK_FN_PTR pFuncDehaze = HI_SCENE_SetDynamicDehaze_AutoGenerate;
@@ -773,6 +780,27 @@ HI_VOID *SCENE_NotLinearAutoThread(HI_VOID *pVoid)
     return HI_NULL;
 }
 
+void *SCENE_VencAutoThread(HI_VOID* pVoid)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_S32 i;
+    prctl(PR_SET_NAME, (unsigned long)"hi_AutoVenc", 0, 0, 0);
+
+    while (s_stSceneState.stThreadVenc.bThreadFlag == HI_TRUE) {
+        //Set VENC RC PARAM
+        for (i = 0; i < s_stSceneState.u32MainPipeNum; i++) {
+            VI_PIPE ViPipe = s_stSceneState.astMainPipe[i].MainPipeHdl;
+	        HI_S32 s32Index = s_stSceneMode.astPipeAttr[i].u8PipeParamIndex;
+
+            s32Ret = HI_SCENE_SetRCParam_AutoGenerate(ViPipe,s32Index);
+            HI_SCENECOMM_CHECK(s32Ret, HI_SCENE_EINTER);
+        }
+        usleep(200000);
+    }
+
+    return NULL;
+}
+
 static HI_S32 SCENE_StartAutoThread(HI_VOID)
 {
     HI_S32 s32Ret = HI_SUCCESS;
@@ -806,6 +834,12 @@ static HI_S32 SCENE_StartAutoThread(HI_VOID)
     {
         s_stSceneState.stThreadNotLinear.bThreadFlag = HI_TRUE;
         s32Ret = pthread_create(&s_stSceneState.stThreadLuminance.pThread, &(s_stSceneState.stThreadnotlinearattr), SCENE_NotLinearAutoThread, NULL);
+        HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
+    }
+
+    if (s_stSceneState.stThreadVenc.bThreadFlag == HI_FALSE) {
+        s_stSceneState.stThreadVenc.bThreadFlag = HI_TRUE;
+        s32Ret = pthread_create(&s_stSceneState.stThreadVenc.pThread, &(s_stSceneState.stThreadvencattr), SCENE_VencAutoThread, NULL);
         HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
     }
 

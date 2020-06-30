@@ -99,17 +99,17 @@ insert_ko()
 	insmod hi3559av100_gdc.ko
 	insmod hi3559av100_vgs.ko
 	insmod hi3559av100_dis.ko
-	insert_isp;
 	insmod hi3559av100_vi.ko
+        insert_isp;
 	insmod hi3559av100_vpss.ko
 	insmod hi3559av100_avs.ko
 	insmod hi3559av100_vo.ko
 	insmod hifb.ko video="hifb:vram0_size:32400,vram1_size:16200,vram2_size:256"     # default fb0:4k,fb1:1080p,fb2:256x256
 
-	insmod hi3559av100_rc.ko
-	insmod hi3559av100_venc.ko
 	insmod hi3559av100_chnl.ko
 	insmod hi3559av100_vedu.ko
+	insmod hi3559av100_rc.ko
+	insmod hi3559av100_venc.ko
 	insmod hi3559av100_h264e.ko
 	insmod hi3559av100_h265e.ko
 	insmod hi3559av100_jpege.ko
@@ -165,9 +165,9 @@ remove_ko()
 	rmmod hi3559av100_jpege
 	rmmod hi3559av100_h264e
 	rmmod hi3559av100_h265e
+	rmmod hi3559av100_venc
 	rmmod hi3559av100_vedu
 	rmmod hi3559av100_chnl
-	rmmod hi3559av100_venc
 	rmmod hifb
 	rmmod hi3559av100_vo
 	rmmod hi3559av100_avs
@@ -200,6 +200,7 @@ load_usage()
 	echo "    -a                       remove modules first, then insert modules"
 	echo "    -sensor0~7 sensor_name   config sensor type [default: imx334]"
 	echo "    -h                       help information"
+	echo -e "Notice: sensors which share one clock must be same!  sensor0 and sensor1 share clock0,sensor2 and sensor3 share clock1, sensor4 and sensor5 share clock2,sensor6 and sensor7 share clock3."
 	echo -e "Available sensors: imx334 imx477 imx377 imx299 imx290 imx290_slave imx277_slvs"
 	echo -e "for example: ./load3559av100_multicore -i -sensor0 imx334 -sensor1 imx334 -sensor2 imx334 -sensor3 imx334 -sensor4 imx334 -sensor5 imx334 -sensor6 imx334 -sensor7 imx334\n"
 }

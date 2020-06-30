@@ -15,6 +15,8 @@
 #include "hi_scene_loadparam.h"
 #include "hi_scenecomm_log.h"
 #include "sample_comm.h"
+#include "hi_scene_prev.h"
+
 
 HI_VOID SAMPLE_SCENE_HandleSig(HI_S32 signo)
 {
@@ -33,7 +35,7 @@ HI_VOID SAMPLE_SCENE_HandleSig(HI_S32 signo)
 }
 
 #ifdef __HuaweiLite__
-HI_S32 app_main()
+HI_S32 app_main(HI_S32 argc, char *argv[])
 #else
 HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
 #endif
@@ -57,7 +59,20 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
     signal(SIGINT, SAMPLE_SCENE_HandleSig);
     signal(SIGTERM, SAMPLE_SCENE_HandleSig);
 #else
+    SCENE_PREV_S stScenePrev;
+    s32ret = SAMPLE_SCENE_START_PREV(&stScenePrev);
+    if (HI_SUCCESS == s32ret)
+    {
+        SAMPLE_PRT("ISP is now running normally\n");
+    }
+    else
+    {
+        SAMPLE_PRT("ISP is not running normally!Please check it\n");
+        return -1;
+    }
+    printf("Please waite for a while\n");
 
+    sleep(5);
 #endif
 
     printf("init success\n");

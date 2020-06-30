@@ -6,8 +6,8 @@
 
 #define FRAME_MAX_SIZE (500*1024)
 
-static gsf_venc_ini_t venc_ini = {.st_num = 2};
-venc_mgr_t venc_mgr[GSF_CODEC_VENC_NUM];
+static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
+venc_mgr_t venc_mgr[GSF_CODEC_IPC_CHN*GSF_CODEC_VENC_NUM];
 
 unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
@@ -73,9 +73,9 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   rec.seq  = pstStream->u32Seq;
   rec.utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
   rec.pts  = pstStream->pstPack[0].u64PTS/1000;
-  rec.video.encode = codec_ipc.venc[mgr->vst].type;
-  rec.video.width  = codec_ipc.venc[mgr->vst].width;
-  rec.video.height = codec_ipc.venc[mgr->vst].height;
+  rec.video.encode = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].type;
+  rec.video.width  = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].width;
+  rec.video.height = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;
   rec.size = 0;
   
   
@@ -194,37 +194,40 @@ __err:
 
 int gsf_venc_init(gsf_venc_ini_t *ini)
 {
-  int i = 0;
+  int i = 0, j = 0;
   
   if(ini)
   {
     venc_ini = *ini;
   }
-  venc_ini.st_num = (venc_ini.st_num > GSF_CODEC_VENC_NUM)?GSF_CODEC_VENC_NUM:venc_ini.st_num;
-    
-  memset(venc_mgr, 0, sizeof(venc_mgr));
-  for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
-    venc_mgr[i].vst = i;
   
-  for(i = 0; i < venc_ini.st_num; i++)
+  venc_ini.ch_num = (venc_ini.ch_num > GSF_CODEC_IPC_CHN)?GSF_CODEC_IPC_CHN:venc_ini.ch_num;
+  venc_ini.st_num = (venc_ini.st_num > GSF_CODEC_VENC_NUM)?GSF_CODEC_VENC_NUM:venc_ini.st_num;
+  
+  memset(venc_mgr, 0, sizeof(venc_mgr));
+
+  for(i = 0; i < venc_ini.ch_num; i++)
+  for(j = 0; j < venc_ini.st_num; j++)
   {
+    venc_mgr[i*GSF_CODEC_VENC_NUM+j].vst = i*GSF_CODEC_VENC_NUM+j;
+    
     #ifdef GSF_CPU_3516e
-    int size = (i == 0)? 1*1024*1024:
-               (i == 1)? 0.5*1024*1024:
-               (i == 2)? 0.3*1024*1024: 0;
+    int size = (j == 0)? 1*1024*1024:
+               (j == 1)? 0.5*1024*1024:
+               (j == 2)? 0.3*1024*1024: 0;
     #else
-    int size = (i == 0)? 2*1024*1024:
-               (i == 1)? 1*1024*1024:
-               (i == 2)? 0.5*1024*1024: 0;
+    int size = (j == 0)? 2*1024*1024:
+               (j == 1)? 1*1024*1024:
+               (j == 2)? 0.5*1024*1024: 0;
     #endif
     if(size > 0)
     {
-      venc_mgr[i].video_fifo 
+      venc_mgr[i*GSF_CODEC_VENC_NUM+j].video_fifo 
               = cfifo_alloc(size, 
                           cfifo_recsize, 
                           cfifo_rectag, 
                           cfifo_recrel, 
-                          &venc_mgr[i].video_shmid,
+                          &venc_mgr[i*GSF_CODEC_VENC_NUM+j].video_shmid,
                           0);
     }
   }

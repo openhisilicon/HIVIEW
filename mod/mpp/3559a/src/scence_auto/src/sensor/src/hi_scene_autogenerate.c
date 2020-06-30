@@ -6,11 +6,17 @@
 #include "mpi_isp.h"
 #include "mpi_vi.h"
 #include "mpi_hdr.h"
+#include "mpi_venc.h"
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif
 #endif
+#define PIC_WIDTH_1080P   1920
+#define PIC_HEIGHT_1080P  1080
+
+#define LCU_ALIGN_H265 64
+#define MB_ALIGN_H264 16
 
 #define SCENE_MAX(a, b) (((a) < (b)) ? (b) : (a))
 
@@ -32,7 +38,7 @@ HI_SCENE_PIPE_PARAM_S g_astScenePipeParam[HI_SCENE_PIPETYPE_NUM];
             return HI_SUCCESS;\
         }\
     }while(0);\
-     
+
 #define CHECK_SCENE_RET(s32Ret)\
     do{\
         if (HI_SUCCESS != s32Ret)\
@@ -40,7 +46,7 @@ HI_SCENE_PIPE_PARAM_S g_astScenePipeParam[HI_SCENE_PIPETYPE_NUM];
             printf("Failed at %s: LINE: %d with %#x!", __FUNCTION__, __LINE__, s32Ret);\
         }\
     }while(0);\
-     
+
 #define CHECK_SCENE_NULLPTR(ptr)\
     do{\
         if (NULL == ptr)\
@@ -49,7 +55,7 @@ HI_SCENE_PIPE_PARAM_S g_astScenePipeParam[HI_SCENE_PIPETYPE_NUM];
             return HI_FAILURE;\
         }\
     }while(0);\
-     
+
 #define FREE_SCENE_PTR(ptr)\
     do{\
         if (NULL != ptr)\
@@ -58,7 +64,7 @@ HI_SCENE_PIPE_PARAM_S g_astScenePipeParam[HI_SCENE_PIPETYPE_NUM];
             ptr = NULL;\
         }\
     }while(0);\
-     
+
 static  HI_U32 SCENE_GetLevelLtoH(HI_U64 u64Value, HI_U32 u32Count, HI_U64 *pu64Thresh)
 {
     HI_U32 u32Level = 0;
@@ -413,9 +419,15 @@ HI_S32 HI_SCENE_SetStaticThreeDNR_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index)
     stNrx.stNRXParamV1.stNRXAutoV1.u32ParamNum = g_astScenePipeParam[u8Index].stStaticThreeDNR.u32ThreeDNRCount;
     for (i = 0; i < stNrx.stNRXParamV1.stNRXAutoV1.u32ParamNum; i++)
     {
+        stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].IEyMode = 0;
         stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].IEy.IES = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].IEy.IES;
         stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].IEy.IESS = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].IEy.IESS;
         stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].IEy.IEDZ = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].IEy.IEDZ;
+
+        for(j = 0; j < 4; j++)
+        {
+            stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].IEyEx[j] = 32;
+        }
         for (j = 0; j < 5; j++)
         {
             stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].SFy[j].SBF = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].SFy[j].SBF;
@@ -475,6 +487,9 @@ HI_S32 HI_SCENE_SetStaticThreeDNR_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index)
         {
             stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].BriThr[j] = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].BriThr[j];
         }
+
+        stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].NRc.MODE = 0;
+        stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].NRc.PRESFC = 4;
         stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].NRc.SFC = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].NRc.SFC;
         stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].NRc.TFC = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].NRc.TFC;
         stNrx.stNRXParamV1.stNRXAutoV1.pastNRXParamV1[i].NRc.CSFS = g_astScenePipeParam[u8Index].stStaticThreeDNR.astThreeDNRValue[i].NRc.CSFS;
@@ -799,6 +814,66 @@ HI_S32 HI_SCENE_SetDynamicShading_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposur
     return HI_SUCCESS;
 }
 
+HI_S32 HI_SCENE_SetDynamicVencBitrate_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Iso, HI_U64 u64LastIso, HI_U8 u8Index)
+{
+    if (g_astScenePipeParam[u8Index].stDynamicVencBitrate.bEnable != HI_TRUE) {
+        return HI_SUCCESS;
+    }
+    
+    HI_U32 u32ExpLevel = 0;
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_U32 u32Iso = u64Iso;
+    HI_U32 u32LastIso = u64LastIso;
+
+    VENC_CHN_ATTR_S stVencChnAttr;
+    VENC_RC_PARAM_S stRcParam;
+    PAYLOAD_TYPE_E  enType;
+
+    if (u32Iso != u32LastIso) {
+        CHECK_SCENE_PAUSE();
+        s32Ret = HI_MPI_VENC_GetChnAttr(ViPipe, &stVencChnAttr);
+        CHECK_SCENE_RET(s32Ret);
+        enType  = stVencChnAttr.stVencAttr.enType;
+        if (stVencChnAttr.stRcAttr.enRcMode != VENC_RC_MODE_H264AVBR && stVencChnAttr.stRcAttr.enRcMode != VENC_RC_MODE_H265AVBR) {
+            return HI_SUCCESS;
+        }
+
+        s32Ret = HI_MPI_VENC_GetRcParam(ViPipe, &stRcParam);
+        CHECK_SCENE_RET(s32Ret);
+
+        u32ExpLevel = SCENE_GetLevelLtoH_U32(u32Iso, g_astScenePipeParam[u8Index].stDynamicVencBitrate.u32IsoThreshCnt, g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH);
+
+        if (u32ExpLevel == 0 || u32ExpLevel == g_astScenePipeParam[u8Index].stDynamicVencBitrate.u32IsoThreshCnt - 1) {
+            if (enType == PT_H264 ) {
+                stRcParam.stParamH264AVbr.s32ChangePos = g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32ExpLevel];
+            } else {
+                stRcParam.stParamH265AVbr.s32ChangePos = g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32ExpLevel];
+            }
+        } else {
+            if (enType == PT_H264 ) {
+                stRcParam.stParamH264AVbr.s32ChangePos = SCENE_Interpulate(u32Iso,
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH[u32ExpLevel - 1],
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32ExpLevel - 1],
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH[u32ExpLevel],
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32ExpLevel]);
+            } else {
+                stRcParam.stParamH265AVbr.s32ChangePos = SCENE_Interpulate(u32Iso,
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH[u32ExpLevel - 1],
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32ExpLevel - 1],
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH[u32ExpLevel],
+                            g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32ExpLevel]);
+            }
+
+        }
+
+        CHECK_SCENE_PAUSE();
+        s32Ret =  HI_MPI_VENC_SetRcParam(ViPipe, &stRcParam);
+        CHECK_SCENE_RET(s32Ret);
+    }
+
+    return HI_SUCCESS;
+}
+
 HI_S32 HI_SCENE_SetDynamicLDCI_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI_U64 u64LastExposure, HI_U8 u8Index)
 {
     HI_U32 u32ExpLevel = 0;
@@ -863,6 +938,23 @@ HI_S32 HI_SCENE_SetDynamicFsWdr_AutoGenerate(VI_PIPE ViPipe, HI_U32 u32ISO, HI_U
 
     ISP_WDR_FS_ATTR_S stFSWDRAttr;
 
+	CHECK_SCENE_PAUSE();
+    s32Ret = HI_MPI_ISP_GetFSWDRAttr(ViPipe, &stFSWDRAttr);
+    CHECK_SCENE_RET(s32Ret);
+
+	if(u32ISO <= 150)
+	{
+		stFSWDRAttr.enWDRMergeMode = MERGE_WDR_MODE;
+	}
+	else
+	{
+		stFSWDRAttr.enWDRMergeMode = MERGE_FUSION_MODE;
+	}
+
+	CHECK_SCENE_PAUSE();
+    s32Ret = HI_MPI_ISP_SetFSWDRAttr(ViPipe, &stFSWDRAttr);
+    CHECK_SCENE_RET(s32Ret);
+
     if (u32ISO != u32LastISO)
     {
         CHECK_SCENE_PAUSE();
@@ -872,7 +964,7 @@ HI_S32 HI_SCENE_SetDynamicFsWdr_AutoGenerate(VI_PIPE ViPipe, HI_U32 u32ISO, HI_U
         u32IsoLevel = SCENE_GetLevelLtoH_U32(u32ActRation, g_astScenePipeParam[u8Index].stDynamicFSWDR.u32IsoCnt, g_astScenePipeParam[u8Index].stDynamicFSWDR.au32ExpRation);
         stFSWDRAttr.stWDRCombine.bMotionComp = g_astScenePipeParam[u8Index].stDynamicFSWDR.au8MotionComp[u32IsoLevel];
         u32IsoLevel = SCENE_GetLevelLtoH_U32(u32ISO, g_astScenePipeParam[u8Index].stDynamicFSWDR.u32IsoCnt, g_astScenePipeParam[u8Index].stDynamicFSWDR.au32ISOLtoHThresh);
-        stFSWDRAttr.stBnr.u8BnrStr = g_astScenePipeParam[u8Index].stDynamicFSWDR.au8BnrStr[u32IsoLevel];
+        //stFSWDRAttr.stBnr.u8BnrStr = g_astScenePipeParam[u8Index].stDynamicFSWDR.au8BnrStr[u32IsoLevel];
         stFSWDRAttr.stBnr.enBnrMode = (ISP_BNR_MODE_E)g_astScenePipeParam[u8Index].stDynamicFSWDR.au8BnrMode[u32IsoLevel];
 
         CHECK_SCENE_PAUSE();
@@ -1277,6 +1369,7 @@ HI_S32 HI_SCENE_GetModuleState_AutoGenerate(HI_SCENE_MODULE_STATE_S *pstModuleSt
     pstModuleState->bDyanamicFalseColor = 0;
     pstModuleState->bDyanamicDemosaic = 0;
     pstModuleState->bDynamicShading = 1;
+    pstModuleState->bDynamicIsoVenc = 1;
     pstModuleState->bDynamicDehaze = 1;
     pstModuleState->bDynamicFSWDR = 1;
     pstModuleState->bDynamicHDRTM = 0;
@@ -1320,6 +1413,225 @@ HI_S32 HI_SCENE_GetPipeAERoute_AutoGenerate(HI_S32 s32PipeIndex, HI_U8 au8AEWeig
     return HI_SUCCESS;
 }
 
+HI_S32 HI_SCENE_SetQP_AutoGenerate(HI_U32  u32PicWidth, HI_U32  u32PicHeight,HI_U32 u32MaxBitRate,PAYLOAD_TYPE_E  enType,VENC_RC_PARAM_S * pstRcParam)
+{
+    HI_U32 u32AlignPicHeight;
+    HI_U32 u32AlignPicWidht;
+    HI_U32 u32AlignPicHeight_1080P;
+    HI_U32 u32AlignPicWidht_1080P;
+
+    u32AlignPicHeight = ((u32PicHeight + MB_ALIGN_H264 - 1) / MB_ALIGN_H264);
+    u32AlignPicWidht  = ((u32PicWidth + MB_ALIGN_H264- 1) / MB_ALIGN_H264);	
+    u32AlignPicHeight_1080P = ((PIC_HEIGHT_1080P + MB_ALIGN_H264- 1) / MB_ALIGN_H264);
+    u32AlignPicWidht_1080P  = ((PIC_WIDTH_1080P + MB_ALIGN_H264- 1) / MB_ALIGN_H264);	
+    u32MaxBitRate = (u32AlignPicHeight_1080P * u32AlignPicWidht_1080P * u32MaxBitRate) / (u32AlignPicHeight * u32AlignPicWidht);
+
+    if (enType == PT_H265) {
+        if (u32MaxBitRate <= 768) {
+            pstRcParam->stParamH265AVbr.u32MinIQp = 30;
+	        pstRcParam->stParamH265AVbr.u32MinQp = 32;
+	        pstRcParam->stParamH265AVbr.u32MaxIQp = 48;
+	        pstRcParam->stParamH265AVbr.u32MaxQp = 48;	      
+        } else if (u32MaxBitRate <= 1536) {
+            pstRcParam->stParamH265AVbr.u32MinIQp = 29;
+            pstRcParam->stParamH265AVbr.u32MinQp  = 31;
+            pstRcParam->stParamH265AVbr.u32MaxIQp = 44;
+            pstRcParam->stParamH265AVbr.u32MaxQp = 44;	
+        } else if (u32MaxBitRate <= 2560) {
+            pstRcParam->stParamH265AVbr.u32MinIQp = 26;
+            pstRcParam->stParamH265AVbr.u32MinQp  = 28;
+            pstRcParam->stParamH265AVbr.u32MaxIQp = 42;
+            pstRcParam->stParamH265AVbr.u32MaxQp = 42;	
+        } else if (u32MaxBitRate <= 3584) {
+            pstRcParam->stParamH265AVbr.u32MinIQp = 25;
+            pstRcParam->stParamH265AVbr.u32MinQp  = 27;
+            pstRcParam->stParamH265AVbr.u32MaxIQp = 42;
+            pstRcParam->stParamH265AVbr.u32MaxQp = 42;	
+        } else if (u32MaxBitRate <= 4096) {
+            pstRcParam->stParamH265AVbr.u32MinIQp = 24;
+            pstRcParam->stParamH265AVbr.u32MinQp  = 26;
+            pstRcParam->stParamH265AVbr.u32MaxIQp = 42;
+            pstRcParam->stParamH265AVbr.u32MaxQp = 42;	
+        } else {
+            pstRcParam->stParamH265AVbr.u32MinIQp = 23;
+            pstRcParam->stParamH265AVbr.u32MinQp  = 25;
+            pstRcParam->stParamH265AVbr.u32MaxIQp = 42;
+            pstRcParam->stParamH265AVbr.u32MaxQp = 42;	
+        }
+        pstRcParam->stParamH265AVbr.u32MinIprop = 1;
+        pstRcParam->stParamH265AVbr.u32MaxIprop = 100;
+        pstRcParam->stParamH265AVbr.s32MaxReEncodeTimes = 2;
+        pstRcParam->stParamH265AVbr.s32MinStillPercent = 25;	
+        pstRcParam->stParamH265AVbr.u32MaxStillQP = 35;
+        pstRcParam->stParamH265AVbr.u32MinStillPSNR = 0;
+    }
+
+    if (enType == PT_H264) {
+        if (u32MaxBitRate <= 768) {
+             pstRcParam->stParamH264AVbr.u32MinIQp = 30;
+             pstRcParam->stParamH264AVbr.u32MinQp = 32;
+             pstRcParam->stParamH264AVbr.u32MaxIQp = 48;
+             pstRcParam->stParamH264AVbr.u32MaxQp = 48;	      
+        } else if (u32MaxBitRate <= 1536) {
+             pstRcParam->stParamH264AVbr.u32MinIQp = 29;
+             pstRcParam->stParamH264AVbr.u32MinQp = 31;
+             pstRcParam->stParamH264AVbr.u32MaxIQp = 44;
+             pstRcParam->stParamH264AVbr.u32MaxQp = 44;	
+        } else if (u32MaxBitRate <= 3072) {
+             pstRcParam->stParamH264AVbr.u32MinIQp = 27;
+             pstRcParam->stParamH264AVbr.u32MinQp = 29;
+             pstRcParam->stParamH264AVbr.u32MaxIQp = 42;
+             pstRcParam->stParamH264AVbr.u32MaxQp = 42;	
+        } else if (u32MaxBitRate <= 5120) {
+             pstRcParam->stParamH264AVbr.u32MinIQp = 26;
+             pstRcParam->stParamH264AVbr.u32MinQp = 28;
+             pstRcParam->stParamH264AVbr.u32MaxIQp = 42;
+             pstRcParam->stParamH264AVbr.u32MaxQp = 42;	
+        } else if (u32MaxBitRate <= 7168) {
+             pstRcParam->stParamH264AVbr.u32MinIQp = 25;
+             pstRcParam->stParamH264AVbr.u32MinQp = 27;
+             pstRcParam->stParamH264AVbr.u32MaxIQp = 42;
+             pstRcParam->stParamH264AVbr.u32MaxQp = 42;	
+        } else {
+             pstRcParam->stParamH264AVbr.u32MinIQp = 23;
+             pstRcParam->stParamH264AVbr.u32MinQp = 25;
+             pstRcParam->stParamH264AVbr.u32MaxIQp = 42;
+             pstRcParam->stParamH264AVbr.u32MaxQp = 42;	
+        }
+        pstRcParam->stParamH264AVbr.u32MinIprop = 1;
+        pstRcParam->stParamH264AVbr.u32MaxIprop = 100;
+        pstRcParam->stParamH264AVbr.s32MaxReEncodeTimes = 2;
+        pstRcParam->stParamH264AVbr.s32MinStillPercent = 25;	
+        pstRcParam->stParamH264AVbr.u32MaxStillQP = 35;
+        pstRcParam->stParamH264AVbr.u32MinStillPSNR = 0;
+    }
+
+    return HI_SUCCESS;
+}
+
+HI_S32 HI_SCENE_SetRCParam_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    ISP_EXP_INFO_S stIspExpInfo;
+    VENC_CHN_ATTR_S stVencChnAttr;
+    VENC_CHN_STATUS_S stStatEx;
+    VENC_RC_PARAM_S stRcParam;
+    HI_U32 i, u32MinQP, u32Iso;
+    HI_U32 u32MeanQp;								/*the start Qp of encoded frames*/
+    HI_S32 s32Percent = 90;	
+    HI_U32 u32SumMeanQP = 0;
+    HI_U32 u32SumIso = 0;
+    HI_U32 u32MaxBitRate;   
+    PAYLOAD_TYPE_E enType;
+    static HI_U32 u32IsoInfo[8] = {100,100,100,100,100,100,100,100};
+    static HI_U32 u32MeanQpInfo[8] = {30,30,30,30,30,30,30,30};
+    HI_U32 u32PicWidth;        
+    HI_U32 u32PicHeight; 
+    HI_U32 u32Index = 0;
+
+    if (g_astScenePipeParam[u8Index].stDynamicVencBitrate.bEnable != HI_TRUE) {
+        return HI_SUCCESS;
+    }
+
+    s32Ret = HI_MPI_VENC_GetChnAttr(ViPipe, &stVencChnAttr);
+    CHECK_SCENE_RET(s32Ret);
+
+    if (stVencChnAttr.stRcAttr.enRcMode != VENC_RC_MODE_H264AVBR &&
+	    stVencChnAttr.stRcAttr.enRcMode != VENC_RC_MODE_H265AVBR) {
+        return HI_SUCCESS;
+    }
+
+    s32Ret = HI_MPI_ISP_QueryExposureInfo(ViPipe, &stIspExpInfo);
+    CHECK_SCENE_RET(s32Ret);
+
+    u32Iso = stIspExpInfo.u32ISO;
+    s32Ret = HI_MPI_VENC_QueryStatus(ViPipe, &stStatEx);
+    CHECK_SCENE_RET(s32Ret);
+
+    enType = stVencChnAttr.stVencAttr.enType;
+    u32MeanQp = stStatEx.stVencStrmInfo.u32MeanQp;
+    u32MinQP = u32MeanQpInfo[0];
+    u32MaxBitRate = (enType == PT_H264)? stVencChnAttr.stRcAttr.stH264AVbr.u32MaxBitRate : stVencChnAttr.stRcAttr.stH265AVbr.u32MaxBitRate;
+    u32PicWidth = stVencChnAttr.stVencAttr.u32PicWidth;
+    u32PicHeight = stVencChnAttr.stVencAttr.u32PicHeight;
+
+    for (i = 0; i < 7; i++) {
+       u32IsoInfo[i]= u32IsoInfo[i+1];
+       u32MeanQpInfo[i]=u32MeanQpInfo[i+1];
+    }
+    u32IsoInfo[i]= u32Iso;
+    u32MeanQpInfo[i]=u32MeanQp;
+
+    for (i = 0; i < 8; i++) {
+        if (u32MinQP < u32MeanQpInfo[i]) {
+            u32MinQP = u32MeanQpInfo[i];
+        }
+        u32SumMeanQP += u32MeanQpInfo[i];
+	    u32SumIso += u32IsoInfo[i];
+    }
+    u32SumMeanQP = u32SumMeanQP - u32MinQP;
+    u32SumMeanQP = u32SumMeanQP / 7;
+    u32SumIso = u32SumIso / 8;
+
+    for (i = 0; i < g_astScenePipeParam[u8Index].stDynamicVencBitrate.u32IsoThreshCnt; i++) {
+        if (u32SumIso > g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH[i]) {
+            u32Index++;
+        }	
+    }
+	
+    s32Ret= HI_MPI_VENC_GetRcParam(ViPipe, &stRcParam);
+    CHECK_SCENE_RET(s32Ret);
+    if (enType == PT_H264) {
+        stRcParam.stParamH264AVbr.s32ChangePos = g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32Index -1];
+        s32Percent = stRcParam.stParamH264AVbr.s32ChangePos;
+    }
+    if (enType == PT_H265) {
+        stRcParam.stParamH265AVbr.s32ChangePos = g_astScenePipeParam[u8Index].stDynamicVencBitrate.au16ManualPercent[u32Index -1];
+        s32Percent = stRcParam.stParamH265AVbr.s32ChangePos;
+    }
+
+    if (u32SumIso > g_astScenePipeParam[u8Index].stDynamicVencBitrate.au32IsoThreshLtoH[2]) {
+        if (u32SumMeanQP <= 33 && u32SumMeanQP >= 31) {
+            s32Percent = 19 * s32Percent/20;
+        } else if(u32SumMeanQP <= 30 && u32SumMeanQP >= 29) {
+   	        s32Percent = 9 * s32Percent/10;
+   	    } else if(u32SumMeanQP < 29 ) {
+   	        s32Percent = 8 * s32Percent/10;
+   	    }  	
+
+        if(enType == PT_H264) {
+            stRcParam.stParamH264AVbr.s32ChangePos = s32Percent;
+            stRcParam.stParamH264AVbr.u32MinQpDelta = 2;
+        }
+        if(enType == PT_H265) {
+            stRcParam.stParamH265AVbr.s32ChangePos = s32Percent;
+            stRcParam.stParamH265AVbr.u32MinQpDelta = 2;
+        }
+    } else {
+        if (stVencChnAttr.stGopAttr.enGopMode == VENC_GOPMODE_SMARTP) {
+            if (enType == PT_H264) {
+                stRcParam.stParamH264AVbr.u32MinQpDelta = 3;
+            } if (enType == PT_H265) {
+                stRcParam.stParamH265AVbr.u32MinQpDelta = 3;
+            }
+        } else {
+            if (enType == PT_H264) {
+		        stRcParam.stParamH264AVbr.u32MinQpDelta = 3;
+            }
+            if (enType == PT_H265) {
+                stRcParam.stParamH265AVbr.u32MinQpDelta = 3;
+            }
+        }
+    }
+
+    s32Ret = HI_SCENE_SetQP_AutoGenerate(u32PicWidth, u32PicHeight, u32MaxBitRate, enType, &stRcParam);
+    CHECK_SCENE_RET(s32Ret);
+
+    s32Ret= HI_MPI_VENC_SetRcParam(ViPipe, &stRcParam);
+    CHECK_SCENE_RET(s32Ret);
+
+    return HI_SUCCESS;
+}
 
 #ifdef __cplusplus
 #if __cplusplus

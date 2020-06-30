@@ -2906,6 +2906,69 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
     return HI_SUCCESS;
 }
 
+HI_S32 SCENE_LoadDynamicVencBitrate(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_VENCBITRATE_S *pstDynamicVenc)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_S32 s32Value = 0;
+    HI_U32 u32IdxM = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0};
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:Enable");
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString) {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_vencbitrate:Enable", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret) {
+            MLOGE("load dynamic_vencbitrate:Enable failed\n");
+            return HI_FAILURE;
+        }
+        pstDynamicVenc->bEnable = s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:IsoThreshCnt");
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString) {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_vencbitrate:IsoThreshCnt", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret) {
+            MLOGE("load dynamic_vencbitrate:TotalNum failed\n");
+            return HI_FAILURE;
+        }
+        pstDynamicVenc->u32IsoThreshCnt = s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:IsoThreshLtoH");
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString) {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicVenc->u32IsoThreshCnt; u32IdxM++) {
+            pstDynamicVenc->au32IsoThreshLtoH[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:ManualPercent");
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString) {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicVenc->u32IsoThreshCnt; u32IdxM++) {
+            pstDynamicVenc->au16ManualPercent[u32IdxM] = (HI_U16)s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    return HI_SUCCESS;
+}
+
 HI_S32 SCENE_LoadDynamicFalseColor(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FALSECOLOR_S *pstDynamicFalseColor)
 {
 
@@ -3181,6 +3244,56 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
     }
 #endif
 
+#ifdef CFG_DYM_THREADDRC_REFRATIOCNT
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RefRatioCnt");/*RefRatioCnt*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "thread_drc:RefRatioCnt", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load thread_drc:ExpCnt failed\n");
+            return HI_FAILURE;
+        }
+        pstThreadDrc->u32RefRatioCount = (HI_U32)s32Value;
+    }
+#endif
+
+#ifdef CFG_DYM_THREADDRC_REFRATIO
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RefRatioLtoH");/*RefRatioLtoH*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstThreadDrc->u32ExpCount; u32IdxM++)
+        {
+            pstThreadDrc->au32RefRatioLtoH[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+#endif
+
+#ifdef CFG_DYM_THREADDRC_REFRATIOALPHA
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RefRatioAlpha");/*RefRatioAlpha*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstThreadDrc->u32ExpCount; u32IdxM++)
+        {
+            pstThreadDrc->u32RefRatioAlpha[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+#endif
+
 #ifdef CFG_DYM_THREADDRC_ISOCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:IsoCnt");/*IsoCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
@@ -3277,6 +3390,38 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         for (u32IdxM = 0; u32IdxM < HI_ISP_DRC_TM_NODE_NUM; u32IdxM++)
         {
             pstThreadDrc->au16ToneMappingValue2[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+#endif
+
+#ifdef CFG_DYM_THREADDRC_DRCTMVALUELOW
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DRCTMValueLow");/*DRCTMValueLow*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < HI_ISP_DRC_TM_NODE_NUM; u32IdxM++)
+        {
+            pstThreadDrc->au16TMValueLow[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+#endif
+
+#ifdef CFG_DYM_THREADDRC_DRCTMVALUEHIGH
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DRCTMValueHigh");/*DRCTMValueHigh*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < HI_ISP_DRC_TM_NODE_NUM; u32IdxM++)
+        {
+            pstThreadDrc->au16TMValueHigh[u32IdxM] = s_as64LineNum[u32IdxM];
         }
         free(pszString);
         pszString = HI_NULL;
@@ -3663,7 +3808,11 @@ HI_S32 SCENE_LoadSceneParam(const HI_CHAR *pszIniModule, HI_SCENE_PIPE_PARAM_S *
         MLOGE("SCENE_LoadDynamicAE failed\n");
         return HI_FAILURE;
     }
-
+    s32Ret = SCENE_LoadDynamicVencBitrate(pszIniModule, &pstSceneParam->stDynamicVencBitrate);
+    if (HI_SUCCESS != s32Ret) {
+        MLOGE("SCENE_LoadDynamicVencBitrate failed\n");
+        return HI_FAILURE;
+    }
 
     s32Ret = SCENE_LoadDynamicFalseColor(pszIniModule, &pstSceneParam->stDynamicFalsecolor);
     if (HI_SUCCESS != s32Ret)
@@ -3931,7 +4080,6 @@ HI_S32 HI_SCENE_CreateParam(HI_CHAR *pdirname, HI_SCENE_PARAM_S *pstSceneParam, 
 
     //maohw snprintf(acInipath, SCENETOOL_MAX_FILESIZE, "%s%s", pdirname, "/config_cfgaccess_hd.ini");
     snprintf(acInipath, SCENETOOL_MAX_FILESIZE, "%s", pdirname);
-    
     printf("The iniPath is %s.\n", acInipath);
 
     s32Ret = HI_CONFACCESS_Init(SCENE_INIPARAM, acInipath, &u32ModuleNum);

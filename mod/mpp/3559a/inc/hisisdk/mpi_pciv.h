@@ -1,25 +1,12 @@
-/******************************************************************************
-
-  Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : mpi_pciv.h
-  Version       : Initial Draft
-  Author        : Hisilicon Hi3511 MPP Team
-  Created       : 2009/06/23
-  Last Modified :
-  Description   : mpi functions declaration
-  Function List :
-  History       :
-  1.Date        : 2009/06/23
-    Author      : z44949
-    Modification: Create
-******************************************************************************/
+/*
+ * Copyright (c) Hisilicon Technologies Co., Ltd. 2009-2019. All rights reserved.
+ * Description   : mpi functions declaration
+ * Author        : Hisilicon Hi3511 MPP Team
+ * Created       : 2009/06/23
+ */
 #ifndef __MPI_PCIV_H__
 #define __MPI_PCIV_H__
 
-#include "hi_common.h"
-#include "hi_comm_video.h"
 #include "hi_comm_pciv.h"
 
 #ifdef __cplusplus
@@ -38,7 +25,7 @@ extern "C"{
 
  See Also        : HI_MPI_PCIV_Destroy
 *****************************************************************************/
-HI_S32 HI_MPI_PCIV_Create(PCIV_CHN pcivChn,const PCIV_ATTR_S *pPcivAttr);
+HI_S32 HI_MPI_PCIV_Create(PCIV_CHN pcivChn, const PCIV_ATTR_S *pPcivAttr);
 
 /*****************************************************************************
  Description     : Destroy the pciv channel
@@ -61,7 +48,7 @@ HI_S32 HI_MPI_PCIV_Destroy(PCIV_CHN pcivChn);
 
  See Also        : HI_MPI_PCIV_GetAttr
 *****************************************************************************/
-HI_S32 HI_MPI_PCIV_SetAttr(PCIV_CHN pcivChn,const PCIV_ATTR_S *pPcivAttr);
+HI_S32 HI_MPI_PCIV_SetAttr(PCIV_CHN pcivChn, const PCIV_ATTR_S *pPcivAttr);
 
 /*****************************************************************************
  Description     : Get the attribute of pciv channel
@@ -132,15 +119,15 @@ HI_S32  HI_MPI_PCIV_Malloc(HI_U32 u32BlkSize, HI_U32 u32BlkCnt, HI_U64 au64PhyAd
 
  See Also        : None
 *****************************************************************************/
-HI_S32  HI_MPI_PCIV_Free(HI_U32 u32BlkCnt,const HI_U64 au64PhyAddr[]);
+HI_S32  HI_MPI_PCIV_Free(HI_U32 u32BlkCnt, const HI_U64 au64PhyAddr[]);
 
 /*****************************************************************************
  Description     : Alloc 'u32BlkSize' bytes memory and give the physical address for one pciv channel
                    The memory used by PCI host, pciv slave cann't use this interface.
- Input           : pcivChn        **pciv channel
- 			   u32BlkSize    ** The size of each memory block
-                      u32BlkCnt     ** The count of memory block
- Output         : u64PhyAddr  ** The physical address of the memory
+ Input           : pcivChn       **pciv channel
+                   u32BlkSize    ** The size of each memory block
+                   u32BlkCnt     ** The count of memory block
+ Output          : u64PhyAddr    ** The physical address of the memory
  Return Value    : HI_SUCCESS if success.
                    HI_FAILURE if failure
 
@@ -152,8 +139,8 @@ HI_S32  HI_MPI_PCIV_MallocChnBuffer(PCIV_CHN pcivChn, HI_U32 u32BlkSize, HI_U32 
  Description     : free pciv channel memory with the physical address
                    The memory used by PCI host, pciv slave cann't use this interface.
  Input           : pcivChn    ** pciv channel
-                      u32BlkCnt     ** The count of memory block
- Output         : None
+                   u32BlkCnt  ** The count of memory block
+ Output          : None
  Return Value    : HI_SUCCESS if success.
                    HI_FAILURE if failure
 
@@ -174,20 +161,7 @@ HI_S32  HI_MPI_PCIV_FreeChnBuffer(PCIV_CHN pcivChn, HI_U32 u32BlkCnt);
 HI_S32  HI_MPI_PCIV_GetLocalId(HI_VOID);
 
 /*****************************************************************************
- Description     : Enum all the connected chip.Call this function as follow.
-                   {
-                       HI_S32 s32ChipID[PCIV_MAX_CHIPNUM], i, s32Ret;
-
-                       s32Ret = HI_MPI_PCIV_EnumChip(s32ChipID);
-                       HI_ASSERT(HI_SUCCESS == s32Ret);
-
-                       for(i=0; i<PCIV_MAX_CHIPNUM; i++)
-                       {
-                           if(s32ChipID[i] == -1) break;
-                           printf("The chip%d is connected\n", s32ChipID[i]);
-                       }
-                       printf("Total %d chips are connected\n", i);
-                   }
+ Description     : Enum all the connected chip. Need check the invalid value (-1)
  Input           : s32ChipID  ** The chip id array
  Output          : None
  Return Value    : HI_SUCCESS if success.
@@ -264,30 +238,6 @@ HI_S32 HI_MPI_PCIV_Show(PCIV_CHN pcivChn);
  Return Value :
 *****************************************************************************/
 HI_S32 HI_MPI_PCIV_Hide(PCIV_CHN pcivChn);
-
-/*****************************************************************************
- Description  : Get pre-processing parameter, e.g. filter coef.
- Input        : pcivChn ** The pciv channel id
- Output       : PCIV_PREPROC_CFG_S  ** The pre-processing parameter of pciv channel
- Return Value :HI_SUCCESS if success.
-                   HI_FAILURE if failure
-
-  See Also        : HI_MPI_PCIV_SetPreProcCfg
-*****************************************************************************/
-HI_S32 HI_MPI_PCIV_GetPreProcCfg(PCIV_CHN pcivChn,PCIV_PREPROC_CFG_S *pstCfg);
-
-/*****************************************************************************
- Description  : Set pre-processing parameter, e.g. filter coef.
- Input        : pcivChn ** The pciv channel id
- 		     PCIV_PREPROC_CFG_S  ** The pre-processing parameter of pciv channel
- Output       : NONE
- Return Value :HI_SUCCESS if success.
-                   HI_FAILURE if failure
-
-See Also        : HI_MPI_PCIV_GetPreProcCfg
-*****************************************************************************/
-
-HI_S32 HI_MPI_PCIV_SetPreProcCfg(PCIV_CHN pcivChn,const PCIV_PREPROC_CFG_S *pstCfg);
 
 #ifdef __cplusplus
 #if __cplusplus

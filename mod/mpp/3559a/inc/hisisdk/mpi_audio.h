@@ -1,17 +1,12 @@
-/******************************************************************************
-
-  Copyright (C), 2016-2018, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : mpi_audio.h
-  Version         : Initial Draft
-  Author          : Hisilicon multimedia software group
-  Created        : 2016/6/15
-  Last Modified :
-  Description    :
-  Function List  :
-******************************************************************************/
-
+/*
+ * Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * Description: mpi_audio.h
+ * Author: Hisilicon multimedia software group
+ * Create: 2016/6/15
+ * History                 :
+ *  1.Date                 :   2016/6/15
+ *    Modification         :   Created file
+ */
 #ifndef __MPI_AUDIO_H__
 #define __MPI_AUDIO_H__
 
@@ -33,6 +28,7 @@ extern "C"
 /* Audio function api. */
 HI_S32 HI_MPI_AUDIO_SetModParam(const AUDIO_MOD_PARAM_S *pstModParam);
 HI_S32 HI_MPI_AUDIO_GetModParam(AUDIO_MOD_PARAM_S *pstModParam);
+HI_S32 HI_MPI_AUDIO_RegisterVQEModule(const AUDIO_VQE_REGISTER_S *pstVqeRegister);
 
 /* AI function api. */
 HI_S32 HI_MPI_AI_SetPubAttr(AUDIO_DEV AiDevId, const AIO_ATTR_S *pstAttr);
@@ -89,8 +85,8 @@ HI_S32 HI_MPI_AO_SendFrame(AUDIO_DEV AoDevId, AO_CHN AoChn, const AUDIO_FRAME_S 
 HI_S32 HI_MPI_AO_EnableReSmp(AUDIO_DEV AoDevId, AO_CHN AoChn, AUDIO_SAMPLE_RATE_E enInSampleRate);
 HI_S32 HI_MPI_AO_DisableReSmp(AUDIO_DEV AoDevId, AO_CHN AoChn);
 
-HI_S32 HI_MPI_AO_ClearChnBuf(AUDIO_DEV AoDevId ,AO_CHN AoChn);
-HI_S32 HI_MPI_AO_QueryChnStat(AUDIO_DEV AoDevId ,AO_CHN AoChn, AO_CHN_STATE_S *pstStatus);
+HI_S32 HI_MPI_AO_ClearChnBuf(AUDIO_DEV AoDevId, AO_CHN AoChn);
+HI_S32 HI_MPI_AO_QueryChnStat(AUDIO_DEV AoDevId, AO_CHN AoChn, AO_CHN_STATE_S *pstStatus);
 
 HI_S32 HI_MPI_AO_PauseChn(AUDIO_DEV AoDevId, AO_CHN AoChn);
 HI_S32 HI_MPI_AO_ResumeChn(AUDIO_DEV AoDevId, AO_CHN AoChn);
@@ -130,6 +126,9 @@ HI_S32 HI_MPI_AENC_UnRegisterEncoder(HI_S32 s32Handle);
 
 HI_S32 HI_MPI_AENC_GetStreamBufInfo(AENC_CHN AeChn, HI_U64* pu64PhysAddr, HI_U32* pu32Size);
 
+HI_S32 HI_MPI_AENC_SetMute(AENC_CHN AeChn, HI_BOOL bEnable);
+HI_S32 HI_MPI_AENC_GetMute(AENC_CHN AeChn, HI_BOOL *pbEnable);
+
 /* ADEC function api. */
 HI_S32 HI_MPI_ADEC_CreateChn(ADEC_CHN AdChn, const ADEC_CHN_ATTR_S *pstAttr);
 HI_S32 HI_MPI_ADEC_DestroyChn(ADEC_CHN AdChn);
@@ -144,6 +143,7 @@ HI_S32 HI_MPI_ADEC_UnRegisterDecoder(HI_S32 s32Handle);
 HI_S32 HI_MPI_ADEC_GetFrame(ADEC_CHN AdChn, AUDIO_FRAME_INFO_S *pstFrmInfo, HI_BOOL bBlock);
 HI_S32 HI_MPI_ADEC_ReleaseFrame(ADEC_CHN AdChn, const AUDIO_FRAME_INFO_S *pstFrmInfo);
 HI_S32 HI_MPI_ADEC_SendEndOfStream(ADEC_CHN AdChn, HI_BOOL bInstant);
+HI_S32 HI_MPI_ADEC_QueryChnStat(ADEC_CHN AdChn, ADEC_CHN_STATE_S *pstBufferStatus);
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -1,9 +1,8 @@
 #include "mpp.h"
-#include "fw/libfont/inc/gsf_font_draw.h"
 #include "rgn.h"
 #include "cfg.h"
 
-static gsf_rgn_ini_t rgn_ini = {.st_num = 3};
+static gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
 
 int gsf_rgn_init(gsf_rgn_ini_t *ini)
 {
@@ -41,8 +40,8 @@ enum {
   OBJ_VMASK = 1,
 };
 
-#define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*3+8*3) + (type)*(8*3) + (st)*(8) + idx)
-static gsf_rgn_obj_t rgn_obj[8*3+8*3 + 8*3+8*3];
+#define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*3+8*1) + (type)*(8*3) + (st)*(8) + idx)
+static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_IPC_CHN)*(8*3+8*1)];
 
 int utf8_byte_num(unsigned char firstCh)
 {
@@ -279,8 +278,11 @@ static unsigned short argb8888_1555(unsigned int color)
 int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
 {
   int i = 0;
-  for(i = 0; i < rgn_ini.st_num; i++)
+  for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
+    if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+      continue;
+    
     int handle = GSF_RGN_OBJ_HANDLE(ch, OBJ_OSD, i, idx);
     
     memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
@@ -294,8 +296,8 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
     rgn_obj[handle].rgn.stChn.s32DevId = 0;
-    rgn_obj[handle].rgn.stChn.s32ChnId = i;
-    
+    rgn_obj[handle].rgn.stChn.s32ChnId = ch*GSF_CODEC_VENC_NUM+i;
+    //printf("handle:%d, ch:%d, i:%d, s32ChnId:%d\n", handle, ch, i, rgn_obj[handle].rgn.stChn.s32ChnId);
     rgn_obj[handle].rgn.stChnAttr.bShow = osd->en;//HI_TRUE;
     rgn_obj[handle].rgn.stChnAttr.enType = OVERLAY_RGN;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = ALIGN_UP(osd->point[0], 2);
@@ -413,9 +415,9 @@ int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
     rgn_obj[handle].rgn.stRegion.enType = COVER_RGN;
     
     rgn_obj[handle].rgn.stChn.enModId = HI_ID_VPSS;
-    rgn_obj[handle].rgn.stChn.s32DevId = 0;
-    rgn_obj[handle].rgn.stChn.s32ChnId = i;
-    
+    rgn_obj[handle].rgn.stChn.s32DevId = ch;
+    rgn_obj[handle].rgn.stChn.s32ChnId = 0;
+    //printf("handle:%d, ch:%d, i:%d, s32ChnId:%d\n", handle, ch, i, rgn_obj[handle].rgn.stChn.s32ChnId);
     rgn_obj[handle].rgn.stChnAttr.bShow = vmask->en;//HI_TRUE;
     rgn_obj[handle].rgn.stChnAttr.enType = COVER_RGN;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.enCoverType = AREA_RECT;

@@ -1,19 +1,10 @@
-/******************************************************************************
+/*
+* Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+* Description:
+* Author: Hisilicon multimedia software group
+* Create: 2011/06/28
+*/
 
-  Copyright (C), 2016, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : mpi_isp.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 2010/12/20
-  Description   :
-  History       :
-  1.Date        : 2010/12/20
-    Author      :
-    Modification: Created file
-
-******************************************************************************/
 
 #ifndef __MPI_ISP_H__
 #define __MPI_ISP_H__
@@ -194,6 +185,8 @@ HI_S32 HI_MPI_ISP_GetDCFInfo(VI_PIPE ViPipe, ISP_DCF_INFO_S *pstIspDCF);
 HI_S32 HI_MPI_ISP_SetCSCAttr(VI_PIPE ViPipe, const ISP_CSC_ATTR_S *pstCSCAttr);
 HI_S32 HI_MPI_ISP_GetCSCAttr(VI_PIPE ViPipe, ISP_CSC_ATTR_S *pstCSCFAttr);
 
+HI_S32 HI_MPI_ISP_SetRGBIRAttr(VI_PIPE ViPipe, const ISP_RGBIR_ATTR_S *pstRGBIRAttr);
+HI_S32 HI_MPI_ISP_GetRGBIRAttr(VI_PIPE ViPipe, ISP_RGBIR_ATTR_S *pstRGBIRAttr);
 HI_S32 HI_MPI_ISP_SetRegister(VI_PIPE ViPipe, HI_U32 u32Addr, HI_U32 u32Value);
 HI_S32 HI_MPI_ISP_GetRegister(VI_PIPE ViPipe, HI_U32 u32Addr, HI_U32 *pu32Value);
 
@@ -205,6 +198,14 @@ HI_S32 HI_MPI_ISP_GetFPNAttr(VI_PIPE ViPipe, ISP_FPN_ATTR_S *pstFPNAttr);
 HI_S32 HI_MPI_ISP_GetDngImageStaticInfo(VI_PIPE ViPipe, DNG_IMAGE_STATIC_INFO_S *pstDngImageStaticInfo);
 HI_S32 HI_MPI_ISP_SetDngColorParam(VI_PIPE ViPipe, const ISP_DNG_COLORPARAM_S *pstDngColorParam);
 HI_S32 HI_MPI_ISP_GetDngColorParam(VI_PIPE ViPipe, ISP_DNG_COLORPARAM_S *pstDngColorParam);
+HI_S32 HI_MPI_ISP_IrAutoRunOnce(VI_PIPE ViPipe, ISP_IR_AUTO_ATTR_S *pstIrAttr);
+
+HI_S32 HI_MPI_ISP_SetSmartInfo(VI_PIPE ViPipe, const ISP_SMART_INFO_S *pstSmartInfo);
+HI_S32 HI_MPI_ISP_GetSmartInfo(VI_PIPE ViPipe, ISP_SMART_INFO_S *pstSmartInfo);
+HI_S32 HI_MPI_ISP_CalcFlickerType(VI_PIPE ViPipe, ISP_CALCFLICKER_INPUT_S *pstInputParam,ISP_CALCFLICKER_OUTPUT_S *pstOutputParam, VIDEO_FRAME_INFO_S stFrame[], HI_U32 u32ArraySize);
+
+HI_S32 HI_MPI_ISP_SetRawPos(VI_PIPE ViPipe, const ISP_RAW_POS *rawPos);
+HI_S32 HI_MPI_ISP_GetRawPos(VI_PIPE ViPipe, ISP_RAW_POS *rawPos);
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -212,4 +213,4 @@ HI_S32 HI_MPI_ISP_GetDngColorParam(VI_PIPE ViPipe, ISP_DNG_COLORPARAM_S *pstDngC
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#endif /*__MPI_ISP_H__ */
+#endif /* __MPI_ISP_H__ */

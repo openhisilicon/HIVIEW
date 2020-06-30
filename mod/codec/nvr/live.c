@@ -208,6 +208,7 @@ static void* live_task(void *parm)
           attr.etype  = PT_VENC(frm->video.encode);// PAYLOAD_TYPE_E;
           attr.width  = frm->video.width;   // width;
           attr.height = frm->video.height;  // height;
+          attr.pts    = frm->pts*1000; // pts ms*1000;
           ret = gsf_mpp_vo_vsend(VOLAYER_HD0, (int)ch, data, &attr);
       }while(1);
     }

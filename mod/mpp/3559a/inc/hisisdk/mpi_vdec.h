@@ -1,18 +1,12 @@
+/*
+* Copyright (c) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+* Description:mpi_vdec.c header file
+* Author: Hisilicon multimedia software group
+* Create: 2016/07/15
+*/
 
-/******************************************************************************
-Copyright (C), 2016, Hisilicon Tech. Co., Ltd.
-******************************************************************************
-File Name     : mpi_vdec.h
-Version       : Initial Draft
-Author        : Hisilicon multimedia software group
-Created       : 2016/07/15
-Last Modified :
-Description   : MPP Programe Interface for video decode
-Function List :
-******************************************************************************/
-
-#ifndef  __MPI_VDEC_H__
-#define  __MPI_VDEC_H__
+#ifndef __MPI_VDEC_H__
+#define __MPI_VDEC_H__
 
 #include "hi_common.h"
 #include "hi_comm_video.h"
@@ -21,10 +15,9 @@ Function List :
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
-
 
 HI_S32 HI_MPI_VDEC_CreateChn(VDEC_CHN VdChn, const VDEC_CHN_ATTR_S *pstAttr);
 HI_S32 HI_MPI_VDEC_DestroyChn(VDEC_CHN VdChn);
@@ -35,18 +28,18 @@ HI_S32 HI_MPI_VDEC_SetChnAttr(VDEC_CHN VdChn, const VDEC_CHN_ATTR_S *pstAttr);
 HI_S32 HI_MPI_VDEC_StartRecvStream(VDEC_CHN VdChn);
 HI_S32 HI_MPI_VDEC_StopRecvStream(VDEC_CHN VdChn);
 
-HI_S32 HI_MPI_VDEC_QueryStatus(VDEC_CHN VdChn,VDEC_CHN_STATUS_S *pstStatus);
+HI_S32 HI_MPI_VDEC_QueryStatus(VDEC_CHN VdChn, VDEC_CHN_STATUS_S *pstStatus);
 
 HI_S32 HI_MPI_VDEC_GetFd(VDEC_CHN VdChn);
 HI_S32 HI_MPI_VDEC_CloseFd(VDEC_CHN VdChn);
 
 HI_S32 HI_MPI_VDEC_ResetChn(VDEC_CHN VdChn);
 
-HI_S32 HI_MPI_VDEC_SetChnParam(VDEC_CHN VdChn, const VDEC_CHN_PARAM_S* pstParam);
-HI_S32 HI_MPI_VDEC_GetChnParam(VDEC_CHN VdChn, VDEC_CHN_PARAM_S* pstParam);
+HI_S32 HI_MPI_VDEC_SetChnParam(VDEC_CHN VdChn, const VDEC_CHN_PARAM_S *pstParam);
+HI_S32 HI_MPI_VDEC_GetChnParam(VDEC_CHN VdChn, VDEC_CHN_PARAM_S *pstParam);
 
 HI_S32 HI_MPI_VDEC_SetProtocolParam(VDEC_CHN VdChn, const VDEC_PRTCL_PARAM_S *pstParam);
-HI_S32 HI_MPI_VDEC_GetProtocolParam(VDEC_CHN VdChn,VDEC_PRTCL_PARAM_S *pstParam);
+HI_S32 HI_MPI_VDEC_GetProtocolParam(VDEC_CHN VdChn, VDEC_PRTCL_PARAM_S *pstParam);
 
 /* s32MilliSec: -1 is block,0 is no block,other positive number is timeout */
 HI_S32 HI_MPI_VDEC_SendStream(VDEC_CHN VdChn, const VDEC_STREAM_S *pstStream, HI_S32 s32MilliSec);
@@ -73,7 +66,6 @@ HI_S32 HI_MPI_VDEC_DetachVbPool(VDEC_CHN VdChn);
 HI_S32 HI_MPI_VDEC_SetModParam(const VDEC_MOD_PARAM_S *pstModParam);
 HI_S32 HI_MPI_VDEC_GetModParam(VDEC_MOD_PARAM_S *pstModParam);
 
-
 #ifdef __cplusplus
 #if __cplusplus
 }
@@ -81,4 +73,5 @@ HI_S32 HI_MPI_VDEC_GetModParam(VDEC_MOD_PARAM_S *pstModParam);
 #endif /* End of #ifdef __cplusplus */
 
 #endif /* End of #ifndef  __MPI_VDEC_H__ */
+
 

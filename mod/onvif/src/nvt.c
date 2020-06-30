@@ -13,8 +13,6 @@
 
 int nvt_wsse_auth(struct soap *soap)
 {
-  g_nvt->p.auth = 1;
-  
 	if(g_nvt->p.auth == 0)
 	{
 	  printf("%s => check flag auth:%d.\n", __func__, g_nvt->p.auth);

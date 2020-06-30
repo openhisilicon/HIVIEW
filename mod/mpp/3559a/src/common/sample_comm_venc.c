@@ -482,6 +482,7 @@ HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VEN
 {
     if(pstPara->cb)
     {
+      //printf("%s => VencChn:%d, pstStream:%p, pstPara->cb:%p\n", __func__, VencChn, pstStream, pstPara->cb);
       pstPara->cb(VencChn, PT, pstStream, pstPara->uargs);
     }
 
@@ -636,6 +637,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stH265Cbr.fr32DstFrameRate  = u32FrameRate; /* target frame rate */
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stH265Cbr.u32BitRate = 1024 * 1 + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stH265Cbr.u32BitRate = 1024 * 2 + 1024*u32FrameRate/30;
                         break;
@@ -652,6 +656,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH265Cbr.u32BitRate = 1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH265Cbr.u32BitRate = 1024 * 20 + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -700,6 +705,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH265Vbr.u32MaxBitRate = 1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH265Vbr.u32MaxBitRate = 1024 * 20 + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -735,6 +741,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH265AVbr.u32MaxBitRate = 1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH265AVbr.u32MaxBitRate = 1024 * 20 + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -776,6 +783,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stH264Cbr.fr32DstFrameRate      = u32FrameRate; /* target frame rate */
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stH264Cbr.u32BitRate = 1024 * 1  + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stH264Cbr.u32BitRate = 1024 * 2  + 1024*u32FrameRate/30;
                         break;
@@ -792,6 +802,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH264Cbr.u32BitRate = 1024 * 12 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH264Cbr.u32BitRate = 1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -841,6 +852,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH264Vbr.u32MaxBitRate = 1024 * 10  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH264Vbr.u32MaxBitRate = 1024 * 20  + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -876,6 +888,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH264AVbr.u32MaxBitRate = 1024 * 10  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH264AVbr.u32MaxBitRate = 1024 * 20  + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -911,6 +924,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH264AVbr.u32MaxBitRate = 1024 * 10  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stH264AVbr.u32MaxBitRate = 1024 * 20  + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -960,6 +974,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stMjpegeCbr.fr32DstFrameRate    = u32FrameRate;
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stMjpegeCbr.u32BitRate = 1024 * 3  + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stMjpegeCbr.u32BitRate = 1024 * 5  + 1024*u32FrameRate/30;
                         break;
@@ -976,6 +993,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stMjpegeCbr.u32BitRate = 1024 * 30 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stMjpegeCbr.u32BitRate = 1024 * 40 + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -1017,6 +1035,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stMjpegVbr.u32MaxBitRate    = 1024 * 30 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
+                    case PIC_7680x1080:
                         stMjpegVbr.u32MaxBitRate = 1024 * 40 + 5120*u32FrameRate/30;
                         break;
                     default :
@@ -1037,6 +1056,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         case PT_JPEG:
             stJpegAttr.bSupportDCF     = HI_FALSE;
             stJpegAttr.stMPFCfg.u8LargeThumbNailNum = 0;
+            stJpegAttr.enReceiveMode = VENC_PIC_RECEIVE_SINGLE;
             memcpy(&stVencChnAttr.stVencAttr.stAttrJpege, &stJpegAttr, sizeof(VENC_ATTR_JPEG_S));
         break;
 
@@ -1100,16 +1120,15 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
             }
         }
     }
-    if( PT_JPEG != enType) // maohw
+
+    s32Ret = HI_MPI_VENC_CreateChn(VencChn, &stVencChnAttr);
+    if (HI_SUCCESS != s32Ret)
     {
-      s32Ret = HI_MPI_VENC_CreateChn(VencChn, &stVencChnAttr);
-      if (HI_SUCCESS != s32Ret)
-      {
-          SAMPLE_PRT("HI_MPI_VENC_CreateChn [%d] faild with %#x! ===\n", \
-                     VencChn, s32Ret);
-          return s32Ret;
-      }
+        SAMPLE_PRT("HI_MPI_VENC_CreateChn [%d] faild with %#x! ===\n", \
+                   VencChn, s32Ret);
+        return s32Ret;
     }
+
     return HI_SUCCESS;
 }
 
@@ -1132,7 +1151,6 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         SAMPLE_PRT("SAMPLE_COMM_VENC_Creat faild with%#x! \n", s32Ret);
         return HI_FAILURE;
     }
-    
     if(enType != PT_JPEG) // maohw
     {
       /******************************************
@@ -1146,6 +1164,7 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
           return HI_FAILURE;
       }
     }
+    SAMPLE_PRT("SAMPLE_COMM_VENC_Creat VencChn: %d, enType: %d\n", VencChn, enType);
     return HI_SUCCESS;
 }
 
@@ -1189,6 +1208,7 @@ HI_S32 SAMPLE_COMM_VENC_SnapStart(VENC_CHN VencChn, SIZE_S* pstSize, HI_BOOL bSu
      step 1:  Create Venc Channel
     ******************************************/
     stVencChnAttr.stVencAttr.enType = PT_JPEG;
+    stVencChnAttr.stVencAttr.u32Profile         = 0;
     stVencChnAttr.stVencAttr.u32MaxPicWidth     = pstSize->u32Width;
     stVencChnAttr.stVencAttr.u32MaxPicHeight    = pstSize->u32Height;
     stVencChnAttr.stVencAttr.u32PicWidth        = pstSize->u32Width;
@@ -1196,6 +1216,7 @@ HI_S32 SAMPLE_COMM_VENC_SnapStart(VENC_CHN VencChn, SIZE_S* pstSize, HI_BOOL bSu
     stVencChnAttr.stVencAttr.u32BufSize         = pstSize->u32Width * pstSize->u32Height * 2;
     stVencChnAttr.stVencAttr.bByFrame           = HI_TRUE;/*get stream mode is field mode  or frame mode*/
     stVencChnAttr.stVencAttr.stAttrJpege.bSupportDCF = bSupportDCF;
+    stVencChnAttr.stVencAttr.stAttrJpege.enReceiveMode = VENC_PIC_RECEIVE_SINGLE;
     //stVencChnAttr.stVencAttr.stAttrJpege.bSupportXMP = HI_FALSE;
     stVencChnAttr.stVencAttr.stAttrJpege.stMPFCfg.u8LargeThumbNailNum = 0;
 
@@ -1768,6 +1789,7 @@ HI_VOID* SAMPLE_COMM_QpmapSendFrameProc(HI_VOID* p)
             stFrame[i].stUserRcInfo.bQpMapValid     = 1;
             stFrame[i].stUserRcInfo.u64QpMapPhyAddr = u64QpMapPhyAddr[i];
             stFrame[i].stUserRcInfo.u32BlkStartQp   = 30;
+            stFrame[i].stUserRcInfo.enFrameType = VENC_FRAME_TYPE_NONE;
 
             s32Ret = HI_MPI_VENC_SendFrameEx(pstPara->VeChn[VeChnCnt], &stFrame[i],-1);
             if(HI_SUCCESS != s32Ret)
@@ -1899,7 +1921,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                        stVencChnAttr.stVencAttr.enType, s32Ret);
             return NULL;
         }
-        if(0) //maohw if(PT_JPEG != enPayLoadType[i])
+        if(0)//maohw if(PT_JPEG != enPayLoadType[i])
         {
             snprintf(aszFileName[i],32, "stream_chn%d%s", i, szFilePostfix);
 
@@ -1912,7 +1934,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             }
         }
         /* Set Venc Fd. */
-        VencFd[i] = HI_MPI_VENC_GetFd(i);
+        VencFd[i] = HI_MPI_VENC_GetFd(VencChn/*i*/);
         if (VencFd[i] < 0)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetFd failed with %#x!\n",
@@ -1924,7 +1946,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             maxfd = VencFd[i];
         }
 
-        s32Ret = HI_MPI_VENC_GetStreamBufInfo (i, &stStreamBufInfo[i]);
+        s32Ret = HI_MPI_VENC_GetStreamBufInfo (VencChn/*i*/, &stStreamBufInfo[i]);
         if (HI_SUCCESS != s32Ret)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo failed with %#x!\n", s32Ret);
@@ -1967,7 +1989,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     *******************************************************/
                     memset(&stStream, 0, sizeof(stStream));
 
-                    s32Ret = HI_MPI_VENC_QueryStatus(i, &stStat);
+                    s32Ret = HI_MPI_VENC_QueryStatus(/*i*/pstPara->VeChn[i], &stStat);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_QueryStatus chn[%d] failed with %#x!\n", i, s32Ret);
@@ -2001,7 +2023,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                      step 2.4 : call mpi to get one-frame stream
                     *******************************************************/
                     stStream.u32PackCount = stStat.u32CurPacks;
-                    s32Ret = HI_MPI_VENC_GetStream(i, &stStream, HI_TRUE);
+                    s32Ret = HI_MPI_VENC_GetStream(pstPara->VeChn[i]/*i*/, &stStream, HI_TRUE);
                     if (HI_SUCCESS != s32Ret)
                     {
                         free(stStream.pstPack);
@@ -2041,7 +2063,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     /*******************************************************
                      step 2.6 : release stream
                      *******************************************************/
-                    s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
+                    s32Ret = HI_MPI_VENC_ReleaseStream(pstPara->VeChn[i]/*i*/, &stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed!\n");
@@ -2334,6 +2356,7 @@ HI_S32 SAMPLE_COMM_VENC_StartGetStream(VENC_CHN VeChn[],HI_S32 s32Cnt)
     for(i=0; i<s32Cnt; i++)
     {
         gs_stPara.VeChn[i] = VeChn[i];
+        printf("%s => s32Cnt:%d, VeChn:%d\n", __func__, s32Cnt, VeChn[i]);
     }
     return pthread_create(&gs_VencPid, 0, SAMPLE_COMM_VENC_GetVencStreamProc, (HI_VOID*)&gs_stPara);
 }
@@ -2343,6 +2366,7 @@ HI_S32 SAMPLE_COMM_VENC_StartGetStreamCb(VENC_CHN VeChn[],HI_S32 s32Cnt, int (*c
 {
   gs_stPara.uargs = uargs;
   gs_stPara.cb = cb;
+  printf("%s => gs_stPara.cb:%p\n", __func__, gs_stPara.cb);
   return SAMPLE_COMM_VENC_StartGetStream(VeChn, s32Cnt);
 }
 

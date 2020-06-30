@@ -13,6 +13,7 @@
 #include "rgn.h"
 
 extern int venc_start(int start);
+
 static void msg_func_venc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   if(req->set && req->sid >= 0 && req->sid < GSF_CODEC_VENC_NUM)
@@ -45,19 +46,19 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   gsf_sdp_t *sdp = (gsf_sdp_t*)rsp->data;
   
-  sdp->video_shmid = venc_mgr[req->sid].video_shmid;
+  sdp->video_shmid = venc_mgr[req->ch*3 + req->sid].video_shmid;
   sdp->audio_shmid = -1;
   sdp->venc = codec_ipc.venc[req->sid];
   sdp->aenc = codec_ipc.aenc;
-  sdp->val[0]  = venc_mgr[req->sid].val[0];
-  sdp->val[1]  = venc_mgr[req->sid].val[1];
-  sdp->val[2]  = venc_mgr[req->sid].val[2];
-  sdp->val[3]  = venc_mgr[req->sid].val[3];
+  sdp->val[0]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0];
+  sdp->val[1]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1];
+  sdp->val[2]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2];
+  sdp->val[3]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[3];
   printf("sid:%d, val.size[%d,%d,%d,%d]\n", req->sid,
-        venc_mgr[req->sid].val[0].size,
-        venc_mgr[req->sid].val[1].size,
-        venc_mgr[req->sid].val[2].size,
-        venc_mgr[req->sid].val[3].size);
+        venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0].size,
+        venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1].size,
+        venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2].size,
+        venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[3].size);
   rsp->size = sizeof(gsf_sdp_t);
   rsp->err  = 0;
 }
@@ -114,7 +115,8 @@ static int snap_cb(int idx, VENC_STREAM_S* pstStream, void* u)
 {
   int i = 0;
   gsf_msg_t *rsp = (gsf_msg_t*)u;
-  char *name = "/tmp/snap.jpg";
+  char name[64] = {0};
+  sprintf(name, "/tmp/snap_%02d_%01d.jpg", rsp->ch, rsp->sid);
   FILE* pFile = fopen(name, "wb");
   
   for (i = 0; i < pstStream->u32PackCount; i++)
@@ -145,7 +147,11 @@ static void msg_func_snap(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   rsp->err  = 0;
   rsp->size = 0;
-  gsf_mpp_venc_snap(2, 1, snap_cb, rsp);
+  rsp->ch = req->ch;
+  rsp->sid = req->sid;
+  gsf_mpp_venc_snap(rsp->ch*GSF_CODEC_VENC_NUM+GSF_CODEC_SNAP_IDX, 1, snap_cb, rsp);
+  
+  return;
 }
 
 

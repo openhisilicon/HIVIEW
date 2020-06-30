@@ -11,7 +11,7 @@ typedef struct {
   void* pstStream;
 }venc_mgr_t;
 
-extern venc_mgr_t venc_mgr[3];
+extern venc_mgr_t venc_mgr[GSF_CODEC_IPC_CHN*GSF_CODEC_VENC_NUM];
 extern gsf_codec_ipc_t codec_ipc;
 extern char codec_parm_path[128];
 

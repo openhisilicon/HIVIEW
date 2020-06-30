@@ -1,5 +1,5 @@
 /*****************************************************************************
-*Copyright (C), 2016-2018, Hisilicon Tech. Co., Ltd.
+* Copyright (C), 2016-2018, Hisilicon Tech. Co., Ltd.
 *
 * FileName: hi_api_tde.h
 * Description:TDE2 API define
@@ -16,13 +16,13 @@
 #if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-#endif  /* __cplusplus */
+#endif /* __cplusplus */
 
 #include "hi_type.h"
 #include "hi_tde_type.h"
 
-#define HI_TDE_Open HI_TDE2_Open
-#define HI_TDE_Close HI_TDE2_Close
+#define HI_TDE_Open     HI_TDE2_Open
+#define HI_TDE_Close    HI_TDE2_Close
 #define HI_TDE_BeginJob HI_TDE2_BeginJob
 
 /****************************************************************************/
@@ -45,8 +45,7 @@ A TDE device can be started repeatedly by using multiple processes.\n.
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_Open(HI_VOID);
-
+HI_S32 HI_TDE2_Open(HI_VOID);
 
 /**
 \brief Stops a TDE2 device.
@@ -57,8 +56,7 @@ HI_TDE2_Open must work with HI_TDE2_Close.\n
 \see \n
 N/A
 */
-HI_VOID     HI_TDE2_Close(HI_VOID);
-
+HI_VOID HI_TDE2_Close(HI_VOID);
 
 /**
 \brief Creates a TDE task.
@@ -70,8 +68,7 @@ HI_VOID     HI_TDE2_Close(HI_VOID);
 \see \n
 N/A
 */
-TDE_HANDLE  HI_TDE2_BeginJob(HI_VOID);
-
+TDE_HANDLE HI_TDE2_BeginJob(HI_VOID);
 
 /**
 \brief Submits an existing TDE task.
@@ -91,8 +88,7 @@ After a task is submitted, its handle becomes invalid. If the task is submitted 
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_EndJob(TDE_HANDLE s32Handle, HI_BOOL bSync, HI_BOOL bBlock, HI_U32 u32TimeOut);
-
+HI_S32 HI_TDE2_EndJob(TDE_HANDLE s32Handle, HI_BOOL bSync, HI_BOOL bBlock, HI_U32 u32TimeOut);
 
 /**
 \brief Cancels an operation added in a TDE task.
@@ -109,9 +105,7 @@ This API is called when an error occurs during TDE operation configuration.\n
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_CancelJob(TDE_HANDLE s32Handle);
-
-
+HI_S32 HI_TDE2_CancelJob(TDE_HANDLE s32Handle);
 
 /**
 \brief Waits for the completion of a specified TDE task.
@@ -128,8 +122,7 @@ HI_S32      HI_TDE2_CancelJob(TDE_HANDLE s32Handle);
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_WaitForDone(TDE_HANDLE s32Handle);
-
+HI_S32 HI_TDE2_WaitForDone(TDE_HANDLE s32Handle);
 
 /**
 \brief Waits for the completion of all TDE tasks.
@@ -145,7 +138,6 @@ N/A
 */
 HI_S32 HI_TDE2_WaitAllDone(HI_VOID);
 
-
 /**
 \brief Resets all statuses of the TDE.
 \attention \n
@@ -157,7 +149,6 @@ This API is used to reset software and hardware if a timeout error occurs due to
 N/A
 */
 HI_S32 HI_TDE2_Reset(HI_VOID);
-
 
 /**
 \brief Adds the fast copy operation to a TDE task.
@@ -185,9 +176,8 @@ The horizontal start point and width of the YCbCr422 bitmap must be even numbers
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_QuickCopy(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S  *pstSrcRect,
-                              const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect);
-
+HI_S32 HI_TDE2_QuickCopy(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S *pstSrcRect,
+                         const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect);
 
 /**
 \brief Rapidly fills in the target bitmap with a fixed value.
@@ -208,9 +198,8 @@ The data to be filled in must be specified based on the format of the target bit
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_QuickFill(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect,
-                              HI_U32 u32FillData);
-
+HI_S32 HI_TDE2_QuickFill(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect,
+                         HI_U32 u32FillData);
 
 /**
 \brief Scales the source bitmap based on a specified size of the target bitmap. The source bitmap and target bitmap can be the same.
@@ -237,9 +226,8 @@ You can scale a bitmap that serves as both source bitmap and target bitmap. If t
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_QuickResize(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S  *pstSrcRect,
-                                const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S  *pstDstRect);
-
+HI_S32 HI_TDE2_QuickResize(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S *pstSrcRect,
+                           const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect);
 
 /**
 \brief Adds the anti-flicker operation to a TDE task.
@@ -266,10 +254,8 @@ If the sizes of the specified input area and output area are different, scaling 
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_QuickDeflicker(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S  *pstSrcRect,
-                                   const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S  *pstDstRect);
-
-
+HI_S32 HI_TDE2_QuickDeflicker(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S *pstSrcRect,
+                              const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect);
 
 /**
 \brief Adds the transfer operation (with additional functions available for the raster or macroblock bitmap) to a TDE task.
@@ -309,10 +295,10 @@ The pixel format of the target bitmap cannot be the macroblock format.\n
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_Bitblit(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstBackGround, const TDE2_RECT_S  *pstBackGroundRect,
-                            const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S  *pstForeGroundRect, const TDE2_SURFACE_S *pstDst,
-                            const TDE2_RECT_S  *pstDstRect, const TDE2_OPT_S *pstOpt);
-
+HI_S32 HI_TDE2_Bitblit(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstBackGround,
+                       const TDE2_RECT_S *pstBackGroundRect,
+                       const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S *pstForeGroundRect, const TDE2_SURFACE_S *pstDst,
+                       const TDE2_RECT_S *pstDstRect, const TDE2_OPT_S *pstOpt);
 
 /**
 \brief Adds the fill and transfer operations (with additional functions available for the raster bitmap) to a TDE task. After addition, the functions of drawing a point, drawing a line, filling in a color block on the surface, and filling in a memory can be implemented.
@@ -343,11 +329,11 @@ To draw a rectangle, a vertical line, or a horizontal line by calling HI_TDE2_So
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_SolidDraw(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S  *pstForeGroundRect,
-                              const TDE2_SURFACE_S *pstDst,
-                              const TDE2_RECT_S  *pstDstRect, const TDE2_FILLCOLOR_S *pstFillColor,
-                              const TDE2_OPT_S *pstOpt);
-
+HI_S32 HI_TDE2_SolidDraw(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstForeGround,
+                         const TDE2_RECT_S *pstForeGroundRect,
+                         const TDE2_SURFACE_S *pstDst,
+                         const TDE2_RECT_S *pstDstRect, const TDE2_FILLCOLOR_S *pstFillColor,
+                         const TDE2_OPT_S *pstOpt);
 
 /**
 \brief Adds the transfer operation (with additional functions available for the macroblock bitmap) to a TDE task. That is, the luminance macroblock data and the chrominance macroblock data are combined into raster data. During the combination, the scaling, anti-flicker, and clip operations can be performed concurrently.
@@ -375,9 +361,9 @@ The pixel format of the target bitmap cannot be the macroblock format.\n
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_MbBlit(TDE_HANDLE s32Handle, const TDE2_MB_S *pstMB, const TDE2_RECT_S  *pstMbRect, const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S  *pstDstRect,
-                           const TDE2_MBOPT_S *pstMbOpt);
-
+HI_S32 HI_TDE2_MbBlit(TDE_HANDLE s32Handle, const TDE2_MB_S *pstMB, const TDE2_RECT_S *pstMbRect,
+                      const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect,
+                      const TDE2_MBOPT_S *pstMbOpt);
 
 /**
 \brief Adds the mask raster of operation (ROP) (available for the raster bitmap) to a TDE task. That is, the ROP operation is performed on the foreground bitmap and the background bitmap based on the mask bitmap.
@@ -407,13 +393,12 @@ The target bitmap and foreground bitmap must be in the same color space.\n
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_BitmapMaskRop(TDE_HANDLE s32Handle,
-                                  const TDE2_SURFACE_S *pstBackGround, const TDE2_RECT_S  *pstBackGroundRect,
-                                  const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S  *pstForeGroundRect,
-                                  const TDE2_SURFACE_S *pstMask, const TDE2_RECT_S  *pstMaskRect,
-                                  const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S  *pstDstRect,
-                                  TDE2_ROP_CODE_E enRopCode_Color, TDE2_ROP_CODE_E enRopCode_Alpha);
-
+HI_S32 HI_TDE2_BitmapMaskRop(TDE_HANDLE s32Handle,
+                             const TDE2_SURFACE_S *pstBackGround, const TDE2_RECT_S *pstBackGroundRect,
+                             const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S *pstForeGroundRect,
+                             const TDE2_SURFACE_S *pstMask, const TDE2_RECT_S *pstMaskRect,
+                             const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect,
+                             TDE2_ROP_CODE_E enRopCode_Color, TDE2_ROP_CODE_E enRopCode_Alpha);
 
 /**
 \brief Adds the mask blend operation (available for the raster bitmap) to a TDE task. That is, the foreground bitmap and the background bitmap are blending with the mask bitmap based on the mask bitmap.
@@ -444,13 +429,12 @@ The parameter enBlendMode cannot be set to TDE2_ALUCMD_ROP.\n
 \see \n
 N/A
 */
-HI_S32      HI_TDE2_BitmapMaskBlend(TDE_HANDLE s32Handle,
-                                    const TDE2_SURFACE_S *pstBackGround, const TDE2_RECT_S  *pstBackGroundRect,
-                                    const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S  *pstForeGroundRect,
-                                    const TDE2_SURFACE_S *pstMask, const TDE2_RECT_S  *pstMaskRect,
-                                    const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S  *pstDstRect,
-                                    HI_U8 u8Alpha, TDE2_ALUCMD_E enBlendMode);
-
+HI_S32 HI_TDE2_BitmapMaskBlend(TDE_HANDLE s32Handle,
+                               const TDE2_SURFACE_S *pstBackGround, const TDE2_RECT_S *pstBackGroundRect,
+                               const TDE2_SURFACE_S *pstForeGround, const TDE2_RECT_S *pstForeGroundRect,
+                               const TDE2_SURFACE_S *pstMask, const TDE2_RECT_S *pstMaskRect,
+                               const TDE2_SURFACE_S *pstDst, const TDE2_RECT_S *pstDstRect,
+                               HI_U8 u8Alpha, TDE2_ALUCMD_E enBlendMode);
 
 /**
 \brief  Adds the rotation operation to a TDE task.
@@ -474,10 +458,9 @@ The parameters s32DstPointX and s32DstPointY are set to 0 by default. Because th
 \see \n
 N/A
 */
-HI_S32 HI_TDE2_Rotate(TDE_HANDLE s32Handle, const TDE2_SURFACE_S* pstSrc, const TDE2_RECT_S  *pstSrcRect, const TDE2_SURFACE_S* pstDst,
-                                                const TDE2_RECT_S  *pstDstRect,TDE_ROTATE_ANGLE_E enRotateAngle);
-
-
+HI_S32 HI_TDE2_Rotate(TDE_HANDLE s32Handle, const TDE2_SURFACE_S *pstSrc, const TDE2_RECT_S *pstSrcRect,
+                      const TDE2_SURFACE_S *pstDst,
+                      const TDE2_RECT_S *pstDstRect, TDE_ROTATE_ANGLE_E enRotateAngle);
 
 /**
 \brief Sets the anti-flicker level.
@@ -490,7 +473,6 @@ N/A
 \see none
 */
 HI_S32 HI_TDE2_SetDeflickerLevel(TDE_DEFLICKER_LEVEL_E enDeflickerLevel);
-
 
 /**
 \brief Obtains the anti-flicker level.
@@ -505,7 +487,6 @@ N/A
 */
 HI_S32 HI_TDE2_GetDeflickerLevel(TDE_DEFLICKER_LEVEL_E *pDeflickerLevel);
 
-
 /**
 \brief Sets the alpha judgment threshold.
 \attention \n
@@ -518,7 +499,6 @@ N/A
 N/A
 */
 HI_S32 HI_TDE2_SetAlphaThresholdValue(HI_U8 u8ThresholdValue);
-
 
 /**
 \brief Obtains the alpha judgment threshold.
@@ -533,7 +513,6 @@ N/A
 */
 HI_S32 HI_TDE2_GetAlphaThresholdValue(HI_U8 *pu8ThresholdValue);
 
-
 /**
 \brief Enables or disables the alpha judgment.
 \attention  N/A
@@ -544,7 +523,6 @@ HI_S32 HI_TDE2_GetAlphaThresholdValue(HI_U8 *pu8ThresholdValue);
 N/A
 */
 HI_S32 HI_TDE2_SetAlphaThresholdState(HI_BOOL bEnAlphaThreshold);
-
 
 /**
 \brief Obtains the enable status of the alpha judgment.
@@ -557,7 +535,6 @@ HI_S32 HI_TDE2_SetAlphaThresholdState(HI_BOOL bEnAlphaThreshold);
 N/A
 */
 HI_S32 HI_TDE2_GetAlphaThresholdState(HI_BOOL *p_bEnAlphaThreshold);
-
 
 /**
 \brief Fills in the pattern.
@@ -600,11 +577,11 @@ HI_S32 HI_TDE2_EnableRegionDeflicker(HI_BOOL bRegionDeflicker);
 **/
 HI_S32 HI_TDE2_MultiBlending(TDE_HANDLE s32Handle, const TDE_SURFACE_LIST_S *pstSurfaceList);
 
-/** @} */  /** <!-- ==== API declaration end ==== */
+/** @} */ /** <!-- ==== API declaration end ==== */
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif /* __cplusplus */
-#endif  /* __cplusplus */
+#endif /* __cplusplus */
 
-#endif  /* _HI_API_TDE2_H_ */
+#endif /* _HI_API_TDE2_H_ */

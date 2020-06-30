@@ -1,8 +1,6 @@
 #ifndef _HI_I2C_H
 #define _HI_I2C_H
 
-
-
 /* /dev/i2c-X ioctl commands.  The ioctl's parameter is always an
  * unsigned long, except for:
  *      - I2C_FUNCS, takes pointer to an unsigned long
@@ -30,14 +28,15 @@
 #define I2C_16BIT_REG   0x0709  /* 16BIT REG WIDTH */
 #define I2C_16BIT_DATA  0x070a  /* 16BIT DATA WIDTH */
 
-typedef struct hiI2C_DATA_S
-{
-    unsigned char    dev_addr;
-    unsigned int     reg_addr;
-    unsigned int     addr_byte_num;
-    unsigned int     data;
-      unsigned int     data_byte_num;
-}I2C_DATA_S;
+typedef struct hiI2C_DATA_S {
+    unsigned char dev_addr;
+    unsigned int reg_addr;
+    unsigned int addr_byte_num;
+    unsigned int data;
+    unsigned int data_byte_num;
+} I2C_DATA_S;
+
+typedef I2C_DATA_S i2c_data;
 
 #endif
 

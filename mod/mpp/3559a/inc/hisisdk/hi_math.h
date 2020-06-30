@@ -18,7 +18,7 @@
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
@@ -111,10 +111,9 @@ extern "C"{
 
 __inline static HI_BOOL IS_LITTLE_END(void)
 {
-    union unEND_TEST_U
-    {
+    union unEND_TEST_U {
         HI_CHAR cTest[4];
-        HI_U32  u32Test;
+        HI_U32 u32Test;
     } unEndTest;
 
     unEndTest.cTest[0] = 0x01;
@@ -124,7 +123,6 @@ __inline static HI_BOOL IS_LITTLE_END(void)
 
     return (unEndTest.u32Test > 0x01020304) ? (HI_TRUE) : (HI_FALSE);
 }
-
 
 /******************************************************************************
 ** FRACTION32(de,nu)          fraction: nu(minator) / de(nominator).
@@ -175,35 +173,34 @@ __inline static HI_BOOL IS_LITTLE_END(void)
 ** Rgb2Yc(r, g, b, *y, *u, *u)    convert r,g,b to y,u,v
 ** Rgb2Yuv(rgb)             convert rgb to yuv
 ******************************************************************************/
-__inline static HI_VOID Rgb2Yc(HI_U16 r, HI_U16 g, HI_U16 b, HI_U16 * py, HI_U16 * pcb, HI_U16 * pcr)
+__inline static HI_VOID Rgb2Yc(HI_U16 r, HI_U16 g, HI_U16 b, HI_U16 *py, HI_U16 *pcb, HI_U16 *pcr)
 {
     /* Y */
-    *py = (HI_U16)((((r*66+g*129+b*25) >> 8) + 16) << 2);
+    *py = (HI_U16)((((r * 66 + g * 129 + b * 25) >> 8) + 16) << 2);
 
     /* Cb */
-    *pcb = (HI_U16)(((((b*112-r*38)-g*74) >> 8) + 128) << 2);
+    *pcb = (HI_U16)(((((b * 112 - r * 38) - g * 74) >> 8) + 128) << 2);
 
     /* Cr */
-    *pcr = (HI_U16)(((((r*112-g*94)-b*18) >> 8) + 128) << 2);
+    *pcr = (HI_U16)(((((r * 112 - g * 94) - b * 18) >> 8) + 128) << 2);
 }
 
 __inline static HI_U32 Rgb2Yuv(HI_U32 u32Rgb)
 {
-    HI_U16 y,u,v;
+    HI_U16 y, u, v;
 
     Rgb2Yc(RGB_R(u32Rgb), RGB_G(u32Rgb), RGB_B(u32Rgb), &y, &u, &v);
 
-    return YUV(y,u,v);
+    return YUV(y, u, v);
 }
-
 
 __inline static HI_VOID Rgb2Yc_full(HI_U16 r, HI_U16 g, HI_U16 b, HI_U16 *py, HI_U16 *pcb, HI_U16 *pcr)
 {
     HI_U16 py_temp, pcb_temp, pcr_temp;
 
-    py_temp  = (HI_U16)(((r*76 + g*150 + b*29)>>8) * 4);
-    pcb_temp = (HI_U16)(CLIP_MIN(((((b*130 - r*44 ) - g*86) >> 8)+128),0) * 4);
-    pcr_temp = (HI_U16)(CLIP_MIN(((((r*130 - g*109) - b*21) >> 8)+128),0) * 4);
+    py_temp = (HI_U16)(((r * 76 + g * 150 + b * 29) >> 8) * 4);
+    pcb_temp = (HI_U16)(CLIP_MIN(((((b * 130 - r * 44) - g * 86) >> 8) + 128), 0) * 4);
+    pcr_temp = (HI_U16)(CLIP_MIN(((((r * 130 - g * 109) - b * 21) >> 8) + 128), 0) * 4);
 
     *py = MAX2(MIN2(py_temp, 1023), 0);
     *pcb = MAX2(MIN2(pcb_temp, 1023), 0);
@@ -212,11 +209,11 @@ __inline static HI_VOID Rgb2Yc_full(HI_U16 r, HI_U16 g, HI_U16 b, HI_U16 *py, HI
 
 __inline static HI_U32 Rgb2Yuv_full(HI_U32 u32Rgb)
 {
-    HI_U16 y,u,v;
+    HI_U16 y, u, v;
 
     Rgb2Yc_full(RGB_R(u32Rgb), RGB_G(u32Rgb), RGB_B(u32Rgb), &y, &u, &v);
 
-    return YUV(y,u,v);
+    return YUV(y, u, v);
 }
 
 /******************************************************************************
@@ -226,22 +223,44 @@ __inline static HI_U32 Rgb2Yuv_full(HI_U32 u32Rgb)
 __inline static HI_VOID Rgb2Yc_8BIT(HI_U8 r, HI_U8 g, HI_U8 b, HI_U8 *py, HI_U8 *pcb, HI_U8 *pcr)
 {
     /* Y */
-    *py = (HI_U8)(((r*66+g*129+b*25) >> 8) + 16);
+    *py = (HI_U8)(((r * 66 + g * 129 + b * 25) >> 8) + 16);
 
     /* Cb */
-    *pcb = (HI_U8)((((b*112-r*38)-g*74) >> 8) + 128);
+    *pcb = (HI_U8)((((b * 112 - r * 38) - g * 74) >> 8) + 128);
 
     /* Cr */
-    *pcr = (HI_U8)((((r*112-g*94)-b*18) >> 8) + 128);
+    *pcr = (HI_U8)((((r * 112 - g * 94) - b * 18) >> 8) + 128);
 }
 
 __inline static HI_U32 Rgb2Yuv_8BIT(HI_U32 u32Rgb)
 {
-    HI_U8 y,u,v;
+    HI_U8 y, u, v;
 
     Rgb2Yc_8BIT(RGB_R(u32Rgb), RGB_G(u32Rgb), RGB_B(u32Rgb), &y, &u, &v);
 
-    return YUV_8BIT(y,u,v);
+    return YUV_8BIT(y, u, v);
+}
+
+__inline static HI_VOID Rgb2Yc_full_8BIT(HI_U8 r, HI_U8 g, HI_U8 b, HI_U8 *py, HI_U8 *pcb, HI_U8 *pcr)
+{
+    HI_S16 py_temp, pcb_temp, pcr_temp;
+
+    py_temp = (r * 76 + g * 150 + b * 29) >> 8;
+    pcb_temp = (((b * 130 - r * 44) - g * 86) >> 8) + 128;
+    pcr_temp = (((r * 130 - g * 109) - b * 21) >> 8) + 128;
+
+    *py = MAX2(MIN2(py_temp, 255), 0);
+    *pcb = MAX2(MIN2(pcb_temp, 255), 0);
+    *pcr = MAX2(MIN2(pcr_temp, 255), 0);
+}
+
+__inline static HI_U32 Rgb2Yuv_full_8BIT(HI_U32 u32Rgb)
+{
+    HI_U8 y, u, v;
+
+    Rgb2Yc_full_8BIT(RGB_R(u32Rgb), RGB_G(u32Rgb), RGB_B(u32Rgb), &y, &u, &v);
+
+    return YUV_8BIT(y, u, v);
 }
 
 /*******************************************************************************
@@ -256,15 +275,14 @@ __inline static HI_U32 Rgb2Yuv_8BIT(HI_U32 u32Rgb)
 **  }
 **
 *******************************************************************************/
-typedef struct hiFPS_CTRL_S
-{
-    HI_U32 u32Ffps;    /* Full frame rate    */
-    HI_U32 u32Tfps;    /* Target frame rate  */
-    HI_U32 u32FrmKey;  /* update key frame   */
+typedef struct hiFPS_CTRL_S {
+    HI_U32 u32Ffps; /* Full frame rate    */
+    HI_U32 u32Tfps; /* Target frame rate  */
+    HI_U32 u32FrmKey; /* update key frame   */
 } FPS_CTRL_S;
 
 __inline static HI_VOID InitFps(FPS_CTRL_S *pFrmCtrl, HI_U32 u32FullFps,
-                                HI_U32 u32TagFps)
+         HI_U32 u32TagFps)
 {
     pFrmCtrl->u32Ffps   = u32FullFps;
     pFrmCtrl->u32Tfps   = u32TagFps;
@@ -273,11 +291,10 @@ __inline static HI_VOID InitFps(FPS_CTRL_S *pFrmCtrl, HI_U32 u32FullFps,
 
 __inline static HI_BOOL FpsControl(FPS_CTRL_S *pFrmCtrl)
 {
-    HI_BOOL   bReturn       = HI_FALSE;
+    HI_BOOL bReturn = HI_FALSE;
 
     pFrmCtrl->u32FrmKey += pFrmCtrl->u32Tfps;
-    if (pFrmCtrl->u32FrmKey >= pFrmCtrl->u32Ffps)
-    {
+    if (pFrmCtrl->u32FrmKey >= pFrmCtrl->u32Ffps) {
         pFrmCtrl->u32FrmKey -= pFrmCtrl->u32Ffps;
         bReturn = HI_TRUE;
     }
@@ -285,32 +302,26 @@ __inline static HI_BOOL FpsControl(FPS_CTRL_S *pFrmCtrl)
     return bReturn;
 }
 
-
-__inline static HI_U32 GetLowAddr(HI_U64  u64Phyaddr)
+__inline static HI_U32 GetLowAddr(HI_U64 u64Phyaddr)
 {
     return (HI_U32)u64Phyaddr;
 }
 
-
-__inline static HI_U32 GetHighAddr(HI_U64  u64Phyaddr)
+__inline static HI_U32 GetHighAddr(HI_U64 u64Phyaddr)
 {
-    return (HI_U32)(u64Phyaddr>>32);
+    return (HI_U32)(u64Phyaddr >> 32);
 }
 
-
-
-
 #define hi_usleep(usec) \
-do { \
-    usleep(usec); \
-} while (0)
+    do { \
+        usleep(usec); \
+    } while (0)
 
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif /* __cplusplus */
-
 
 #endif /* __HI_MATH_H__ */
 

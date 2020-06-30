@@ -23,15 +23,12 @@ extern "C" {
 #include <sys/prctl.h>
 
 #include "sample_comm.h"
-
 #if 0 //maohw
 #define MAX_SENSOR_NUM      8
 #define ISP_MAX_DEV_NUM     8
 #endif
-
 static pthread_t    g_IspPid[ISP_MAX_DEV_NUM] = {0};
 static HI_U32       g_au32IspSnsId[ISP_MAX_DEV_NUM] = {0, 1};
-
 #if 0 //maohw
 SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM] =
 {
@@ -45,7 +42,6 @@ SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM] =
     SENSOR7_TYPE
 };
 #endif
-
 ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX477_12M_30FPS =
 {
     {0, 0, 4000, 3000},
@@ -66,6 +62,17 @@ ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX477_9M_50FPS =
     0,
 };
 
+ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX477_9M_60FPS =
+{
+    {0, 0, 3000, 3000},
+    {3000, 3000},
+    59.94,
+    BAYER_RGGB,
+    WDR_MODE_NONE,
+    1,
+};
+
+
 ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX477_8M_60FPS =
 {
     {0, 0, 3840, 2160},
@@ -80,7 +87,7 @@ ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX477_8M_30FPS =
 {
     {0, 0, 3840, 2160},
     {3840, 2160},
-    30,
+    29.97,
     BAYER_RGGB,
     WDR_MODE_NONE,
     1,
@@ -115,6 +122,17 @@ ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX334_4K_30FPS =
     WDR_MODE_NONE,
     0,
 };
+
+ISP_PUB_ATTR_S ISP_PUB_ATTR_SHARP8K_SLVDS_8K_30FPS =
+{
+    {0, 0, 7680, 4320},
+    {7680, 4320},
+    30,
+    BAYER_GRBG,
+    WDR_MODE_NONE,
+    0,
+};
+
 
 ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX334_4K_30FPS_WDR2TO1_LINE =
 {
@@ -189,6 +207,10 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX477_9M_50FPS, sizeof(ISP_PUB_ATTR_S));
             break;
 
+        case SONY_IMX477_MIPI_9M_60FPS_10BIT:
+            memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX477_9M_60FPS, sizeof(ISP_PUB_ATTR_S));
+            break;
+
         case SONY_IMX477_MIPI_8M_60FPS_12BIT:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX477_8M_60FPS, sizeof(ISP_PUB_ATTR_S));
             break;
@@ -205,9 +227,13 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX290_MIPI_2M_30FPS_WDR3TO1_LINE, sizeof(ISP_PUB_ATTR_S));
             break;
 
-    	case SONY_IMX334_SLAVE_MIPI_8M_30FPS_12BIT:
-	case SONY_IMX334_MIPI_8M_30FPS_12BIT:
+        case SONY_IMX334_SLAVE_MIPI_8M_30FPS_12BIT:
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX334_4K_30FPS, sizeof(ISP_PUB_ATTR_S));
+            break;
+
+        case COMSIS_SHARP8K_SLVDS_8K_30FPS_12BIT:
+            memcpy(pstPubAttr, &ISP_PUB_ATTR_SHARP8K_SLVDS_8K_30FPS, sizeof(ISP_PUB_ATTR_S));
             break;
 
         case SONY_IMX334_MIPI_8M_30FPS_12BIT_WDR2TO1:
@@ -252,6 +278,7 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
     {
         case SONY_IMX477_MIPI_12M_30FPS_12BIT:
         case SONY_IMX477_MIPI_9M_50FPS_10BIT:
+        case SONY_IMX477_MIPI_9M_60FPS_10BIT:
         case SONY_IMX477_MIPI_8M_60FPS_12BIT:
         case SONY_IMX477_MIPI_8M_30FPS_12BIT:
             return &stSnsImx477Obj;
@@ -260,12 +287,12 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
         case SONY_IMX290_MIPI_2M_30FPS_12BIT_WDR3TO1:
             return &stSnsImx290Obj;
 
-	case SONY_IMX334_SLAVE_MIPI_8M_30FPS_12BIT:
-	    return &stSnsImx334SlaveObj;
+        case SONY_IMX334_SLAVE_MIPI_8M_30FPS_12BIT:
+            return &stSnsImx334SlaveObj;
 
-	case SONY_IMX334_MIPI_8M_30FPS_12BIT:
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
         case SONY_IMX334_MIPI_8M_30FPS_12BIT_WDR2TO1:
-	    return &stSnsImx334Obj;
+            return &stSnsImx334Obj;
 
         case SONY_IMX277_SLVS_8M_120FPS_10BIT:
         case SONY_IMX277_SLVS_8M_30FPS_12BIT:
@@ -273,6 +300,9 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
         case SONY_IMX277_SLVS_2M_240FPS_12BIT:
             return &stSnsImx277SlvsObj;
+
+        case COMSIS_SHARP8K_SLVDS_8K_30FPS_12BIT:
+            return &stSnsSharp8kObj;
 
         default:
             return HI_NULL;
