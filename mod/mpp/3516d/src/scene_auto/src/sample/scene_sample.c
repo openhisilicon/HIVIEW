@@ -32,8 +32,15 @@ HI_VOID SAMPLE_SCENE_HandleSig(HI_S32 signo)
     exit(-1);
 }
 
+static HI_VOID sample_sceneauto_usage(char *sPrgNm)
+{
+    printf("Usage : %s <inidir>\n\n", sPrgNm);
+
+    printf("\tfor example :./sample_scene ./param/sensor_imx327\n");
+}
+
 #ifdef __HuaweiLite__
-HI_S32 app_main()
+HI_S32 app_main(HI_S32 argc, HI_CHAR *argv[])
 #else
 HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
 #endif
@@ -45,13 +52,22 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
     HI_SCENE_PARAM_S stSceneParam;
     HI_SCENE_VIDEO_MODE_S stVideoMode;
 
-    if (argc < 2)
+    if ((argc < 2) || (argc > 2))
     {
-        printf("Usage : %s <inidir>\n", argv[0]);
+        sample_sceneauto_usage(argv[0]);
         return HI_SUCCESS;
     }
 
     pszdirname = argv[1];
+
+    if (pszdirname != NULL)
+    {
+        if(strncmp(pszdirname, "-h", sizeof(argv[1]))==0)
+        {
+            sample_sceneauto_usage(argv[0]);
+            return HI_SUCCESS;
+        }
+    }
 
 #ifndef __HuaweiLite__
     signal(SIGINT, SAMPLE_SCENE_HandleSig);
@@ -77,7 +93,7 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
         {
             case 1:
                 printf("When We Start SceneAuto, we neen to set video Pipe mode\n");
-                printf("Please input videomode index, without which we couldn't work  effectively.\n");
+                printf("Please input a valid videomode index, without which we couldn't work  effectively.\n");
                 s32choice = -1;
                 fgets(aszinput, 10, stdin);
                 sscanf(aszinput, "%d", &s32choice);
@@ -101,7 +117,9 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
                     printf("HI_SRDK_SCENEAUTO_Start failed\n");
                     return HI_FAILURE;
                 }
-                MLOGD("The sceneauto is started.");
+                printf("The sceneauto is started.\n");
+                printf("If you want to change videomode. Please enter 2 to pause the sceneauto\n");
+                printf("and then enter 3 to update a new videomode.\n\n");
                 break;
             case 2:
                 s32ret = HI_SCENE_Pause(HI_TRUE);
@@ -110,10 +128,10 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
                     printf("HI_SCENE_Pause failed\n");
                     return HI_FAILURE;
                 }
-                MLOGD("The sceneauto is pause.");
+                printf("The sceneauto is pause.\n");
                 break;
             case 3:
-
+                printf("enter a valid videomode.\n");
                 s32choice = -1;
                 fgets(aszinput, 10, stdin);
                 sscanf(aszinput, "%d", &s32choice);
@@ -132,7 +150,7 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
                     printf("HI_SCENE_Resume failed\n");
                     return HI_FAILURE;
                 }
-                MLOGD("The sceneauto is resume.");
+                printf("The sceneauto is resume.\n");
                 break;
             case 4:
                 s32ret = HI_SCENE_Deinit();
@@ -141,7 +159,7 @@ HI_S32 scene_sample_main(HI_S32 argc, HI_CHAR *argv[])
                     printf("HI_SCENE_Deinit failed\n");
                     return HI_FAILURE;
                 }
-                MLOGD("The scene sample is end.");
+                printf("The scene sample is end.\n");
                 exit(-1);
             default:
                 printf("unknown input\n");

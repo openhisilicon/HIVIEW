@@ -45,7 +45,6 @@ extern "C" {
 /** CIPHER set IV for first package */
 #define CIPHER_IV_CHANGE_ALL_PKG        (2)
 
-//typedef unsigned long           HI_SIZE_T;
 /** Cipher work mode */
 typedef enum hiHI_UNF_CIPHER_WORK_MODE_E
 {

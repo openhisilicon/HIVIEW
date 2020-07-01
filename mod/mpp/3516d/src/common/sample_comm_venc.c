@@ -466,6 +466,7 @@ HI_S32 SAMPLE_COMM_VENC_SaveStream(FILE* pFd, VENC_STREAM_S* pstStream)
 
     return HI_SUCCESS;
 }
+
 //maohw
 HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VENC_GETSTREAM_PARA_S* pstPara, VENC_STREAM_S* pstStream)
 {
@@ -810,6 +811,57 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH265QVbr, &stH265QVbr, sizeof(VENC_H265_QVBR_S));
             }
+            else if(SAMPLE_RC_CVBR == enRcMode)
+            {
+                VENC_H265_CVBR_S    stH265CVbr;
+
+                stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H265CVBR;
+                stH265CVbr.u32Gop         = u32Gop;
+                stH265CVbr.u32StatTime    = u32StatTime;
+                stH265CVbr.u32SrcFrameRate  = u32FrameRate;
+                stH265CVbr.fr32DstFrameRate = u32FrameRate;
+                stH265CVbr.u32LongTermStatTime  = 1;
+                stH265CVbr.u32ShortTermStatTime = u32StatTime;
+                switch (enSize)
+                {
+                    case PIC_720P:
+                        stH265CVbr.u32MaxBitRate         = 1024 * 3 + 1024*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 2 + 1024*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 512;
+                        break;
+                    case PIC_1080P:
+                        stH265CVbr.u32MaxBitRate         = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 1024;
+                        break;
+                    case PIC_2592x1944:
+                        stH265CVbr.u32MaxBitRate         = 1024 * 4 + 3072*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 3 + 3072*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 1024*2;
+                        break;
+                    case PIC_3840x2160:
+                        stH265CVbr.u32MaxBitRate         = 1024 * 8  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 5  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 1024*3;
+                        break;
+                    case PIC_4000x3000:
+                        stH265CVbr.u32MaxBitRate         = 1024 * 12  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 10 + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 1024*4;
+                        break;
+                    case PIC_7680x4320:
+                        stH265CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 20 + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 1024*6;
+                        break;
+                    default :
+                        stH265CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 15 + 2048*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = 1024*5;
+                        break;
+                }
+                memcpy(&stVencChnAttr.stRcAttr.stH265CVbr, &stH265CVbr, sizeof(VENC_H265_CVBR_S));
+            }
             else if(SAMPLE_RC_QPMAP == enRcMode)
             {
                 VENC_H265_QPMAP_S    stH265QpMap;
@@ -844,25 +896,25 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
-                        stH264Cbr.u32BitRate = 1024 * 2  + 1024*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 3 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH264Cbr.u32BitRate = 1024 * 2  + 2048*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 2 + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH264Cbr.u32BitRate = 1024 * 3  + 3072*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 4 + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH264Cbr.u32BitRate = 1024 * 5 + 5120*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 8  + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH264Cbr.u32BitRate = 1024 * 12 + 5120*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 12  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH264Cbr.u32BitRate = 1024 * 10 + 5120*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 24  + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH264Cbr.u32BitRate = 1024 * 15 + 2048*u32FrameRate/30;
+                        stH264Cbr.u32BitRate         = 1024 * 24  + 5120*u32FrameRate/30;
                         break;
                 }
 
@@ -892,6 +944,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stH264Vbr.fr32DstFrameRate = u32FrameRate;
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stH264Vbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stH264Vbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
@@ -927,6 +982,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stH264AVbr.fr32DstFrameRate = u32FrameRate;
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stH264AVbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stH264AVbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
@@ -962,8 +1020,11 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stH264QVbr.fr32DstFrameRate = u32FrameRate;
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stH264QVbr.u32TargetBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
-                        stH264QVbr.u32TargetBitRate= 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
                         stH264QVbr.u32TargetBitRate = 1024 * 2   + 2048*u32FrameRate/30;
@@ -985,6 +1046,57 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH264QVbr, &stH264QVbr, sizeof(VENC_H264_QVBR_S));
+            }
+            else if(SAMPLE_RC_CVBR == enRcMode)
+            {
+                VENC_H264_CVBR_S    stH264CVbr;
+
+                stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264CVBR;
+                stH264CVbr.u32Gop         = u32Gop;
+                stH264CVbr.u32StatTime    = u32StatTime;
+                stH264CVbr.u32SrcFrameRate  = u32FrameRate;
+                stH264CVbr.fr32DstFrameRate = u32FrameRate;
+                stH264CVbr.u32LongTermStatTime  = 1;
+                stH264CVbr.u32ShortTermStatTime = u32StatTime;
+                switch (enSize)
+                {
+                    case PIC_720P:
+                        stH264CVbr.u32MaxBitRate         = 1024 * 3 + 1024*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 2 + 1024*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 512;
+                        break;
+                    case PIC_1080P:
+                        stH264CVbr.u32MaxBitRate         = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 1024;
+                        break;
+                    case PIC_2592x1944:
+                        stH264CVbr.u32MaxBitRate         = 1024 * 4 + 3072*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 3 + 3072*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 1024*2;
+                        break;
+                    case PIC_3840x2160:
+                        stH264CVbr.u32MaxBitRate         = 1024 * 8  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 5  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 1024*3;
+                        break;
+                    case PIC_4000x3000:
+                        stH264CVbr.u32MaxBitRate         = 1024 * 12  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 10 + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 1024*4;
+                        break;
+                    case PIC_7680x4320:
+                        stH264CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 20 + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 1024*6;
+                        break;
+                    default :
+                        stH264CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 15 + 2048*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = 1024*5;
+                        break;
+                }
+                memcpy(&stVencChnAttr.stRcAttr.stH264CVbr, &stH264CVbr, sizeof(VENC_H264_CVBR_S));
             }
             else if(SAMPLE_RC_QPMAP == enRcMode)
             {
@@ -1028,6 +1140,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stMjpegeCbr.fr32DstFrameRate    = u32FrameRate;
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stMjpegeCbr.u32BitRate = 1024 * 3  + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stMjpegeCbr.u32BitRate = 1024 * 5  + 1024*u32FrameRate/30;
                         break;
@@ -1053,7 +1168,8 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
 
                 memcpy(&stVencChnAttr.stRcAttr.stMjpegCbr, &stMjpegeCbr,sizeof(VENC_MJPEG_CBR_S));
             }
-            else if ((SAMPLE_RC_VBR == enRcMode) ||(SAMPLE_RC_AVBR == enRcMode)||(SAMPLE_RC_QVBR == enRcMode))
+            else if ((SAMPLE_RC_VBR == enRcMode) ||(SAMPLE_RC_AVBR == enRcMode)||
+                     (SAMPLE_RC_QVBR == enRcMode)||(SAMPLE_RC_CVBR == enRcMode))
             {
                 VENC_MJPEG_VBR_S   stMjpegVbr;
 
@@ -1069,6 +1185,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
 
                 switch (enSize)
                 {
+                    case PIC_360P:
+                        stMjpegVbr.u32MaxBitRate = 1024 * 3 + 1024*u32FrameRate/30;
+                        break;
                     case PIC_720P:
                         stMjpegVbr.u32MaxBitRate = 1024 * 5 + 1024*u32FrameRate/30;
                         break;
@@ -1105,7 +1224,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         case PT_JPEG:
             stJpegAttr.bSupportDCF     = HI_FALSE;
             stJpegAttr.stMPFCfg.u8LargeThumbNailNum = 0;
-            stJpegAttr.enReceiveMode   = VENC_PIC_RECEIVE_SINGLE;
+            stJpegAttr.enReceiveMode                = VENC_PIC_RECEIVE_SINGLE;
             memcpy(&stVencChnAttr.stVencAttr.stAttrJpege, &stJpegAttr, sizeof(VENC_ATTR_JPEG_S));
             break;
         default:
@@ -1152,12 +1271,12 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
 
     if( PT_JPEG != enType) // maohw
     {
-        s32Ret = SAMPLE_COMM_VENC_CloseReEncode(VencChn);
-        if (HI_SUCCESS != s32Ret)
-        {
-            HI_MPI_VENC_DestroyChn(VencChn);
-            return s32Ret;
-        }
+      s32Ret = SAMPLE_COMM_VENC_CloseReEncode(VencChn);
+      if (HI_SUCCESS != s32Ret)
+      {
+          HI_MPI_VENC_DestroyChn(VencChn);
+          return s32Ret;
+      }
     }
     return HI_SUCCESS;
 }
@@ -1195,7 +1314,6 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
           return HI_FAILURE;
       }
     }
-    
     return HI_SUCCESS;
 }
 
@@ -1239,6 +1357,7 @@ HI_S32 SAMPLE_COMM_VENC_SnapStart(VENC_CHN VencChn, SIZE_S* pstSize, HI_BOOL bSu
      step 1:  Create Venc Channel
     ******************************************/
     stVencChnAttr.stVencAttr.enType = PT_JPEG;
+    stVencChnAttr.stVencAttr.u32Profile         = 0;
     stVencChnAttr.stVencAttr.u32MaxPicWidth     = pstSize->u32Width;
     stVencChnAttr.stVencAttr.u32MaxPicHeight    = pstSize->u32Height;
     stVencChnAttr.stVencAttr.u32PicWidth        = pstSize->u32Width;
@@ -1284,6 +1403,7 @@ HI_S32 SAMPLE_COMM_VENC_SnapStop(VENC_CHN VencChn)
 /******************************************************************************
 * funciton : snap process
 ******************************************************************************/
+//maohw
 static pthread_mutex_t SnapMutex = PTHREAD_MUTEX_INITIALIZER;
 static int(*SnapCB)(int i, VENC_STREAM_S* pstStream, void* u) = NULL;
 static void* SnapU = NULL;
@@ -1891,6 +2011,8 @@ HI_S32 SAMPLE_COMM_VENC_QpmapSendFrame(VPSS_GRP VpssGrp,VPSS_CHN VpssChn,VENC_CH
     return pthread_create(&gs_VencQpmapPid, 0, SAMPLE_COMM_QpmapSendFrameProc, (HI_VOID*)&stQpMapSendFramePara);
 }
 
+
+
 /******************************************************************************
 * funciton : get stream from each channels and save them
 ******************************************************************************/
@@ -1960,7 +2082,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             }
         }
         /* Set Venc Fd. */
-        VencFd[i] = HI_MPI_VENC_GetFd(i);
+        VencFd[i] = HI_MPI_VENC_GetFd(VencChn/*i*/);
         if (VencFd[i] < 0)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetFd failed with %#x!\n",
@@ -1972,7 +2094,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             maxfd = VencFd[i];
         }
 
-        s32Ret = HI_MPI_VENC_GetStreamBufInfo (i, &stStreamBufInfo[i]);
+        s32Ret = HI_MPI_VENC_GetStreamBufInfo (VencChn/*i*/, &stStreamBufInfo[i]);
         if (HI_SUCCESS != s32Ret)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo failed with %#x!\n", s32Ret);
@@ -2015,7 +2137,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     *******************************************************/
                     memset(&stStream, 0, sizeof(stStream));
 
-                    s32Ret = HI_MPI_VENC_QueryStatus(i, &stStat);
+                    s32Ret = HI_MPI_VENC_QueryStatus(/*i*/pstPara->VeChn[i], &stStat);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_QueryStatus chn[%d] failed with %#x!\n", i, s32Ret);
@@ -2049,7 +2171,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                      step 2.4 : call mpi to get one-frame stream
                     *******************************************************/
                     stStream.u32PackCount = stStat.u32CurPacks;
-                    s32Ret = HI_MPI_VENC_GetStream(i, &stStream, HI_TRUE);
+                    s32Ret = HI_MPI_VENC_GetStream(/*i*/pstPara->VeChn[i], &stStream, HI_TRUE);
                     if (HI_SUCCESS != s32Ret)
                     {
                         free(stStream.pstPack);
@@ -2075,7 +2197,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
 
 #ifndef __HuaweiLite__
                     //maohw
-                    //SAMPLE_COMM_VENC_SaveStream;
+                    //s32Ret = SAMPLE_COMM_VENC_SaveStream(pFile[i], &stStream);
                     s32Ret = SAMPLE_COMM_VENC_CbStream(pstPara->VeChn[i], enPayLoadType[i], pstPara, &stStream);
 #else
                     s32Ret = SAMPLE_COMM_VENC_SaveStream_PhyAddr(pFile[i], &stStreamBufInfo[i], &stStream);
@@ -2090,7 +2212,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     /*******************************************************
                      step 2.6 : release stream
                      *******************************************************/
-                    s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
+                    s32Ret = HI_MPI_VENC_ReleaseStream(/*i*/pstPara->VeChn[i], &stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed!\n");
@@ -2394,8 +2516,6 @@ HI_S32 SAMPLE_COMM_VENC_StartGetStreamCb(VENC_CHN VeChn[],HI_S32 s32Cnt, int (*c
   gs_stPara.cb = cb;
   return SAMPLE_COMM_VENC_StartGetStream(VeChn, s32Cnt);
 }
-
-
 
 /******************************************************************************
 * funciton : start get venc svc-t stream process thread

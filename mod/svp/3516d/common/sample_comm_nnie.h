@@ -13,7 +13,6 @@ extern "C"{
 #include "sample_comm_ive.h"
 #include <sys/time.h>
 
-
 /*16Byte align*/
 #define SAMPLE_SVP_NNIE_ALIGN_16 16
 #define SAMPLE_SVP_NNIE_ALIGN16(u32Num) ((u32Num + SAMPLE_SVP_NNIE_ALIGN_16-1) / SAMPLE_SVP_NNIE_ALIGN_16*SAMPLE_SVP_NNIE_ALIGN_16)
@@ -88,7 +87,7 @@ typedef enum hiSAMPLE_SVP_NNIE_NET_TYPE_E
 {
 	SAMPLE_SVP_NNIE_ALEXNET_FASTER_RCNN       =  0x0,  /*FasterRcnn Alexnet*/
 	SAMPLE_SVP_NNIE_VGG16_FASTER_RCNN         =  0x1,  /*FasterRcnn Vgg16*/
-	SAMPLE_SVP_NNIE_PVANET_FASTER_RCNN       = 0x2, /*pavenet fasterRcnn*/
+	SAMPLE_SVP_NNIE_PVANET_FASTER_RCNN        =  0x2, /*pavenet fasterRcnn*/
 
 	SAMPLE_SVP_NNIE_NET_TYPE_BUTT
 }SAMPLE_SVP_NNIE_NET_TYPE_E;
@@ -251,7 +250,7 @@ typedef struct hiSAMPLE_SVP_NNIE_YOLOV1_SOFTWARE_PARAM_S
 	SVP_DST_BLOB_S stDstScore;
 }SAMPLE_SVP_NNIE_YOLOV1_SOFTWARE_PARAM_S;
 
-/*Yolov1 software parameter*/
+/*Yolov2 software parameter*/
 typedef struct hiSAMPLE_SVP_NNIE_YOLOV2_SOFTWARE_PARAM_S
 {
 	HI_U32 u32OriImHeight;
@@ -270,52 +269,71 @@ typedef struct hiSAMPLE_SVP_NNIE_YOLOV2_SOFTWARE_PARAM_S
 	SVP_DST_BLOB_S stDstScore;
 }SAMPLE_SVP_NNIE_YOLOV2_SOFTWARE_PARAM_S;
 
- /*stat performance*/
+/*Yolov3 software parameter*/
+typedef struct hiSAMPLE_SVP_NNIE_YOLOV3_SOFTWARE_PARAM_S
+{
+    HI_U32 u32OriImHeight;
+    HI_U32 u32OriImWidth;
+    HI_U32 u32BboxNumEachGrid;
+    HI_U32 u32ClassNum;
+    HI_U32 au32GridNumHeight[3];
+    HI_U32 au32GridNumWidth[3];
+    HI_U32 u32NmsThresh;
+    HI_U32 u32ConfThresh;
+    HI_U32 u32MaxRoiNum;
+    HI_FLOAT af32Bias[3][6];
+    SVP_MEM_INFO_S stGetResultTmpBuf;
+    SVP_DST_BLOB_S stClassRoiNum;
+    SVP_DST_BLOB_S stDstRoi;
+    SVP_DST_BLOB_S stDstScore;
+}SAMPLE_SVP_NNIE_YOLOV3_SOFTWARE_PARAM_S;
+
+/*stat performance*/
 #ifdef SAMPLE_SVP_NNIE_PERF_STAT
- typedef struct hiSAMPLE_SVP_NNIE_OP_PERF_STAT_S
- {
-     HI_U64 u64SrcFlushTime;
-     HI_U64 u64PreDstFulshTime;
-     HI_U64 u64AferDstFulshTime;
-     HI_U64 u64OPTime;
- }SAMPLE_SVP_NNIE_OP_PERF_STAT_S;
- /*Yolo*/
- typedef struct hiSAMPLE_SVP_NNIE_YOLO_PERF_STAT_S
- {
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
- }SAMPLE_SVP_NNIE_YOLO_PERF_STAT_S;
- /*SSD*/
- typedef struct hiSAMPLE_SVP_NNIE_SSD_PERF_STAT_S
- {
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
- }SAMPLE_SVP_NNIE_SSD_PERF_STAT_S;
+typedef struct hiSAMPLE_SVP_NNIE_OP_PERF_STAT_S
+{
+    HI_U64 u64SrcFlushTime;
+    HI_U64 u64PreDstFulshTime;
+    HI_U64 u64AferDstFulshTime;
+    HI_U64 u64OPTime;
+}SAMPLE_SVP_NNIE_OP_PERF_STAT_S;
+/*Yolo*/
+typedef struct hiSAMPLE_SVP_NNIE_YOLO_PERF_STAT_S
+{
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
+}SAMPLE_SVP_NNIE_YOLO_PERF_STAT_S;
+/*SSD*/
+typedef struct hiSAMPLE_SVP_NNIE_SSD_PERF_STAT_S
+{
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
+}SAMPLE_SVP_NNIE_SSD_PERF_STAT_S;
 
- /*PVANET*/
- typedef struct hiSAMPLE_SVP_NNIE_PVANET_PERF_STAT_S
- {
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stRpnPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stRoiPoolingPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
- }SAMPLE_SVP_NNIE_PVANET_PERF_STAT_S;
+/*PVANET*/
+typedef struct hiSAMPLE_SVP_NNIE_PVANET_PERF_STAT_S
+{
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stRpnPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stRoiPoolingPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
+}SAMPLE_SVP_NNIE_PVANET_PERF_STAT_S;
 
- /*RFCN*/
- typedef struct hiSAMPLE_SVP_NNIE_RFCN_PERF_STAT_S
- {
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stRpnPerf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stPsRoiPooling1Perf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stPsRoiPooling2Perf;
-     SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
- }SAMPLE_SVP_NNIE_RFCN_PERF_STAT_S;
+/*RFCN*/
+typedef struct hiSAMPLE_SVP_NNIE_RFCN_PERF_STAT_S
+{
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stForwardPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stRpnPerf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stPsRoiPooling1Perf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stPsRoiPooling2Perf;
+    SAMPLE_SVP_NNIE_OP_PERF_STAT_S stGRPerf; /*GetResult performance*/
+}SAMPLE_SVP_NNIE_RFCN_PERF_STAT_S;
 
 #define SAMPLE_SVP_NIE_PERF_STAT_DEF_VAR() \
-     struct timeval stStart;\
-     struct timeval stEnd;
+    struct timeval stStart;\
+    struct timeval stEnd;
 #define SAMPLE_SVP_NIE_PERF_STAT_DEF_FRM_VAR() \
-     HI_U32 u32Frm;\
+    HI_U32 u32Frm;\
 
 #define SAMPLE_SVP_NNIE_PERF_STAT_BEGIN_LOOP() for(u32Frm = 0; u32Frm < SAMPLE_SVP_NNIE_PERF_STAT_LOOP_TIMES; u32Frm++){
 #define SAMPLE_SVP_NNIE_PERF_STAT_END_LOOP()   }
@@ -336,9 +354,8 @@ typedef struct hiSAMPLE_SVP_NNIE_YOLOV2_SOFTWARE_PARAM_S
 #define SAMPLE_SVP_NNIE_PERF_STAT_END()
 #define SAMPLE_SVP_NNIE_PERF_STAT_TIME_DIFF()
 
+
 #endif
-
-
  /*****************************************************************************
  *   Prototype    : SAMPLE_COMM_SVP_NNIE_ParamDeinit
  *   Description  : Deinit NNIE parameters

@@ -1,19 +1,10 @@
-/******************************************************************************
+/*
+* Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+* Description:
+* Author: Hisilicon multimedia software group
+* Create: 2011/06/28
+*/
 
-  Copyright (C), 2016, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : hi_comm_3a.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 2012/12/18
-  Description   :
-  History       :
-  1.Date        : 2012/12/18
-    Author      :
-    Modification: Created file
-
-******************************************************************************/
 
 #ifndef __HI_COMM_3A_H__
 #define __HI_COMM_3A_H__
@@ -29,28 +20,27 @@ extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#define IS_LINEAR_MODE(mode)      (WDR_MODE_NONE == (mode))
+#define IS_LINEAR_MODE(mode)      ((mode) == WDR_MODE_NONE)
 #define IS_WDR_MODE(mode)         ((!IS_LINEAR_MODE(mode)) && ((mode) < WDR_MODE_BUTT))
 #define IS_HDR_MODE(mode)         (((mode) > DYNAMIC_RANGE_SDR10) && ((mode) < DYNAMIC_RANGE_BUTT))
-#define IS_BUILT_IN_WDR_MODE(mode) (WDR_MODE_BUILT_IN == (mode))
+#define IS_BUILT_IN_WDR_MODE(mode) ((mode) == WDR_MODE_BUILT_IN)
 #define IS_FS_WDR_MODE(mode)      ((!IS_LINEAR_MODE(mode))&& (!IS_BUILT_IN_WDR_MODE(mode)) && ((mode) < WDR_MODE_BUTT))
-#define IS_2to1_WDR_MODE(mode)    ((WDR_MODE_2To1_FRAME == (mode)) || (WDR_MODE_2To1_FRAME_FULL_RATE == (mode)) || (WDR_MODE_2To1_LINE == (mode))  || (WDR_MODE_QUDRA == (mode)))
-#define IS_3to1_WDR_MODE(mode)    ((WDR_MODE_3To1_FRAME == (mode)) || (WDR_MODE_3To1_FRAME_FULL_RATE == (mode)) || (WDR_MODE_3To1_LINE == (mode)))
-#define IS_4to1_WDR_MODE(mode)    ((WDR_MODE_4To1_FRAME == (mode)) || (WDR_MODE_4To1_FRAME_FULL_RATE == (mode)) || (WDR_MODE_4To1_LINE == (mode)))
-#define IS_FULL_WDR_MODE(mode)    ((WDR_MODE_2To1_FRAME_FULL_RATE == (mode)) || (WDR_MODE_3To1_FRAME_FULL_RATE == (mode)) || (WDR_MODE_4To1_FRAME_FULL_RATE == (mode)))
-#define IS_HALF_WDR_MODE(mode)    ((WDR_MODE_2To1_FRAME == (mode)) || (WDR_MODE_3To1_FRAME == (mode)) || (WDR_MODE_4To1_FRAME == (mode)))
-#define IS_LINE_WDR_MODE(mode)    ((WDR_MODE_2To1_LINE == (mode)) || (WDR_MODE_3To1_LINE == (mode)) || (WDR_MODE_4To1_LINE == (mode)) || (WDR_MODE_QUDRA == (mode)))
+#define IS_2to1_WDR_MODE(mode)    (((mode) == WDR_MODE_2To1_FRAME) || ((mode) == WDR_MODE_2To1_FRAME_FULL_RATE) || ((mode) == WDR_MODE_2To1_LINE) || ((mode) == WDR_MODE_QUDRA))
+#define IS_3to1_WDR_MODE(mode)    (((mode) == WDR_MODE_3To1_FRAME) || ((mode) == WDR_MODE_3To1_FRAME_FULL_RATE) || ((mode) == WDR_MODE_3To1_LINE))
+#define IS_4to1_WDR_MODE(mode)    (((mode) == WDR_MODE_4To1_FRAME) || ((mode) == WDR_MODE_4To1_FRAME_FULL_RATE) || ((mode) == WDR_MODE_4To1_LINE))
+#define IS_FULL_WDR_MODE(mode)    (((mode) == WDR_MODE_2To1_FRAME_FULL_RATE) || ((mode) == WDR_MODE_3To1_FRAME_FULL_RATE) || ((mode) == WDR_MODE_4To1_FRAME_FULL_RATE))
+#define IS_HALF_WDR_MODE(mode)    (((mode) == WDR_MODE_2To1_FRAME) || ((mode) == WDR_MODE_3To1_FRAME) || ((mode) == WDR_MODE_4To1_FRAME))
+#define IS_LINE_WDR_MODE(mode)    (((mode) == WDR_MODE_2To1_LINE) || ((mode) == WDR_MODE_3To1_LINE) || ((mode) == WDR_MODE_4To1_LINE) || ((mode) == WDR_MODE_QUDRA))
 
 #define IS_STITCH_MAIN_PIPE(ViPipe,MainPipe) ((ViPipe) == (MainPipe))
-#define IS_OFFLINE_MODE(mode)    (ISP_MODE_RUNNING_OFFLINE    == (mode))
-#define IS_ONLINE_MODE(mode)     (ISP_MODE_RUNNING_ONLINE     == (mode))
-#define IS_SIDEBYSIDE_MODE(mode) (ISP_MODE_RUNNING_SIDEBYSIDE == (mode))
-#define IS_STRIPING_MODE(mode)   (ISP_MODE_RUNNING_STRIPING   == (mode))
+#define IS_OFFLINE_MODE(mode)    ((mode) == ISP_MODE_RUNNING_OFFLINE)
+#define IS_ONLINE_MODE(mode)     ((mode) == ISP_MODE_RUNNING_ONLINE)
+#define IS_SIDEBYSIDE_MODE(mode) ((mode) == ISP_MODE_RUNNING_SIDEBYSIDE)
+#define IS_STRIPING_MODE(mode)   ((mode) == ISP_MODE_RUNNING_STRIPING)
 
 #define MAX_REGISTER_ALG_LIB_NUM 2
 
-typedef enum hiISP_ALG_MOD_E
-{
+typedef enum hiISP_ALG_MOD_E {
     ISP_ALG_AE = 0,
     ISP_ALG_AF,
     ISP_ALG_AWB,
@@ -92,8 +82,7 @@ typedef enum hiISP_ALG_MOD_E
     ISP_ALG_BUTT,
 } ISP_ALG_MOD_E;
 
-typedef enum hiISP_CTRL_CMD_E
-{
+typedef enum hiISP_CTRL_CMD_E {
     ISP_WDR_MODE_SET = 8000,
     ISP_PROC_WRITE,
 
@@ -119,16 +108,14 @@ typedef enum hiISP_CTRL_CMD_E
     ISP_CTRL_CMD_BUTT,
 } ISP_CTRL_CMD_E;
 
-typedef struct hiISP_CTRL_PROC_WRITE_S
-{
+typedef struct hiISP_CTRL_PROC_WRITE_S {
     HI_CHAR *pcProcBuff;
     HI_U32   u32BuffLen;
     HI_U32   u32WriteLen;   /* The len count should contain '\0'. */
 } ISP_CTRL_PROC_WRITE_S;
 
 
-typedef struct hiISP_STITCH_ATTR_S
-{
+typedef struct hiISP_STITCH_ATTR_S {
     HI_BOOL bStitchEnable;
     HI_BOOL bMainPipe;
     HI_U8   u8StitchPipeNum;
@@ -136,8 +123,7 @@ typedef struct hiISP_STITCH_ATTR_S
 } ISP_STITCH_ATTR_S;
 /********************************  AE  *************************************/
 /* the init param of ae alg */
-typedef struct hiISP_AE_PARAM_S
-{
+typedef struct hiISP_AE_PARAM_S {
     SENSOR_ID SensorId;
     HI_U8  u8WDRMode;
     HI_U8  u8HDRMode;
@@ -150,59 +136,51 @@ typedef struct hiISP_AE_PARAM_S
 } ISP_AE_PARAM_S;
 
 /* the statistics of ae alg */
-typedef struct hiISP_FE_AE_STAT_1_S
-{
+typedef struct hiISP_FE_AE_STAT_1_S {
     HI_U32  u32PixelCount[ISP_CHN_MAX_NUM];
     HI_U32  u32PixelWeight[ISP_CHN_MAX_NUM];
     HI_U32  au32HistogramMemArray[ISP_CHN_MAX_NUM][1024];
 } ISP_FE_AE_STAT_1_S;
 
-typedef struct hiISP_FE_AE_STAT_2_S
-{
+typedef struct hiISP_FE_AE_STAT_2_S {
     HI_U16  u16GlobalAvgR[ISP_CHN_MAX_NUM];
     HI_U16  u16GlobalAvgGr[ISP_CHN_MAX_NUM];
     HI_U16  u16GlobalAvgGb[ISP_CHN_MAX_NUM];
     HI_U16  u16GlobalAvgB[ISP_CHN_MAX_NUM];
 } ISP_FE_AE_STAT_2_S;
 
-typedef struct hiISP_FE_AE_STAT_3_S
-{
+typedef struct hiISP_FE_AE_STAT_3_S {
     HI_U16  au16ZoneAvg[ISP_CHN_MAX_NUM][AE_ZONE_ROW][AE_ZONE_COLUMN][4];
 } ISP_FE_AE_STAT_3_S;
 
-typedef struct hiISP_FE_AE_STITCH_STAT_3_S
-{
+typedef struct hiISP_FE_AE_STITCH_STAT_3_S {
     HI_U16  au16ZoneAvg[VI_MAX_PIPE_NUM][ISP_CHN_MAX_NUM][AE_ZONE_ROW][AE_ZONE_COLUMN][4];
 } ISP_FE_AE_STITCH_STAT_3_S;
 
-typedef struct hiISP_BE_AE_STAT_1_S
-{
+typedef struct hiISP_BE_AE_STAT_1_S {
     HI_U32  u32PixelCount;
     HI_U32  u32PixelWeight;
     HI_U32  au32HistogramMemArray[1024];
 } ISP_BE_AE_STAT_1_S;
 
-typedef struct hiISP_BE_AE_STAT_2_S
-{
+typedef struct hiISP_BE_AE_STAT_2_S {
     HI_U16  u16GlobalAvgR;
     HI_U16  u16GlobalAvgGr;
     HI_U16  u16GlobalAvgGb;
     HI_U16  u16GlobalAvgB;
 } ISP_BE_AE_STAT_2_S;
 
-typedef struct hiISP_BE_AE_STAT_3_S
-{
+typedef struct hiISP_BE_AE_STAT_3_S {
     HI_U16  au16ZoneAvg[AE_ZONE_ROW][AE_ZONE_COLUMN][4];
 } ISP_BE_AE_STAT_3_S;
 
-typedef struct hiISP_BE_AE_STITCH_STAT_3_S
-{
+typedef struct hiISP_BE_AE_STITCH_STAT_3_S {
     HI_U16  au16ZoneAvg[VI_MAX_PIPE_NUM][AE_ZONE_ROW][AE_ZONE_COLUMN][4];
 } ISP_BE_AE_STITCH_STAT_3_S;
 
-typedef struct hiISP_AE_INFO_S
-{
+typedef struct hiISP_AE_INFO_S {
     HI_U32  u32FrameCnt;    /* the counting of frame */
+    ISP_SMART_INFO_S stSmartInfo;  /* Only used for Hi3516EV200/Hi3516EV300/Hi3518EV300 */
 
     ISP_FE_AE_STAT_1_S *pstFEAeStat1;
     ISP_FE_AE_STAT_2_S *pstFEAeStat2;
@@ -215,8 +193,7 @@ typedef struct hiISP_AE_INFO_S
 } ISP_AE_INFO_S;
 
 
-typedef struct hiISP_AE_STAT_ATTR_S
-{
+typedef struct hiISP_AE_STAT_ATTR_S {
     HI_BOOL bChange;
 
     HI_BOOL bHistAdjust;
@@ -237,14 +214,17 @@ typedef struct hiISP_AE_STAT_ATTR_S
 } ISP_AE_STAT_ATTR_S;
 
 /* the final calculate of ae alg */
-#define AE_INT_TIME_NUM     (4)
-typedef struct hiISP_AE_RESULT_S
-{
+#define AE_INT_TIME_NUM          (4)
+typedef struct hiISP_AE_RESULT_S {
     HI_U32  u32IntTime[AE_INT_TIME_NUM];
     HI_U32  u32IspDgain;
     HI_U32  u32Again;
     HI_U32  u32Dgain;
     HI_U32  u32Iso;
+    HI_U32  u32IspDgainSF;
+    HI_U32  u32AgainSF;
+    HI_U32  u32DgainSF;
+    HI_U32  u32IsoSF;
     HI_U8   u8AERunInterval;
 
     HI_BOOL bPirisValid;
@@ -254,13 +234,13 @@ typedef struct hiISP_AE_RESULT_S
     ISP_FSWDR_MODE_E enFSWDRMode;
     HI_U32  au32WDRGain[4];
     HI_U32  u32HmaxTimes; /* unit is ns */
+    HI_U32  u32Vmax; /* unit is line */
 
     ISP_AE_STAT_ATTR_S stStatAttr;
     ISP_DCF_UPDATE_INFO_S stUpdateInfo;
 } ISP_AE_RESULT_S;
 
-typedef struct hiISP_AE_EXP_FUNC_S
-{
+typedef struct hiISP_AE_EXP_FUNC_S {
     HI_S32 (*pfn_ae_init)(HI_S32 s32Handle, const ISP_AE_PARAM_S *pstAeParam);
     HI_S32 (*pfn_ae_run)(HI_S32 s32Handle,
                          const ISP_AE_INFO_S *pstAeInfo,
@@ -271,14 +251,12 @@ typedef struct hiISP_AE_EXP_FUNC_S
     HI_S32 (*pfn_ae_exit)(HI_S32 s32Handle);
 } ISP_AE_EXP_FUNC_S;
 
-typedef struct hiISP_AE_REGISTER_S
-{
+typedef struct hiISP_AE_REGISTER_S {
     ISP_AE_EXP_FUNC_S stAeExpFunc;
 } ISP_AE_REGISTER_S;
 
 /********************************  AWB  *************************************/
-typedef enum hiAWB_CTRL_CMD_E
-{
+typedef enum hiAWB_CTRL_CMD_E {
     AWB_CCM_CONFIG_SET,
     AWB_CCM_CONFIG_GET,
 
@@ -288,8 +266,7 @@ typedef enum hiAWB_CTRL_CMD_E
     AWB_CTRL_BUTT,
 } AWB_CTRL_CMD_E;
 
-typedef struct hiAWB_CCM_CONFIG_S
-{
+typedef struct hiAWB_CCM_CONFIG_S {
     HI_BOOL bAWBBypassEn;
     HI_BOOL bManualSatEn;
     HI_BOOL bManualTempEn;
@@ -305,8 +282,7 @@ typedef struct hiAWB_CCM_CONFIG_S
 } AWB_CCM_CONFIG_S;
 
 /* the init param of awb alg */
-typedef struct hiISP_AWB_PARAM_S
-{
+typedef struct hiISP_AWB_PARAM_S {
     SENSOR_ID SensorId;
     HI_U8 u8WDRMode;
     HI_U8 u8AWBZoneRow;
@@ -319,19 +295,14 @@ typedef struct hiISP_AWB_PARAM_S
 } ISP_AWB_PARAM_S;
 
 /* the statistics of awb alg */
-
-
-typedef struct hiISP_AWB_STAT_1_S
-{
+typedef struct hiISP_AWB_STAT_1_S {
     HI_U16  u16MeteringAwbAvgR;
     HI_U16  u16MeteringAwbAvgG;
     HI_U16  u16MeteringAwbAvgB;
     HI_U16  u16MeteringAwbCountAll;
-
 } ISP_AWB_STAT_1_S;
 
-typedef struct hiISP_AWB_STAT_2_S
-{
+typedef struct hiISP_AWB_STAT_2_S {
     HI_U16  au16MeteringMemArrayAvgR[AWB_ZONE_NUM];
     HI_U16  au16MeteringMemArrayAvgG[AWB_ZONE_NUM];
     HI_U16  au16MeteringMemArrayAvgB[AWB_ZONE_NUM];
@@ -339,8 +310,7 @@ typedef struct hiISP_AWB_STAT_2_S
 
 } ISP_AWB_STAT_2_S;
 
-typedef struct hiISP_AWB_STAT_STITCH_S
-{
+typedef struct hiISP_AWB_STAT_STITCH_S {
     HI_U16  u16ZoneCol;
     HI_U16  u16ZoneRow;
     HI_U16  u16ZoneBin;
@@ -351,29 +321,26 @@ typedef struct hiISP_AWB_STAT_STITCH_S
 
 } ISP_AWB_STAT_STITCH_S;
 
-typedef struct hiISP_AWB_STAT_RESULT_S
-{
+typedef struct hiISP_AWB_STAT_RESULT_S {
     HI_U16 *pau16ZoneAvgR;
     HI_U16 *pau16ZoneAvgG;
     HI_U16 *pau16ZoneAvgB;
     HI_U16 *pau16ZoneCount;
 } ISP_AWB_STAT_RESULT_S;
 
-typedef struct hiISP_AWB_INFO_S
-{
+typedef struct hiISP_AWB_INFO_S {
     HI_U32  u32FrameCnt;
 
     ISP_AWB_STAT_1_S *pstAwbStat1;
     ISP_AWB_STAT_RESULT_S stAwbStat2;
     HI_U8 u8AwbGainSwitch;
+    HI_U8 u8AwbStatSwitch;
+    HI_BOOL bWbGainInSensor;
     HI_U32 au32WDRWBGain[ISP_BAYER_CHN_NUM];
 } ISP_AWB_INFO_S;
 
 /* the statistics's attr of awb alg */
-
-
-typedef struct hiISP_AWB_RAW_STAT_ATTR_S
-{
+typedef struct hiISP_AWB_RAW_STAT_ATTR_S {
     HI_BOOL bStatCfgUpdate;
 
     HI_U16  u16MeteringWhiteLevelAwb;
@@ -385,8 +352,7 @@ typedef struct hiISP_AWB_RAW_STAT_ATTR_S
 } ISP_AWB_RAW_STAT_ATTR_S;
 
 /* the final calculate of awb alg */
-typedef struct hiISP_AWB_RESULT_S
-{
+typedef struct hiISP_AWB_RESULT_S {
     HI_U32  au32WhiteBalanceGain[ISP_BAYER_CHN_NUM];
     HI_U16  au16ColorMatrix[CCM_MATRIX_SIZE];
     HI_U32  u32ColorTemp;
@@ -394,28 +360,23 @@ typedef struct hiISP_AWB_RESULT_S
     ISP_AWB_RAW_STAT_ATTR_S stRawStatAttr;
 } ISP_AWB_RESULT_S;
 
-typedef struct hiISP_AWB_EXP_FUNC_S
-{
-    HI_S32 (*pfn_awb_init)(HI_S32 s32Handle, const ISP_AWB_PARAM_S *pstAwbParam);
+typedef struct hiISP_AWB_EXP_FUNC_S {
+    HI_S32 (*pfn_awb_init)(HI_S32 s32Handle, const ISP_AWB_PARAM_S *pstAwbParam, ISP_AWB_RESULT_S *pstAwbResult);
     HI_S32 (*pfn_awb_run)(HI_S32 s32Handle,
                           const ISP_AWB_INFO_S *pstAwbInfo,
                           ISP_AWB_RESULT_S *pstAwbResult,
-                          HI_S32 s32Rsv
-                         );
+                          HI_S32 s32Rsv);
     HI_S32 (*pfn_awb_ctrl)(HI_S32 s32Handle, HI_U32 u32Cmd, HI_VOID *pValue);
     HI_S32 (*pfn_awb_exit)(HI_S32 s32Handle);
 } ISP_AWB_EXP_FUNC_S;
 
-typedef struct hiISP_AWB_REGISTER_S
-{
+typedef struct hiISP_AWB_REGISTER_S {
     ISP_AWB_EXP_FUNC_S stAwbExpFunc;
 } ISP_AWB_REGISTER_S;
 
 /********************************  AF  *************************************/
-
 /* the statistics of af alg */
-typedef struct hiISP_AF_ZONE_S
-{
+typedef struct hiISP_AF_ZONE_S {
     HI_U16  u16v1;
     HI_U16  u16h1;
     HI_U16  u16v2;
@@ -424,25 +385,21 @@ typedef struct hiISP_AF_ZONE_S
     HI_U16  u16HlCnt;
 } ISP_AF_ZONE_S;
 
-typedef struct hiISP_FE_AF_STAT_S
-{
-    ISP_AF_ZONE_S stZoneMetrics[WDR_CHN_MAX][AF_ZONE_ROW][AF_ZONE_COLUMN]; /*R; The zoned measure of contrast*/
+typedef struct hiISP_FE_AF_STAT_S {
+    ISP_AF_ZONE_S stZoneMetrics[WDR_CHN_MAX][AF_ZONE_ROW][AF_ZONE_COLUMN]; /* R; The zoned measure of contrast */
 } ISP_FE_AF_STAT_S;
 
-typedef struct hiISP_BE_AF_STAT_S
-{
-    ISP_AF_ZONE_S stZoneMetrics[AF_ZONE_ROW][AF_ZONE_COLUMN]; /*R; The zoned measure of contrast*/
+typedef struct hiISP_BE_AF_STAT_S {
+    ISP_AF_ZONE_S stZoneMetrics[AF_ZONE_ROW][AF_ZONE_COLUMN]; /* R; The zoned measure of contrast */
 } ISP_BE_AF_STAT_S;
 
-#define ALG_LIB_NAME_SIZE_MAX   (20)
-typedef struct hiALG_LIB_S
-{
+#define ALG_LIB_NAME_SIZE_MAX    (20)
+typedef struct hiALG_LIB_S {
     HI_S32  s32Id;
     HI_CHAR acLibName[ALG_LIB_NAME_SIZE_MAX];
 } ALG_LIB_S;
 
-typedef struct hiISP_BIND_ATTR_S
-{
+typedef struct hiISP_BIND_ATTR_S {
     SENSOR_ID   SensorId;
     ALG_LIB_S   stAeLib;
     ALG_LIB_S   stAfLib;
@@ -455,4 +412,4 @@ typedef struct hiISP_BIND_ATTR_S
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#endif /*__HI_COMM_SNS_H__ */
+#endif /* __HI_COMM_SNS_H__ */

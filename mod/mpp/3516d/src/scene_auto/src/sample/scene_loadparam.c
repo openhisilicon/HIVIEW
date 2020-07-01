@@ -15,8 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include "hi_scene_autogenerate.h"
-#include "hi_scene_paramtype_autogenerate.h"
+#include "hi_scene_setparam.h"
 #include "hi_confaccess.h"
 #include "hi_scenecomm.h"
 #include "hi_scene_loadparam.h"
@@ -116,7 +115,6 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_AE_INTERVAL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AERunInterval");/*AERunInterval*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -132,9 +130,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u8AERunInterval = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AE_EXVALID
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AERouteExValid");/*AERouteExValid*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -151,9 +147,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->bAERouteExValid = (HI_BOOL)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AE_SYSGAINMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AutoSysGainMax");/*AutoSysGainMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -169,9 +163,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u32AutoSysGainMax = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AE_EXPTIMEMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AutoExpTimeMax");/*AutoExpTimeMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -187,10 +179,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u32AutoExpTimeMax = (HI_U32)s32Value;
     }
-#endif
 
-
-#ifdef CFG_STA_AE_SPEED
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AutoSpeed");/*AutoSpeed*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -206,9 +195,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u8AutoSpeed = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AE_TOLERANCE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AutoTolerance");/*AutoTolerance*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -224,9 +211,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u8AutoTolerance = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AE_BLACKDELAYFRAME
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AutoBlackDelayFrame");/*AutoBlackDelayFrame*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -242,9 +227,7 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u16AutoBlackDelayFrame = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AE_WHITEDELAYFRAME
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ae:AutoWhiteDelayFrame");/*AutoWhiteDelayFrame*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -260,19 +243,19 @@ HI_S32 SCENE_LoadStaticAE(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE_S *pst
         }
         pstStaticAe->u16AutoWhiteDelayFrame = (HI_U16)s32Value;
     }
-#endif
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticAERoute(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AEROUTE_S *pstStaticAeRoute)
 {
-
-#ifdef CFG_STA_AEROUTE_TOTALNUM
+#if 0
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
+    HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aeroute:u32TotalNum");/*TotalNum*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -288,13 +271,7 @@ HI_S32 SCENE_LoadStaticAERoute(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AERO
         }
         pstStaticAeRoute->u32TotalNum = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AEROUTE_INTTIME
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aeroute:RouteIntTime");/*RouteIntTime*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -308,13 +285,7 @@ HI_S32 SCENE_LoadStaticAERoute(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AERO
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AEROUTE_SYSGAIN
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aeroute:RouteSysGain");/*RouteSysGain*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -329,17 +300,17 @@ HI_S32 SCENE_LoadStaticAERoute(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AERO
         pszString = HI_NULL;
     }
 #endif
-
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *pstStaticAwb)
 {
-#ifdef CFG_STA_AWB_STATICWB
+#if 0
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoStaticWb");/*AutoStaticWb*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -353,13 +324,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AWB_CURVEPARA
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoCurvePara");/*AutoCurvePara*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -373,13 +338,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AWB_SPEED
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoSpeed");/*AutoSpeed*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -395,13 +354,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         }
         pstStaticAwb->u16AutoSpeed = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWB_LOWCOLORTEMP
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoLowColorTemp");/*AutoLowColorTemp*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -417,13 +370,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         }
         pstStaticAwb->u16AutoLowColorTemp = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWB_CRMAX
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoCrMax");/*AutoCrMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -437,9 +384,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AWB_CRMIN
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_U32 u32IdxM = 0;
@@ -457,13 +402,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AWB_CBMAX
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoCbMax");/*AutoCbMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -477,13 +416,7 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AWB_CBMIN
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awb:AutoCbMin");/*AutoCbMin*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -498,17 +431,17 @@ HI_S32 SCENE_LoadStaticAWB(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWB_S *p
         pszString = HI_NULL;
     }
 #endif
-
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_S *pstStaticAwbEx)
 {
-#ifdef CFG_STA_AWBEX_TOLERANCE
+#if 0
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:Tolerance");/*Tolerance*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -524,13 +457,7 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         }
         pstStaticAwbEx->u8Tolerance = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWBEX_OUTTHRESH
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:OutThresh");/*OutThresh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -546,13 +473,7 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         }
         pstStaticAwbEx->u32OutThresh = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWBEX_LOWSTOP
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:LowStop");/*LowStop*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -568,13 +489,7 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         }
         pstStaticAwbEx->u16LowStop = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWBEX_HIGHSTART
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:HighStart");/*HighStart*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -590,13 +505,7 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         }
         pstStaticAwbEx->u16HighStart = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWBEX_HIGHSTOP
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:HighStop");/*HighStop*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -612,13 +521,7 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         }
         pstStaticAwbEx->u16HighStop = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWBEX_MULTILIGHTSOURCEEN
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_S32 s32Value = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:MultiLightSourceEn");/*MultiLightSourceEn*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -634,13 +537,7 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         }
         pstStaticAwbEx->bMultiLightSourceEn = s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AWBEX_MULTICTWT
-    HI_S32 s32Ret = HI_SUCCESS;
-    HI_CHAR *pszString = NULL;
-    HI_U32 u32IdxM = 0;
-    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_awbex:MultiCTWt");/*MultiCTWt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -655,7 +552,6 @@ HI_S32 SCENE_LoadStaticAWBEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AWBEX_
         pszString = HI_NULL;
     }
 #endif
-
     return HI_SUCCESS;
 }
 
@@ -667,7 +563,6 @@ HI_S32 SCENE_LoadStaticAeRouteEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_AEROUTEEX_TOTALNUM
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aerouteex:TotalNum");/*Tolerance*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -683,9 +578,7 @@ HI_S32 SCENE_LoadStaticAeRouteEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE
         }
         pstStaticAeRouteEx->u32TotalNum = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_AEROUTEEX_ROUTEEXINTTIME
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aerouteex:RouteEXIntTime");/*RouteEXIntTime*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -699,9 +592,7 @@ HI_S32 SCENE_LoadStaticAeRouteEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AEROUTEEX_ROUTEEXAGAIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aerouteex:RouteEXAGain");/*RouteEXAGain*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -715,9 +606,7 @@ HI_S32 SCENE_LoadStaticAeRouteEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AEROUTEEX_ROUTEEXDGAIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aerouteex:RouteEXDGain");/*RouteEXDGain*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -731,9 +620,7 @@ HI_S32 SCENE_LoadStaticAeRouteEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_AEROUTEEX_ROUTEEXISPDGAIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_aerouteex:RouteEXISPDGain");/*RouteEXISPDGain*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -747,7 +634,6 @@ HI_S32 SCENE_LoadStaticAeRouteEX(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_AE
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -759,7 +645,6 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_GLOBALCAC_ENABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:GlobalCacEnable");/*GlobalCacEnable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -775,9 +660,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->bEnable = (HI_BOOL)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_VERCOORDINATE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:VerCoordinate");/*VerCoordinate*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -793,9 +676,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u16VerCoordinate = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_HORCOORDINATE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:HorCoordinate");/*HorCoordinate*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -811,9 +692,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u16HorCoordinate = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_PARAMREDA
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:ParamRedA");/*ParamRedA*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -829,9 +708,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->s16ParamRedA = (HI_S16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_PARAMREDB
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:ParamRedB");/*ParamRedB*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -847,9 +724,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->s16ParamRedB = (HI_S16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_PARAMREDC
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:ParamRedC");/*ParamRedC*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -865,9 +740,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->s16ParamRedC = (HI_S16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_PARAMBLUEA
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:ParamBlueA");/*ParamBlueA*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -883,9 +756,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->s16ParamBlueA = (HI_S16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_PARAMBLUEB
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:ParamBlueB");/*ParamBlueB*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -901,9 +772,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->s16ParamBlueB = (HI_S16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_PARAMBLUEC
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:ParamBlueC");/*ParamBlueC*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -919,9 +788,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->s16ParamBlueC = (HI_S16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_VERNORMSHIFT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:VerNormShift");/*VerNormShift*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -937,9 +804,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u8VerNormShift = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_VERNORMFACTOR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:VerNormFactor");/*VerNormFactor*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -955,9 +820,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u8VerNormFactor = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_HORNORMSHIFT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:HorNormShift");/*HorNormShift*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -973,10 +836,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u8HorNormShift = (HI_U8)s32Value;
     }
-#endif
 
-
-#ifdef CFG_STA_GLOBALCAC_HORNORMFACTOR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:HorNormFactor");/*HorNormFactor*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -992,9 +852,7 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u8HorNormFactor = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_GLOBALCAC_CORVARTHR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_globalcac:CorVarThr");/*CorVarThr*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1010,7 +868,6 @@ HI_S32 SCENE_LoadStaticGlobalCac(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_GL
         }
         pstStaticGlobalCac->u16CorVarThr = (HI_U16)s32Value;
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -1023,7 +880,6 @@ HI_S32 SCENE_LoadStaticWdrExposure(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_WDREXPOSURE_EXPRATIOTYPE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_wdrexposure:ExpRatioType");/*ExpRatioType*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1039,9 +895,7 @@ HI_S32 SCENE_LoadStaticWdrExposure(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_
         }
         pstStaticWdrExposure->u8ExpRatioType = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_WDREXPOSURE_EXPRATIOMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_wdrexposure:ExpRatioMax");/*ExpRatioMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1057,9 +911,7 @@ HI_S32 SCENE_LoadStaticWdrExposure(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_
         }
         pstStaticWdrExposure->u32ExpRatioMax = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_WDREXPOSURE_EXPRATIOMIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_wdrexposure:ExpRatioMin");/*ExpRatioMin*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1075,9 +927,7 @@ HI_S32 SCENE_LoadStaticWdrExposure(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_
         }
         pstStaticWdrExposure->u32ExpRatioMin = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_WDREXPOSURE_EXPRATIO
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_wdrexposure:ExpRatio");/*ExpRatio*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1091,14 +941,12 @@ HI_S32 SCENE_LoadStaticWdrExposure(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticSaturation(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_SATURATION_S *pstStaticSaturation)
 {
-#ifdef CFG_STA_STATURATION_AUTOSAT
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_U32 u32IdxM = 0;
@@ -1116,14 +964,56 @@ HI_S32 SCENE_LoadStaticSaturation(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_S
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
 
+HI_S32 SCENE_LoadStaticCCM(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CCM_S *pstStaticCcm)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_S32 s32Value = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ccm:ISOActEn");/*ISOActEn*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "static_ccm:ISOActEn", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load static_ccm:ISOActEn failed\n");
+            return HI_FAILURE;
+        }
+        pstStaticCcm->bISOActEn = (HI_BOOL)s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ccm:TempActEn");/*TempActEn*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "static_ccm:TempActEn", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load static_ccm:TempActEn failed\n");
+            return HI_FAILURE;
+        }
+        pstStaticCcm->bTempActEn = (HI_BOOL)s32Value;
+    }
+
+    return HI_SUCCESS;
+}
+
+
 HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S *pstStaticLdci)
 {
-#ifdef CFG_STA_LDCI_BENABLE
+#if 0
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1143,9 +1033,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->bEnable = (HI_BOOL)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_LDCIOPTYPE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:LDCIOpType");/*LDCIOpType*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1161,9 +1049,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8LDCIOpType = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_LDCIGAUSSLPFSIGMA
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:LDCIGaussLPFSigma");/*LDCIGaussLPFSigma*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1179,9 +1065,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8GaussLPFSigma = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_MANUALBLCCTRL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:ManualBlcCtrl");/*ManualBlcCtrl*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1197,9 +1081,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u16ManualBlcCtrl = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_MANUALHEPOSSIGMA
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:ManualHePosSigma");/*ManualHePosSigma*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1215,9 +1097,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8ManualHePosSigma = (HI_U16)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_MANUALHEPOSMEAN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:ManualHePosMean");/*ManualHePosMean*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1233,9 +1113,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8ManualHePosMean = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_MANUALHENEGSIGMA
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:ManualHeNegSigma");/*ManualHeNegSigma*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1251,9 +1129,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8ManualHeNegSigma = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_MANUALHENEGWGT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:ManualHeNegWgt");/*ManualHeNegWgt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1269,9 +1145,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8ManualHeNegWgt = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_LDCI_MANUALHENEGMEAN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_ldci:ManualHeNegMean");/*ManualHeNegMean */
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1287,9 +1161,7 @@ HI_S32 SCENE_LoadStaticLDCI(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_LDCI_S 
         }
         pstStaticLdci->u8ManualHeNegMean = (HI_U8)s32Value;
     }
-
 #endif
-
     return HI_SUCCESS;
 }
 
@@ -1301,7 +1173,6 @@ HI_S32 SCENE_LoadStaticDrc(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DRC_S *p
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_DRC_BENABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:bEnable");/*bEnable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1317,9 +1188,7 @@ HI_S32 SCENE_LoadStaticDrc(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DRC_S *p
         }
         pstStaticDrc->bEnable = (HI_BOOL)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_DRC_CURVESELECT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:CurveSelect");/*CurveSelect*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1335,9 +1204,7 @@ HI_S32 SCENE_LoadStaticDrc(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DRC_S *p
         }
         pstStaticDrc->u8CurveSelect = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_DRC_DRCOPTYPE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:DRCOpType");/*DRCOpType*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1353,64 +1220,7 @@ HI_S32 SCENE_LoadStaticDrc(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DRC_S *p
         }
         pstStaticDrc->u8DRCOpType = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_DRC_DRCAUTOSTR
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:DRCAutoStr");/*DRCAutoStr*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        free(pszString);
-        pszString = HI_NULL;
-        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "static_drc:DRCAutoStr", 0, &s32Value);
-        if (HI_SUCCESS != s32Ret)
-        {
-            MLOGE("load static_drc:DRCAutoStr failed\n");
-            return HI_FAILURE;
-        }
-        pstStaticDrc->u16AutoStrength = (HI_U16)s32Value;
-    }
-#endif
-
-#ifdef CFG_STA_DRC_DRCAUTOSTRMIN
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:DRCAutoStrMin");/*DRCAutoStrMin*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        free(pszString);
-        pszString = HI_NULL;
-        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "static_drc:DRCAutoStrMin", 0, &s32Value);
-        if (HI_SUCCESS != s32Ret)
-        {
-            MLOGE("load static_drc:DRCAutoStrMin failed\n");
-            return HI_FAILURE;
-        }
-        pstStaticDrc->u16AutoStrengthMin = (HI_U16)s32Value;
-    }
-#endif
-
-
-#ifdef CFG_STA_DRC_DRCAUTOSTRMAX
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:DRCAutoStrMax");/*DRCAutoStrMax*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        free(pszString);
-        pszString = HI_NULL;
-        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "static_drc:DRCAutoStrMax", 0, &s32Value);
-        if (HI_SUCCESS != s32Ret)
-        {
-            MLOGE("load static_drc:DRCAutoStrMax failed\n");
-            return HI_FAILURE;
-        }
-        pstStaticDrc->u16AutoStrengthMax = (HI_U16)s32Value;
-    }
-#endif
-
-#ifdef CFG_STA_DRC_DRCTONEMAPPINGVALUE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:DRCToneMappingValue");/*DRCToneMappingValue*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1424,9 +1234,7 @@ HI_S32 SCENE_LoadStaticDrc(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_DRC_DRCCOLORCORRECTIONLUT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_drc:DRCColorCorrectionLut");/*DRCColorCorrectionLut*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1440,7 +1248,6 @@ HI_S32 SCENE_LoadStaticDrc(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -1453,7 +1260,6 @@ HI_S32 SCENE_LoadStaticDehaze(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DEHAZ
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_DEHAZE_BENABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_dehaze:bEnable");/*bEnable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1469,10 +1275,8 @@ HI_S32 SCENE_LoadStaticDehaze(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DEHAZ
         }
         pstStaticDeHaze->bEnable = (HI_BOOL)s32Value;
     }
-#endif
 
 
-#ifdef CFG_STA_DEHAZE_DEHAZEOPTYPE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_dehaze:DehazeOpType");/*DehazeOpType*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1488,9 +1292,7 @@ HI_S32 SCENE_LoadStaticDehaze(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DEHAZ
         }
         pstStaticDeHaze->u8DehazeOpType = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_DEHAZE_BDEHAZEUSERLUTENABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_dehaze:bDehazeUserLutEnable");/*bDehazeUserLutEnable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1506,9 +1308,7 @@ HI_S32 SCENE_LoadStaticDehaze(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DEHAZ
         }
         pstStaticDeHaze->bUserLutEnable = (HI_BOOL)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_DEHAZE_DEHAZELUT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_dehaze:DehazeLut");/*bDehazeUserLutEnable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1522,15 +1322,12 @@ HI_S32 SCENE_LoadStaticDehaze(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DEHAZ
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticStatistics(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_STATISTICSCFG_S *pstStaticStatistics)
 {
-#ifdef CFG_STA_STATISTICS_EXPWEIGHT
-
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_U32 u32IdxM = 0;
@@ -1565,14 +1362,12 @@ HI_S32 SCENE_LoadStaticStatistics(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_S
             }
         }
     }
-#endif
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *pstStaticCSC)
 {
-
-#ifdef CFG_STA_CSC_ENABLE
+#if 0
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1592,9 +1387,7 @@ HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *p
         }
         pstStaticCSC->bEnable = s32Value;
     }
-#endif
 
-#ifdef CFG_STA_CSC_HUE
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1614,9 +1407,7 @@ HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *p
         }
         pstStaticCSC->u8Hue = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_CSC_LUMA
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1636,9 +1427,7 @@ HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *p
         }
         pstStaticCSC->u8Luma = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_CSC_CONTRAST
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1658,9 +1447,7 @@ HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *p
         }
         pstStaticCSC->u8Contr = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_CSC_SATURATION
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1680,9 +1467,7 @@ HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *p
         }
         pstStaticCSC->u8Satu = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_CSC_COLORGAMUT
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -1703,7 +1488,6 @@ HI_S32 SCENE_LoadStaticCSC(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_CSC_S *p
         pstStaticCSC->enColorGamut = s32Value;
     }
 #endif
-
     return HI_SUCCESS;
 }
 
@@ -1714,7 +1498,6 @@ HI_S32 SCENE_LoadStaticShading(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_SHAD
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_SHARDING_ENABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_shading:bEnable");/*bEnable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1730,7 +1513,6 @@ HI_S32 SCENE_LoadStaticShading(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_SHAD
         }
         pstStaticShading->bEnable = (HI_BOOL)s32Value;
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -1928,7 +1710,6 @@ HI_S32 SCENE_LoadDynamicThreeDNR(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_T
     HI_S32 s32Value = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_STA_THREEDNR_THREEDNRCOUNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_threednr:ThreeDNRCount");/*ThreeDNRCount*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1944,9 +1725,23 @@ HI_S32 SCENE_LoadDynamicThreeDNR(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_T
         }
         pstDynamicThreeDnr->u32ThreeDNRCount = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_STA_THREEDNR_ISOTHRESH
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_threednr:VI_3DNRStartPoint");/*VI_3DNRStartPoint*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_threednr:VI_3DNRStartPoint", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load dynamic_threednr:VI_3DNRStartPoint failed\n");
+            return HI_FAILURE;
+        }
+        pstDynamicThreeDnr->u16VI_3DNRStartPoint = (HI_U32)s32Value;
+    }
+
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_threednr:IsoThresh");/*IsoThresh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -1960,9 +1755,7 @@ HI_S32 SCENE_LoadDynamicThreeDNR(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_T
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_STA_THREEDNR_3DNRPARAM
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_threednr:3DnrParam_0");/*3DnrParam_0*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2104,7 +1897,6 @@ HI_S32 SCENE_LoadDynamicThreeDNR(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_T
             }
         }
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -2119,7 +1911,6 @@ HI_S32 SCENE_LoadDynamicGamma(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_GAMM
     HI_U32 u32IdxN = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_GAMMA_TOTALNUM
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_gamma:TotalNum");/*TotalNum*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2135,9 +1926,7 @@ HI_S32 SCENE_LoadDynamicGamma(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_GAMM
         }
         pstDynamicGamma->u32TotalNum = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_GAMMA_INTERVAL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_gamma:Interval");/*Interval*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2153,9 +1942,7 @@ HI_S32 SCENE_LoadDynamicGamma(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_GAMM
         }
         pstDynamicGamma->u32InterVal = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_GAMMA_EXPTHRESHLTOH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_gamma:gammaExpThreshLtoH");/*ExpThreshLtoH*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2169,9 +1956,7 @@ HI_S32 SCENE_LoadDynamicGamma(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_GAMM
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_GAMMA_EXPTHRESHHTOL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_gamma:gammaExpThreshHtoL");/*ExpThreshHtoL*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2185,25 +1970,7 @@ HI_S32 SCENE_LoadDynamicGamma(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_GAMM
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_GAMMA_EXPTHRESH
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_gamma:gammaExpThresh");/*GammaExpThresh*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        SCENE_GetNumbersInOneLine(pszString);
-        for (u32IdxM = 0; u32IdxM < pstDynamicGamma->u32TotalNum; u32IdxM++)
-        {
-            pstDynamicGamma->au32GammaExpThresh[u32IdxM] = s_as64LineNum[u32IdxM];
-        }
-        free(pszString);
-        pszString = HI_NULL;
-    }
-#endif
-
-#ifdef CFG_DYM_GAMMA_TABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_gamma:Table_0");/*Table_0*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2232,7 +1999,6 @@ HI_S32 SCENE_LoadDynamicGamma(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_GAMM
             }
         }
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -2245,7 +2011,6 @@ HI_S32 SCENE_LoadDynamicShading(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_SH
     HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_SHADING_EXPTHRESHCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_shading:ExpThreshCnt");/*ExpThreshCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2261,9 +2026,7 @@ HI_S32 SCENE_LoadDynamicShading(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_SH
         }
         pstDynamicShading->u32ExpThreshCnt = s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_SHADING_EXPTHRESHLTOH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_shading:ExpThreshLtoH");/*ExpThreshLtoH*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2277,9 +2040,7 @@ HI_S32 SCENE_LoadDynamicShading(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_SH
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_SHADING_MANUALSTRENGTH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_shading:ManualStrength");/*ManualStrength*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2293,7 +2054,6 @@ HI_S32 SCENE_LoadDynamicShading(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_SH
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
@@ -2306,7 +2066,6 @@ HI_S32 SCENE_LoadDynamicLDCI(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_LDCI_
     HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_LDCI_ENABLECNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ldci:EnableCount");/*EnableCount*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2322,9 +2081,7 @@ HI_S32 SCENE_LoadDynamicLDCI(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_LDCI_
         }
         pstDynamicLdci->u32EnableCnt = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_LDCI_ENABLEEXPTHRESHLTOH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ldci:EnableExpThreshLtoH");/*EnableExpThreshLtoH*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2338,9 +2095,7 @@ HI_S32 SCENE_LoadDynamicLDCI(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_LDCI_
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_LDCI_ENABLE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ldci:Enable");/*Enable*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2354,57 +2109,7 @@ HI_S32 SCENE_LoadDynamicLDCI(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_LDCI_
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_LDCI_EXPTHRESHCNT
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ldci:ExpThreshCnt");/*ExpThreshCnt*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        free(pszString);
-        pszString = HI_NULL;
-        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_ldci:ExpThreshCnt", 0, &s32Value);
-        if (HI_SUCCESS != s32Ret)
-        {
-            MLOGE("load dynamic_gamma:ExpThreshCnt failed\n");
-            return HI_FAILURE;
-        }
-        pstDynamicLdci->u32ExpThreshCnt = (HI_U32)s32Value;
-    }
-#endif
-
-#ifdef CFG_DYM_LDCI_XPTHRESHLTOH
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ldci:ExpThreshLtoH");/*ExpThreshLtoH*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        SCENE_GetNumbersInOneLine(pszString);
-        for (u32IdxM = 0; u32IdxM < pstDynamicLdci->u32ExpThreshCnt; u32IdxM++)
-        {
-            pstDynamicLdci->au64ExpThreshLtoH[u32IdxM] = s_as64LineNum[u32IdxM];
-        }
-        free(pszString);
-        pszString = HI_NULL;
-    }
-#endif
-
-#ifdef CFG_DYM_LDCI_MANUALHEPOSWGT
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ldci:ManualLDCIHePosWgt");/*ManualLDCIHePosWgt*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        SCENE_GetNumbersInOneLine(pszString);
-        for (u32IdxM = 0; u32IdxM < pstDynamicLdci->u32ExpThreshCnt; u32IdxM++)
-        {
-            pstDynamicLdci->au8ManualLDCIHePosWgt[u32IdxM] = s_as64LineNum[u32IdxM];
-        }
-        free(pszString);
-        pszString = HI_NULL;
-    }
-#endif
     return HI_SUCCESS;
 }
 
@@ -2416,7 +2121,6 @@ HI_S32 SCENE_LoadDynamicDehaze(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DEH
     HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_DEHAZE_EXPTHRESHCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_dehaze:ExpThreshCnt");/*ExpThreshCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2432,9 +2136,7 @@ HI_S32 SCENE_LoadDynamicDehaze(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DEH
         }
         pstDynamicDehaze->u32ExpThreshCnt = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_DEHAZE_EXPTHRESHLTOH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_dehaze:ExpThreshLtoH");/*ExpThreshLtoH*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2448,9 +2150,7 @@ HI_S32 SCENE_LoadDynamicDehaze(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DEH
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_DEHAZE_MANUALDEHAZESTR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_dehaze:ManualDehazeStr");/*ManualDehazeStr*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2464,7 +2164,7 @@ HI_S32 SCENE_LoadDynamicDehaze(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DEH
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
+
     return HI_SUCCESS;
 }
 
@@ -2476,7 +2176,6 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
     HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_FSWDR_ISOCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:IsoCnt");/*IsoCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2492,9 +2191,7 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
         }
         pstDynamicFsWdr->u32IsoCnt = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_FSWDR_EXPRATION
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:ExpRation");/*ExpRation*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2508,9 +2205,7 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_FSWDR_MOTIONCOMP
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:MotionComp");/*MotionComp*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2524,9 +2219,7 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_FSWDR_ISOTHRESHLTOH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:ISOLtoHThresh");/*ISOLtoHThresh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2540,9 +2233,7 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_FSWDR_BNRSTR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:BnrStr");/*BnrStr*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2556,9 +2247,7 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_FSWDR_BNRMODE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:BnrMode");/*BnrMode*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2572,7 +2261,35 @@ HI_S32 SCENE_LoadDynamicFsWdr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_FSWD
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:ISOModeChange");/*ISOModeChange*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicFsWdr->u32IsoCnt; u32IdxM++)
+        {
+            pstDynamicFsWdr->au32ISOModeChange[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_fswdr:MergeMode");/*MergeMode*/
+        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+        if (HI_NULL != pszString)
+        {
+            SCENE_GetNumbersInOneLine(pszString);
+            for (u32IdxM = 0; u32IdxM < pstDynamicFsWdr->u32IsoCnt; u32IdxM++)
+            {
+                pstDynamicFsWdr->au8MergeMode[u32IdxM] = s_as64LineNum[u32IdxM];
+            }
+            free(pszString);
+            pszString = HI_NULL;
+        }
+
     return HI_SUCCESS;
 }
 
@@ -2584,7 +2301,6 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
     HI_U32 u32IdxM = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_AE_EXPCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:aeExpCount");/*aeExpCount*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2600,9 +2316,7 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         }
         pstDynamicAe->u8AEExposureCnt = (HI_U8)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_AE_EXPTHRESHLTOH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:aeExpLtoHThresh");/*aeExpLtoHThresh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2616,9 +2330,7 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_AE_EXPTHRESHHTOL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:aeExpHtoLThresh");/*aeExpHtoLThresh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2632,9 +2344,7 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_AE_COMPENSATION
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:AutoCompesation");/*AutoCompensation*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2648,9 +2358,7 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_AE_AUTOHISTOFFSET
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:AutoHistOffset");/*AutoHistOffset*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2664,9 +2372,7 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_AE_AUTOEXPRATIOMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:AutoExpRatioMax");/*AutoExpRatioMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2680,9 +2386,7 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_AE_AUTOEXPRATIOMIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_ae:AutoExpRatioMin");/*AutoExpRatioMin*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2696,201 +2400,197 @@ HI_S32 SCENE_LoadDynamicAE(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_AE_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticSharpen(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_SHARPEN_S *pstStaticSharpen)
 {
-#ifdef CFG_DYM_SHARPEN_OVERSHOOT
-        HI_S32 s32Ret = HI_SUCCESS;
-        HI_CHAR *pszString = NULL;
-        HI_U32 i = 0, u32IdxN = 0;
-        HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_U32 i = 0, u32IdxN = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:OverShoot");/*OverShoot*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:OverShoot");/*OverShoot*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
         {
-            SCENE_GetNumbersInOneLine(pszString);
-            for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
-            {
-                pstStaticSharpen->au8OverShoot[i] = s_as64LineNum[i];
-            }
-            free(pszString);
-            pszString = HI_NULL;
+            pstStaticSharpen->au8OverShoot[i] = s_as64LineNum[i];
         }
-#endif
+        free(pszString);
+        pszString = HI_NULL;
+    }
 
-#ifdef CFG_DYM_SHARPEN_UNDERSHOOT
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:UnderShoot");/*UnderShoot*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:UnderShoot");/*UnderShoot*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
         {
-            SCENE_GetNumbersInOneLine(pszString);
-            for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
-            {
-                pstStaticSharpen->au8UnderShoot[i] = s_as64LineNum[i];
+            pstStaticSharpen->au8UnderShoot[i] = s_as64LineNum[i];
 
-            }
-            free(pszString);
-            pszString = HI_NULL;
         }
-#endif
+        free(pszString);
+        pszString = HI_NULL;
+    }
 
-#ifdef CFG_DYM_SHARPEN_TEXTURESTR_TABLE
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:TextureStrTable0");/*TextureStrTable0*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:TextureStrTable0");/*TextureStrTable0*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
         {
-            free(pszString);
-            pszString = HI_NULL;
-            for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
+            snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:TextureStrTable%d", i);
+            s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+            if (HI_SUCCESS != s32Ret)
             {
-                snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:TextureStrTable%d", i);
-                s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-                if (HI_SUCCESS != s32Ret)
+                MLOGE("load %s failed\n", aszIniNodeName);
+                return HI_FAILURE;
+            }
+            if (NULL != pszString)
+            {
+                SCENE_GetNumbersInOneLine(pszString);
+                for (u32IdxN = 0; u32IdxN < ISP_SHARPEN_GAIN_NUM; u32IdxN++)
                 {
-                    MLOGE("load %s failed\n", aszIniNodeName);
-                    return HI_FAILURE;
+                    pstStaticSharpen->au16TextureStr[i][u32IdxN] = (HI_U16)s_as64LineNum[u32IdxN];
                 }
-                if (NULL != pszString)
-                {
-                    SCENE_GetNumbersInOneLine(pszString);
-                    for (u32IdxN = 0; u32IdxN < ISP_SHARPEN_GAIN_NUM; u32IdxN++)
-                    {
-                        pstStaticSharpen->au16TextureStr[i][u32IdxN] = (HI_U16)s_as64LineNum[u32IdxN];
-                    }
-                    free(pszString);
-                    pszString = HI_NULL;
-                }
+                free(pszString);
+                pszString = HI_NULL;
             }
         }
-#endif
+    }
 
-#ifdef CFG_DYM_SHARPEN_EDGESTR_TABLE
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:EdgeStrTable0");/*EdgeStrTable0*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:EdgeStrTable0");/*EdgeStrTable0*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
         {
-            free(pszString);
-            pszString = HI_NULL;
-            for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
+            snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:EdgeStrTable%d", i);
+            s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+            if (HI_SUCCESS != s32Ret)
             {
-                snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_sharpen:EdgeStrTable%d", i);
-                s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-                if (HI_SUCCESS != s32Ret)
+                MLOGE("load %s failed\n", aszIniNodeName);
+                return HI_FAILURE;
+            }
+            if (NULL != pszString)
+            {
+                SCENE_GetNumbersInOneLine(pszString);
+                for (u32IdxN = 0; u32IdxN < ISP_SHARPEN_GAIN_NUM; u32IdxN++)
                 {
-                    MLOGE("load %s failed\n", aszIniNodeName);
-                    return HI_FAILURE;
+                    pstStaticSharpen->au16EdgeStr[i][u32IdxN] = (HI_U16)s_as64LineNum[u32IdxN];
                 }
-                if (NULL != pszString)
-                {
-                    SCENE_GetNumbersInOneLine(pszString);
-                    for (u32IdxN = 0; u32IdxN < ISP_SHARPEN_GAIN_NUM; u32IdxN++)
-                    {
-                        pstStaticSharpen->au16EdgeStr[i][u32IdxN] = (HI_U16)s_as64LineNum[u32IdxN];
-                    }
-                    free(pszString);
-                    pszString = HI_NULL;
-                }
+                free(pszString);
+                pszString = HI_NULL;
             }
         }
-#endif
+    }
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticDemosaic(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DEMOSAIC_S *pstStaticDemosaic)
 {
-#ifdef CFG_DYM_DEMOSAIC_MFDETAILEHC
-        HI_S32 s32Ret = HI_SUCCESS;
-        HI_CHAR *pszString = NULL;
-        HI_U32 i = 0;
-        HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_U32 i = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_demosaic:NonDirMFDetailEhcStr");/*NonDirMFDetailEhcStr*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_demosaic:NonDirMFDetailEhcStr");/*NonDirMFDetailEhcStr*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
         {
-            SCENE_GetNumbersInOneLine(pszString);
-            for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
-            {
-                pstStaticDemosaic->au8NonDirMFDetailEhcStr[i] = s_as64LineNum[i];
-            }
-            free(pszString);
-            pszString = HI_NULL;
+            pstStaticDemosaic->au8NonDirMFDetailEhcStr[i] = s_as64LineNum[i];
         }
-#endif
+        free(pszString);
+        pszString = HI_NULL;
+    }
 
     return HI_SUCCESS;
 }
 
-HI_S32 SCENE_LoadDynamicBayernr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_BAYERNR_S *pstynamicBayernr)
+HI_S32 SCENE_LoadDynamicBayernr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_BAYERNR_S *pstDynamicBayernr)
 {
-#ifdef CFG_DYM_BAYERNR_ISOCOUNT
-        HI_S32 s32Ret = HI_SUCCESS;
-        HI_CHAR *pszString = NULL;
-        HI_S32 s32Value = 0;
-        HI_U32 u32IdxM = 0, u32IdxN = 0;
-        HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_S32 s32Value = 0;
+    HI_U32 u32IdxM = 0, u32IdxN = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:IsoCount");/*IsoCount*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:IsoCount");/*IsoCount*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_bayernr:IsoCount", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
         {
-            free(pszString);
-            pszString = HI_NULL;
-            s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_bayernr:IsoCount", 0, &s32Value);
-            if (HI_SUCCESS != s32Ret)
-            {
-                MLOGE("load dynamic_bayernr: IsoCount failed\n");
-                return HI_FAILURE;
-            }
-            pstynamicBayernr->u32IsoCount = (HI_U32)s32Value;
+            MLOGE("load dynamic_bayernr: IsoCount failed\n");
+            return HI_FAILURE;
         }
-#endif
+        pstDynamicBayernr->u32IsoCount = (HI_U32)s32Value;
+    }
 
-#ifdef CFG_DYM_BAYERNR_ISOLEVEL
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:IsoLevel");/*IsoLevel*/
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:IsoLevel");/*IsoLevel*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicBayernr->u32IsoCount; u32IdxM++)
+        {
+            pstDynamicBayernr->au32IsoLevel[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:CoringWgt");/*CoringWgt*/
         s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
         SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
         if (HI_NULL != pszString)
         {
             SCENE_GetNumbersInOneLine(pszString);
-            for (u32IdxM = 0; u32IdxM < pstynamicBayernr->u32IsoCount; u32IdxM++)
+            for (u32IdxM = 0; u32IdxM < ISP_AUTO_ISO_STRENGTH_NUM; u32IdxM++)
             {
-                pstynamicBayernr->au32IsoLevel[u32IdxM] = s_as64LineNum[u32IdxM];
+                pstDynamicBayernr->au16CoringWgt[u32IdxM] = s_as64LineNum[u32IdxM];
             }
             free(pszString);
             pszString = HI_NULL;
         }
-#endif
 
-#ifdef CFG_DYM_BAYERNR_CORINGWGT
-            snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:CoringWgt");/*CoringWgt*/
-            s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-            SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-            if (HI_NULL != pszString)
+        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:FineStr");/*FineStr*/
+        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+        if (HI_NULL != pszString)
+        {
+            SCENE_GetNumbersInOneLine(pszString);
+            for (u32IdxM = 0; u32IdxM < ISP_AUTO_ISO_STRENGTH_NUM; u32IdxM++)
             {
-                SCENE_GetNumbersInOneLine(pszString);
-                for (u32IdxM = 0; u32IdxM < ISP_AUTO_ISO_STRENGTH_NUM; u32IdxM++)
-                {
-                    pstynamicBayernr->au16CoringWgt[u32IdxM] = s_as64LineNum[u32IdxM];
-                }
-                free(pszString);
-                pszString = HI_NULL;
+                pstDynamicBayernr->au8FineStr[u32IdxM] = s_as64LineNum[u32IdxM];
             }
-#endif
+            free(pszString);
+            pszString = HI_NULL;
+        }
 
-#ifdef CFG_DYM_BAYERNR_CORINGRATIO
         snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:CoringRatioTable0");/*CoringRatioTable0*/
         s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
         SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2898,7 +2598,7 @@ HI_S32 SCENE_LoadDynamicBayernr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_BA
         {
             free(pszString);
             pszString = HI_NULL;
-            for (u32IdxM = 0; u32IdxM < pstynamicBayernr->u32IsoCount; u32IdxM++)
+            for (u32IdxM = 0; u32IdxM < pstDynamicBayernr->u32IsoCount; u32IdxM++)
             {
                 snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_bayernr:CoringRatioTable%d", u32IdxM);
                 s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
@@ -2912,47 +2612,44 @@ HI_S32 SCENE_LoadDynamicBayernr(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_BA
                     SCENE_GetNumbersInOneLine(pszString);
                     for (u32IdxN = 0; u32IdxN < HI_ISP_BAYERNR_LUT_LENGTH; u32IdxN++)
                     {
-                        pstynamicBayernr->au16CoringRatio[u32IdxM][u32IdxN] = (HI_U16)s_as64LineNum[u32IdxN];
+                        pstDynamicBayernr->au16CoringRatio[u32IdxM][u32IdxN] = (HI_U16)s_as64LineNum[u32IdxN];
                     }
                     free(pszString);
                     pszString = HI_NULL;
                 }
             }
         }
-#endif
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadStaticDetail(const HI_CHAR *pszIniModule, HI_SCENE_STATIC_DETAIL_S *pstStaticDetail)
 {
-#ifdef CFG_DYM_DETAIL_GLOBALGAIN
-        HI_S32 s32Ret = HI_SUCCESS;
-        HI_CHAR *pszString = NULL;
-        HI_U32 i = 0;
-        HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_U32 i = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-        snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_detail:GlobalGain");/*GlobalGain*/
-        s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-        SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-        if (HI_NULL != pszString)
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "static_detail:GlobalGain");/*GlobalGain*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
         {
-            SCENE_GetNumbersInOneLine(pszString);
-            for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++)
-            {
-                pstStaticDetail->au16GlobalGain[i] = s_as64LineNum[i];
-            }
-            free(pszString);
-            pszString = HI_NULL;
+            pstStaticDetail->au16GlobalGain[i] = s_as64LineNum[i];
         }
-#endif
+        free(pszString);
+        pszString = HI_NULL;
+    }
 
     return HI_SUCCESS;
 }
 
 HI_S32 SCENE_LoadDynamicDIS(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DIS_S *pstDynamicDis)
 {
-#ifdef CFG_DYM_DIS_TOTALNUM
+#if 0
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR *pszString = NULL;
     HI_S32 s32Value = 0;
@@ -2973,9 +2670,7 @@ HI_S32 SCENE_LoadDynamicDIS(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DIS_S 
         }
         pstDynamicDis->u32TotalNum = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_DIS_DISISOTHRESH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_dis:DISIsoThresh");/*DISIsoThresh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -2989,9 +2684,7 @@ HI_S32 SCENE_LoadDynamicDIS(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DIS_S 
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_DIS_MOVINGSUBJECTLEVEL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_dis:MovingSubjectLevel");/*MovingSubjectLevel*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3006,7 +2699,272 @@ HI_S32 SCENE_LoadDynamicDIS(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_DIS_S 
         pszString = HI_NULL;
     }
 #endif
+    return HI_SUCCESS;
+}
 
+HI_S32 SCENE_LoadDynamicLinearDrc(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_LINEARDRC_S *pstDynamicLinearDrc)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_S32 s32Value = 0;
+    HI_U32 u32IdxM = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:Enable");/*Enable*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "linear_drc:Enable", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load linear_drc:bEnable failed\n");
+            return HI_FAILURE;
+        }
+        pstDynamicLinearDrc->bEnable = (HI_BOOL)s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:IsoCnt");  /*IsoCnt*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "linear_drc:IsoCnt", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load linear_drc:IsoCnt failed\n");
+            return HI_FAILURE;
+        }
+        pstDynamicLinearDrc->u32ISOCount = (HI_U32)s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:IsoLevel"); /*IsoLevel*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au32ISOLevel[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:LocalMixingBrightMax");/*LocalMixingBrightMax*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8LocalMixingBrightMax[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:LocalMixingBrightMin");/*LocalMixingBrightMin*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8LocalMixingBrightMin[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:LocalMixingDarkMax");/*LocalMixingDarkMax*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8LocalMixingDarkMax[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:LocalMixingDarkMin");/*LocalMixingDarkMin*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8LocalMixingDarkMin[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:BrightGainLmt");/*BrightGainLmt*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8BrightGainLmt[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:BrightGainLmtStep"); /*BrightGainLmtStep*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8BrightGainLmtStep[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:DarkGainLmtY");/*DarkGainLmtY*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8DarkGainLmtY[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:DarkGainLmtC");/*DarkGainLmtC*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8DarkGainLmtC[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:ContrastControl");/*ContrastControl*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8ContrastControl[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:DetailAdjustFactor");/*DetailAdjustFactor*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->as8DetailAdjustFactor[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:Asymmetry");/*Asymmetry*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8Asymmetry[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:SecondPole"); /*SecondPole*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8SecondPole[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:Compress"); /*Compress*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8Compress[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:Stretch");/*Stretch*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au8Stretch[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "linear_drc:Strength");/*Strength*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicLinearDrc->u32ISOCount; u32IdxM++)
+        {
+            pstDynamicLinearDrc->au16Strength[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
     return HI_SUCCESS;
 }
 
@@ -3019,7 +2977,6 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
     HI_U32 u32IdxN = 0;
     HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
 
-#ifdef CFG_DYM_THREADDRC_RATIONCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RationCnt");/*RationCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3035,9 +2992,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         }
         pstThreadDrc->u32RationCount = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_RATIONLEVE
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RationLevel");/*RationLevel*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3051,9 +3006,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_REFRATIOCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RefRatioCnt");/*RefRatioCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3069,9 +3022,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         }
         pstThreadDrc->u32RefRatioCount = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_REFRATIO
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RefRatioLtoH");/*RefRatioLtoH*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3085,9 +3036,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_REFRATIOALPHA
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RefRatioAlpha");/*RefRatioAlpha*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3101,9 +3050,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_ISOCNT
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:IsoCnt");/*IsoCnt*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3119,9 +3066,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         }
         pstThreadDrc->u32ISOCount = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_ISOLEVEL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:IsoLevel");/*IsoLevel*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3135,9 +3080,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_INTERVAL
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:Interval");/*Interval*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3153,27 +3096,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         }
         pstThreadDrc->u32Interval = (HI_U32)s32Value;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_ENABLE
-    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:Enable");/*Enable*/
-    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
-    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
-    if (HI_NULL != pszString)
-    {
-        free(pszString);
-        pszString = HI_NULL;
-        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "thread_drc:Enable", 0, &s32Value);
-        if (HI_SUCCESS != s32Ret)
-        {
-            MLOGE("load thread_drc:Enable failed\n");
-            return HI_FAILURE;
-        }
-        pstThreadDrc->bEnable = (HI_BOOL)s32Value;
-    }
-#endif
-
-#ifdef CFG_DYM_THREADDRC_DRCTMVALUELOW
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DRCTMValueLow");/*DRCTMValueLow*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3187,9 +3110,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_DRCTMVALUEHIGH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DRCTMValueHigh");/*DRCTMValueHigh*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3203,9 +3124,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_LOCALMIXINGBRIGHTMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:LocalMixingBrightMax");/*LocalMixingBrightMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3219,9 +3138,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_LOCALMIXINGBRIGHTMIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:LocalMixingBrightMin");/*LocalMixingBrightMin*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3235,9 +3152,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_LOCALMIXINGDARKMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:LocalMixingDarkMax");/*LocalMixingDarkMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3251,9 +3166,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_LOCALMIXINGDARKMIN
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:LocalMixingDarkMin");/*LocalMixingDarkMin*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3267,9 +3180,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_DARKGAINLMTY
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DarkGainLmtY");/*DarkGainLmtY*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3283,9 +3194,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_DARKGAINLMTC
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DarkGainLmtC");/*DarkGainLmtC*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3299,9 +3208,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_DETAILADJUSTFACTOR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:DetailAdjustFactor");/*DetailAdjustFactor*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3315,9 +3222,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_DSPATIALFLTCOEF
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:SpatialFltCoef");/*SpatialFltCoef*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3331,9 +3236,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_RANGEFLTCOEF
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:RangeFltCoef");/*RangeFltCoef*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3347,9 +3250,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_GRADREVMAX
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:GradRevMax");/*GradRevMax*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3363,9 +3264,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_GRADREVTHR
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:GradRevThr");/*GradRevThr*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3379,9 +3278,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_COMPRESS
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:Compress");/*Compress*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3395,9 +3292,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_STRETCH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:Stretch");/*Stretch*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3411,9 +3306,7 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
         free(pszString);
         pszString = HI_NULL;
     }
-#endif
 
-#ifdef CFG_DYM_THREADDRC_AUTOSTRENGTH
     snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "thread_drc:AutoStrength_0");/*AutoStrength_0*/
     s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
     SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
@@ -3442,8 +3335,520 @@ HI_S32 SCENE_LoadThreadDrc(const HI_CHAR *pszIniModule, HI_SCENE_THREAD_DRC_S *p
             }
         }
     }
-#endif
+
     return HI_SUCCESS;
+}
+
+HI_S32 SCENE_LoadDynamicVencBitrate(const HI_CHAR *pszIniModule, HI_SCENE_DYNAMIC_VENCBITRATE_S *pstDynamicVenc)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = NULL;
+    HI_S32 s32Value = 0;
+    HI_U32 u32IdxM = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:IsoThreshCnt");/*IsoThreshCnt*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "dynamic_vencbitrate:IsoThreshCnt", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load dynamic_vencbitrate:TotalNum failed\n");
+            return HI_FAILURE;
+        }
+        pstDynamicVenc->u32IsoThreshCnt = s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:IsoThreshLtoH");/*IsoThreshLtoH*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicVenc->u32IsoThreshCnt; u32IdxM++)
+        {
+            pstDynamicVenc->au32IsoThreshLtoH[u32IdxM] = s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "dynamic_vencbitrate:ManualPercent");/*ManualPercent*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        SCENE_GetNumbersInOneLine(pszString);
+        for (u32IdxM = 0; u32IdxM < pstDynamicVenc->u32IsoThreshCnt; u32IdxM++)
+        {
+            pstDynamicVenc->au16ManualPercent[u32IdxM] = (HI_U16)s_as64LineNum[u32IdxM];
+        }
+        free(pszString);
+        pszString = HI_NULL;
+    }
+
+    return HI_SUCCESS;
+}
+
+HI_S32 SCENE_LoadModuleState(const HI_CHAR *pszIniModule, HI_SCENE_MODULE_STATE_S *pstModuleState)
+{
+	HI_S32 s32Ret = HI_SUCCESS;
+    HI_CHAR *pszString = HI_NULL;
+    HI_S32 s32Value = 0;
+    HI_CHAR aszIniNodeName[SCENE_INIPARAM_NODE_NAME_LEN] = {0,};
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticAE");/*bStaticAE*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticAE", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:AERunInterval failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticAE = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticAWB");/*bStaticAWB*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticAWB", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticAWB failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticAWB = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticAWBEx");/*bStaticAWBEx*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticAWBEx", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticAWBEx failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticAWBEx = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticCCM");/*bStaticCCM*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticCCM", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticCCM failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticCCM = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticAERouteEx");/*bStaticAERouteEx*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticAERouteEx", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticAERouteEx failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticAERouteEx = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticGlobalCac");/*bStaticGlobalCac*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticGlobalCac", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticGlobalCac failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticGlobalCac = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticWdrExposure");/*bStaticWdrExposure*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticWdrExposure", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticWdrExposure failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticWdrExposure = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticDehaze");/*bStaticDehaze*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticDehaze", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticDehaze failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticDehaze = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticLdci");/*bStaticLdci*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticLdci", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticLdci failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticLdci = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticStatistics");/*bStaticStatistics*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticStatistics", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticStatistics failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticStatistics = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticSaturation");/*bStaticSaturation*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticSaturation", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticSaturation failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticSaturation = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticShading");/*bStaticShading*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticShading", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticShading failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticShading = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicAE");/*bDynamicAE*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicAE", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicAE failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicAE = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicThreeDNR");/*bDynamicThreeDNR*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicThreeDNR", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicThreeDNR failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicThreeDNR = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicGamma");/*bDynamicGamma*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicGamma", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicGamma failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicGamma = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicShading");/*bDynamicShading*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicShading", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicShading failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicShading = (HI_BOOL)s32Value;
+    }
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicIsoVenc");/*bDynamicIsoVenc*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicIsoVenc", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicIsoVenc failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicIsoVenc = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicLdci");/*bDynamicLdci*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicLdci", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicLdci failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicLdci = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicDehaze");/*bDynamicDehaze*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicDehaze", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicDehaze failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicDehaze = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicFSWDR");/*bDynamicFSWDR*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicFSWDR", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicFSWDR failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicFSWDR = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticSharpen");/*bStaticSharpen*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticSharpen", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticSharpen failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticSharpen = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticDemosaic");/*bStaticDemosaic*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticDemosaic", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticDemosaic failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticDemosaic = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicBayernr");/*bDynamicBayernr*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicBayernr", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicBayernr failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicBayernr = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticDetail");/*bStaticDetail*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticDetail", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticDetail failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticDetail = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicDIS");/*bDynamicDIS*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicDIS", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicDIS failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicDIS = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bStaticDrc");/*bStaticDrc*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticDrc", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bStaticDrc failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bStaticDrc = (HI_BOOL)s32Value;
+    }
+
+	snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicLinearDrc");/*bDynamicLinearDrc*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bDynamicLinearDrc", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicLinearDrc failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicLinearDrc = (HI_BOOL)s32Value;
+    }
+
+    snprintf(aszIniNodeName, SCENE_INIPARAM_NODE_NAME_LEN, "module_state:bDynamicThreadDrc");/*bDynamicThreadDrc*/
+    s32Ret = HI_CONFACCESS_GetString(SCENE_INIPARAM, pszIniModule, aszIniNodeName, NULL, &pszString);
+    SCENE_INIPARAM_CHECK_LOAD_RESULT(s32Ret, aszIniNodeName);
+    if (HI_NULL != pszString)
+    {
+        free(pszString);
+        pszString = HI_NULL;
+        s32Ret = HI_CONFACCESS_GetInt(SCENE_INIPARAM, pszIniModule, "module_state:bStaticDrc", 0, &s32Value);
+        if (HI_SUCCESS != s32Ret)
+        {
+            MLOGE("load module_state:bDynamicThreadDrc failed\n");
+            return HI_FAILURE;
+        }
+        pstModuleState->bDynamicThreadDrc = (HI_BOOL)s32Value;
+    }
+
+	return s32Ret;
 }
 
 HI_S32 SCENE_LoadSceneParam(const HI_CHAR *pszIniModule, HI_SCENE_PIPE_PARAM_S *pstSceneParam)
@@ -3503,6 +3908,13 @@ HI_S32 SCENE_LoadSceneParam(const HI_CHAR *pszIniModule, HI_SCENE_PIPE_PARAM_S *
     if (HI_SUCCESS != s32Ret)
     {
         MLOGE("SCENE_LoadStaticSaturation failed\n");
+        return HI_FAILURE;
+    }
+
+    s32Ret = SCENE_LoadStaticCCM(pszIniModule, &pstSceneParam->stStaticCcm);
+    if (HI_SUCCESS != s32Ret)
+    {
+        MLOGE("SCENE_LoadStaticCCM failed\n");
         return HI_FAILURE;
     }
 
@@ -3567,6 +3979,12 @@ HI_S32 SCENE_LoadSceneParam(const HI_CHAR *pszIniModule, HI_SCENE_PIPE_PARAM_S *
         MLOGE("SCENE_LoadDynamicShading failed\n");
         return HI_FAILURE;
     }
+    s32Ret = SCENE_LoadDynamicVencBitrate(pszIniModule, &pstSceneParam->stDynamicVencBitrate);
+    if (HI_SUCCESS != s32Ret)
+    {
+        MLOGE("SCENE_LoadDynamicVencBitrate failed\n");
+        return HI_FAILURE;
+    }
     s32Ret = SCENE_LoadDynamicLDCI(pszIniModule, &pstSceneParam->stDynamicLDCI);
     if (HI_SUCCESS != s32Ret)
     {
@@ -3628,12 +4046,27 @@ HI_S32 SCENE_LoadSceneParam(const HI_CHAR *pszIniModule, HI_SCENE_PIPE_PARAM_S *
         return HI_FAILURE;
     }
 
+    s32Ret = SCENE_LoadDynamicLinearDrc(pszIniModule, &pstSceneParam->stDynamicLinearDrc);
+    if (HI_SUCCESS != s32Ret)
+    {
+        MLOGE("SCENE_LoadThreadDrc failed\n");
+        return HI_FAILURE;
+    }
+
     s32Ret = SCENE_LoadThreadDrc(pszIniModule, &pstSceneParam->stThreadDrc);
     if (HI_SUCCESS != s32Ret)
     {
         MLOGE("SCENE_LoadThreadDrc failed\n");
         return HI_FAILURE;
     }
+
+    s32Ret = SCENE_LoadModuleState(pszIniModule, &pstSceneParam->stModuleState);
+	if (HI_SUCCESS != s32Ret)
+	{
+		MLOGE("SCENE_LoadModuleState failed\n");
+		return HI_FAILURE;
+	}
+
     return HI_SUCCESS;
 }
 

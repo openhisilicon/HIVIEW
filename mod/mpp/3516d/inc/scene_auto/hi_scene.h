@@ -13,7 +13,7 @@
 #ifndef _HI_SCENE_H_
 #define _HI_SCENE_H_
 
-#include "hi_scene_autogenerate.h"
+#include "hi_scene_setparam.h"
 
 #ifdef __cplusplus
 #if __cplusplus

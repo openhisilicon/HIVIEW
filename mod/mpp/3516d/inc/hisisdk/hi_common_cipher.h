@@ -34,7 +34,9 @@ extern "C" {
 #define  HI_ERR_CIPHER_ILLEGAL_DATA                 (HI_S32)(0x804D0019)
 #define  HI_ERR_CIPHER_RSA_SIGN                     (HI_S32)(0x804D001A)
 #define  HI_ERR_CIPHER_RSA_VERIFY                   (HI_S32)(0x804D001B)
-
+#define  HI_ERR_CIPHER_MEMSET_S_FAILED              (HI_S32)(0x804D001C)
+#define  HI_ERR_CIPHER_MEMCPY_S_FAILED              (HI_S32)(0x804D001D)
+#define  HI_ERR_CIPHER_RSA_CRYPT_FAILED             (HI_S32)(0x804D001E)
 
 #ifdef __cplusplus
 #if __cplusplus

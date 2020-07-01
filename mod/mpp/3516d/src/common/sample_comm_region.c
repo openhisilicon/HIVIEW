@@ -23,12 +23,20 @@ extern "C" {
 #define MosaicMinHandle    80
 HI_CHAR* Path_BMP = HI_NULL;
 
-HI_S32 REGION_MST_LoadBmp(const char* filename, BITMAP_S* pstBitmap, HI_BOOL bFil, HI_U32 u16FilColor, PIXEL_FORMAT_E enPixelFmt)
+HI_S32 REGION_MST_LoadBmp(const char *filename, BITMAP_S *pstBitmap, HI_BOOL bFil, HI_U32 u16FilColor,PIXEL_FORMAT_E enPixelFormat)
 {
     OSD_SURFACE_S Surface;
     OSD_BITMAPFILEHEADER bmpFileHeader;
     OSD_BITMAPINFO bmpInfo;
-    HI_U32 u32BytePerPix = 0;
+    HI_S32 s32BytesPerPix = 2;
+    HI_U8* pu8Data;
+    HI_S32 R_Value;
+    HI_S32 G_Value;
+    HI_S32 B_Value;
+    HI_S32 Gr_Value;
+    HI_U8  Value_tmp;
+    HI_U8  Value;
+    HI_S32 s32Width;
 
     if (GetBmpInfo(filename, &bmpFileHeader, &bmpInfo) < 0)
     {
@@ -36,28 +44,26 @@ HI_S32 REGION_MST_LoadBmp(const char* filename, BITMAP_S* pstBitmap, HI_BOOL bFi
         return HI_FAILURE;
     }
 
-    if (PIXEL_FORMAT_ARGB_1555 == enPixelFmt)
+     if(enPixelFormat == PIXEL_FORMAT_ARGB_4444)
     {
-        Surface.enColorFmt = OSD_COLOR_FMT_RGB1555;
-        u32BytePerPix      = 2;
+        Surface.enColorFmt =OSD_COLOR_FMT_RGB4444;
     }
-    else if (PIXEL_FORMAT_ARGB_4444 == enPixelFmt)
+    else if(enPixelFormat == PIXEL_FORMAT_ARGB_1555 || enPixelFormat == PIXEL_FORMAT_ARGB_2BPP)
     {
-        Surface.enColorFmt = OSD_COLOR_FMT_RGB4444;
-        u32BytePerPix      = 2;
+        Surface.enColorFmt =OSD_COLOR_FMT_RGB1555;
     }
-    else if (PIXEL_FORMAT_ARGB_8888 == enPixelFmt)
+    else if(enPixelFormat == PIXEL_FORMAT_ARGB_8888)
     {
         Surface.enColorFmt = OSD_COLOR_FMT_RGB8888;
-        u32BytePerPix      = 4;
+        s32BytesPerPix = 4;
     }
     else
     {
-        printf("Pixel format is not support!\n");
+        printf("enPixelFormat err %d \n",enPixelFormat);
         return HI_FAILURE;
     }
 
-    pstBitmap->pData = malloc(u32BytePerPix * (bmpInfo.bmiHeader.biWidth) * (bmpInfo.bmiHeader.biHeight));
+    pstBitmap->pData = malloc(s32BytesPerPix * (bmpInfo.bmiHeader.biWidth) * (bmpInfo.bmiHeader.biHeight));
 
     if (NULL == pstBitmap->pData)
     {
@@ -65,46 +71,81 @@ HI_S32 REGION_MST_LoadBmp(const char* filename, BITMAP_S* pstBitmap, HI_BOOL bFi
         return HI_FAILURE;
     }
 
-    printf("Func: %s, Bitmap user addr pData=%p.....\n", __FUNCTION__, pstBitmap->pData);
 
     CreateSurfaceByBitMap(filename, &Surface, (HI_U8*)(pstBitmap->pData));
 
     pstBitmap->u32Width = Surface.u16Width;
     pstBitmap->u32Height = Surface.u16Height;
+    pstBitmap->enPixelFormat = enPixelFormat;
 
-    if (PIXEL_FORMAT_ARGB_1555 == enPixelFmt)
+    int i,j, k;
+    HI_U8*  pu8Temp;
+    if (PIXEL_FORMAT_ARGB_2BPP == enPixelFormat)
     {
-        pstBitmap->enPixelFormat = PIXEL_FORMAT_ARGB_1555;
-    }
-    else if (PIXEL_FORMAT_ARGB_4444 == enPixelFmt)
-    {
-        pstBitmap->enPixelFormat = PIXEL_FORMAT_ARGB_4444;
-    }
-    else if (PIXEL_FORMAT_ARGB_8888 == enPixelFmt)
-    {
-        pstBitmap->enPixelFormat = PIXEL_FORMAT_ARGB_8888;
-    }
-
-    int i, j;
-    HI_U16* pu16Temp;
-
-    pu16Temp = (HI_U16*)pstBitmap->pData;
-
-    if (bFil)
-    {
-        for (i = 0; i < pstBitmap->u32Height; i++)
+        s32Width = DIV_UP (bmpInfo.bmiHeader.biWidth,4);
+        pu8Data = malloc((s32Width)* (bmpInfo.bmiHeader.biHeight));
+        if (NULL == pu8Data)
         {
-            for (j = 0; j < pstBitmap->u32Width; j++)
-            {
-                if (u16FilColor == *pu16Temp)
-                {
-                    *pu16Temp &= 0x7FFF;
-                }
+            printf("malloc osd memroy err!\n");
+            return HI_FAILURE;
+        }
+    }
+    if (PIXEL_FORMAT_ARGB_2BPP != enPixelFormat)
+    {
 
-                pu16Temp++;
+        HI_U16* pu16Temp;
+
+        pu16Temp = (HI_U16*)pstBitmap->pData;
+
+        if (bFil)
+        {
+            for (i = 0; i < pstBitmap->u32Height; i++)
+            {
+                for (j = 0; j < pstBitmap->u32Width; j++)
+                {
+                    if (u16FilColor == *pu16Temp)
+                    {
+                        *pu16Temp &= 0x7FFF;
+                    }
+
+                    pu16Temp++;
+                }
             }
         }
-
+    }
+    else
+    {
+        HI_U16 *pu16Temp;
+        pu16Temp = (HI_U16*)pstBitmap->pData;
+        pu8Temp = (HI_U8*)pu8Data;
+        for (i = 0; i < pstBitmap->u32Height; i++)
+        {
+            for (j = 0; j < pstBitmap->u32Width/4; j++)
+            {
+                Value = 0;
+                for (k = j; k < j + 4; k++)
+                {
+                    B_Value = *pu16Temp & 0x001F;
+                    G_Value = *pu16Temp >> 5 & 0x001F;
+                    R_Value = *pu16Temp >> 10 & 0x001F;
+                    pu16Temp++;
+                    Gr_Value = (R_Value * 299 + G_Value * 587 + B_Value * 144 + 500) / 1000;
+                    if (Gr_Value > 16)
+                    {
+                        Value_tmp = 0x01;
+                    }
+                    else
+                    {
+                        Value_tmp = 0x00;
+                    }
+                    Value = (Value << 2) + Value_tmp;
+                }
+                *pu8Temp = Value;
+                pu8Temp++;
+            }
+        }
+        free(pstBitmap->pData);
+        pstBitmap->pData = pu8Data;
     }
 
     return HI_SUCCESS;
@@ -570,14 +611,15 @@ HI_S32 SAMPLE_COMM_REGION_AttachToChn(HI_S32 HandleNum,RGN_TYPE_E enType, MPP_CH
 
             stChnAttr.unChnAttr.stOverlayChn.stQpInfo.bQpDisable = HI_FALSE;
             stChnAttr.unChnAttr.stOverlayChn.stQpInfo.bAbsQp = HI_TRUE;
-            stChnAttr.unChnAttr.stOverlayChn.stQpInfo.s32Qp  = 10;
+            stChnAttr.unChnAttr.stOverlayChn.stQpInfo.s32Qp  = 30;
 
             stChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.u32Height = 16;
             stChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.u32Width = 16;
             stChnAttr.unChnAttr.stOverlayChn.stInvertColor.u32LumThresh = 128;
             stChnAttr.unChnAttr.stOverlayChn.stInvertColor.enChgMod = LESSTHAN_LUM_THRESH;
             stChnAttr.unChnAttr.stOverlayChn.stInvertColor.bInvColEn = HI_FALSE;
-
+            stChnAttr.unChnAttr.stOverlayChn.u16ColorLUT[0] = 0x2abc;
+            stChnAttr.unChnAttr.stOverlayChn.u16ColorLUT[1] = 0x7FF0;
             stChnAttr.unChnAttr.stOverlayChn.enAttachDest = ATTACH_JPEG_MAIN;
             break;
         case OVERLAYEX_RGN:
@@ -729,12 +771,12 @@ HI_S32 SAMPLE_COMM_REGION_DetachFrmChn(HI_S32 HandleNum,RGN_TYPE_E enType, MPP_C
     return s32Ret;
 }
 
-HI_S32 SAMPLE_COMM_REGION_SetBitMap(RGN_HANDLE Handle)
+HI_S32 SAMPLE_COMM_REGION_SetBitMap(RGN_HANDLE Handle,PIXEL_FORMAT_E enPixelFmt)
 {
    HI_S32 s32Ret;
    BITMAP_S stBitmap;
 
-   REGION_MST_LoadBmp(Path_BMP, &stBitmap, HI_FALSE, 0,PIXEL_FORMAT_ARGB_1555);
+   REGION_MST_LoadBmp(Path_BMP, &stBitmap, HI_FALSE, 0,enPixelFmt);
    s32Ret = SAMPLE_REGION_SetBitMap(Handle, &stBitmap);
    if (s32Ret != HI_SUCCESS)
    {

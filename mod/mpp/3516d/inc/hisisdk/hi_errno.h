@@ -16,19 +16,17 @@ Function List :
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
-
 
 /* 1010 0000b
  * VTOP use APPID from 0~31
  * so, hisilicon use APPID based on 32
  */
-#define HI_ERR_APPID  (0x80000000L + 0x20000000L)
+#define HI_ERR_APPID (0x80000000L + 0x20000000L)
 
-typedef enum hiERR_LEVEL_E
-{
+typedef enum hiERR_LEVEL_E {
     EN_ERR_LEVEL_DEBUG = 0,  /* debug-level                                  */
     EN_ERR_LEVEL_INFO,       /* informational                                */
     EN_ERR_LEVEL_NOTICE,     /* normal but significant condition             */
@@ -38,8 +36,7 @@ typedef enum hiERR_LEVEL_E
     EN_ERR_LEVEL_ALERT,      /* action must be taken immediately             */
     EN_ERR_LEVEL_FATAL,      /* just for compatibility with previous version */
     EN_ERR_LEVEL_BUTT
-}ERR_LEVEL_E;
-
+} ERR_LEVEL_E;
 
 /******************************************************************************
 |----------------------------------------------------------------|
@@ -48,14 +45,13 @@ typedef enum hiERR_LEVEL_E
 |<--><--7bits----><----8bits---><--3bits---><------13bits------->|
 ******************************************************************************/
 
-#define HI_DEF_ERR( module, level, errid) \
-    ((HI_S32)( (HI_ERR_APPID) | ((module) << 16 ) | ((level)<<13) | (errid) ))
+#define HI_DEF_ERR(module, level, errid) \
+    ((HI_S32)((HI_ERR_APPID) | ((module) << 16) | ((level) << 13) | (errid)))
 
 /* NOTE! the following defined all common error code,
 ** all module must reserved 0~63 for their common error code
 */
-typedef enum hiEN_ERR_CODE_E
-{
+typedef enum hiEN_ERR_CODE_E {
     EN_ERR_INVALID_DEVID = 1, /* invlalid device ID                           */
     EN_ERR_INVALID_CHNID = 2, /* invlalid channel ID                          */
     EN_ERR_ILLEGAL_PARAM = 3, /* at lease one parameter is illagal
@@ -93,9 +89,7 @@ typedef enum hiEN_ERR_CODE_E
 
     EN_ERR_BUTT          = 63,/* maxium code, private error code of all modules
                               ** must be greater than it                      */
-}EN_ERR_CODE_E;
-
-
+} EN_ERR_CODE_E;
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -103,5 +97,5 @@ typedef enum hiEN_ERR_CODE_E
 #endif
 #endif /* __cplusplus */
 
-#endif  /* __HI_ERRNO_H__ */
+#endif /* __HI_ERRNO_H__ */
 

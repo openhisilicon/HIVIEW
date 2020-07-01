@@ -9,6 +9,38 @@ extern "C" {
 
 #define MAXFRAMESIZE 2048
 
+#ifndef HI_ERR_RESAMPLE_PREFIX
+ #define HI_ERR_RESAMPLE_PREFIX 0x80000000
+#endif
+
+/* input handle is invalid */
+#define HI_ERR_RESAMPLE_HANDLE (HI_ERR_RESAMPLE_PREFIX | 0x0001)
+
+/* pcm circ buffer state is invalid */
+#define HI_ERR_RESAMPLE_PCMBUF (HI_ERR_RESAMPLE_PREFIX | 0x0002)
+
+/* input sample number is more than MAXFRAMESIZE or input buffer size
+   , or input sample number is not invalid (eg. even)*/
+#define HI_ERR_RESAMPLE_SAMPLE_NUMBER (HI_ERR_RESAMPLE_PREFIX | 0x0003)
+
+/* output pcm buffer space is not enough */
+#define HI_ERR_RESAMPLE_OUTPCM_SPACE (HI_ERR_RESAMPLE_PREFIX | 0x0004)
+
+/* the channels of input pcm is invalid */
+#define HI_ERR_PCM_CHANNEL (HI_ERR_RESAMPLE_PREFIX | 0x0005)
+
+/* the bit width of input pcm is invalid */
+#define HI_ERR_PCM_FORMAT (HI_ERR_RESAMPLE_PREFIX | 0x0006)
+
+/* invalid bypass flag */
+#define HI_ERR_INVALID_BYPASSFLAG (HI_ERR_RESAMPLE_PREFIX | 0x0007)
+
+/* error unknown */
+#define HI_ERR_UNKNOWN (HI_ERR_RESAMPLE_PREFIX | 0x0008)
+
+/* input Empty pointer*/
+#define HI_ERR_INPUT_EMPTY_POINTER (HI_ERR_RESAMPLE_PREFIX | 0x0009)
+
 /**************************************************************************************
  * Function:    HI_Resampler_Create
  *

@@ -15,6 +15,7 @@ Function List :
 #ifndef __KERNEL__
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 #endif
 
 #include "hi_type.h"
@@ -22,7 +23,7 @@ Function List :
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
@@ -39,8 +40,7 @@ extern "C"{
 #define HI_DBG_INFO       6   /* informational                        */
 #define HI_DBG_DEBUG      7   /* debug-level messages                 */
 
-typedef struct hiLOG_LEVEL_CONF_S
-{
+typedef struct hiLOG_LEVEL_CONF_S {
     MOD_ID_E  enModId;
     HI_S32    s32Level;
     HI_CHAR   cModName[16];
@@ -51,7 +51,7 @@ typedef struct hiLOG_LEVEL_CONF_S
 ** For User Mode : HI_PRINT, HI_ASSERT, HI_TRACE
 ******************************************************************************/
 
-#define HI_PRINT printf
+#define HI_PRINT      printf
 
 /* #ifdef HI_DEBUG */
 #ifdef CONFIG_HI_LOG_TRACE_SUPPORT
@@ -64,14 +64,19 @@ typedef struct hiLOG_LEVEL_CONF_S
                    "  >Line No. : %d\n"   \
                    "  >Condition: %s\n",  \
                    __FUNCTION__, __LINE__, #expr);\
-            _exit(-1);\
+            assert(0);\
         } \
     }while(0)
 
     /* Using samples:
     ** HI_TRACE(HI_DBG_DEBUG, HI_ID_CMPI, "Test %d, %s\n", 12, "Test");
     **/
-    #define HI_TRACE(level, enModId, fmt...) fprintf(stderr,##fmt)
+    #define HI_TRACE(level, enModId, fmt...) \
+        do {                                 \
+            if (level <= HI_DBG_ERR)         \
+                fprintf(stderr,##fmt);       \
+        }while(0)
+
 #else
     #define HI_ASSERT(expr)
     #define HI_TRACE(level, enModId, fmt...)
@@ -81,12 +86,9 @@ typedef struct hiLOG_LEVEL_CONF_S
 /******************************************************************************
 ** For Linux Kernel : HI_PRINT, HI_ASSERT, HI_TRACE
 ******************************************************************************/
-//#include "hi_osal.h"
-#define HI_PRINT osal_printk
+#define HI_PRINT      osal_printk
 
-extern HI_S32 HI_ChkLogLevel(HI_S32 s32Levle, MOD_ID_E enModId);
-
-int HI_LOG(HI_S32 level, MOD_ID_E enModId,const char *fmt, ...) __attribute__((format(printf,3,4)));
+int HI_LOG(HI_S32 level, MOD_ID_E enModId, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
 /* #ifdef HI_DEBUG */
 #ifdef CONFIG_HI_LOG_TRACE_SUPPORT
@@ -111,33 +113,95 @@ int HI_LOG(HI_S32 level, MOD_ID_E enModId,const char *fmt, ...) __attribute__((f
     #define HI_TRACE(level, enModId, fmt...)
 #endif
 
+#endif /* end of __KERNEL__ */
 
-#endif  /* end of __KERNEL__ */
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_EMERG)
 
+#define HI_EMERG_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_EMERG, mod, fmt);\
+} while (0)\
 
-#define HI_PRINT_BLOCK(pu8Datablock, u32Length)  \
-{  \
-    HI_U32 u32ii = 0;  \
-    HI_U8* pu8VirAddr = (HI_U8*)(pu8Datablock);  \
-    if(HI_NULL != pu8VirAddr)\
-    {\
-        HI_PRINT("\n[Func]:%s [Line]:%d [Info]:%s\n", __FUNCTION__, __LINE__, #pu8Datablock);  \
-        for (u32ii = 0; u32ii < (u32Length);)  \
-        {  \
-            HI_PRINT(" %02X", *pu8VirAddr);\
-            pu8VirAddr++;\
-            u32ii++;\
-            if(0 == (u32ii % 16))HI_PRINT("\n");\
-        }  \
-        HI_PRINT("\n\n");\
-    }\
-    else\
-    {\
-        HI_PRINT("\n[Func]:%s [Line]:%d [Info]:pointer(%s) is null!\n", __FUNCTION__, __LINE__, #pu8Datablock);  \
-    }\
-}
+#else
+#define HI_EMERG_TRACE(mod, fmt...)
+#endif
 
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_ALERT)
 
+#define HI_ALERT_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_ALERT, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_ALERT_TRACE(mod, fmt...)
+#endif
+
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_CRIT)
+
+#define HI_CRIT_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_CRIT, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_CRIT_TRACE(mod, fmt...)
+#endif
+
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_ERR)
+
+#define HI_ERR_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_ERR, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_ERR_TRACE(mod, fmt...)
+#endif
+
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_WARN)
+
+#define HI_WARN_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_WARN, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_WARN_TRACE(mod, fmt...)
+#endif
+
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_NOTICE)
+
+#define HI_NOTICE_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_NOTICE, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_NOTICE_TRACE(mod, fmt...)
+#endif
+
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_INFO)
+
+#define HI_INFO_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_INFO, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_INFO_TRACE(mod, fmt...)
+#endif
+
+#if (CONFIG_HI_LOG_TRACE_LEVEL >= HI_DBG_DEBUG)
+
+#define HI_DEBUG_TRACE(mod, fmt...)\
+do {\
+    HI_TRACE(HI_DBG_DEBUG, mod, fmt);\
+} while (0)\
+
+#else
+#define HI_DEBUG_TRACE(mod, fmt...)
+#endif
 
 
 #ifdef __cplusplus

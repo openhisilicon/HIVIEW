@@ -1,17 +1,10 @@
-/******************************************************************************
-
-  Copyright (C), 2016-2017, Hisilicon Tech. Co., Ltd.
-
-******************************************************************************
-File Name     : mpi_venc.h
-Version       : Initial Draft
-Author        : Hisilicon multimedia software group
-Created       : 2016/11/15
-Last Modified :
-Description   : MPP Programe Interface for video encoded moudle
-Function List :
-******************************************************************************/
-
+/*
+ * Copyright (C) Hisilicon Technologies Co., Ltd. 2016-2019. All rights reserved.
+ * Description:
+ * Author: Hisilicon multimedia software group
+ * Create: 2016/11/15
+ * History:
+ */
 #ifndef __MPI_VENC_H__
 #define __MPI_VENC_H__
 
@@ -22,7 +15,7 @@ Function List :
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
@@ -45,10 +38,10 @@ HI_S32 HI_MPI_VENC_ReleaseStream(VENC_CHN VeChn, VENC_STREAM_S *pstStream);
 
 HI_S32 HI_MPI_VENC_InsertUserData(VENC_CHN VeChn, HI_U8 *pu8Data, HI_U32 u32Len);
 
-HI_S32 HI_MPI_VENC_SendFrame(VENC_CHN VeChn, const VIDEO_FRAME_INFO_S *pstFrame ,HI_S32 s32MilliSec);
+HI_S32 HI_MPI_VENC_SendFrame(VENC_CHN VeChn, const VIDEO_FRAME_INFO_S *pstFrame, HI_S32 s32MilliSec);
 HI_S32 HI_MPI_VENC_SendFrameEx(VENC_CHN VeChn, const USER_FRAME_INFO_S *pstFrame, HI_S32 s32MilliSec);
 
-HI_S32 HI_MPI_VENC_RequestIDR(VENC_CHN VeChn,HI_BOOL bInstant);
+HI_S32 HI_MPI_VENC_RequestIDR(VENC_CHN VeChn, HI_BOOL bInstant);
 
 HI_S32 HI_MPI_VENC_GetFd(VENC_CHN VeChn);
 HI_S32 HI_MPI_VENC_CloseFd(VENC_CHN VeChn);
@@ -124,22 +117,22 @@ HI_S32 HI_MPI_VENC_SetFrameLostStrategy(VENC_CHN VeChn, const VENC_FRAMELOST_S *
 HI_S32 HI_MPI_VENC_GetFrameLostStrategy(VENC_CHN VeChn, VENC_FRAMELOST_S *pstFrmLostParam);
 
 HI_S32 HI_MPI_VENC_SetSuperFrameStrategy(VENC_CHN VeChn, const VENC_SUPERFRAME_CFG_S *pstSuperFrmParam);
-HI_S32 HI_MPI_VENC_GetSuperFrameStrategy(VENC_CHN VeChn,VENC_SUPERFRAME_CFG_S *pstSuperFrmParam);
+HI_S32 HI_MPI_VENC_GetSuperFrameStrategy(VENC_CHN VeChn, VENC_SUPERFRAME_CFG_S *pstSuperFrmParam);
 
 HI_S32 HI_MPI_VENC_SetIntraRefresh(VENC_CHN VeChn, const VENC_INTRA_REFRESH_S *pstIntraRefresh);
 HI_S32 HI_MPI_VENC_GetIntraRefresh(VENC_CHN VeChn, VENC_INTRA_REFRESH_S *pstIntraRefresh);
 
-HI_S32 HI_MPI_VENC_GetSSERegion(VENC_CHN VeChn, HI_U32 u32Index,VENC_SSE_CFG_S *pstSSECfg);
-HI_S32 HI_MPI_VENC_SetSSERegion(VENC_CHN VeChn, const VENC_SSE_CFG_S * pstSSECfg);
+HI_S32 HI_MPI_VENC_GetSSERegion(VENC_CHN VeChn, HI_U32 u32Index, VENC_SSE_CFG_S *pstSSECfg);
+HI_S32 HI_MPI_VENC_SetSSERegion(VENC_CHN VeChn, const VENC_SSE_CFG_S *pstSSECfg);
 
-HI_S32 HI_MPI_VENC_SetChnParam(VENC_CHN VeChn,const VENC_CHN_PARAM_S *pstChnParam);
-HI_S32 HI_MPI_VENC_GetChnParam(VENC_CHN VeChn,VENC_CHN_PARAM_S *pstChnParam);
+HI_S32 HI_MPI_VENC_SetChnParam(VENC_CHN VeChn, const VENC_CHN_PARAM_S *pstChnParam);
+HI_S32 HI_MPI_VENC_GetChnParam(VENC_CHN VeChn, VENC_CHN_PARAM_S *pstChnParam);
 
 HI_S32 HI_MPI_VENC_SetModParam(const VENC_PARAM_MOD_S *pstModParam);
 HI_S32 HI_MPI_VENC_GetModParam(VENC_PARAM_MOD_S *pstModParam);
 
-HI_S32 HI_MPI_VENC_GetForegroundProtect(VENC_CHN VeChn,VENC_FOREGROUND_PROTECT_S *pstForegroundProtect);
-HI_S32 HI_MPI_VENC_SetForegroundProtect(VENC_CHN VeChn,const VENC_FOREGROUND_PROTECT_S *pstForegroundProtect);
+HI_S32 HI_MPI_VENC_GetForegroundProtect(VENC_CHN VeChn, VENC_FOREGROUND_PROTECT_S *pstForegroundProtect);
+HI_S32 HI_MPI_VENC_SetForegroundProtect(VENC_CHN VeChn, const VENC_FOREGROUND_PROTECT_S *pstForegroundProtect);
 
 HI_S32 HI_MPI_VENC_SetSceneMode(VENC_CHN VeChn, const VENC_SCENE_MODE_E enSceneMode);
 HI_S32 HI_MPI_VENC_GetSceneMode(VENC_CHN VeChn, VENC_SCENE_MODE_E *penSceneMode);
@@ -147,21 +140,23 @@ HI_S32 HI_MPI_VENC_GetSceneMode(VENC_CHN VeChn, VENC_SCENE_MODE_E *penSceneMode)
 HI_S32 HI_MPI_VENC_AttachVbPool(VENC_CHN VeChn, const VENC_CHN_POOL_S *pstPool);
 HI_S32 HI_MPI_VENC_DetachVbPool(VENC_CHN VeChn);
 
-HI_S32 HI_MPI_VENC_SetCuPrediction(VENC_CHN VeChn, const  VENC_CU_PREDICTION_S * pstCuPrediction);
-HI_S32 HI_MPI_VENC_GetCuPrediction(VENC_CHN VeChn, VENC_CU_PREDICTION_S * pstCuPrediction);
+HI_S32 HI_MPI_VENC_SetCuPrediction(VENC_CHN VeChn, const VENC_CU_PREDICTION_S *pstCuPrediction);
+HI_S32 HI_MPI_VENC_GetCuPrediction(VENC_CHN VeChn, VENC_CU_PREDICTION_S *pstCuPrediction);
 
-HI_S32 HI_MPI_VENC_SetSkipBias(VENC_CHN VeChn, const  VENC_SKIP_BIAS_S * pstSkipBias);
-HI_S32 HI_MPI_VENC_GetSkipBias(VENC_CHN VeChn, VENC_SKIP_BIAS_S * pstSkipBias);
+HI_S32 HI_MPI_VENC_SetSkipBias(VENC_CHN VeChn, const VENC_SKIP_BIAS_S *pstSkipBias);
+HI_S32 HI_MPI_VENC_GetSkipBias(VENC_CHN VeChn, VENC_SKIP_BIAS_S *pstSkipBias);
 
-HI_S32 HI_MPI_VENC_SetDeBreathEffect(VENC_CHN VeChn, const VENC_DEBREATHEFFECT_S * pstDeBreathEffect);
-HI_S32 HI_MPI_VENC_GetDeBreathEffect(VENC_CHN VeChn, VENC_DEBREATHEFFECT_S * pstDeBreathEffect);
+HI_S32 HI_MPI_VENC_SetDeBreathEffect(VENC_CHN VeChn, const VENC_DEBREATHEFFECT_S *pstDeBreathEffect);
+HI_S32 HI_MPI_VENC_GetDeBreathEffect(VENC_CHN VeChn, VENC_DEBREATHEFFECT_S *pstDeBreathEffect);
 
-HI_S32 HI_MPI_VENC_SetHierarchicalQp(VENC_CHN VeChn, const VENC_HIERARCHICAL_QP_S * pstHierarchicalQp);
-HI_S32 HI_MPI_VENC_GetHierarchicalQp(VENC_CHN VeChn, VENC_HIERARCHICAL_QP_S * pstHierarchicalQp);
+HI_S32 HI_MPI_VENC_SetHierarchicalQp(VENC_CHN VeChn, const VENC_HIERARCHICAL_QP_S *pstHierarchicalQp);
+HI_S32 HI_MPI_VENC_GetHierarchicalQp(VENC_CHN VeChn, VENC_HIERARCHICAL_QP_S *pstHierarchicalQp);
 
 HI_S32 HI_MPI_VENC_SetRcAdvParam(VENC_CHN VeChn, const VENC_RC_ADVPARAM_S *pstRcAdvParam);
 HI_S32 HI_MPI_VENC_GetRcAdvParam(VENC_CHN VeChn, VENC_RC_ADVPARAM_S *pstRcAdvParam);
 
+HI_S32 HI_MPI_VENC_SetSliceSplit(VENC_CHN VeChn, const VENC_SLICE_SPLIT_S* pstSliceSplit);
+HI_S32 HI_MPI_VENC_GetSliceSplit(VENC_CHN VeChn, VENC_SLICE_SPLIT_S * pstSliceSplit);
 
 #ifdef __cplusplus
 #if __cplusplus

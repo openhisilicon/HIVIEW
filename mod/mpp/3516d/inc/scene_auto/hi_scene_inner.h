@@ -76,9 +76,11 @@ typedef struct tagSCENE_STATE_S
     SCENE_THREAD_S stThreadNormal;
     SCENE_THREAD_S stThreadLuminance;
     SCENE_THREAD_S stThreadNotLinear;
+    SCENE_THREAD_S stThreadVenc;
     pthread_attr_t stThreadnormattr;
     pthread_attr_t stThreadluminanceattr;
     pthread_attr_t stThreadnotlinearattr;
+    pthread_attr_t stThreadvencattr;
     HI_U32 u32MainPipeNum;
     SCENE_MAINPIPE_STATE_S astMainPipe[HI_SCENE_PIPE_MAX_NUM];
 } SCENE_STATE_S;

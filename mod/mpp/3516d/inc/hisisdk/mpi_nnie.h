@@ -17,20 +17,20 @@
 #ifndef _HI_MPI_NNIE_H_
 #define _HI_MPI_NNIE_H_
 
+#include "hi_nnie.h"
+
 #ifdef __cplusplus
 #if __cplusplus
 extern "C"{
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#include "hi_nnie.h"
-
 /*****************************************************************************
 *   Prototype    : HI_MPI_SVP_NNIE_LoadModel
 *   Description  : Load cnn model
 *   Parameters   : const SVP_SRC_MEM_INFO_S   *pstModelBuf    Input model buf, can't be freed
-*                                                       until invoke the unload function.
-*                  SVP_NNIE_MODEL_S     *pstModel       Output model struct.
+*                                                               until invoke the unload function.
+*                  SVP_NNIE_MODEL_S           *pstModel       Output model struct.
 *   Return Value : HI_SUCCESS: Success; Error codes: Failure.
 *   Spec         :
 *   History:
@@ -44,14 +44,14 @@ HI_S32 HI_MPI_SVP_NNIE_LoadModel(const SVP_SRC_MEM_INFO_S *pstModelBuf, SVP_NNIE
 
 /*****************************************************************************
 *   Prototype    : HI_MPI_SVP_NNIE_GetTskBufSize
-*   Description  : Load cnn model
-*   Parameters   : HI_U32               u32MaxInputNum       Maximum input num,  CNN_Forword input data num cann't
-*                                                            be more than it.
-*                  HI_U32               u32MaxBboxNum        Maximum Bbox num, the RPN's output bbox num, should
-*                                                            be less or   equal to the compiler's correspond value.
-*                  SVP_NNIE_MODEL_S     *pstModel            the  model from Loadmodel.
-*                  HI_U32               au32TskBufSize[]     The task relate   auxiliary buffer array.
-*                  HI_U32               u32NetSegNum         the au32TskBufSize array element num.
+*   Description  : Get task buffer size
+*   Parameters   : HI_U32            u32MaxInputNum   Maximum input num,  CNN_Forword input data num cann't
+*                                                        be more than it.
+*                  HI_U32            u32MaxBboxNum    Maximum Bbox num, the RPN's output bbox num, should
+*                                                        be less or equal to the compiler's correspond value.
+*                  SVP_NNIE_MODEL_S  *pstModel        The model from Loadmodel.
+*                  HI_U32            au32TskBufSize[] The task relate auxiliary buffer array.
+*                  HI_U32            u32NetSegNum     The au32TskBufSize array element num.
 *   Return Value: HI_SUCCESS: Success; Error codes: Failure.
 *   Spec         :
 *   History:
@@ -62,19 +62,19 @@ HI_S32 HI_MPI_SVP_NNIE_LoadModel(const SVP_SRC_MEM_INFO_S *pstModelBuf, SVP_NNIE
 *
 *****************************************************************************/
 HI_S32 HI_MPI_SVP_NNIE_GetTskBufSize(HI_U32 u32MaxInputNum, HI_U32 u32MaxBboxNum,
-       const SVP_NNIE_MODEL_S *pstModel, HI_U32 au32TskBufSize[], HI_U32 u32NetSegNum);
+    const SVP_NNIE_MODEL_S *pstModel, HI_U32 au32TskBufSize[], HI_U32 u32NetSegNum);
 
 /*****************************************************************************
 *   Prototype    : HI_MPI_SVP_NNIE_Forward
 *   Description  : Perform CNN prediction on input sample(s), and output responses for corresponding sample(s)
 *   Parameters   : SVP_NNIE_HANDLE                  *phSvpNnieHandle      Returned handle ID of a task
-*                  const SVP_SRC_BLOB_S                    astSrc[]             Input node array.
-*                  const SVP_NNIE_MODEL_S                  pstModel             CNN model data
-*                  const SVP_DST_BLOB_S                    astDst[]             Output node array
-*                  const SVP_NNIE_FORWARD_CTRL_S          *pstForwardCtrl       Ctrl prameters
+*                  const SVP_SRC_BLOB_S              astSrc[]             Input node array.
+*                  const SVP_NNIE_MODEL_S            pstModel             CNN model data
+*                  const SVP_DST_BLOB_S              astDst[]             Output node array
+*                  const SVP_NNIE_FORWARD_CTRL_S    *pstForwardCtrl       Ctrl prameters
 *                  HI_BOOL                           bInstant             Flag indicating whether to generate an interrupt.
-*                                                                         If the output result blocks the next operation,
-*                                                                         set bInstant to HI_TRUE.
+*                                                                           If the output result blocks the next operation,
+*                                                                           set bInstant to HI_TRUE.
 *   Spec         :
 *   Return Value: HI_SUCCESS: Success; Error codes: Failure.
 *   Spec         :
@@ -86,21 +86,21 @@ HI_S32 HI_MPI_SVP_NNIE_GetTskBufSize(HI_U32 u32MaxInputNum, HI_U32 u32MaxBboxNum
 *
 *****************************************************************************/
 HI_S32 HI_MPI_SVP_NNIE_Forward(SVP_NNIE_HANDLE *phSvpNnieHandle,
-    const SVP_SRC_BLOB_S astSrc[], const SVP_NNIE_MODEL_S *pstModel,const SVP_DST_BLOB_S astDst[],
-    const SVP_NNIE_FORWARD_CTRL_S *pstForwardCtrl,HI_BOOL bInstant);
+    const SVP_SRC_BLOB_S astSrc[], const SVP_NNIE_MODEL_S *pstModel, const SVP_DST_BLOB_S astDst[],
+    const SVP_NNIE_FORWARD_CTRL_S *pstForwardCtrl, HI_BOOL bInstant);
 
 /*****************************************************************************
 *   Prototype    : HI_MPI_SVP_NNIE_ForwardWithBbox
 *   Description  : Perform CNN prediction on input sample(s), and output responses for corresponding sample(s)
-*   Parameters   : SVP_NNIE_HANDLE                  *pNnieHandle        Returned handle ID of a task
-*                  const SVP_SRC_BLOB_S                    astSrc[]           Input nodes' array.
-*                  const SVP_SRC_BLOB_S                    astBbox[]          Input nodes' Bbox array.
-*                  const SVP_NNIE_MODEL_S                  pstModel           CNN model data
-*                  const SVP_DST_BLOB_S                    astDst[]           Output node array
-*                  const SVP_NNIE_FORWARD_WITHBBOX_CTRL_S *pstForwardCtrl     Ctrl prameters
-*                  HI_BOOL                           bInstant           Flag indicating whether to generate an interrupt.
-*                                                                       If the output result blocks the next operation,
-*                                                                       set bInstant to HI_TRUE.
+*   Parameters   : SVP_NNIE_HANDLE                         *pNnieHandle    Returned handle ID of a task
+*                  const SVP_SRC_BLOB_S                    astSrc[]        Input nodes' array.
+*                  const SVP_SRC_BLOB_S                    astBbox[]       Input nodes' Bbox array.
+*                  const SVP_NNIE_MODEL_S                  pstModel        CNN model data
+*                  const SVP_DST_BLOB_S                    astDst[]        Output node array
+*                  const SVP_NNIE_FORWARD_WITHBBOX_CTRL_S *pstForwardCtrl  Ctrl prameters
+*                  HI_BOOL                                 bInstant        Flag indicating whether to generate an interrupt.
+*                                                                            If the output result blocks the next operation,
+*                                                                            set bInstant to HI_TRUE.
 *   Spec         :
 *   Return Value: HI_SUCCESS: Success; Error codes: Failure.
 *   Spec         :
@@ -113,7 +113,7 @@ HI_S32 HI_MPI_SVP_NNIE_Forward(SVP_NNIE_HANDLE *phSvpNnieHandle,
 *****************************************************************************/
 HI_S32 HI_MPI_SVP_NNIE_ForwardWithBbox(SVP_NNIE_HANDLE *phSvpNnieHandle,
     const SVP_SRC_BLOB_S astSrc[], const SVP_SRC_BLOB_S astBbox[], const SVP_NNIE_MODEL_S *pstModel,
-    const SVP_DST_BLOB_S astDst[], const SVP_NNIE_FORWARD_WITHBBOX_CTRL_S *pstForwardCtrl,HI_BOOL bInstant);
+    const SVP_DST_BLOB_S astDst[], const SVP_NNIE_FORWARD_WITHBBOX_CTRL_S *pstForwardCtrl, HI_BOOL bInstant);
 
 /*****************************************************************************
 *   Prototype    : HI_MPI_SVP_NNIE_UnloadModel
@@ -129,7 +129,7 @@ HI_S32 HI_MPI_SVP_NNIE_ForwardWithBbox(SVP_NNIE_HANDLE *phSvpNnieHandle,
 *           Modification : Created function
 *
 *****************************************************************************/
- HI_S32 HI_MPI_SVP_NNIE_UnloadModel(SVP_NNIE_MODEL_S *pstModel);
+HI_S32 HI_MPI_SVP_NNIE_UnloadModel(SVP_NNIE_MODEL_S *pstModel);
 
 /*****************************************************************************
 *   Prototype    : HI_MPI_SVP_NNIE_Query
@@ -138,7 +138,7 @@ HI_S32 HI_MPI_SVP_NNIE_ForwardWithBbox(SVP_NNIE_HANDLE *phSvpNnieHandle,
                    In non-block mode, the current status is queried and no action is taken.
 *   Parameters   : SVP_NNIE_ID_E        enNnieId       NNIE Id
 *                  SVP_NNIE_HANDLE      nnieHandle     nnieHandle of a called function. It is entered by users.
-*                  HI_BOOL                    *pbFinish      Returned status
+*                  HI_BOOL              *pbFinish      Returned status
 *                  HI_BOOL              bBlock         Flag indicating the block mode or non-block mode
 *   Return Value : HI_SUCCESS: Success;Error codes: Failure.
 *   Spec         :
@@ -149,7 +149,8 @@ HI_S32 HI_MPI_SVP_NNIE_ForwardWithBbox(SVP_NNIE_HANDLE *phSvpNnieHandle,
 *          Modification  : Created function
 *
 *****************************************************************************/
-HI_S32 HI_MPI_SVP_NNIE_Query(SVP_NNIE_ID_E enNnieId,SVP_NNIE_HANDLE svpNnieHandle,HI_BOOL *pbFinish,HI_BOOL bBlock);
+HI_S32 HI_MPI_SVP_NNIE_Query(SVP_NNIE_ID_E enNnieId, SVP_NNIE_HANDLE svpNnieHandle,
+    HI_BOOL *pbFinish, HI_BOOL bBlock);
 
 
 /*****************************************************************************

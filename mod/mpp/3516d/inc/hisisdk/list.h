@@ -15,7 +15,7 @@ struct list_head {
     struct list_head *next, *prev;
 };
 
-static inline void __list_add(struct list_head * _new, struct list_head * prev, struct list_head * next)
+static inline void __list_add(struct list_head *_new, struct list_head *prev, struct list_head *next)
 {
     next->prev = _new;
     _new->next = next;
@@ -33,7 +33,7 @@ static inline void list_add_tail(struct list_head *_new, struct list_head *head)
     __list_add(_new, head->prev, head);
 }
 
-static inline void __list_del(struct list_head * prev, struct list_head * next)
+static inline void __list_del(struct list_head *prev, struct list_head *next)
 {
     next->prev = prev;
     prev->next = next;
@@ -57,7 +57,7 @@ static inline void list_move(struct list_head *list, struct list_head *head)
 }
 
 static inline void list_move_tail(struct list_head *list,
-                  struct list_head *head)
+                                  struct list_head *head)
 {
     __list_del(list->prev, list->next);
     list_add_tail(list, head);
@@ -84,33 +84,31 @@ static inline void __list_splice(struct list_head *list,
 
 static inline void list_splice(struct list_head *list, struct list_head *head)
 {
-    if (!list_empty(list))
-    {
+    if (!list_empty(list)) {
         __list_splice(list, head);
     }
 }
 
 static inline void list_splice_init(struct list_head *list, struct list_head *head)
 {
-    if (!list_empty(list))
-    {
+    if (!list_empty(list)) {
         __list_splice(list, head);
         INIT_LIST_HEAD(list);
     }
 }
 
 #define list_entry(ptr, type, member) \
-    ((type *)((unsigned long)(ptr)-((unsigned long)(&((type *)1)->member) - 1)))
+    ((type *)((uintptr_t)(ptr) - ((unsigned long)(&((type *)1)->member) - 1)))
 
 #define list_for_each(pos, head) \
     for (pos = (head)->next; pos != (head); pos = pos->next)
 
 #define list_for_each_safe(pos, n, head) \
     for (pos = (head)->next, n = pos->next; pos != (head); \
-        pos = n, n = pos->next)
+         pos = n, n = pos->next)
 
 #define get_first_item(attached, type, member) \
-    ((type *)((char *)((attached)->next)-(unsigned long)(&((type *)0)->member)))
+    ((type *)((char *)((attached)->next) - (unsigned long)(&((type *)0)->member)))
 
 #endif
 

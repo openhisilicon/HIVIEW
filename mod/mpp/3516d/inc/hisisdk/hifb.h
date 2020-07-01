@@ -26,7 +26,20 @@ extern "C"{
 
 #include "hi_type.h"
 #include "hi_common.h"
+#ifdef __HuaweiLite__
+#include <fb.h>
+#include <linux/wait.h>
+#include "stdlib.h"
+#include <linux/workqueue.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include "liteos/fb.h"
+
+
+#else
 #include <linux/fb.h>
+#endif
+
 /*************************** Structure Definition ****************************/
 
 #define IOC_TYPE_HIFB       'F'
@@ -80,7 +93,7 @@ typedef struct
     HI_U32  u32Width;
     HI_U32  u32Height;
 }HIFB_SIZE_S;
-
+#ifndef __HuaweiLite__
 static inline HI_U8  hifb_rgb(const struct fb_bitfield* pBit, HI_S32 color)
 {
     return ((HI_U8)((((HI_U32)color)>>pBit->offset) << (8-pBit->length)) +
@@ -102,7 +115,7 @@ static inline HI_S32 hifb_color2key(const struct fb_var_screeninfo* pVar, HI_S32
       return (r<<16) + (g<<8) + b;
    }
 }
-
+#endif
 typedef enum hifbDYNAMIC_RANGE_E
 {
     HIFB_DYNAMIC_RANGE_SDR8 = 0,
@@ -225,6 +238,7 @@ typedef enum
     HIFB_LAYER_BUF_ONE    = 0x1,       /**<  1 display buf in fb */
     HIFB_LAYER_BUF_NONE   = 0x2,       /**<  no display buf in fb,the buf user refreshed will be directly set to VO*/
     HIFB_LAYER_BUF_DOUBLE_IMMEDIATE=0x3, /**< 2 display buf in fb, each refresh will be displayed*/
+    HIFB_LAYER_BUF_FENCE = 0x4, /**<  2 display buf in fb with fence */
     HIFB_LAYER_BUF_BUTT
 } HIFB_LAYER_BUF_E;
 
@@ -288,6 +302,7 @@ typedef struct
 cursor can be attached to only one layer at any time*/
 #define FBIOPUT_CURSOR_ATTCHCURSOR    _IOW(IOC_TYPE_HIFB, 114, HI_U32 )
 #define FBIOPUT_CURSOR_DETACHCURSOR   _IOW(IOC_TYPE_HIFB, 115, HI_U32 )
+
 /**antiflicker level*/
 /**Auto means fb will choose a appropriate antiflicker level automatically according to the color info of map*/
 typedef enum
@@ -377,8 +392,26 @@ typedef struct
 /**To get the DDR detect zone of an overlay layer*/
 #define FBIOGET_MDDRDETECT_HIFB    _IOW(IOC_TYPE_HIFB, 136, HIFB_DDRZONE_S)
 
+#ifdef __HuaweiLite__
+#define FBIOGET_SCREENINFO_HIFB 0x4600
+#define FBIOPUT_SCREENINFO_HIFB 0x4601
+#define FBIOPAN_DISPLAY_HIFB 0x4606
 
+struct hifb_info
+{
+    struct fb_vtable_s vtable; /* FB interfaces */
+    struct fb_videoinfo_s vinfo;    /* This structure descrides the overall video controller */
+    struct fb_overlayinfo_s oinfo;  /* This structure descrides one overlay */
+#ifdef CONFIG_FB_CMAP
+    struct fb_cmap_s cmap; /* Current camp */
+#endif
 
+    int activate;
+    void *par; /* Private data */
+};
+
+extern HI_S32 hifb_init(void* pArgs);
+#endif
 #ifdef __cplusplus
 #if __cplusplus
 }

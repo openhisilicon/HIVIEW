@@ -53,6 +53,11 @@ void SAMPLE_SVP_NNIE_Yolov1(void);
 void SAMPLE_SVP_NNIE_Yolov2(void);
 
 /******************************************************************************
+* function : show YOLOV3 sample
+******************************************************************************/
+void SAMPLE_SVP_NNIE_Yolov3(void);
+
+/******************************************************************************
 * function : show Lstm sample
 ******************************************************************************/
 void SAMPLE_SVP_NNIE_Lstm(void);
@@ -102,6 +107,11 @@ void SAMPLE_SVP_NNIE_Yolov1_HandleSig(void);
 * function : Yolov2 sample signal handle
 ******************************************************************************/
 void SAMPLE_SVP_NNIE_Yolov2_HandleSig(void);
+
+/******************************************************************************
+* function : Yolov3 sample signal handle
+******************************************************************************/
+void SAMPLE_SVP_NNIE_Yolov3_HandleSig(void);
 
 /******************************************************************************
 * function : Lstm sample signal handle

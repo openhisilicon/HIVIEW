@@ -93,7 +93,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
 
 
 static void * dl = NULL;
-
+static int snscnt = 0;
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
   char snsstr[64];
@@ -107,12 +107,19 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
     return -1;
   } 
   
-  char loadstr[128];
+  snscnt = cfg->snscnt;
+  char loadstr[256];
   sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, cfg->snsname);
+  int i = 0;
+  for(i = 1; i < snscnt; i++)
+  {
+    sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
+  }
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
   
+
   SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = sns->type;
   
   if(dl)
@@ -163,12 +170,20 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   memset(&stViConfig, 0, sizeof(stViConfig));
   SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
   
-  stViConfig.s32WorkingViNum       = 1;
-  stViConfig.astViInfo[0].stDevInfo.ViDev     = ViDev;
-  stViConfig.astViInfo[0].stPipeInfo.aPipe[0] = ViPipe;
-  stViConfig.astViInfo[0].stChnInfo.ViChn     = ViChn;
-  stViConfig.astViInfo[0].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
-  stViConfig.astViInfo[0].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+  stViConfig.s32WorkingViNum       = snscnt;
+  // SAMPLE_COMM_VI_SetMipiHsMode(LANE_DIVIDE_MODE_0/LANE_DIVIDE_MODE_1)
+  // Mode  DEV0   DEV1  DEV2  DEV3  DEV4   DEV5  DEV6   DEV7
+  //  0    L0~L3   N     N     N      N      N     N     N
+  //  1    L0L2    L1L3  N     N      N      N     N     N
+  int i = 0;
+  for(i = 0; i < snscnt; i++)
+  {
+    stViConfig.astViInfo[i].stDevInfo.ViDev     = i;//ViDev 0, 1, 2, 3;
+    stViConfig.astViInfo[i].stPipeInfo.aPipe[0] = i;//ViPipe 0, 1, 2, 3;
+    stViConfig.astViInfo[i].stChnInfo.ViChn     = 0;//ViChn  0, 0, 0, 0;
+    stViConfig.astViInfo[i].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
+    stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+  }
 
   s32Ret = SAMPLE_VENC_VI_Init(&stViConfig, vi->bLowDelay,vi->u32SupplementConfig);
   if(s32Ret != HI_SUCCESS)

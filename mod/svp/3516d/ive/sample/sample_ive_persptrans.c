@@ -31,7 +31,7 @@ static SAMPLE_IVE_PERSP_TRANS_S     s_stPerspTrans;
 static HI_VOID SAMPLE_IVE_PerspTrans_Uninit(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTrans)
 {
     HI_U16 i;
-    
+
     IVE_MMZ_FREE(pstPerspTrans->stSrc.au64PhyAddr[0], pstPerspTrans->stSrc.au64VirAddr[0]);
 
     for (i = 0; i < pstPerspTrans->u16RoiNum; i++)
@@ -45,7 +45,7 @@ static HI_VOID SAMPLE_IVE_PerspTrans_Uninit(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTr
 }
 
 static HI_S32 SAMPLE_IVE_PerspTrans_Init(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTrans,
-    HI_U32 u32SrcWidth,HI_U32 u32SrcHeight, HI_U32 u32DstWidth,HI_U32 u32DstHeight, 
+    HI_U32 u32SrcWidth,HI_U32 u32SrcHeight, HI_U32 u32DstWidth,HI_U32 u32DstHeight,
     IVE_RECT_U32_S astRoi[], HI_U16 u16RoiNum,  HI_U16 u16MaxPointPairNum, HI_CHAR *pchSrcFileName,
     HI_CHAR *pchDstFileName)
 {
@@ -64,7 +64,7 @@ static HI_S32 SAMPLE_IVE_PerspTrans_Init(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTrans
         SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, PERSP_TRANS_INIT_FAIL,
             "Error(%#x),Create src image failed!\n", s32Ret);
 
-    hi_memcpy(pstPerspTrans->astRoi, sizeof(IVE_RECT_U32_S) * u16RoiNum, astRoi, sizeof(IVE_RECT_U32_S) * u16RoiNum);
+    memcpy_s(pstPerspTrans->astRoi, sizeof(IVE_RECT_U32_S) * u16RoiNum, astRoi, sizeof(IVE_RECT_U32_S) * u16RoiNum);
 
     for (i = 0; i < u16RoiNum; i++)
     {
@@ -92,10 +92,10 @@ static HI_S32 SAMPLE_IVE_PerspTrans_Init(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTrans
         pstTmp = (IVE_PERSP_TRANS_POINT_PAIR_S *)(HI_UL)pstPerspTrans->astPointPair[i].u64VirAddr;
         for (j = 0; j < pstPerspTrans->stPerspTransCtrl.u16PointPairNum; j++)
         {
-            pstTmp->stSrcPoint.u14q2X = au16LandMark[j * 4];
-            pstTmp->stSrcPoint.u14q2Y = au16LandMark[j * 4 + 1];
-            pstTmp->stDstPoint.u14q2X = au16LandMark[j * 4 + 2];
-            pstTmp->stDstPoint.u14q2Y = au16LandMark[j * 4 + 3];
+            pstTmp->stSrcPoint.u14q2X = au16LandMark[j * 4] << 2;
+            pstTmp->stSrcPoint.u14q2Y = au16LandMark[j * 4 + 1] << 2;
+            pstTmp->stDstPoint.u14q2X = au16LandMark[j * 4 + 2] << 2;
+            pstTmp->stDstPoint.u14q2Y = au16LandMark[j * 4 + 3] << 2;
 
             pstTmp++;
         }
@@ -110,7 +110,7 @@ static HI_S32 SAMPLE_IVE_PerspTrans_Init(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTrans
     SAMPLE_CHECK_EXPR_GOTO(NULL == pstPerspTrans->pFpDst, PERSP_TRANS_INIT_FAIL,
         "Error,Open file %s failed!\n", pchDstFileName);
     s32Ret = HI_SUCCESS;
-    
+
     return s32Ret;
 
 PERSP_TRANS_INIT_FAIL:
@@ -129,10 +129,10 @@ static HI_S32 SAMPLE_IVE_PerspTransProc(SAMPLE_IVE_PERSP_TRANS_S *pstPerspTrans)
 
     s32Ret = SAMPLE_COMM_IVE_ReadFile(&(pstPerspTrans->stSrc), pstPerspTrans->pFpSrc);
     SAMPLE_CHECK_EXPR_RET(HI_SUCCESS != s32Ret,s32Ret,"Error(%#x),Read src file failed!\n",s32Ret);
-        
+
     s32Ret = HI_MPI_IVE_PerspTrans(&IveHandle, &pstPerspTrans->stSrc, pstPerspTrans->astRoi, pstPerspTrans->astPointPair,
 	    pstPerspTrans->astDst, &pstPerspTrans->stPerspTransCtrl, bInstant);
-    
+
     s32Ret = HI_MPI_IVE_Query(IveHandle, &bFinish, bBlock);
     while (HI_ERR_IVE_QUERY_TIMEOUT == s32Ret)
     {
@@ -152,10 +152,10 @@ HI_VOID SAMPLE_IVE_PerspTrans(HI_VOID)
     HI_S32                 s32Ret;
     HI_U32                 u32SrcWidth  = 250;
     HI_U32                 u32SrcHeight = 250;
-    HI_U32                 u32DstWidth  = 200;
-    HI_U32                 u32DstHeight = 200;    
+    HI_U32                 u32DstWidth  = 96;
+    HI_U32                 u32DstHeight = 112;
     HI_CHAR                *pchSrcFileName = "./data/input/psp/src/Amelia_Vega_250x250_420sp.yuv";
-    HI_CHAR                *pchDstFileName = "./data/output/psp/Amelia_Vega_Affine_200x200_420sp.yuv";
+    HI_CHAR                *pchDstFileName = "./data/output/psp/Amelia_Vega_Affine_96x112_420sp.yuv";
     IVE_RECT_U32_S astRoi[2] = {0};
     HI_U16 u16RoiNum = 1;
     HI_U16 u16MaxPointPairNum = 68;

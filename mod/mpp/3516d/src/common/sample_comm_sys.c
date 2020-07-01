@@ -144,6 +144,11 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
             pstSize->u32Height = 288;
             break;
 
+        case PIC_360P:   /* 640 * 360 */
+            pstSize->u32Width  = 640;
+            pstSize->u32Height = 360;
+            break;
+
         case PIC_D1_PAL:   /* 720 * 576 */
             pstSize->u32Width  = 720;
             pstSize->u32Height = 576;
@@ -178,8 +183,13 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
             pstSize->u32Width  = 2592;
             pstSize->u32Height = 1536;
             break;
-			
-	    case PIC_2716x1524:
+
+        case PIC_2560x1440:
+            pstSize->u32Width  = 2560;
+            pstSize->u32Height = 1440;
+            break;
+
+        case PIC_2716x1524:
             pstSize->u32Width  = 2716;
             pstSize->u32Height = 1524;
             break;
@@ -212,6 +222,12 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
             pstSize->u32Width = 3840;
             pstSize->u32Height = 8640;
             break;
+
+        case PIC_2688x1536:
+            pstSize->u32Width  = 2688;
+            pstSize->u32Height = 1536;
+            break;
+
         default:
             return HI_FAILURE;
     }

@@ -3,7 +3,7 @@
 
 #include "sample_comm.h"
 
-//api;
+//cfg;
 typedef struct {
   char  snsname[32];  // sensor imx335
   int   snscnt;       // sensor count
@@ -16,9 +16,11 @@ typedef struct {
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
 
 
+//vi;
 typedef struct {
   HI_BOOL bLowDelay;
   HI_U32 u32SupplementConfig;
+  VI_STITCH_GRP_ATTR_S stStitchGrpAttr; // 3516DV300 no-support 
 }gsf_mpp_vi_t;
 
 //SAMPLE_COMM_VI_StartVi
@@ -28,10 +30,18 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
 
+//vpss;
 typedef struct {
   VPSS_GRP    VpssGrp;
-  HI_S32      ViPipe; // >=0: bind ViPipe;
-  VI_CHN      ViChn; 
+  
+  MOD_ID_E  srcModId;
+  union{
+    HI_S32  ViPipe;
+  };
+  union{
+    VI_CHN  ViChn;
+  };
+
   HI_BOOL     enable[VPSS_MAX_PHY_CHN_NUM];
   PIC_SIZE_E  enSize[VPSS_MAX_PHY_CHN_NUM];
 }gsf_mpp_vpss_t;
@@ -43,10 +53,26 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 
 
+//venc;
 typedef struct {
-  VENC_CHN        VencChn;
-  VPSS_GRP        VpssGrp;
-  VPSS_CHN        VpssChn;
+  
+  VENC_CHN  VencChn;
+  
+  MOD_ID_E  srcModId;
+  union {
+    VPSS_GRP  VpssGrp;
+    AVS_GRP   AVSGrp;
+    VI_PIPE   ViPipe;
+    VO_LAYER  VoLayer;
+  };
+  union {
+    VPSS_CHN  VpssChn; // VPSS
+    AVS_CHN   AVSChn;  // AVS
+    VDEC_CHN  VdChn;   // VDEC
+    VI_CHN    ViChn;   // VI
+    VO_CHN    VoChn;   // VO
+  };
+  
   PAYLOAD_TYPE_E  enPayLoad;
   PIC_SIZE_E      enSize;
   HI_S32          enRcMode;
@@ -76,7 +102,7 @@ int gsf_mpp_venc_dest();
 int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
 
 
-//
+//isp;
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
 

@@ -16,6 +16,7 @@
 #include "sample_comm.h"
 #include "acodec.h"
 #include "audio_aac_adp.h"
+#include "audio_mp3_adp.h"
 
 #ifdef HI_ACODEC_TYPE_TLV320AIC31
 #include "tlv320aic31.h"
@@ -1101,7 +1102,7 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAi(AUDIO_DEV AiDevId, HI_S32 s32AiChnCnt,
 
     for (i = 0; i < s32AiChnCnt>>pstAioAttr->enSoundmode; i++)
     {
-        s32Ret = HI_MPI_AI_EnableChn(AiDevId, i/(pstAioAttr->enSoundmode + 1));
+        s32Ret = HI_MPI_AI_EnableChn(AiDevId, i);
         if (s32Ret)
         {
             printf("%s: HI_MPI_AI_EnableChn(%d,%d) failed with %#x\n", __FUNCTION__, AiDevId, i, s32Ret);
@@ -1323,9 +1324,9 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAo(AUDIO_DEV AoDevId, HI_S32 s32AoChnCnt,
         return HI_FAILURE;
     }
 
-    for (i = 0; i < s32AoChnCnt; i++)
+    for (i = 0; i < s32AoChnCnt>>pstAioAttr->enSoundmode; i++)
     {
-        s32Ret = HI_MPI_AO_EnableChn(AoDevId, i/(pstAioAttr->enSoundmode + 1));
+        s32Ret = HI_MPI_AO_EnableChn(AoDevId, i);
         if (HI_SUCCESS != s32Ret)
         {
             printf("%s: HI_MPI_AO_EnableChn(%d) failed with %#x!\n", __FUNCTION__, i, s32Ret);
@@ -1394,6 +1395,13 @@ HI_S32 SAMPLE_COMM_AUDIO_StopAo(AUDIO_DEV AoDevId, HI_S32 s32AoChnCnt, HI_BOOL b
             printf("%s: HI_MPI_AO_DisableChn failed with %#x!\n", __FUNCTION__, s32Ret);
             return s32Ret;
         }
+    }
+
+    s32Ret = HI_MPI_AO_DisableChn(AoDevId, AO_SYSCHN_CHNID);
+    if (HI_SUCCESS != s32Ret)
+    {
+        printf("%s: HI_MPI_AO_DisableChn(%d) failed with %#x!\n", __FUNCTION__, i, s32Ret);
+        return s32Ret;
     }
 
     s32Ret = HI_MPI_AO_Disable(AoDevId);
@@ -1583,6 +1591,7 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAdec(ADEC_CHN AdChn, PAYLOAD_TYPE_E enType)
     ADEC_ATTR_G726_S stAdecG726;
     ADEC_ATTR_LPCM_S stAdecLpcm;
     ADEC_ATTR_AAC_S stAdecAac;
+    ADEC_ATTR_MP3_S stMp3Attr;
 
     stAdecAttr.enType = enType;
     stAdecAttr.u32BufSize = 20;
@@ -1612,6 +1621,10 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAdec(ADEC_CHN AdChn, PAYLOAD_TYPE_E enType)
         stAdecAttr.pValue = &stAdecAac;
         stAdecAttr.enMode = ADEC_MODE_STREAM;   /* aac should be stream mode */
         stAdecAac.enTransType = gs_enAacTransType;
+    }
+    else if (PT_MP3 == stAdecAttr.enType)
+    {
+        stAdecAttr.pValue = &stMp3Attr;
     }
     else
     {

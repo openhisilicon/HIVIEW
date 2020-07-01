@@ -71,7 +71,7 @@ HI_VOID SAMPLE_IVE_HandleSig(HI_S32 s32Signo)
                 {
                     SAMPLE_IVE_PerspTrans_HandleSig();
                 }
-                break;     
+                break;
             default :
                 {
                 }
@@ -88,7 +88,7 @@ HI_VOID SAMPLE_IVE_HandleSig(HI_S32 s32Signo)
 ******************************************************************************/
 HI_VOID SAMPLE_IVE_Usage(HI_CHAR* pchPrgName)
 {
-    printf("Usage : %s <index> [complete] [encode] [vo]\n", pchPrgName);
+    printf("Usage : %s <index> [complete] \n", pchPrgName);
     printf("index:\n");
     printf("\t 0)Occlusion detected.(VI->VPSS->IVE->VO_HDMI).\n");
     printf("\t 1)Motion detected.(VI->VPSS->IVE->VGS->VO_HDMI).\n");
@@ -110,11 +110,18 @@ int app_main(int argc, char *argv[])
 int sample_ive_main(int argc, char *argv[])
 #endif
 {
-    if (argc < 2)
+    if (argc < 2 || argc > 3)
     {
         SAMPLE_IVE_Usage(argv[0]);
         return HI_FAILURE;
     }
+
+    if (!strncmp(argv[1], "-h", 2))
+    {
+        SAMPLE_IVE_Usage(argv[0]);
+        return HI_SUCCESS;
+    }
+
     s_ppChCmdArgv = argv;
 #ifndef __HuaweiLite__
     signal(SIGINT, SAMPLE_IVE_HandleSig);
@@ -172,7 +179,7 @@ int sample_ive_main(int argc, char *argv[])
             {
                 SAMPLE_IVE_PerspTrans();
             }
-            break;    
+            break;
         default :
             {
                 SAMPLE_IVE_Usage(argv[0]);

@@ -13,8 +13,10 @@
 #include "rgn.h"
 #include "venc.h"
 
-#define DOUBLE_SENSOR_3516d  0
-#define AVS_4CH_3559a        0
+
+
+#define VI_2CH_3516d  1  //  1: 2 sensor input; 0: 1 sensor input;
+#define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 
 
 #define PIC_WIDTH(w) \
@@ -392,7 +394,7 @@ int main(int argc, char *argv[])
     
     #elif defined(GSF_CPU_3516d)
     
-      #if (DOUBLE_SENSOR_3516d == 0)
+      #if (VI_2CH_3516d == 0)
       // imx335-0-0-4-30
       gsf_mpp_cfg_t cfg = { .snsname = "imx335", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 4, .fps  = 30, };
       gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};

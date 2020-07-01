@@ -1753,7 +1753,7 @@ HI_S32 SAMPLE_IVE_KCF_ObjIOU(IVE_ROI_INFO_S astRoiInfo[], HI_U32 u32RoiNum, IVE_
 
     if(u32BboxNum==0)
     {
-        hi_memcpy(astNewRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum, astRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum);
+        memcpy_s(astNewRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum, astRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum);
         *pu32NewRoiNum = u32RoiNum;
         return s32Ret;
     }
@@ -1944,7 +1944,7 @@ static HI_VOID* SAMPLE_IVE_KcfTracking(HI_VOID* pArgs)
             s_stIveKcfInfo.bNewDetect = HI_FALSE;
             u32RoiNum = s_stIveKcfInfo.u32RoiNum;
             s_stIveKcfInfo.u32RoiNum = 0;
-            hi_memcpy(astRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum, s_stIveKcfInfo.astRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum);
+            memcpy_s(astRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum, s_stIveKcfInfo.astRoiInfo, sizeof(IVE_ROI_INFO_S) * u32RoiNum);
             SAMPLE_IVE_MUTEX_UNLOCK(s_stIveKcfInfo.CnnDetectMutex);
 
             s32Ret = SAMPLE_IVE_KCF_ObjIOU(astRoiInfo, u32RoiNum, astBbox, u32BboxNum,
@@ -2058,7 +2058,7 @@ static HI_S32 SAMPLE_IVE_KcfInit(SAMPLE_IVE_KCF_S *pstIveKcfInfo)
     HI_U32 u32TotalSize;
     HI_S32 s32Len;
 
-    hi_memset(pstIveKcfInfo, sizeof(SAMPLE_IVE_KCF_S), 0, sizeof(SAMPLE_IVE_KCF_S));
+    memset_s(pstIveKcfInfo, sizeof(SAMPLE_IVE_KCF_S), 0, sizeof(SAMPLE_IVE_KCF_S));
 
     s32Ret = HI_MPI_IVE_KCF_GetMemSize(SAMPLE_IVE_KCF_NODE_MAX_NUM, &u32Size);
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, FAIL_0,
@@ -2069,7 +2069,7 @@ static HI_S32 SAMPLE_IVE_KcfInit(SAMPLE_IVE_KCF_S *pstIveKcfInfo)
     s32Ret = SAMPLE_COMM_IVE_CreateMemInfo(&pstIveKcfInfo->stTotalMem, u32TotalSize);
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, FAIL_0,
         "Error(%#x),SAMPLE_COMM_IVE_CreateMemInfo failed!\n", s32Ret);
-    memset((HI_U8*)(HI_UL)pstIveKcfInfo->stTotalMem.u64VirAddr, 0x0, sizeof(u32TotalSize));
+    memset((HI_U8*)(HI_UL)pstIveKcfInfo->stTotalMem.u64VirAddr, 0x0, u32TotalSize);
 
     pstIveKcfInfo->stListMem.u64PhyAddr = pstIveKcfInfo->stTotalMem.u64PhyAddr;
     pstIveKcfInfo->stListMem.u64VirAddr = pstIveKcfInfo->stTotalMem.u64VirAddr;
@@ -2092,7 +2092,7 @@ static HI_S32 SAMPLE_IVE_KcfInit(SAMPLE_IVE_KCF_S *pstIveKcfInfo)
     pstIveKcfInfo->stKcfProCtrl.stTmpBuf.u32Size = SAMPLE_IVE_KCF_TEMP_BUF_SIZE;
 
     pstIveKcfInfo->stKcfProCtrl.enCscMode = IVE_CSC_MODE_VIDEO_BT709_YUV2RGB;
-    pstIveKcfInfo->stKcfProCtrl.u0q16InterFactor = 0.02 * 1024 * 32;
+    pstIveKcfInfo->stKcfProCtrl.u1q15InterFactor = 0.02 * 1024 * 32;
     pstIveKcfInfo->stKcfProCtrl.u0q16Lamda = 10;
     pstIveKcfInfo->stKcfProCtrl.u0q8Sigma = 0.5 * 256;
     pstIveKcfInfo->stKcfProCtrl.u4q12TrancAlfa = 0.2 * 4096;
@@ -2227,7 +2227,7 @@ void SAMPLE_IVE_Kcf(void)
     }
 
     /*config vb*/
-    hi_memset(&stVbConf, sizeof(VB_CONFIG_S), 0, sizeof(VB_CONFIG_S));
+    memset_s(&stVbConf, sizeof(VB_CONFIG_S), 0, sizeof(VB_CONFIG_S));
     stVbConf.u32MaxPoolCnt              = 4;
 
     u32BlkSize = COMMON_GetPicBufferSize(astSize[0].u32Width, astSize[0].u32Height, SAMPLE_PIXEL_FORMAT, DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
@@ -2259,7 +2259,7 @@ void SAMPLE_IVE_Kcf(void)
         "Error(%#x),SAMPLE_COMM_VI_StartVi failed!\n", s32Ret);
 
     /*config vpss*/
-    hi_memset(&stVpssGrpAttr, sizeof(VPSS_GRP_ATTR_S), 0, sizeof(VPSS_GRP_ATTR_S));
+    memset_s(&stVpssGrpAttr, sizeof(VPSS_GRP_ATTR_S), 0, sizeof(VPSS_GRP_ATTR_S));
     stVpssGrpAttr.stFrameRate.s32SrcFrameRate    = -1;
     stVpssGrpAttr.stFrameRate.s32DstFrameRate    = -1;
     stVpssGrpAttr.enDynamicRange                 = DYNAMIC_RANGE_SDR8;
@@ -2309,9 +2309,9 @@ void SAMPLE_IVE_Kcf(void)
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, END_3,
         "Error(%#x),SAMPLE_COMM_VO_StartVO failed!\n", s32Ret);
 
-    hi_memset(&s_stRfcnModel,sizeof(s_stRfcnModel), 0,sizeof(s_stRfcnModel));
-    hi_memset(&s_stRfcnNnieParam,sizeof(s_stRfcnNnieParam), 0,sizeof(s_stRfcnNnieParam));
-    hi_memset(&s_stRfcnSoftwareParam,sizeof(s_stRfcnSoftwareParam), 0,sizeof(s_stRfcnSoftwareParam));
+    memset_s(&s_stRfcnModel,sizeof(s_stRfcnModel), 0,sizeof(s_stRfcnModel));
+    memset_s(&s_stRfcnNnieParam,sizeof(s_stRfcnNnieParam), 0,sizeof(s_stRfcnNnieParam));
+    memset_s(&s_stRfcnSoftwareParam,sizeof(s_stRfcnSoftwareParam), 0,sizeof(s_stRfcnSoftwareParam));
 
     /******************************************
      step 2: init Kcf param
@@ -2422,9 +2422,9 @@ void SAMPLE_IVE_Kcf_HandleSig(void)
     }
 
     SAMPLE_IVE_RfcnDeinit(&s_stRfcnNnieParam,&s_stRfcnSoftwareParam,&s_stRfcnModel);
-    hi_memset(&s_stRfcnNnieParam,sizeof(SAMPLE_SVP_NNIE_PARAM_S), 0,sizeof(SAMPLE_SVP_NNIE_PARAM_S));
-    hi_memset(&s_stRfcnSoftwareParam, sizeof(SAMPLE_SVP_NNIE_RFCN_SOFTWARE_PARAM_S), 0,sizeof(SAMPLE_SVP_NNIE_RFCN_SOFTWARE_PARAM_S));
-    hi_memset(&s_stRfcnModel, sizeof(SAMPLE_SVP_NNIE_MODEL_S), 0,sizeof(SAMPLE_SVP_NNIE_MODEL_S));
+    memset_s(&s_stRfcnNnieParam,sizeof(SAMPLE_SVP_NNIE_PARAM_S), 0,sizeof(SAMPLE_SVP_NNIE_PARAM_S));
+    memset_s(&s_stRfcnSoftwareParam, sizeof(SAMPLE_SVP_NNIE_RFCN_SOFTWARE_PARAM_S), 0,sizeof(SAMPLE_SVP_NNIE_RFCN_SOFTWARE_PARAM_S));
+    memset_s(&s_stRfcnModel, sizeof(SAMPLE_SVP_NNIE_MODEL_S), 0,sizeof(SAMPLE_SVP_NNIE_MODEL_S));
     SAMPLE_IVE_KcfDeInit(&s_stIveKcfInfo);
 
     SAMPLE_COMM_VO_StopVO(&s_stVoConfig);

@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2018-11-23 13:59:34 CST"
+#define AUTOCONF_TIMESTAMP "2019-09-10 19:48:27 CST"
 
 
 /*
@@ -35,6 +35,8 @@
 #define CONFIG_USER_BIT "USER_BIT_32"
 #define CONFIG_RELEASE_TYPE_RELEASE 1
 #define CONFIG_HI_RLS_MODE "HI_RELEASE"
+#define CONFIG_CUSTOMER_VERSION_COMMON 1
+#define CONFIG_CUSTOMER_VERSION "COMMON"
 
 /*
  * Media Modules Setup
@@ -78,6 +80,8 @@
 #define CONFIG_HI_ISP_CA_SUPPORT 1
 #define CONFIG_HI_ISP_EDGEMARK_SUPPORT 1
 #define CONFIG_HI_ISP_HLC_SUPPORT 1
+#define CONFIG_HI_ISP_SPECAWB_SUPPORT 1
+#define CONFIG_HI_ISP_DPC_STATIC_TABLE_SUPPORT 1
 
 /*
  * media dis config
@@ -92,6 +96,8 @@
 #define CONFIG_HI_VPSS_LUMA_STAT_SUPPORT 1
 #define CONFIG_HI_VPSS_COVER_SUPPORT 1
 #define CONFIG_HI_VPSS_MOSAIC_SUPPORT 1
+#define CONFIG_HI_VPSS_BUFFER_REUSE_SUPPORT 1
+#define CONFIG_HI_VPSS_SPREAD_SUPPORT 1
 
 /*
  * media avs config
@@ -102,6 +108,7 @@
  */
 #define CONFIG_HI_GDC_SUPPORT 1
 #define CONFIG_HI_GDC_LOWDELAY_SUPPORT 1
+#define CONFIG_HI_GDC_FISHEYE_SUPPORT 1
 #define CONFIG_HI_GDC_NNIE_SHARE_RAM 1
 
 /*
@@ -138,7 +145,7 @@
 #define CONFIG_HI_VENC_SMARTP_SUPPORT 1
 #define CONFIG_HI_VENC_DUALP_SUPPORT 1
 #define CONFIG_HI_VENC_RCNREF_SHARE_SUPPORT 1
-#define CONFIG_HI_VENC_TWOPASS_SUPPORT 1
+#define CONFIG_HI_VENC_DEBREATH_SUPPORT 1
 #define CONFIG_HI_VENC_SKIPREF_SUPPORT 1
 #define CONFIG_HI_VENC_SCENE0_SUPPORT 1
 #define CONFIG_HI_VENC_SCENE1_SUPPORT 1
@@ -156,6 +163,7 @@
 #define CONFIG_HI_H264D_SUPPORT 1
 #define CONFIG_VDEC_IP "VDEC_IP_VEDU"
 #define CONFIG_HI_JPEGD_SUPPORT 1
+#define CONFIG_HI_JPEGD_PROGRESSIVE 1
 #define CONFIG_VDEC_USERDATA_SUPPORT 1
 
 /*
@@ -171,6 +179,7 @@
  * media region config
  */
 #define CONFIG_HI_REGION_SUPPORT 1
+#define CONFIG_HI_RGN_VGS_QUICKCOPY_SUPPORT 1
 
 /*
  * media audio config
@@ -188,6 +197,10 @@
 
 /*
  * media hdr config
+ */
+
+/*
+ * media mcf config
  */
 
 /*
@@ -227,6 +240,7 @@
  */
 #define CONFIG_HI_SVP_SUPPORT 1
 #define CONFIG_HI_SVP_CNN 1
+#define CONFIG_HI_SVP_RUNTIME 1
 #define CONFIG_HI_SVP_IVE 1
 #define CONFIG_HI_SVP_IVE_CSC 1
 #define CONFIG_HI_SVP_IVE_FILTER_AND_CSC 1
@@ -267,6 +281,10 @@
 
 /*
  * Component motionfusion config
+ */
+
+/*
+ * Component pm Config
  */
 
 /*

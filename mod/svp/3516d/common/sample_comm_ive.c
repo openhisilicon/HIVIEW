@@ -847,8 +847,8 @@ HI_S32 SAMPLE_COMM_IVE_StartVpss(SIZE_S *pastSize,HI_U32 u32VpssChnNum)
     HI_BOOL abChnEnable[VPSS_MAX_CHN_NUM] = {HI_FALSE, HI_FALSE, HI_FALSE, HI_FALSE};
     VPSS_GRP VpssGrp = 0;
 
-    stVpssGrpAttr.u32MaxW = 3840;
-    stVpssGrpAttr.u32MaxH = 2160;
+    stVpssGrpAttr.u32MaxW = 1920;
+    stVpssGrpAttr.u32MaxH = 1080;
     stVpssGrpAttr.stFrameRate.s32SrcFrameRate = -1;
     stVpssGrpAttr.stFrameRate.s32DstFrameRate = -1;
     stVpssGrpAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;

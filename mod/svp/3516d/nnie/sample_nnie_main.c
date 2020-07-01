@@ -66,21 +66,25 @@ void SAMPLE_SVP_HandleSig(int s32Signo)
                    SAMPLE_SVP_NNIE_Yolov2_HandleSig();
                 }
                 break;
-
             case '8':
+                {
+                   SAMPLE_SVP_NNIE_Yolov3_HandleSig();
+                }
+                break;
+            case '9':
                 {
                    SAMPLE_SVP_NNIE_Lstm_HandleSig();
                 }
 		       break;
-    	    case '9':
+    	    case 'a':
     		   {
     		  	SAMPLE_SVP_NNIE_Pvanet_HandleSig();
     		   }
                break;
-           case 'a':
-              {
-               SAMPLE_SVP_NNIE_Rfcn_HandleSig_File();
-              }
+            case 'b':
+               {
+                SAMPLE_SVP_NNIE_Rfcn_HandleSig_File();
+               }
               break;
            default :
             {
@@ -108,13 +112,14 @@ void SAMPLE_SVP_Usage(char* pchPrgName)
     printf("\t 5) SSD(Read File).\n");
     printf("\t 6) Yolov1(Read File).\n");
     printf("\t 7) Yolov2(Read File).\n");
-    printf("\t 8) LSTM(Read File).\n");
-    printf("\t 9) Pvanet(Read File).\n");
-    printf("\t a) Rfcn(Read File).\n");
+    printf("\t 8) Yolov3(Read File).\n");
+    printf("\t 9) LSTM(Read File).\n");
+    printf("\t a) Pvanet(Read File).\n");
+    printf("\t b) Rfcn(Read File).\n");
 }
 
 /******************************************************************************
-* function : ive sample
+* function : nnie sample
 ******************************************************************************/
 #ifdef __HuaweiLite__
 int app_main(int argc, char *argv[])
@@ -124,11 +129,18 @@ int sample_nnie_main(int argc, char *argv[])
 {
     int s32Ret = HI_SUCCESS;
 
-    if (argc < 2)
+    if (argc < 2 || argc > 2)
     {
         SAMPLE_SVP_Usage(argv[0]);
         return HI_FAILURE;
     }
+
+    if (!strncmp(argv[1], "-h", 2))
+    {
+        SAMPLE_SVP_Usage(argv[0]);
+        return HI_SUCCESS;
+    }
+
     s_ppChCmdArgv = argv;
 #ifndef __HuaweiLite__
     signal(SIGINT, SAMPLE_SVP_HandleSig);
@@ -179,15 +191,20 @@ int sample_nnie_main(int argc, char *argv[])
             break;
         case '8':
             {
-                SAMPLE_SVP_NNIE_Lstm();
+                SAMPLE_SVP_NNIE_Yolov3();
             }
             break;
         case '9':
+            {
+                SAMPLE_SVP_NNIE_Lstm();
+            }
+            break;
+        case 'a':
     	    {
     		  SAMPLE_SVP_NNIE_Pvanet();
     	    }
     	    break;
-        case 'a':
+        case 'b':
     	    {
     		  SAMPLE_SVP_NNIE_Rfcn_File();
     	    }

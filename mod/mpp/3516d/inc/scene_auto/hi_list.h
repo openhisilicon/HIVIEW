@@ -10,7 +10,7 @@
 #ifndef __HI_LIST_H__
 #define __HI_LIST_H__
 
-#include "linux_cbb_list.h"
+#include "hi_cbb_list.h"
 
 #ifdef __cplusplus
 #if __cplusplus
