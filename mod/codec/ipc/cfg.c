@@ -17,8 +17,8 @@ gsf_codec_ipc_t codec_ipc = {
         .width  = 1920,
         .height = 1080,
         #endif
-        .fps    = 60,
-        .gop    = 60,
+        .fps    = 30,
+        .gop    = 30,
         .flow   = 0,
         .bitrate= 8000,
         .profile= 0,

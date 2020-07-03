@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
 
     #elif defined(GSF_CPU_3519a)
     // imx334-0-0-8-60
-    gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 60, };
+    gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
     gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
     gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
     gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = { 
