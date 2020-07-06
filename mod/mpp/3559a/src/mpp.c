@@ -262,9 +262,11 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
         goto END1;
     }
 
+	stDispSize.u32Height = (stDispSize.u32Height == 1080)?1088:stDispSize.u32Height;
+
     VB_CONFIG_S stVbConfig;
     memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
-    stVbConfig.u32MaxPoolCnt             = 1;
+    stVbConfig.u32MaxPoolCnt             = 128;
     stVbConfig.astCommPool[0].u32BlkCnt  = 10*u32VdecChnNum;
     stVbConfig.astCommPool[0].u64BlkSize = COMMON_GetPicBufferSize(stDispSize.u32Width, stDispSize.u32Height,
                                                 PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_SEG, 0);
@@ -972,7 +974,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     /*** enable vpss chn, with frame ***/
     stChnAttr.u32Width                    = ALIGN_UP(attr->width,  16);
     stChnAttr.u32Height                   = ALIGN_UP(attr->height, 16);
-    stChnAttr.enChnMode                   = VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER - vdec fps err vpss no data; //
+    stChnAttr.enChnMode                   = VPSS_CHN_MODE_USER; // SAMPLE_COMM_SYS_Init 1080=>1088
     stChnAttr.enCompressMode              = COMPRESS_MODE_SEG;
     stChnAttr.enDynamicRange              = DYNAMIC_RANGE_SDR8;
     stChnAttr.enPixelFormat               = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
