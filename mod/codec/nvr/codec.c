@@ -35,6 +35,88 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 }
 
 
+int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs)
+{
+  static int cnt[128];
+  if(cnt[VeChn]++ % 100 == 0)
+    printf(" VeChn:%d, PT:%d, cnt:%d\n", VeChn, PT, cnt[VeChn]);
+  return 0;
+}
+
+int venc_start(int start)
+{
+  int ret = 0, i = 0, j = 0, k = 0;
+  
+  gsf_mpp_recv_t st = {
+    .s32Cnt = 0,  
+    .VeChn = {0,},
+    .uargs = NULL,
+    .cb = gsf_venc_recv,
+  };
+  
+  if(!start)
+  {
+    printf("stop >>> gsf_mpp_venc_dest()\n");
+    gsf_mpp_venc_dest();
+  }
+
+  for(i = 0; i < 4; i++)
+  for(j = 0; j < GSF_CODEC_VENC_NUM; j++)
+  {
+    if (j == 1 || j == GSF_CODEC_SNAP_IDX ) // SUB;
+    {
+      continue; 
+    }
+    
+    gsf_mpp_venc_t venc = {
+      .VencChn    = i*GSF_CODEC_VENC_NUM+j,
+      .srcModId   = HI_ID_VPSS,
+      .VpssGrp    = i, // grp;
+      .VpssChn    = 0, // ch;
+      .enPayLoad  = PT_H264,
+      .enSize     = PIC_1080P,
+      .enRcMode   = SAMPLE_RC_CBR,
+      .u32Profile = 0,
+      .bRcnRefShareBuf = HI_TRUE,
+      .enGopMode  = VENC_GOPMODE_NORMALP,
+      .u32FrameRate = 30,
+      .u32Gop       = 30,
+      .u32BitRate   = 4000,
+      };
+    
+    if(!start)
+    {
+      ret = gsf_mpp_venc_stop(&venc);
+      printf("stop >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, 1920, ret);
+    }
+    else
+    {
+      ret = gsf_mpp_venc_start(&venc);
+      printf("start >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, 1920, ret);
+    }
+    
+    if(!start)
+      continue;  
+    
+    if(j < 2) // st_num+1(JPEG);
+    {
+      st.VeChn[st.s32Cnt] = venc.VencChn;
+      st.s32Cnt++;
+    }
+  }
+  
+  if(!start)
+    return 0;
+
+  // recv start;
+  printf("start >>> gsf_mpp_venc_recv s32Cnt:%d, cb:%p\n", st.s32Cnt, st.cb);
+  gsf_mpp_venc_recv(&st);
+  return 0;
+}
+
+
+
+
 
 int main(int argc, char *argv[])
 {
@@ -96,6 +178,10 @@ int main(int argc, char *argv[])
     gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
     
     live_mon();
+    
+    //test vdec => vpss => venc;
+    venc_start(1);
+    
     
     GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
