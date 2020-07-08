@@ -303,7 +303,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = ALIGN_UP(osd->point[0], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32Y = ALIGN_UP(osd->point[1], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer   = idx;
-    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = (osd->wh[0] && osd->wh[1])?80:0;//0;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;//(osd->wh[0] && osd->wh[1])?80:0;//0;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
     
     if(rgn_obj[handle].osd_info == NULL)
@@ -376,15 +376,48 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
         
       	memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
       	
+      	// draw string;
       	int l = 0;
       	for (l = 0; l < info->lineN; l++)
       	{
       	    gsf_font_utf8_draw_line(info->fontW,
       	          info->osdW,
                   info->fontS,
-                  rgn_obj[handle].osd_bmp + l * info->osdW * info->fontH*2,  
+                  rgn_obj[handle].osd_bmp + l * info->osdW * info->fontH*2,
           		    info->lines[l], "",
           		    0xffff, 0x0000, 0xffff, 0x0000);
+      	}
+      	// draw rect;
+      	if((osd->wh[0] && osd->wh[1]))
+      	{
+          HI_U16 *p = rgn_obj[handle].osd_bmp + (info->lineN*info->fontH)*(info->osdW*2);
+          HI_U16 leftH = info->osdH - (info->lineN*info->fontH);
+          
+        	int j = 0;
+          for(j = 0; j < info->osdW; j++)
+          {
+            p[0*info->osdW + j]
+            = p[1*info->osdW + j]  
+            = p[2*info->osdW + j] 
+            = p[3*info->osdW + j] 
+            = p[(leftH-1)*info->osdW + j]
+            = p[(leftH-2)*info->osdW + j]
+            = p[(leftH-3)*info->osdW + j] 
+            = p[(leftH-4)*info->osdW + j]
+            = argb8888_1555(0x01FF0000);
+          }
+          for(j = 0; j < leftH; j++)
+          {
+            p[j*info->osdW + 0]
+            = p[j*info->osdW + 1]
+            = p[j*info->osdW + 2]
+            = p[j*info->osdW + 3]
+            = p[j*info->osdW + info->osdW-1] 
+            = p[j*info->osdW + info->osdW-2]
+            = p[j*info->osdW + info->osdW-3] 
+            = p[j*info->osdW + info->osdW-4]
+            = argb8888_1555(0x01FF0000);
+          }
       	}
         
         bitMap.u32Width	    = info->osdW;
@@ -392,7 +425,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
       	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
       	bitMap.pData        = rgn_obj[handle].osd_bmp;
          
-      	if(osd->wh[0] == 0 && osd->wh[1] == 0)
+      	//make edge; if(osd->wh[0] == 0 && osd->wh[1] == 0)
       	  gsf_bitmap_make_edge(&bitMap);
         
         gsf_mpp_rgn_bitmap(handle, &bitMap);

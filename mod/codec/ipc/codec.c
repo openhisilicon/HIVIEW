@@ -15,7 +15,7 @@
 
 
 
-#define VI_2CH_3516d  1  //  1: 2 sensor input; 0: 1 sensor input;
+#define VI_2CH_3516d  0  //  1: 2 sensor input; 0: 1 sensor input;
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 
 
@@ -155,6 +155,8 @@ static int rgn_timer_func(void *u)
     osd.fontsize = 0;
     osd.point[0] = 10;
     osd.point[1] = 10;
+    osd.wh[0] = 100;
+    osd.wh[1] = 300;
   }
   static gsf_vmask_t vmask;
   if(!vmask.en)
