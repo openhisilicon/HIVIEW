@@ -25,7 +25,7 @@ gsf_codec_ipc_t codec_ipc = {
         .qp     = 0,
     },
     [1] = {
-        .en     = 1,
+        .en     = 0,
         .type   = 0,
         .width  = 1280,
         .height = 720,
@@ -37,7 +37,7 @@ gsf_codec_ipc_t codec_ipc = {
         .qp     = 0,
     },
     [2] = {
-        .en     = 1,
+        .en     = 0,
         .type   = 3,
         #ifdef GSF_CPU_3519a
         .width  = 3840,

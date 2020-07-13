@@ -124,6 +124,77 @@ static int sub_recv(char *msg, int size, int err)
       gsf_rgn_osd_set(0, i, &osd);
     }
   }
+  else if(pmsg->id == GSF_EV_SVP_FD)
+  {
+    gsf_svp_fds_t *fds = (gsf_svp_fds_t*) pmsg->data;
+    
+    int i = 0;
+	printf("fd cnt %d\n",fds->cnt);
+    for(i = 0;i < fds->cnt; i++)
+    {  
+		osd_keepalive[i] = 3;
+
+		gsf_osd_t osd;
+
+		osd.en = 1;
+		osd.type = 0;
+		osd.fontsize = 0;
+		osd.point[0] = (unsigned int)((float)fds->result[i].rect[0]/(float)fds->w*1920)&(-1);
+		osd.point[1] = (unsigned int)((float)fds->result[i].rect[1]/(float)fds->h*1080)&(-1);
+		osd.wh[0]    = (unsigned int)(45)&(-1);
+		osd.wh[1]    = (unsigned int)(25)&(-1);
+
+		sprintf(osd.text, "ID: %d", fds->result[i].id);
+
+		printf("GSF_EV_SVP_FD idx: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
+		    , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1]);
+		    
+		gsf_rgn_osd_set(0, i, &osd);
+
+		/*static gsf_vmask_t vmask_left;
+		static gsf_vmask_t vmask_right;
+		static gsf_vmask_t vmask_top;
+		static gsf_vmask_t vmask_bottom;
+		
+		vmask_top.en = 1;
+		vmask_top.color = 0x0000ffff;
+		vmask_top.rect[0] = (unsigned int)((float)fds->result[i].rect[0]/(float)fds->w*1920)&(-1);
+		vmask_top.rect[1] = (unsigned int)((float)fds->result[i].rect[1]/(float)fds->h*1080)&(-1);
+		vmask_top.rect[2] = (unsigned int)((float)fds->result[i].rect[2]/(float)fds->w*1920)&(-1);
+		vmask_top.rect[3] = 2;
+		gsf_rgn_vmask_set(0, 0+4*i, &vmask_top);
+		
+
+		vmask_left.en = 1;
+		vmask_left.color = 0x0000ffff;
+		vmask_left.rect[0] = (unsigned int)((float)fds->result[i].rect[0]/(float)fds->w*1920)&(-1);
+		vmask_left.rect[1] = (unsigned int)((float)fds->result[i].rect[1]/(float)fds->h*1080)&(-1);
+		vmask_left.rect[2] = 2;
+		vmask_left.rect[3] = (unsigned int)((float)fds->result[i].rect[3]/(float)fds->h*1080)&(-1);
+		gsf_rgn_vmask_set(0, 1+4*i, &vmask_left);
+
+
+		vmask_right.en = 1;
+		vmask_right.color = 0x0000ffff;
+		vmask_right.rect[0] = (unsigned int)((float)(fds->result[i].rect[0] + fds->result[i].rect[2])/(float)fds->w*1920)&(-1);;
+		vmask_right.rect[1] = (unsigned int)((float)fds->result[i].rect[1]/(float)fds->h*1080)&(-1);
+		vmask_right.rect[2] = 2;
+		vmask_right.rect[3] = (unsigned int)((float)fds->result[i].rect[3]/(float)fds->h*1080)&(-1);
+		gsf_rgn_vmask_set(0, 2+4*i, &vmask_right);
+
+		
+		vmask_bottom.en = 1;
+		vmask_bottom.color = 0x0000ffff;
+		vmask_bottom.rect[0] = (unsigned int)((float)fds->result[i].rect[0]/(float)fds->w*1920)&(-1);
+		vmask_bottom.rect[1] = (unsigned int)((float)(fds->result[i].rect[1]+fds->result[i].rect[3])/(float)fds->h*1080)&(-1);
+		vmask_bottom.rect[2] = (unsigned int)((float)fds->result[i].rect[2]/(float)fds->w*1920)&(-1);
+		vmask_bottom.rect[3] = 2;
+		gsf_rgn_vmask_set(0, 3+4*i, &vmask_bottom);*/
+
+
+	  
+    }
+  }
 
   return 0;
 }
@@ -131,7 +202,7 @@ static int sub_recv(char *msg, int size, int err)
 static int rgn_timer_func(void *u)
 {
 
-#if 0
+#if 1
 
   int i = 0;
   for(i = 0; i < GSF_CODEC_OSD_NUM; i++)
@@ -143,6 +214,15 @@ static int rgn_timer_func(void *u)
     memset(&osd, 0, sizeof(gsf_osd_t));          
     gsf_rgn_osd_set(0, i, &osd);
   }
+  /*for(i = 0; i < GSF_CODEC_VMASK_NUM; i++)
+  {
+    if(--osd_keepalive[i] > 0)
+      continue;
+    
+    gsf_vmask_t vmask;
+    memset(&vmask, 0, sizeof(gsf_vmask_t));          
+    gsf_rgn_vmask_set(0, i, &vmask);
+  }*/
   return 0;
   
 #else
@@ -398,11 +478,11 @@ int main(int argc, char *argv[])
     
       #if (VI_2CH_3516d == 0)
       // imx335-0-0-4-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx335", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 4, .fps  = 30, };
+      gsf_mpp_cfg_t cfg = { .snsname = "imx327", .snscnt = 1, .lane = 2, .wdr  = 0, .res  = 2, .fps  = 30, };
       gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
       gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
       gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_2592x1536, PIC_720P,}},
+            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
           };
       #else
       // imx327-2-0-2-30
