@@ -1271,7 +1271,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
 
     if( PT_JPEG != enType) // maohw
     {
-      s32Ret = SAMPLE_COMM_VENC_CloseReEncode(VencChn);
+      //s32Ret = SAMPLE_COMM_VENC_CloseReEncode(VencChn);
       if (HI_SUCCESS != s32Ret)
       {
           HI_MPI_VENC_DestroyChn(VencChn);

@@ -293,8 +293,8 @@ static HI_S32 SCENE_SetMainPipeSpecialParam(VI_PIPE ViPipe, HI_BOOL bMetryFixed)
     s32Ret = HI_SCENE_SetStaticDRC_Autogenerate(ViPipe, s_stSceneMode.astPipeAttr[ViPipe].u8PipeParamIndex);
     HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
 
-    s32Ret = HI_SCENE_SetStaticStatisticsCfg_AutoGenerate(ViPipe, s_stSceneMode.astPipeAttr[ViPipe].u8PipeParamIndex, bMetryFixed);
-    HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
+   /* s32Ret = HI_SCENE_SetStaticStatisticsCfg_AutoGenerate(ViPipe, s_stSceneMode.astPipeAttr[ViPipe].u8PipeParamIndex, bMetryFixed);
+    HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);*/
 
     s32Ret = HI_SCENE_SetStaticShading_AutoGenerate(ViPipe, s_stSceneMode.astPipeAttr[ViPipe].u8PipeParamIndex);
     HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
@@ -362,7 +362,7 @@ static HI_S32 SCENE_SetPipeStaticParam(HI_VOID)
         HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
     }
 
-    for (i = 0; i < HI_SCENE_PIPE_MAX_NUM; i++)
+    /*for (i = 0; i < HI_SCENE_PIPE_MAX_NUM; i++)
     {
         if (HI_TRUE != s_stSceneMode.astPipeAttr[i].bEnable)
         {
@@ -371,7 +371,7 @@ static HI_S32 SCENE_SetPipeStaticParam(HI_VOID)
 
         s32Ret = HI_SCENE_SetStaticSharpen_AutoGenerate(s_stSceneMode.astPipeAttr[i].VcapPipeHdl, s_stSceneMode.astPipeAttr[i].u8PipeParamIndex);
         HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
-    }
+    }*/
 
     for (i = 0; i < HI_SCENE_PIPE_MAX_NUM; i++)
     {

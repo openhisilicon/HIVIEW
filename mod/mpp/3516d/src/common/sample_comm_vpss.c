@@ -62,6 +62,22 @@ HI_S32 SAMPLE_COMM_VPSS_Start(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, VPSS_GRP_
             }
         }
     }
+            VpssChn = 1;
+            s32Ret = HI_MPI_VPSS_SetChnAttr(VpssGrp, VpssChn, &pastVpssChnAttr[VpssChn]);
+			
+            if (s32Ret != HI_SUCCESS)
+            {
+                SAMPLE_PRT("HI_MPI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
+                return HI_FAILURE;
+            }
+
+            s32Ret = HI_MPI_VPSS_EnableChn(VpssGrp, VpssChn);
+
+            if (s32Ret != HI_SUCCESS)
+            {
+                SAMPLE_PRT("HI_MPI_VPSS_EnableChn failed with %#x\n", s32Ret);
+                return HI_FAILURE;
+            }
 
     s32Ret = HI_MPI_VPSS_StartGrp(VpssGrp);
 

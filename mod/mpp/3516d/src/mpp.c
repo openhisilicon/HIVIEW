@@ -116,7 +116,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
   }
   printf("%s => loadstr: %s\n", __func__, loadstr);
-  system(loadstr);
+  //system(loadstr);
   
   
 

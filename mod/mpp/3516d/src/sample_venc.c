@@ -428,7 +428,19 @@ HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RA
             stVpssChnAttr[i].stAspectRatio.enMode         = ASPECT_RATIO_NONE;
         }
     }
-
+            stVpssChnAttr[1].u32Width                     = 640;
+            stVpssChnAttr[1].u32Height                    = 640;
+            stVpssChnAttr[1].enChnMode                    = VPSS_CHN_MODE_USER;
+            stVpssChnAttr[1].enCompressMode               = COMPRESS_MODE_NONE;//COMPRESS_MODE_SEG;
+            stVpssChnAttr[1].enDynamicRange               = enDynamicRange;
+            stVpssChnAttr[1].enPixelFormat                = enPixelFormat;
+            stVpssChnAttr[1].stFrameRate.s32SrcFrameRate  = -1;
+            stVpssChnAttr[1].stFrameRate.s32DstFrameRate  = -1;
+            stVpssChnAttr[1].u32Depth                     = 1;
+            stVpssChnAttr[1].bMirror                      = HI_FALSE;
+            stVpssChnAttr[1].bFlip                        = HI_FALSE;
+            stVpssChnAttr[1].enVideoFormat                = VIDEO_FORMAT_LINEAR;
+            stVpssChnAttr[1].stAspectRatio.enMode         = ASPECT_RATIO_NONE;
     s32Ret = SAMPLE_COMM_VPSS_Start(VpssGrp, pabChnEnable,&stVpssGrpAttr,stVpssChnAttr);
     if(s32Ret != HI_SUCCESS)
     {
