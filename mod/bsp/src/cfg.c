@@ -11,7 +11,7 @@ gsf_bsp_def_t bsp_def = {
     .sn    = "123456",
     .type  = "HI3516DV300_E_4_2",
     .snscnt = 1,
-    .sensor = {"imx335", "", },
+    .sensor = {"imx327", "", },
     .caps   = 0xFFFFFFFF,
     },
   .base = {
@@ -22,9 +22,9 @@ gsf_bsp_def_t bsp_def = {
   .eth  = {
     .dhcp = 0,
     .ipv6 = 0,
-    .ipaddr = "192.168.0.2",
+    .ipaddr = "10.6.5.134",
     .netmask = "255.255.255.0",
-    .gateway = "192.168.0.1",
+    .gateway = "10.6.5.1",
     .dns1    = "202.96.134.133",
     .dns2    = "202.96.128.86",
   },
