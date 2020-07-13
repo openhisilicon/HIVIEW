@@ -4,6 +4,7 @@ STRUCT(gsf_svp_t)
 {
   FIELD(int, md_alg);
   FIELD(int, lpr_alg);
+  FIELD(int, fd_alg);
 };
 
 #pragma pack(pop)

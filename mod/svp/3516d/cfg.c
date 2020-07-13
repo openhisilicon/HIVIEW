@@ -5,6 +5,7 @@ char svp_parm_path[128] = {0};
 gsf_svp_t svp_cfg = {
   .md_alg = 0,
   .lpr_alg = 0,
+  .fd_alg = 1,
 };
 
 int json_parm_load(char *filename, gsf_svp_t *cfg)

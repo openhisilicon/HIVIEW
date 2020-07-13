@@ -14,11 +14,22 @@ extern "C" {
 #define GSF_IPC_SVP      "ipc:///tmp/svp_rep"
 #define GSF_PUB_SVP      "ipc:///tmp/svp_pub"
 
+typedef int (*alg_func_start)(int para);//to do for more alg   int--->struct
+typedef int (*alg_func_stop)(int para);//to do for more alg    int--->struct
+
 enum {
     GSF_ID_SVP_CFG    = 1,  // gsf_svp_t;
     GSF_ID_SVP_MD     = 2,  // ch, gsf_svp_md_t
     GSF_ID_SVP_LPR    = 3,  // ch, gsf_svp_lpr_t
     GSF_ID_SVP_END
+};
+
+
+enum {
+    GSF_SVP_LPR   = 0,  // lPR
+    GSF_SVP_FD,  		// FD
+    GSF_SVP_MD,
+    GSF_SVP_MAX
 };
 
 enum {
@@ -28,8 +39,16 @@ enum {
 enum {
   GSF_EV_SVP_MD  = 1, // gsf_svp_mds_t;
   GSF_EV_SVP_LPR = 2, // gsf_svp_lprs_t;
+  GSF_EV_SVP_FD = 3, // gsf_svp_lprs_t;
 };
 
+typedef struct {
+	int type;
+	int enble;
+	alg_func_start start;
+	alg_func_stop stop;
+	
+}gsf_svp_alginfo;
 
 typedef struct {
   int vpssgrp;  // grp
@@ -80,6 +99,18 @@ typedef struct {
   gsf_lpr_result_t result[20];
 }gsf_svp_lprs_t;
 
+typedef struct {
+  int id;        //thr 
+  int rect[4];    //«¯”ÚŒª÷√
+}gsf_fd_result_t;
+
+
+typedef struct {
+  int pts;   // u64PTS/1000
+  int cnt;
+  int w, h;
+  gsf_fd_result_t result[20];
+}gsf_svp_fds_t;
 
 #ifdef __cplusplus
 }

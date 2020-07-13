@@ -8,10 +8,58 @@
 #include "svp.h"
 #include "cfg.h"
 #include "msg_func.h"
+#include "nnie_face_api.h"
+#include "FD.h"
 
 void* svp_pub = NULL;
 GSF_LOG_GLOBAL_INIT("SVP", 8*1024);
 
+static int svp_fd_start(int para);
+static int svp_fd_stop(int para);
+static int svp_lpr_start(int para);
+static int svp_lpr_stop(int para);
+
+static gsf_svp_alginfo AlgInfo[] =
+{
+	{GSF_SVP_LPR,0,svp_lpr_start,svp_lpr_stop},	
+	{GSF_SVP_FD,0,svp_fd_start,svp_fd_stop},
+	{GSF_SVP_MD,0,svp_lpr_start,svp_lpr_stop},	
+};
+static int svp_fd_start(int para)
+{
+	fd_start();
+	return 0;
+}
+
+static int svp_fd_stop(int para)
+{
+
+	fd_stop();
+	return 0;
+}
+static int svp_lpr_start(int para)
+{
+	extern int lpr_start(); 
+	lpr_start();
+	return 0;
+}
+
+static int svp_lpr_stop(int para)
+{
+	extern int lpr_stop(); 
+	lpr_stop();
+	return 0;
+}
+
+static int param_setting(gsf_svp_t *svp)
+{
+	if(1 == svp->md_alg)
+		AlgInfo[GSF_SVP_MD].enble = 1;
+	if(1 == svp->fd_alg)
+		AlgInfo[GSF_SVP_FD].enble = 1;
+	if(1 == svp->lpr_alg)
+		AlgInfo[GSF_SVP_LPR].enble = 1;
+}
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
     int ret = 0;
@@ -58,9 +106,14 @@ HI_VOID SAMPLE_IVE_HandleSig2(HI_S32 s32Signo)
   signal(SIGINT,SIG_IGN);
   signal(SIGTERM,SIG_IGN);
   
-  //SAMPLE_IVE_Md_HandleSig();
-  extern int lpr_stop(); lpr_stop();
-  
+    int i = 0;
+	for(i = 0; i<GSF_SVP_MAX; i++)
+	{
+		if(1 == AlgInfo[i].enble)
+		{
+			AlgInfo[i].stop(i);
+		}
+	}
   exit(-1);
 }
 
@@ -85,11 +138,19 @@ int main(int argc, char *argv[])
     }
     
     svp_pub = nm_pub_listen(GSF_PUB_SVP);
-    
-    printf("init algorithm library...\n");
-    //SAMPLE_IVE_Md();
-    
-    extern int lpr_start(); lpr_start();
+
+	//which alg should be running
+	param_setting(&svp_cfg);
+
+	//init for alg
+    int i = 0;
+	for(i = 0; i<GSF_SVP_MAX; i++)
+	{
+		if(1 == AlgInfo[i].enble)
+		{
+			AlgInfo[i].start(i);
+		}
+	}
     
     //init listen;
     GSF_LOG_CONN(0, 100);
