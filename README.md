@@ -9,6 +9,7 @@
 ##   
 ![fw](/fw.png)
 ![webs](/webs.jpg)
+![IR](/IR.png)
 ![rtsps1](/rtspserv1.jpg)
 ![rtsps2](/rtspserv2.jpg)
 ![rtspc1](/rtspcli1.jpg)
