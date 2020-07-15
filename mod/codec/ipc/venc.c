@@ -72,7 +72,7 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   rec.flag = (pstStream->u32PackCount > 1)?GSF_FRM_FLAG_IDR:0;
   rec.seq  = pstStream->u32Seq;
   rec.utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
-  rec.pts  = pstStream->pstPack[0].u64PTS/1000;
+  rec.pts  = rec.utc;//pstStream->pstPack[0].u64PTS/1000;
   rec.video.encode = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].type;
   rec.video.width  = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].width;
   rec.video.height = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;

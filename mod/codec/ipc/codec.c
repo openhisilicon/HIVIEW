@@ -269,7 +269,8 @@ int venc_start(int start)
       .VpssChn    = (j<p_venc_ini->st_num)?j:0,
 #endif
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
-      .enSize     = PIC_WIDTH(codec_ipc.venc[j].width),
+      //.enSize     = PIC_WIDTH(codec_ipc.venc[j].width),
+      .enSize     = PIC_640x512,
       .enRcMode   = SAMPLE_RC_CBR,
       .u32Profile = 0,
       .bRcnRefShareBuf = HI_TRUE,
@@ -286,7 +287,9 @@ int venc_start(int start)
     }
     else
     {
-      ret = gsf_mpp_venc_start(&venc);
+      //aiost
+      //ret = gsf_mpp_venc_start(&venc);
+      ret = gsf_mpp_uvc_venc_start(&venc);
       printf("start >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, codec_ipc.venc[j].width, ret);
     }
     
@@ -468,7 +471,7 @@ int main(int argc, char *argv[])
     };
     #endif
     
-    gsf_mpp_vi_start(&vi);
+    //gsf_mpp_vi_start(&vi);
     
     // vpss start;
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
@@ -477,7 +480,7 @@ int main(int argc, char *argv[])
     for(i = 0; i < venc_ini.ch_num; i++)
     #endif
     {
-      gsf_mpp_vpss_start(&vpss[i]);
+      //gsf_mpp_vpss_start(&vpss[i]);
     }
     
     // scene start;
@@ -489,7 +492,7 @@ int main(int argc, char *argv[])
     #else
     sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
     #endif
-    gsf_mpp_scene_start(scene_ini, 0);
+    //gsf_mpp_scene_start(scene_ini, 0);
 
 
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
@@ -512,7 +515,7 @@ int main(int argc, char *argv[])
     
     //test osd;
     /////////////////////////////////////
-    void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
+    //void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
     /////////////////////////////////////

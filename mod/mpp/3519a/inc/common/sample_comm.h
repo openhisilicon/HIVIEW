@@ -138,6 +138,7 @@ extern "C" {
 typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
+    PIC_640x512,   /* 640 * 512 */
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
     PIC_720P,	   /* 1280 * 720  */

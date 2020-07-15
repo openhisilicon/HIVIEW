@@ -12,7 +12,7 @@
 #include "mpp.h"
 
 
-
+extern HI_VOID SAMPLE_SEND_YUV_TO_VENC(HI_VOID);
 extern HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, HI_U32 u32SupplementConfig);
 extern HI_S32 SAMPLE_VENC_CheckSensor(SAMPLE_SNS_TYPE_E   enSnsType,SIZE_S  stSize);
 extern HI_S32 SAMPLE_VENC_ModifyResolution(SAMPLE_SNS_TYPE_E   enSnsType,PIC_SIZE_E *penSize,SIZE_S *pstSize);
@@ -250,6 +250,86 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
   return s32Ret;
 }
 
+int gsf_mpp_uvc_venc_start(gsf_mpp_venc_t *venc)
+{
+  VB_CONFIG_S stVbConf;
+  VENC_GOP_ATTR_S stGopAttr;
+  HI_S32 s32Ret = HI_SUCCESS;
+  HI_U32 u32BlkSize;
+  SIZE_S stSize;
+  HI_U32 u32OutWidth;
+  HI_U32 u32OutHeight;
+  HI_U32 u32OutStride;
+  HI_U64 u64AddrAlign = 16;
+
+  /******************************************
+  step  1: init variable 
+  ******************************************/
+  s32Ret = SAMPLE_COMM_SYS_GetPicSize(venc->enSize, &stSize);
+  if (HI_SUCCESS != s32Ret)
+  {
+	  SAMPLE_PRT("SAMPLE_COMM_SYS_GetPicSize failed!\n");
+    return s32Ret;
+  }
+  u32OutWidth  = stSize.u32Width;
+  u32OutHeight = stSize.u32Height;
+  u32OutStride = ALIGN_UP(u32OutWidth, u64AddrAlign);
+  
+  printf("u32OutWidth ============ %d\n", u32OutWidth);
+  printf("u32OutHeight ============ %d\n", u32OutHeight);
+  //printf("u32OutStride ============ %d\n", u32OutStride);
+  u32BlkSize = COMMON_GetPicBufferSize(stSize.u32Width, stSize.u32Height, PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_NONE, 0);
+
+  if (venc->VencChn == 0){
+
+    memset(&stVbConf,0,sizeof(VB_CONFIG_S));
+    stVbConf.u32MaxPoolCnt = 2;
+    /*ddr0 video buffer*/
+    stVbConf.astCommPool[0].u64BlkSize = u32BlkSize;
+    stVbConf.astCommPool[0].u32BlkCnt = 15;
+    stVbConf.astCommPool[1].u64BlkSize = u32BlkSize;
+    stVbConf.astCommPool[1].u32BlkCnt = 15;
+    //printf("u32BlkSize ============ %d\n", u32BlkSize);
+    /******************************************
+     step 2: mpp system init. 
+    ******************************************/
+    s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
+    if (HI_SUCCESS != s32Ret)
+    {
+      SAMPLE_PRT("system init failed with %d!\n", s32Ret);
+    }
+  }
+  
+  /******************************************
+	step 3: encode process
+  ******************************************/
+  s32Ret = SAMPLE_COMM_VENC_GetGopAttr(venc->enGopMode,&stGopAttr);
+  if (HI_SUCCESS != s32Ret)
+  {
+    SAMPLE_PRT("Venc Get GopAttr for %#x!\n", s32Ret);
+    return s32Ret;
+  }
+
+  //??????
+  printf("aiost add ============ SAMPLE_COMM_VENC_CreatAttr\n");
+  SAMPLE_COMM_VENC_CreatAttr(venc->VencChn, venc->u32FrameRate, venc->u32Gop, venc->u32BitRate);
+
+  printf("venc->u32FrameRate ========================== %d\n",venc->u32FrameRate);
+  s32Ret = SAMPLE_COMM_VENC_Start(venc->VencChn, 
+                                venc->enPayLoad, 
+                                venc->enSize, 
+                                venc->enRcMode,
+                                venc->u32Profile,
+                                //venc->bRcnRefShareBuf,
+                                &stGopAttr);
+  if (HI_SUCCESS != s32Ret)
+  {
+    SAMPLE_PRT("Venc Start failed for %#x!\n", s32Ret);
+  }
+
+  return s32Ret;
+}
+
 
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
 {
@@ -309,6 +389,8 @@ int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
 {
   HI_S32 s32Ret;
   s32Ret = SAMPLE_COMM_VENC_StartGetStreamCb(recv->VeChn,recv->s32Cnt, recv->cb, recv->uargs);
+  //aiost
+  SAMPLE_SEND_YUV_TO_VENC();
   return s32Ret;
 }
 
