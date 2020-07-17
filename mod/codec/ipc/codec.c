@@ -249,7 +249,6 @@ int venc_start(int start)
     printf("stop >>> gsf_mpp_venc_dest()\n");
     gsf_mpp_venc_dest();
   }
-
   for(i = 0; i < p_venc_ini->ch_num; i++)
   for(j = 0; j < GSF_CODEC_VENC_NUM; j++)
   {
@@ -269,15 +268,14 @@ int venc_start(int start)
       .VpssChn    = (j<p_venc_ini->st_num)?j:0,
 #endif
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
-      //.enSize     = PIC_WIDTH(codec_ipc.venc[j].width),
-      .enSize     = PIC_640x512,
+      .enSize     = (i > 0)?PIC_640x512:PIC_WIDTH(codec_ipc.venc[j].width),
       .enRcMode   = SAMPLE_RC_CBR,
       .u32Profile = 0,
       .bRcnRefShareBuf = HI_TRUE,
       .enGopMode  = VENC_GOPMODE_NORMALP,
-      .u32FrameRate = codec_ipc.venc[j].fps,
-      .u32Gop       = codec_ipc.venc[j].gop,
-      .u32BitRate   = codec_ipc.venc[j].bitrate,
+      .u32FrameRate = (i > 0)?25:codec_ipc.venc[j].fps,
+      .u32Gop       = (i > 0)?25:codec_ipc.venc[j].gop,
+      .u32BitRate   = (i > 0)?2000:codec_ipc.venc[j].bitrate,
     };
     
     if(!start)
@@ -288,8 +286,13 @@ int venc_start(int start)
     else
     {
       //aiost
-      //ret = gsf_mpp_venc_start(&venc);
-      ret = gsf_mpp_uvc_venc_start(&venc);
+      if (i == 0){ //IMX334
+        printf("gsf_mpp_venc_start ===> venc.VencChn == %d, venc.VpssGrp == %d, venc.VpssChn == %d\n", venc.VencChn, venc.VpssGrp, venc.VpssChn);
+        ret = gsf_mpp_venc_start(&venc);
+      }else { //IR Camera
+        printf("gsf_mpp_uvc_venc_start ===> venc.VencChn == %d, venc.VpssGrp == %d, venc.VpssChn == %d\n", venc.VencChn, venc.VpssGrp, venc.VpssChn);
+        ret = gsf_mpp_uvc_venc_start(&venc);
+      }
       printf("start >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, codec_ipc.venc[j].width, ret);
     }
     
@@ -313,8 +316,7 @@ int venc_start(int start)
   if(!start)
     return 0;
     
-  // recv start;
-  printf("start >>> gsf_mpp_venc_recv s32Cnt:%d, cb:%p\n", st.s32Cnt, st.cb);
+  // recv start
   gsf_mpp_venc_recv(&st);
   return 0;
 }
@@ -390,11 +392,12 @@ int main(int argc, char *argv[])
 
     #elif defined(GSF_CPU_3519a)
     // imx334-0-0-8-60
-    gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
-    gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
-    gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
+    gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 2, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
+    gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 2};
+    gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 2};
     gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = { 
             {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
+            {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
           };
     
     #elif defined(GSF_CPU_3516d)
@@ -471,7 +474,7 @@ int main(int argc, char *argv[])
     };
     #endif
     
-    //gsf_mpp_vi_start(&vi);
+    gsf_mpp_vi_start(&vi);
     
     // vpss start;
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
@@ -480,7 +483,7 @@ int main(int argc, char *argv[])
     for(i = 0; i < venc_ini.ch_num; i++)
     #endif
     {
-      //gsf_mpp_vpss_start(&vpss[i]);
+      gsf_mpp_vpss_start(&vpss[i]);
     }
     
     // scene start;
@@ -492,7 +495,7 @@ int main(int argc, char *argv[])
     #else
     sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
     #endif
-    //gsf_mpp_scene_start(scene_ini, 0);
+    gsf_mpp_scene_start(scene_ini, 0);
 
 
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)

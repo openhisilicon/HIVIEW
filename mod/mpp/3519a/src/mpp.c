@@ -215,7 +215,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
       goto EXIT_VI_STOP;
   }
 
-  if(vpss->ViPipe >= 0)
+  if(vpss->ViPipe == 0)
   {
     s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpss->ViPipe, vpss->ViChn, vpss->VpssGrp);
     if(s32Ret != HI_SUCCESS)
@@ -275,13 +275,14 @@ int gsf_mpp_uvc_venc_start(gsf_mpp_venc_t *venc)
   u32OutHeight = stSize.u32Height;
   u32OutStride = ALIGN_UP(u32OutWidth, u64AddrAlign);
   
-  printf("u32OutWidth ============ %d\n", u32OutWidth);
-  printf("u32OutHeight ============ %d\n", u32OutHeight);
+  //printf("u32OutWidth ============ %d\n", u32OutWidth);
+  //printf("u32OutHeight ============ %d\n", u32OutHeight);
   //printf("u32OutStride ============ %d\n", u32OutStride);
   u32BlkSize = COMMON_GetPicBufferSize(stSize.u32Width, stSize.u32Height, PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_NONE, 0);
 
-  if (venc->VencChn == 0){
-
+#if 0
+  if (venc->VencChn == 3){
+    printf("venc->VencChn ========================= %d\n",venc->VencChn);
     memset(&stVbConf,0,sizeof(VB_CONFIG_S));
     stVbConf.u32MaxPoolCnt = 2;
     /*ddr0 video buffer*/
@@ -299,7 +300,8 @@ int gsf_mpp_uvc_venc_start(gsf_mpp_venc_t *venc)
       SAMPLE_PRT("system init failed with %d!\n", s32Ret);
     }
   }
-  
+#endif
+
   /******************************************
 	step 3: encode process
   ******************************************/
@@ -311,10 +313,8 @@ int gsf_mpp_uvc_venc_start(gsf_mpp_venc_t *venc)
   }
 
   //??????
-  printf("aiost add ============ SAMPLE_COMM_VENC_CreatAttr\n");
   SAMPLE_COMM_VENC_CreatAttr(venc->VencChn, venc->u32FrameRate, venc->u32Gop, venc->u32BitRate);
 
-  printf("venc->u32FrameRate ========================== %d\n",venc->u32FrameRate);
   s32Ret = SAMPLE_COMM_VENC_Start(venc->VencChn, 
                                 venc->enPayLoad, 
                                 venc->enSize, 

@@ -10,13 +10,7 @@ extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <signal.h>
-
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -661,9 +655,9 @@ HI_VOID* SEND_YUV_TO_VENC(HI_VOID* pArgs)
 {
 	HI_U64  phyAddr;
 	HI_U8	*pVirAddr;
-    VENC_CHN VencChn0 = 0;
-	VENC_CHN VencChn1 = 1;
-	VENC_CHN VencChn2 = 2;
+    VENC_CHN VencChn3 = 3;
+	VENC_CHN VencChn4 = 4;
+	//VENC_CHN VencChn5 = 5;
 	HI_S32 s32Ret = HI_SUCCESS;
     VB_POOL hPool  = VB_INVALID_POOLID;
 	VB_BLK  vbBlk  = VB_INVALID_HANDLE;
@@ -672,6 +666,7 @@ HI_VOID* SEND_YUV_TO_VENC(HI_VOID* pArgs)
 	HI_U32 u32OutHeight = DEFAULT_PREVIEW_HEIGHT;
 	HI_U32 u32OutStride = DEFAULT_PREVIEW_WIDTH/2;
     HI_U32 u32BlkSize   = u32OutWidth*u32OutHeight*3/2;
+	HI_U64 u64pts = 0;
 	
 	open_device();
 	init_device();
@@ -694,7 +689,6 @@ HI_VOID* SEND_YUV_TO_VENC(HI_VOID* pArgs)
         {
             SAMPLE_PRT("Mem dev may not open\n");
         }
-    
         memset(&stFrmInfo.stVFrame, 0, sizeof(VIDEO_FRAME_S));
         stFrmInfo.stVFrame.u64PhyAddr[0] = phyAddr;
         stFrmInfo.stVFrame.u64PhyAddr[1] = stFrmInfo.stVFrame.u64PhyAddr[0] + u32OutStride * u32OutHeight;
@@ -702,26 +696,27 @@ HI_VOID* SEND_YUV_TO_VENC(HI_VOID* pArgs)
         stFrmInfo.stVFrame.u64VirAddr[0] = (HI_U64)(HI_UL)pVirAddr;
         stFrmInfo.stVFrame.u64VirAddr[1] = stFrmInfo.stVFrame.u64VirAddr[0] + u32OutStride * u32OutHeight;
         stFrmInfo.stVFrame.u64VirAddr[2] = stFrmInfo.stVFrame.u64VirAddr[1] + u32OutStride * u32OutHeight;
-        stFrmInfo.stVFrame.u32Width     = u32OutWidth;
-        stFrmInfo.stVFrame.u32Height    = u32OutHeight;
-        stFrmInfo.stVFrame.u32Stride[0] = u32OutStride;  
-        stFrmInfo.stVFrame.u32Stride[1] = u32OutStride; 
-        stFrmInfo.stVFrame.u32Stride[2] = u32OutStride; 
-        stFrmInfo.stVFrame.u32TimeRef = (u32Cnt * 2);
+        stFrmInfo.stVFrame.u32Width      = u32OutWidth;
+        stFrmInfo.stVFrame.u32Height     = u32OutHeight;
+        stFrmInfo.stVFrame.u32Stride[0]  = u32OutStride;  
+        stFrmInfo.stVFrame.u32Stride[1]  = u32OutStride; 
+        stFrmInfo.stVFrame.u32Stride[2]  = u32OutStride; 
+        stFrmInfo.stVFrame.u32TimeRef    = (u32Cnt * 2);
+		stFrmInfo.stVFrame.u64PTS        = u32Cnt * 40;//u64pts;
         stFrmInfo.stVFrame.enPixelFormat = SAMPLE_PIXEL_FORMAT;
         stFrmInfo.stVFrame.enField = VIDEO_FIELD_FRAME;
         stFrmInfo.u32PoolId = HI_MPI_VB_Handle2PoolId(vbBlk);
 		
 		fill_one_frame(pVirAddr);
 		
-		s32Ret = HI_MPI_VENC_SendFrame(VencChn0, &stFrmInfo, 0);
+		s32Ret = HI_MPI_VENC_SendFrame(VencChn3, &stFrmInfo, 0);
 		if(s32Ret != HI_SUCCESS) {
 			printf("HI_MPI_VENC_SendFrame0 = %X\n",s32Ret);
 		}
-		//s32Ret = HI_MPI_VENC_SendFrame(VencChn1, &stFrmInfo, 0);
-		//if(s32Ret != HI_SUCCESS) {
-		//	printf("HI_MPI_VENC_SendFrame1 = %X\n",s32Ret);
-		//}
+		s32Ret = HI_MPI_VENC_SendFrame(VencChn4, &stFrmInfo, 0);
+		if(s32Ret != HI_SUCCESS) {
+			printf("HI_MPI_VENC_SendFrame1 = %X\n",s32Ret);
+		}
 		//s32Ret = HI_MPI_VENC_SendFrame(VencChn2, &stFrmInfo, 0);
 		//if(s32Ret != HI_SUCCESS) {
 		//	printf("HI_MPI_VENC_SendFrame2 = %X\n",s32Ret);
