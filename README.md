@@ -10,11 +10,8 @@
 ![fw](/fw.png)
 ![webs](/webs.jpg)
 ![rtsps1](/rtspserv1.jpg)
-![rtsps2](/rtspserv2.jpg)
-![rtspc1](/rtspcli1.jpg)
-![mod](/mod.jpg)
-![mod](/moden.jpg)
 ![mod](/nvr.jpg)
-![mod](/gui.jpg)
 ![mod](/svp.jpg)
 ![mod](/multi-sns.jpg)
+### Thank you for your support
+![pay](/pay.jpg)
