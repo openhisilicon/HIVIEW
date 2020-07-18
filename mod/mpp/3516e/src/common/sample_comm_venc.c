@@ -678,6 +678,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH265Cbr.u32BitRate = 1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -720,6 +721,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH265Vbr.u32MaxBitRate = 1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -746,6 +748,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH265AVbr.u32MaxBitRate = 1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -775,6 +778,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH265QVbr.u32TargetBitRate= 1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -812,6 +816,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH265CVbr.u32MaxBitRate         = 1024 * 3 + 1024*u32FrameRate/30;
                         stH265CVbr.u32LongTermMaxBitrate = 1024 * 2 + 1024*u32FrameRate/30;
                         stH265CVbr.u32LongTermMinBitrate = 512;
@@ -883,6 +888,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH264Cbr.u32BitRate = 1024 * 2  + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -926,6 +932,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH264Vbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -955,6 +962,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH264AVbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -993,6 +1001,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                         stH264QVbr.u32TargetBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_720P:
+                    case PIC_960P:
                         stH264QVbr.u32TargetBitRate = 1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -1030,6 +1039,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stH264CVbr.u32MaxBitRate         = 1024 * 3 + 1024*u32FrameRate/30;
                         stH264CVbr.u32LongTermMaxBitrate = 1024 * 2 + 1024*u32FrameRate/30;
                         stH264CVbr.u32LongTermMinBitrate = 512;
@@ -1110,6 +1120,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stMjpegeCbr.u32BitRate = 1024 * 5  + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
@@ -1146,6 +1157,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
+                    case PIC_960P:
                         stMjpegVbr.u32MaxBitRate = 1024 * 5 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:

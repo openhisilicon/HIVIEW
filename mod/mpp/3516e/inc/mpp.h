@@ -21,6 +21,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
 typedef struct {
   HI_BOOL bLowDelay;
   HI_U32 u32SupplementConfig;
+  VI_STITCH_GRP_ATTR_S stStitchGrpAttr; // 3516Exxx no-support 
   // SAMPLE_VENC_SYS_Init;
   HI_BOOL vpss_en[VPSS_MAX_PHY_CHN_NUM];
   PIC_SIZE_E vpss_sz[VPSS_MAX_PHY_CHN_NUM];
@@ -35,8 +36,15 @@ int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int 
 
 typedef struct {
   VPSS_GRP    VpssGrp;
-  HI_S32      ViPipe; // >=0: bind ViPipe;
-  VI_CHN      ViChn; 
+  
+  MOD_ID_E  srcModId;
+  union{
+    HI_S32  ViPipe;
+  };
+  union{
+    VI_CHN  ViChn;
+  };
+
   HI_BOOL     enable[VPSS_MAX_PHY_CHN_NUM];
   PIC_SIZE_E  enSize[VPSS_MAX_PHY_CHN_NUM];
 }gsf_mpp_vpss_t;
@@ -48,10 +56,26 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 
 
+//venc;
 typedef struct {
-  VENC_CHN        VencChn;
-  VPSS_GRP        VpssGrp;
-  VPSS_CHN        VpssChn;
+  
+  VENC_CHN  VencChn;
+  
+  MOD_ID_E  srcModId;
+  union {
+    VPSS_GRP  VpssGrp;
+    AVS_GRP   AVSGrp;
+    VI_PIPE   ViPipe;
+    VO_LAYER  VoLayer;
+  };
+  union {
+    VPSS_CHN  VpssChn; // VPSS
+    AVS_CHN   AVSChn;  // AVS
+    VDEC_CHN  VdChn;   // VDEC
+    VI_CHN    ViChn;   // VI
+    VO_CHN    VoChn;   // VO
+  };
+  
   PAYLOAD_TYPE_E  enPayLoad;
   PIC_SIZE_E      enSize;
   HI_S32          enRcMode;

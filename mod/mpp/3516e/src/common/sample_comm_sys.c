@@ -173,6 +173,11 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
             pstSize->u32Height = 720;
             break;
 
+        case PIC_960P:   /* 1280 * 960 */
+            pstSize->u32Width  = 1280;
+            pstSize->u32Height = 960;
+            break;
+
         case PIC_1080P:  /* 1920 * 1080 */
             pstSize->u32Width  = 1920;
             pstSize->u32Height = 1080;

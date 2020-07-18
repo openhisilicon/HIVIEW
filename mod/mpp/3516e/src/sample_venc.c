@@ -246,6 +246,11 @@ static HI_U32 GetFullLinesStdFromSensorType(SAMPLE_SNS_TYPE_E enSnsType)
         case SMART_SC2335_MIPI_2M_30FPS_10BIT:
             FullLinesStd = 1125;
             break;
+            
+        case SMART_AR0130_DC_1M_30FPS_12BIT:    
+            FullLinesStd = 990;//746;
+            break;
+            
         case SONY_IMX335_MIPI_5M_30FPS_12BIT:
         case SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1:
             FullLinesStd = 1875;
@@ -275,7 +280,8 @@ static HI_VOID AdjustWrapBufLineBySnsType(SAMPLE_SNS_TYPE_E enSnsType, HI_U32 *p
     /*some sensor as follow need to expand the wrapBufLine*/
     if ((enSnsType == SMART_SC4236_MIPI_3M_30FPS_10BIT) ||
         (enSnsType == SMART_SC4236_MIPI_3M_20FPS_10BIT) ||
-        (enSnsType == SMART_SC2235_DC_2M_30FPS_10BIT))
+        //(enSnsType == SMART_AR0130_DC_1M_30FPS_12BIT)   || 
+        (enSnsType == SMART_SC2235_DC_2M_30FPS_10BIT)   )
     {
         *pWrapBufLine += WRAP_BUF_LINE_EXT;
     }

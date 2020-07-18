@@ -20,7 +20,11 @@ BOARD=demo;
 #DDR start:0x40000000, kernel start:0x40000000,  OS(32M); MMZ start:0x42000000
 mem_total=64                  # 64M, total mem
 mem_start=0x40000000          # phy mem start
-os_mem_size=32                # 32M, os mem
+
+#maohw
+#os_mem_size=32                # 32M, os mem
+os_mem_size=$(cat /proc/cmdline |cut -d" " -f1|sed -e 's/ //g'|cut -b 5-10|cut -d'M' -f1)
+
 mmz_start=0x42000000;         # mmz start addr
 mmz_size=32M;                 # 32M, mmz size
 ##################################################################
