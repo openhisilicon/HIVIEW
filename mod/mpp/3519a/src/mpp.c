@@ -44,7 +44,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = { /* name-lane-wdr-res
     {SONY_IMX334_MIPI_8M_30FPS_12BIT,        "imx334-0-0-8-30", "libsns_imx334.so", "stSnsImx334Obj"}, 
     {SONY_IMX334_MIPI_8M_60FPS_12BIT,        "imx334-0-0-8-60", "libsns_imx334.so", "stSnsImx334Obj"},
     {SONY_IMX334_MIPI_8M_30FPS_12BIT_WDR2TO1,"imx334-0-1-8-30", "libsns_imx334.so", "stSnsImx334Obj"}, 
-    {SONY_IMX377_MIPI_8M_30FPS_10BIT,        "imx337-0-0-8-30",  NULL, NULL},
+    {SONY_IMX377_MIPI_8M_30FPS_10BIT,        "imx377-0-0-8-30", "libsns_imx377.so", "stSnsImx377Obj"},
     {NVP6324_MIPI_2M_30FPS_8BIT,             "nvp6324-0-0-2-30", NULL, NULL},
   };
 

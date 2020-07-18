@@ -1853,7 +1853,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             }
         }
         /* Set Venc Fd. */
-        VencFd[i] = HI_MPI_VENC_GetFd(i);
+        VencFd[i] = HI_MPI_VENC_GetFd(VencChn/*i*/);
         if (VencFd[i] < 0)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetFd failed with %#x!\n",
@@ -1865,10 +1865,10 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             maxfd = VencFd[i];
         }
 
-        s32Ret = HI_MPI_VENC_GetStreamBufInfo (i, &stStreamBufInfo[i]);
+        s32Ret = HI_MPI_VENC_GetStreamBufInfo (VencChn/*i*/, &stStreamBufInfo[i]);
         if (HI_SUCCESS != s32Ret)
         {
-            SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo failed with %#x!\n", s32Ret);
+            SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo VencChn:%d, failed with %#x!\n", VencChn, s32Ret);
             return (void *)HI_FAILURE;
         }
     }
@@ -1908,7 +1908,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     *******************************************************/
                     memset(&stStream, 0, sizeof(stStream));
 
-                    s32Ret = HI_MPI_VENC_QueryStatus(i, &stStat);
+                    s32Ret = HI_MPI_VENC_QueryStatus(/*i*/pstPara->VeChn[i], &stStat);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_QueryStatus chn[%d] failed with %#x!\n", i, s32Ret);
@@ -1942,7 +1942,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                      step 2.4 : call mpi to get one-frame stream
                     *******************************************************/
                     stStream.u32PackCount = stStat.u32CurPacks;
-                    s32Ret = HI_MPI_VENC_GetStream(i, &stStream, HI_TRUE);
+                    s32Ret = HI_MPI_VENC_GetStream(pstPara->VeChn[i]/*i*/, &stStream, HI_TRUE);
                     if (HI_SUCCESS != s32Ret)
                     {
                         free(stStream.pstPack);
@@ -1983,7 +1983,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     /*******************************************************
                      step 2.6 : release stream
                      *******************************************************/
-                    s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
+                    s32Ret = HI_MPI_VENC_ReleaseStream(pstPara->VeChn[i]/*i*/, &stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed!\n");
@@ -2276,18 +2276,20 @@ HI_S32 SAMPLE_COMM_VENC_StartGetStream(VENC_CHN VeChn[],HI_S32 s32Cnt)
     for(i=0; i<s32Cnt; i++)
     {
         gs_stPara.VeChn[i] = VeChn[i];
+        printf("%s => s32Cnt:%d, VeChn:%d\n", __func__, s32Cnt, VeChn[i]);
     }
     return pthread_create(&gs_VencPid, 0, SAMPLE_COMM_VENC_GetVencStreamProc, (HI_VOID*)&gs_stPara);
 }
-
 
 //maohw
 HI_S32 SAMPLE_COMM_VENC_StartGetStreamCb(VENC_CHN VeChn[],HI_S32 s32Cnt, int (*cb)(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs), void *uargs)
 {
   gs_stPara.uargs = uargs;
   gs_stPara.cb = cb;
+  printf("%s => gs_stPara.cb:%p\n", __func__, gs_stPara.cb);
   return SAMPLE_COMM_VENC_StartGetStream(VeChn, s32Cnt);
 }
+
 
 
 /******************************************************************************
