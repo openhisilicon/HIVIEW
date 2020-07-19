@@ -331,7 +331,7 @@ ISP_SNS_OBJ_S *SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
         case SMART_AR0130_DC_1M_30FPS_12BIT:
             return &stSnsAr0130Obj;
         
-        case SMART_AR_DC_2M_30FPS_10BIT:
+        case SMART_SC2235_DC_2M_30FPS_10BIT:
             return &stSnsSc2235Obj;
 
 

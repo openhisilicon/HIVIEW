@@ -82,7 +82,6 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {SMART_SC2335_MIPI_2M_30FPS_10BIT,              "sc2335-0-0-2-30", "libsns_sc2335.so", "stSnsSc2335Obj"},
     {SMART_SC3235_MIPI_3M_30FPS_10BIT,              "sc3235-0-0-3-30", "libsns_sc3235.so", "stSnsSc3235Obj"}, 
     {SMART_SC2235_DC_2M_30FPS_10BIT,                "sc2235-0-0-2-30", "libsns_sc2235.so", "stSnsSc2235Obj"}, 
-    {SMART_AR0130_DC_1M_30FPS_12BIT,                "ar0130-0-0-1-30", "libsns_ar0130.so", "stSnsAr0130Obj"},
     {GALAXYCORE_GC2053_MIPI_2M_30FPS_10BIT,         "gc2053-0-0-2-30", "libsns_gc2053.so", "stSnsGc2053Obj"}, 
     {GALAXYCORE_GC2053_MIPI_2M_30FPS_10BIT_FORCAR,  "gc2053-1-0-2-30", "libsns_gc2053_forcar.so", "stSnsGc2053ForCarObj"}, 
     {SONY_IMX327_MIPI_2M_30FPS_12BIT,               "imx327-0-0-2-30", "libsns_imx307.so", "stSnsImx327Obj"}, 
@@ -151,11 +150,6 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[128];
   if(strstr(cfg->snsname, "sc2335"))
     sprintf(loadstr, "%s/ko/load3516ev200 -i -sensor0 %s", path, "sc2231");
-  else if(strstr(cfg->snsname, "ar0130"))
-  {
-    //sprintf(loadstr, "%s/ko/load3516ev200 -i -sensor0 %s -yuv0 1", path, "sc2235"); // 27M;
-    sprintf(loadstr, "%s/ko/load3516ev200 -i -sensor0 %s -yuv0 1", path, "sc4236"); // 24M;
-  }
   else
     sprintf(loadstr, "%s/ko/load3516ev200 -i -sensor0 %s", path, cfg->snsname);
   

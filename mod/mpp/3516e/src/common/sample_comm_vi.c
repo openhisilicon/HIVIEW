@@ -3931,7 +3931,7 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E *penS
             *penSize = PIC_1080P;
             break;
         case SMART_AR0130_DC_1M_30FPS_12BIT:
-            *penSize = PIC_720P;
+            *penSize = PIC_960P;
             break;
         case GALAXYCORE_GC2053_MIPI_2M_30FPS_10BIT:
         case GALAXYCORE_GC2053_MIPI_2M_30FPS_10BIT_FORCAR:
