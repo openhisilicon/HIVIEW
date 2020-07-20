@@ -1949,7 +1949,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
         s32Ret = HI_MPI_VENC_GetStreamBufInfo (VencChn/*i*/, &stStreamBufInfo[i]);
         if (HI_SUCCESS != s32Ret)
         {
-            SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo failed with %#x!\n", s32Ret);
+            SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo VencChn:%d, failed with %#x!\n", VencChn, s32Ret);
             return (void *)HI_FAILURE;
         }
     }

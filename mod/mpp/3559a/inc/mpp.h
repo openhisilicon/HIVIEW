@@ -121,6 +121,7 @@ int gsf_mpp_scene_stop();
 
 enum {
   GSF_MPP_VENC_CTL_IDR = 0,
+  GSF_MPP_VENC_CTL_RST = 1,
 };
 
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
@@ -236,9 +237,15 @@ int gsf_mpp_vo_setfps(int volayer, int ch, int fps);
 //Çå³ý½âÂëÏÔÊ¾BUFF
 int gsf_mpp_vo_clear(int volayer, int ch);
 
+// VO-BIND-VPSS;
+typedef struct {
+  struct {
+    VPSS_GRP  VpssGrp; 
+    VPSS_CHN  VpssChn;
+  }src[VO_LAYOUT_64MUX];
+}gsf_mpp_vo_bind_t;
 
-
-
+int gsf_mpp_vo_bind(int volayer, gsf_mpp_vo_bind_t *bind);
 
 
 //private for mpp;

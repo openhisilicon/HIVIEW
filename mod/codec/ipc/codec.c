@@ -18,12 +18,16 @@
 #define VI_2CH_3516d  0  //  1: 2 sensor input; 0: 1 sensor input;
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 
+#ifndef PIC_VGA
+#define PIC_VGA PIC_D1_NTSC
+#endif
 
 #define PIC_WIDTH(w) \
             (w >= 3840)?PIC_3840x2160:\
             (w >= 1920)?PIC_1080P:\
             (w >= 1280)?PIC_720P: \
-            PIC_D1_NTSC
+            (w >= 720)?PIC_D1_NTSC: \
+            PIC_VGA
             
 #define PT_VENC(t) \
             (t == GSF_ENC_H264)? PT_H264:\
@@ -415,16 +419,20 @@ int main(int argc, char *argv[])
           };
       #endif
     
-    #elif defined(GSF_CPU_3516d)
-    // sc2335-0-0-2-30
-    gsf_mpp_cfg_t cfg = { .snsname = "sc2335", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 2, .fps  = 30, };
-    gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
-    gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
-    gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-          {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_1080P, PIC_720P,}},
-        };
+    #elif defined(GSF_CPU_3516e)
+    
+      #if 1
+      // sc2335-0-0-2-30
+      gsf_mpp_cfg_t cfg = { .snsname = "sc2335", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 2, .fps  = 30, };
+      gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
+      gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
+      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
+            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_1080P, PIC_720P,}},
+          };
+
+      #endif
     #else
-    #error "unknow gsf_mpp_cfg_t."
+    #error "error unknow gsf_mpp_cfg_t."
     #endif 
 
     //maohw strcpy(cfg.snsname, bsp_def.board.sensor[0]);

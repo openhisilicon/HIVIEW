@@ -435,7 +435,7 @@ HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RA
             stVpssChnAttr[i].enPixelFormat                = enPixelFormat;
             stVpssChnAttr[i].stFrameRate.s32SrcFrameRate  = -1;
             stVpssChnAttr[i].stFrameRate.s32DstFrameRate  = -1;
-            stVpssChnAttr[i].u32Depth                     = 1; //maohw
+            stVpssChnAttr[i].u32Depth                     = 1; //maohw HI_MPI_VPSS_GetChnFrame;
             stVpssChnAttr[i].bMirror                      = HI_FALSE;
             stVpssChnAttr[i].bFlip                        = HI_FALSE;
             stVpssChnAttr[i].enVideoFormat                = VIDEO_FORMAT_LINEAR;

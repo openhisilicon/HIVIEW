@@ -41,7 +41,7 @@ enum {
 };
 
 #define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*3+8*1) + (type)*(8*3) + (st)*(8) + idx)
-static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_IPC_CHN)*(8*3+8*1)];
+static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_NVR_CHN)*(8*3+8*1)];
 
 int utf8_byte_num(unsigned char firstCh)
 {
@@ -318,7 +318,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     gsf_parse_text(osd->text, info->lines, &info->lineN, &info->colN);
     
-    gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
+    gsf_calc_fontsize(codec_nvr.venc[i].width, codec_nvr.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
     
     info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
     info->osdH = info->fontH * info->lineN + 1;
@@ -431,10 +431,51 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
         gsf_mpp_rgn_bitmap(handle, &bitMap);
     }
     
-    gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
-    
+    gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);  
   }
 }
+
+
+    
+#if 0
+{
+    BITMAP_S stBitmap;
+    RGN_CANVAS_INFO_S stRgnCanvasInfo;
+    gsf_mpp_rgn_canvas_get(handle, &stRgnCanvasInfo);
+    
+    printf("handle:%d, u64PhyAddr:%llx, u64VirtAddr:%llx,"
+           "stSize.u32Width:%d, stSize.u32Height:%d, u32Stride:%d, enPixelFmt:%d\n"
+           , handle, stRgnCanvasInfo.u64PhyAddr, stRgnCanvasInfo.u64VirtAddr
+           , stRgnCanvasInfo.stSize.u32Width, stRgnCanvasInfo.stSize.u32Height
+           , stRgnCanvasInfo.u32Stride, stRgnCanvasInfo.enPixelFmt);
+           
+    HI_U16 *p = stBitmap.pData = (HI_VOID*)(HI_UL)stRgnCanvasInfo.u64VirtAddr;
+    
+    memset(p, 0, stRgnCanvasInfo.stSize.u32Height*stRgnCanvasInfo.u32Stride);
+    
+    int j = 0;
+    for(j = 0; j < stRgnCanvasInfo.stSize.u32Width; j++)
+    {
+      p[0*stRgnCanvasInfo.u32Stride/2 + j]
+      = p[1*stRgnCanvasInfo.u32Stride/2 + j]  
+      = p[(stRgnCanvasInfo.stSize.u32Height-1)*stRgnCanvasInfo.u32Stride/2 + j] 
+      = p[(stRgnCanvasInfo.stSize.u32Height-2)*stRgnCanvasInfo.u32Stride/2 + j]
+      = argb8888_1555(0x01FF0000);
+    }
+    for(j = 0; j < stRgnCanvasInfo.stSize.u32Height; j++)
+    {
+      p[j*stRgnCanvasInfo.u32Stride/2 + 0]
+      = p[j*stRgnCanvasInfo.u32Stride/2 + 1]  
+      = p[j*stRgnCanvasInfo.u32Stride/2 + stRgnCanvasInfo.stSize.u32Width - 1] 
+      = p[j*stRgnCanvasInfo.u32Stride/2 + stRgnCanvasInfo.stSize.u32Width - 2]
+      = argb8888_1555(0x01FF0000);
+    }
+    gsf_mpp_rgn_canvas_update(handle);
+}
+#endif
+
+
+
 
 int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
 {

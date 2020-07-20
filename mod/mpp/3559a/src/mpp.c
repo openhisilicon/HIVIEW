@@ -675,10 +675,33 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
     case GSF_MPP_VENC_CTL_IDR:
       ret = HI_MPI_VENC_RequestIDR(VencChn, HI_TRUE);
       break;
+    case GSF_MPP_VENC_CTL_RST:
+      ret = HI_MPI_VENC_StopRecvFrame(VencChn);
+      if (ret != HI_SUCCESS)
+      {
+        printf("HI_MPI_VENC_StopRecvFrame err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      ret = HI_MPI_VENC_ResetChn(VencChn);
+      if (ret != HI_SUCCESS)
+      {
+        printf("HI_MPI_VENC_ResetChn err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      VENC_RECV_PIC_PARAM_S  stRecvParam;
+      stRecvParam.s32RecvPicNum = -1;
+      ret = HI_MPI_VENC_StartRecvFrame(VencChn,&stRecvParam);
+      if (ret != HI_SUCCESS)
+      {
+        printf("HI_MPI_VENC_StartRecvFrame err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      
+      break;
     default:
       break;
   }
-  printf("VencChn:%d, id:%d, ret:%d\n", VencChn, id, ret);
+  printf("%s => VencChn:%d, id:%d, ret:%d\n", __func__, VencChn, id, ret);
   return ret;
 }
 
@@ -828,7 +851,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
     SAMPLE_COMM_VPSS_UnBind_VO(i, VPSS_CHN0, volayer, i);
     SAMPLE_COMM_VDEC_UnBind_VPSS(i, i);
     
-    HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_FALSE};
+    HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
     SAMPLE_COMM_VPSS_Stop(i, chen);
       
     // only set width = height = 0, tell gsf_mpp_vo_vsend to recreate vdec&vpss;
@@ -885,9 +908,14 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     SAMPLE_COMM_VDEC_UnBind_VPSS(ch, ch);
     
     // stop  vpss;
+    #if 0
     s32Ret = HI_MPI_VPSS_StopGrp(ch);
     s32Ret = HI_MPI_VPSS_DisableChn(ch, VPSS_CHN0);
     s32Ret = HI_MPI_VPSS_DestroyGrp(ch);
+    #else
+    HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
+    s32Ret = SAMPLE_COMM_VPSS_Stop(ch, chen);
+    #endif
     // stop  vdec;
     HI_MPI_VDEC_StopRecvStream(ch);
     HI_MPI_VDEC_DestroyChn(ch);
@@ -895,7 +923,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     // start vdec;
     {
     
-    printf("ch:%d, etype:%d, width:%d, height:%d\n", ch, attr->etype, attr->width, attr->height);
+    printf("%s => start vdec ch:%d, etype:%d, width:%d, height:%d\n", __func__, ch, attr->etype, attr->width, attr->height);
     
     VDEC_CHN_ATTR_S stChnAttr;
     VDEC_CHN_POOL_S stPool;
@@ -953,62 +981,100 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     stChnParam.u32DisplayFrameNum = 2;
     CHECK_CHN_RET(HI_MPI_VDEC_SetChnParam(ch, &stChnParam), ch, "HI_MPI_VDEC_GetChnParam");
     CHECK_CHN_RET(HI_MPI_VDEC_StartRecvStream(ch), ch, "HI_MPI_VDEC_StartRecvStream");
+    
+    // 
+    HI_MPI_VDEC_SetDisplayMode(ch, VIDEO_DISPLAY_MODE_PREVIEW);
     }
 
     // start vpss;
+    if(0)
     {
-    VPSS_GRP_ATTR_S stGrpAttr = {0};
-    VPSS_CHN_ATTR_S stChnAttr = {0};
-    
-    /*** create vpss group ***/
-    stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  16);
-    stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 16);
-    stGrpAttr.stFrameRate.s32SrcFrameRate = -1;
-    stGrpAttr.stFrameRate.s32DstFrameRate = -1;
-    stGrpAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;
-    stGrpAttr.enPixelFormat  = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
-    stGrpAttr.bNrEn   = HI_FALSE;
-    s32Ret = HI_MPI_VPSS_CreateGrp(ch, &stGrpAttr);
+      VPSS_GRP_ATTR_S stGrpAttr = {0};
+      VPSS_CHN_ATTR_S stChnAttr = {0};
+      
+      /*** create vpss group ***/
+      stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  16);
+      stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 16);
+      stGrpAttr.stFrameRate.s32SrcFrameRate = -1;
+      stGrpAttr.stFrameRate.s32DstFrameRate = -1;
+      stGrpAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;
+      stGrpAttr.enPixelFormat  = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+      stGrpAttr.bNrEn   = HI_FALSE;
+      s32Ret = HI_MPI_VPSS_CreateGrp(ch, &stGrpAttr);
 
-    
-    /*** enable vpss chn, with frame ***/
-    stChnAttr.u32Width                    = ALIGN_UP(attr->width,  16);
-    stChnAttr.u32Height                   = ALIGN_UP(attr->height, 16);
-    stChnAttr.enChnMode                   = VPSS_CHN_MODE_USER; // SAMPLE_COMM_SYS_Init 1080=>1088
-    stChnAttr.enCompressMode              = COMPRESS_MODE_SEG;
-    stChnAttr.enDynamicRange              = DYNAMIC_RANGE_SDR8;
-    stChnAttr.enPixelFormat               = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
-    stChnAttr.stFrameRate.s32SrcFrameRate = -1;
-    stChnAttr.stFrameRate.s32DstFrameRate = -1;
-    stChnAttr.u32Depth                    = 1; // 0;
-    stChnAttr.bMirror                     = HI_FALSE;
-    stChnAttr.bFlip                       = HI_FALSE;
-    stChnAttr.stAspectRatio.enMode        = ASPECT_RATIO_NONE;
-    stChnAttr.enVideoFormat               = VIDEO_FORMAT_LINEAR;
-    
-    s32Ret = HI_MPI_VPSS_SetChnAttr(ch, VPSS_CHN0, &stChnAttr);
-    s32Ret = HI_MPI_VPSS_EnableChn(ch, VPSS_CHN0);
-    s32Ret = HI_MPI_VPSS_StartGrp(ch);
-    
+      
+      /*** enable vpss chn, with frame ***/
+      stChnAttr.u32Width                    = ALIGN_UP(attr->width,  16);
+      stChnAttr.u32Height                   = ALIGN_UP(attr->height, 16);
+      stChnAttr.enChnMode                   = VPSS_CHN_MODE_USER;//VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER - 1920x1088; //
+      stChnAttr.enCompressMode              = COMPRESS_MODE_NONE;//; //COMPRESS_MODE_SEG // HI_MPI_VPSS_GetChnFrame;
+      stChnAttr.enDynamicRange              = DYNAMIC_RANGE_SDR8;
+      stChnAttr.enPixelFormat               = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+      stChnAttr.stFrameRate.s32SrcFrameRate = -1;
+      stChnAttr.stFrameRate.s32DstFrameRate = -1;
+      stChnAttr.u32Depth                    = 1; // 0; HI_MPI_VPSS_GetChnFrame;
+      stChnAttr.bMirror                     = HI_FALSE;
+      stChnAttr.bFlip                       = HI_FALSE;
+      stChnAttr.stAspectRatio.enMode        = ASPECT_RATIO_NONE;
+      stChnAttr.enVideoFormat               = VIDEO_FORMAT_LINEAR;
+      
+      s32Ret = HI_MPI_VPSS_SetChnAttr(ch, VPSS_CHN0, &stChnAttr);
+      s32Ret = HI_MPI_VPSS_EnableChn(ch, VPSS_CHN0);
+      s32Ret = HI_MPI_VPSS_StartGrp(ch);
+    }
+    else
+    {
+      VPSS_GRP_ATTR_S stGrpAttr = {0};
+      VPSS_CHN_ATTR_S stChnAttr[VPSS_MAX_PHY_CHN_NUM] = {0};
+      
+      /*** create vpss group ***/
+      stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  16);
+      stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 16);
+      stGrpAttr.stFrameRate.s32SrcFrameRate = -1;
+      stGrpAttr.stFrameRate.s32DstFrameRate = -1;
+      stGrpAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;
+      stGrpAttr.enPixelFormat  = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+      stGrpAttr.bNrEn   = HI_FALSE;
+        
+      /*** enable vpss chn, with frame ***/
+      int i;
+      for(i = 0; i < 2; i++)
+      {
+        stChnAttr[i].u32Width                    = ALIGN_UP((i == 0)?attr->width:640,  16);
+        stChnAttr[i].u32Height                   = ALIGN_UP((i == 0)?attr->height:480, 16);
+        stChnAttr[i].enChnMode                   = VPSS_CHN_MODE_USER; //VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER - 1920x1088; //
+        stChnAttr[i].enCompressMode              = COMPRESS_MODE_NONE;//; //COMPRESS_MODE_SEG // HI_MPI_VPSS_GetChnFrame;
+        stChnAttr[i].enDynamicRange              = DYNAMIC_RANGE_SDR8;
+        stChnAttr[i].enPixelFormat               = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+        stChnAttr[i].stFrameRate.s32SrcFrameRate = -1;
+        stChnAttr[i].stFrameRate.s32DstFrameRate = -1;
+        stChnAttr[i].u32Depth                    = 1; // 0; HI_MPI_VPSS_GetChnFrame;
+        stChnAttr[i].bMirror                     = HI_FALSE;
+        stChnAttr[i].bFlip                       = HI_FALSE;
+        stChnAttr[i].stAspectRatio.enMode        = ASPECT_RATIO_NONE;
+        stChnAttr[i].enVideoFormat               = VIDEO_FORMAT_LINEAR;
+      }
+      
+      HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
+      s32Ret = SAMPLE_COMM_VPSS_Start(ch, chen, &stGrpAttr, stChnAttr);
     }
     // bind  vdec && vpss && vo;
     s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, ch);
     s32Ret = SAMPLE_COMM_VPSS_Bind_VO(ch, VPSS_CHN0, volayer, ch);
-
   }
   
   pthread_mutex_unlock(&vdev->lock);
   
   // send vdec;
   VDEC_STREAM_S stStream = {0};
-  stStream.u64PTS  = 0;
+  stStream.u64PTS  = attr->pts;//0;
   stStream.pu8Addr = data;
   stStream.u32Len  = attr->size;
   stStream.bEndOfFrame  = HI_TRUE;
   stStream.bEndOfStream = HI_FALSE;   
   stStream.bDisplay = 1;
   s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
-  //printf("HI_MPI_VDEC_SendStream ret:0x%x\n", s32Ret);
+  //printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x\n", ch, s32Ret);
   return err;
 }
 
@@ -1037,6 +1103,14 @@ int gsf_mpp_vo_clear(int volayer, int ch)
   
   return err;
 }
+
+// VO-BIND-VPSS;
+int gsf_mpp_vo_bind(int volayer, gsf_mpp_vo_bind_t *bind)
+{
+  return 0;
+}
+
+
 
 static struct fb_bitfield s_r16 = {10, 5, 0};
 static struct fb_bitfield s_g16 = {5, 5, 0};

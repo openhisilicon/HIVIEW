@@ -5,12 +5,32 @@
 #include "inc/gsf.h"
 #include "fw/comm/inc/proc.h"
 #include "mod/bsp/inc/bsp.h"
-
+#include "mod/svp/inc/svp.h"
 #include "codec.h"
 #include "cfg.h"
 #include "msg_func.h"
 #include "mpp.h"
 #include "live.h"
+#include "rgn.h"
+#include "venc.h"
+
+#ifndef PIC_VGA
+#define PIC_VGA PIC_D1_NTSC
+#endif
+
+#define PIC_WIDTH(w) \
+            (w >= 3840)?PIC_3840x2160:\
+            (w >= 1920)?PIC_1080P:\
+            (w >= 1280)?PIC_720P: \
+            (w >= 720)?PIC_D1_NTSC: \
+            PIC_VGA
+            
+#define PT_VENC(t) \
+            (t == GSF_ENC_H264)? PT_H264:\
+            (t == GSF_ENC_H265)? PT_H265:\
+            (t == GSF_ENC_JPEG)? PT_JPEG:\
+            (t == GSF_ENC_MJPEG)? PT_MJPEG:\
+            PT_H264
 
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
@@ -34,14 +54,146 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
+static int osd_keepalive[GSF_CODEC_OSD_NUM] = {3,3,3,3,3,3,3,3};
 
-int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs)
+static int sub_recv(char *msg, int size, int err)
 {
-  static int cnt[128];
-  if(cnt[VeChn]++ % 100 == 0)
-    printf(" VeChn:%d, PT:%d, cnt:%d\n", VeChn, PT, cnt[VeChn]);
+  gsf_msg_t *pmsg = (gsf_msg_t*)msg;
+  
+  printf("pmsg->id:%d\n", pmsg->id);
+  
+  if(pmsg->id == GSF_EV_SVP_MD)
+  {
+    gsf_svp_mds_t *mds = (gsf_svp_mds_t*) pmsg->data;
+    
+    int i = 0;
+    for(i = 0; i < 4 && i < mds->cnt; i++)
+    {
+      
+      osd_keepalive[i] = 3;
+      
+      gsf_osd_t osd;
+
+      osd.en = 1;
+      osd.type = 0;
+      osd.fontsize = 0;
+      osd.point[0] = (unsigned int)((float)mds->result[i].rect[0]/(float)mds->w*1920)&(-1);
+      osd.point[1] = (unsigned int)((float)mds->result[i].rect[1]/(float)mds->h*1080)&(-1);
+      osd.wh[0]    = (unsigned int)((float)mds->result[i].rect[2]/(float)mds->w*1920)&(-1);
+      osd.wh[1]    = (unsigned int)((float)mds->result[i].rect[3]/(float)mds->h*1080)&(-1);
+      
+      sprintf(osd.text, "ID: %d", i);
+      
+      printf("GSF_EV_SVP_MD idx: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
+            , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1]);
+            
+      gsf_rgn_osd_set(0, i, &osd);
+    }
+  }
+  else if(pmsg->id == GSF_EV_SVP_LPR)
+  {
+    gsf_svp_lprs_t *lprs = (gsf_svp_lprs_t*) pmsg->data;
+    
+    int i = 0;
+    //lprs->cnt = 1;
+    for(i = 0; i < 4 && i < lprs->cnt; i++)
+    {
+      
+      osd_keepalive[i] = 3;
+      
+      gsf_osd_t osd;
+
+      osd.en = 1;
+      osd.type = 0;
+      osd.fontsize = 1;
+
+      osd.point[0] = 0;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
+      osd.point[1] = 800+i*100;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
+      osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*1920)&(-1);
+      osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*1080)&(-1);
+      
+      char utf8str[32] = {0};
+      gsf_gb2312_to_utf8(lprs->result[i].number, strlen(lprs->result[i].number), utf8str);
+      sprintf(osd.text, "%s", utf8str);
+      
+      printf("GSF_EV_SVP_LPR idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
+            , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);
+            
+      gsf_rgn_osd_set(0, i, &osd);
+    }
+  }
+
   return 0;
 }
+
+static int rgn_timer_func(void *u)
+{
+
+#if 0 
+
+  int i = 0;
+  for(i = 0; i < GSF_CODEC_OSD_NUM; i++)
+  {
+    if(--osd_keepalive[i] > 0)
+      continue;
+    
+    gsf_osd_t osd;
+    memset(&osd, 0, sizeof(gsf_osd_t));          
+    gsf_rgn_osd_set(0, i, &osd);
+  }
+  return 0;
+  
+#else
+  
+  static gsf_osd_t osd;
+  if(!osd.en)
+  {
+    osd.en = 1;
+    osd.type = 0;
+    osd.fontsize = 0;
+    osd.point[0] = 10;
+    osd.point[1] = 10;
+    osd.wh[0] = 100;
+    osd.wh[1] = 300;
+  }
+  static gsf_vmask_t vmask;
+  if(!vmask.en)
+  {
+    vmask.en = 1;
+    vmask.color = 0x0000ffff;
+    vmask.rect[0] = 100;
+    vmask.rect[1] = 100;
+    vmask.rect[2] = 200;
+    vmask.rect[3] = 200;
+  }
+  
+  time_t rawtime;
+  time(&rawtime);
+  struct tm *info = localtime(&rawtime);
+  strftime(osd.text, 80, "%Y-%m-%d %H:%M:%S", info);
+  
+  osd.point[0] += 100;
+  osd.point[0] %= 2000;
+  osd.point[1] += 100;
+  osd.point[1] %= 2000;
+  printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
+  gsf_rgn_osd_set(0, 0, &osd);
+  
+  vmask.rect[0] += 100;
+  vmask.rect[0] %= 2000;
+  vmask.rect[1] += 100;
+  vmask.rect[1] %= 2000;
+  printf("vmask: x:%d,y:%d,w:%d,h:%d\n", vmask.rect[0], vmask.rect[1], vmask.rect[2], vmask.rect[3]);
+  gsf_rgn_vmask_set(0, 0, &vmask);
+  
+  return 0;
+#endif
+}
+
+
+
+static gsf_venc_ini_t *p_venc_ini = NULL;
+
 
 int venc_start(int start)
 {
@@ -60,39 +212,39 @@ int venc_start(int start)
     gsf_mpp_venc_dest();
   }
 
-  for(i = 0; i < 4; i++)
+  for(i = 0; i < p_venc_ini->ch_num; i++)
   for(j = 0; j < GSF_CODEC_VENC_NUM; j++)
   {
-    if (j == 1 || j == GSF_CODEC_SNAP_IDX ) // SUB;
-    {
-      continue; 
-    }
+    if((!codec_nvr.venc[j].en) || (j >= p_venc_ini->st_num && j != GSF_CODEC_SNAP_IDX))
+      continue;
     
     gsf_mpp_venc_t venc = {
       .VencChn    = i*GSF_CODEC_VENC_NUM+j,
       .srcModId   = HI_ID_VPSS,
       .VpssGrp    = i, // grp;
       .VpssChn    = 0, // ch;
-      .enPayLoad  = PT_H264,
-      .enSize     = PIC_1080P,
+      .enPayLoad  = PT_VENC(codec_nvr.venc[j].type),
+      .enSize     = PIC_WIDTH(codec_nvr.venc[j].width),
       .enRcMode   = SAMPLE_RC_CBR,
       .u32Profile = 0,
       .bRcnRefShareBuf = HI_TRUE,
       .enGopMode  = VENC_GOPMODE_NORMALP,
-      .u32FrameRate = 30,
-      .u32Gop       = 30,
-      .u32BitRate   = 4000,
+      .u32FrameRate = codec_nvr.venc[j].fps,
+      .u32Gop       = codec_nvr.venc[j].gop,
+      .u32BitRate   = codec_nvr.venc[j].bitrate,
       };
     
     if(!start)
     {
       ret = gsf_mpp_venc_stop(&venc);
-      printf("stop >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, 1920, ret);
+      printf("stop >>> VencChn:%d, ch:%d, st:%d, width:%d, ret:%d\n"
+            , venc.VencChn, i, j, codec_nvr.venc[j].width, ret);
     }
     else
     {
       ret = gsf_mpp_venc_start(&venc);
-      printf("start >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, 1920, ret);
+      printf("start >>> VencChn:%d, ch:%d, st:%d, width:%d, ret:%d\n"
+            , venc.VencChn, i, j, codec_nvr.venc[j].width, ret);
     }
     
     if(!start)
@@ -179,12 +331,25 @@ int main(int argc, char *argv[])
     
     live_mon();
     
+    gsf_rgn_ini_t rgn_ini = {.ch_num = 8, .st_num = 1};
+    gsf_venc_ini_t venc_ini = {.ch_num = 8, .st_num = 1};
+    p_venc_ini = &venc_ini;
+  
+    //internal-init rgn, venc;
+    gsf_rgn_init(&rgn_ini);
+    gsf_venc_init(&venc_ini);
+  
     //test vdec => vpss => venc;
     venc_start(1);
     
     
     GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
+    
+    void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
+    void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
+    printf("nm_sub_conn sub:%p\n", sub);
+    
     
     while(1)
     {

@@ -3,7 +3,45 @@
 #include "cfg.h"
 
 gsf_codec_nvr_t codec_nvr = {
-  0
+  .resolu = 0,
+  .venc = {
+    [0] = {
+        .en     = 1,
+        .type   = 0,
+        .width  = 1920,
+        .height = 1080,
+        .fps    = 30,
+        .gop    = 30,
+        .flow   = 0,
+        .bitrate= 4000,
+        .profile= 0,
+        .qp     = 0,
+    },
+    [1] = {
+        .en     = 1,
+        .type   = 0,
+        .width  = 640,
+        .height = 480,
+        .fps    = 30,
+        .gop    = 30,
+        .flow   = 0,
+        .bitrate= 2000,
+        .profile= 0,
+        .qp     = 0,
+    },
+    [2] = {
+        .en     = 1,
+        .type   = 3,
+        .width  = 1920,
+        .height = 1080,
+        .fps    = 30,
+        .gop    = 30,
+        .flow   = 0,
+        .bitrate= 2000,
+        .profile= 0,
+        .qp     = 0,
+    }
+  },
 };
 
 int json_parm_load(char *filename, gsf_codec_nvr_t *cfg)
