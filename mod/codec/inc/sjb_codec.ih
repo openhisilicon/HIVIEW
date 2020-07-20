@@ -64,6 +64,7 @@ STRUCT(gsf_codec_ipc_t)
 STRUCT(gsf_codec_nvr_t)
 {
   FIELD(int, resolu);
+  ARRAY(gsf_venc_t, venc, GSF_CODEC_VENC_NUM);
 };
 
 
