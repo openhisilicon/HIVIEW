@@ -10,8 +10,9 @@ int rtsp_st_init();
 
 struct rtsp_st_ctl_t
 {
-  int id; //RTSP_CTL_ 
+  int id; //GSF_ID_RTSPS_
   int size;
+  int err;
   unsigned char data[0];
 };
 

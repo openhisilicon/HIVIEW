@@ -100,6 +100,9 @@ int rtsp_client_announce(rtsp_client_t* rtsp, const char* sdp);
 /// Notice: if npt and scale is null, resume record only
 int rtsp_client_record(struct rtsp_client_t *rtsp, const uint64_t *npt, const float *scale);
 
+//maohw
+int rtsp_client_send_interleaved_data(struct rtsp_client_t *rtsp, const void* data, size_t bytes);
+
 /// SDP API
 int rtsp_client_media_count(rtsp_client_t* rtsp);
 const struct rtsp_header_transport_t* rtsp_client_get_media_transport(rtsp_client_t* rtsp, int media);

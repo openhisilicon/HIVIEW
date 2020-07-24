@@ -24,8 +24,20 @@ struct rtsp_conn_ctx_t
   int last_time;
 };
 
+struct rtsp_push_ctx_t
+{
+  UT_hash_handle hh;
+  char name[256];
+  int  refcnt;
+  void* c;
+  int err;
+  int last_time;
+};
+
+
 // muti-rtsps, conn_ctxs in shm memery;
 static struct rtsp_conn_ctx_t *conn_ctxs;
+static struct rtsp_push_ctx_t *push_ctxs;
 
 static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
@@ -261,12 +273,319 @@ int rtsp_st_ctl(struct rtsp_st_ctl_t *ctl)
     ret = recvfrom(sock, ctl, 8*1024, 0, (struct sockaddr*)&from_addr, &from_len);
     printf("recvfrom ret:%d\n", ret);
     close(sock);
-    return 0;
+    return (ret>0)?0:-1;
   }
   close(sock);
   return -1;
 }
 
+static int push_err(void *param, int err)
+{
+  struct rtsp_push_ctx_t *ctx = (struct rtsp_push_ctx_t *)param;
+  ctx->err = err;
+  printf("ctx:%p, err:%d\n", ctx, err);
+  return 0;
+}
+
+static void push_ctx_check(void)
+{
+  struct timespec _ts;  
+  clock_gettime(CLOCK_MONOTONIC, &_ts);
+  
+  struct rtsp_push_ctx_t *ctx, *tmp;
+  HASH_ITER(hh, push_ctxs, ctx, tmp)
+  {
+    if(_ts.tv_sec - ctx->last_time > 5)
+    {
+      if(ctx->err == 0)
+      {
+        ctx->last_time = _ts.tv_sec;
+        continue;
+      }
+      
+      //clear error;
+      ctx->err = 0;  
+      printf("reconnect => ctx->name:[%s], cur:%d, last:%d\n"
+            , ctx->name, _ts.tv_sec, ctx->last_time);
+      
+      if(ctx->c)
+      {
+        rtsp_client_close(ctx->c);
+      }
+      
+      struct st_rtsp_client_handler_t handler;
+      handler.onframe = NULL;
+      handler.onerr   = push_err;
+      handler.param   = (void*)ctx;
+      ctx->c = rtsp_client_connect(ctx->name, RTSP_TRANSPORT_RTP_UDP, &handler);         
+      
+      ctx->last_time = _ts.tv_sec;
+    }
+  }
+}
+
+
+static void conn_ctx_check(void)
+{
+  struct timespec _ts;  
+  clock_gettime(CLOCK_MONOTONIC, &_ts);
+  
+  struct rtsp_conn_ctx_t *ctx, *tmp;
+  HASH_ITER(hh, conn_ctxs, ctx, tmp)
+  {
+    if(_ts.tv_sec - ctx->last_time > 5)
+    {
+      printf("reconnect => ctx->name:[%s], cur:%d, last:%d\n"
+            , ctx->name, _ts.tv_sec, ctx->last_time);
+      
+      if(ctx->c)
+      {
+        rtsp_client_close(ctx->c);
+      }
+      
+      struct st_rtsp_client_handler_t handler;
+      handler.onframe = onframe;
+      handler.onerr   = NULL;
+      handler.param   = (void*)ctx;
+      ctx->c = rtsp_client_connect(ctx->name, RTSP_TRANSPORT_RTP_UDP, &handler);         
+      
+      ctx->last_time = _ts.tv_sec;
+    }
+  }
+}
+
+static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
+{
+  gsf_rtsp_url_t *ru = (gsf_rtsp_url_t*)ctl->data;
+  
+  char *name = ru->url;
+  if(strlen(name) == 0 || strlen(name) > 255)
+  {
+    printf("id: GSF_ID_RTSPS_C_OPEN err name [%s]\n", name);
+    ctl->size = 0;
+    return;
+  }
+  
+  struct rtsp_conn_ctx_t *ctx = NULL;
+  HASH_FIND_STR(conn_ctxs, name, ctx);
+  if (ctx)
+  {
+    ctx->refcnt++;
+    printf("id: GSF_ID_RTSPS_C_OPEN refcnt:%d [%s]\n", ctx->refcnt, name);
+    
+    gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
+    shmid->video_shmid = ctx->video_shmid;
+    shmid->audio_shmid = ctx->audio_shmid;;
+    ctl->size = sizeof(gsf_shmid_t);
+    ctl->err = 0;
+    return;
+  }
+  
+  ctx = calloc(1, sizeof(*ctx));
+  ctx->refcnt++;
+  ctx->audio_shmid = -1;
+  ctx->video_fifo = cfifo_alloc(1*1024*1024,
+                  cfifo_recsize, 
+                  cfifo_rectag, 
+                  cfifo_recrel, 
+                  &ctx->video_shmid,
+                  0);
+  strncpy(ctx->name, name, sizeof(ctx->name)-1);          
+  printf("id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d\n", name, ctx->video_shmid);
+  
+  struct timespec _ts;  
+  clock_gettime(CLOCK_MONOTONIC, &_ts);
+  ctx->last_time = _ts.tv_sec;
+  
+  struct st_rtsp_client_handler_t handler;
+  handler.onframe = onframe;
+  handler.onerr   = NULL;
+  handler.param   = (void*)ctx;
+  ctx->c = rtsp_client_connect(name, RTSP_TRANSPORT_RTP_UDP, &handler);
+  HASH_ADD_STR(conn_ctxs, name, ctx);
+  
+  gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
+  shmid->video_shmid = ctx->video_shmid;
+  shmid->audio_shmid = ctx->audio_shmid;;
+  ctl->size = sizeof(gsf_shmid_t);
+  ctl->err = 0;
+  return;
+}
+
+static void conn_ctx_close(struct rtsp_st_ctl_t *ctl)
+{
+  gsf_rtsp_url_t *ru = (gsf_rtsp_url_t*)ctl->data;
+  
+  char *name = ru->url;
+  struct rtsp_conn_ctx_t *ctx = NULL;
+  if(strlen(name) == 0 || strlen(name) > 255)
+  {
+    ctl->size = 0;
+    return;
+  }
+  HASH_FIND_STR(conn_ctxs, name, ctx);
+  if (ctx && --ctx->refcnt == 0)
+  {
+    HASH_DEL(conn_ctxs, ctx);
+    
+    printf("id: GSF_ID_RTSPS_C_CLOSE free [%s]\n", name);
+    if(ctx->c)
+    {
+      rtsp_client_close(ctx->c);
+    }
+    if(ctx->video_shmid != -1)
+    {
+      cfifo_free(ctx->video_fifo);
+    }
+    if(ctx->audio_shmid != -1)
+    {
+      ;
+    }
+    free(ctx);
+  }
+  else if(ctx)
+  {
+    printf("id: GSF_ID_RTSPS_C_CLOSE refcnt:%d, [%s]\n", ctx->refcnt, name);
+  }
+  
+  ctl->size = 0;
+  ctl->err = 0;
+  return;
+}
+
+
+static void conn_ctx_list(struct rtsp_st_ctl_t *ctl)
+{
+  struct rtsp_conn_ctx_t *ctx, *tmp;
+  HASH_ITER(hh, conn_ctxs, ctx, tmp)
+  {
+    printf("GSF_ID_RTSPS_C_LIST ctx->name:[%s]\n", ctx->name);
+  }
+  ctl->size = 0;
+  ctl->err = 0;
+}
+static void conn_ctx_clear(struct rtsp_st_ctl_t *ctl)
+{
+  struct rtsp_conn_ctx_t *ctx, *tmp;
+  HASH_ITER(hh, conn_ctxs, ctx, tmp)
+  {
+    HASH_DEL(conn_ctxs, ctx);
+
+    printf("GSF_ID_RTSPS_C_CLEAR ctx->name:[%s]\n", ctx->name);
+    
+    if(ctx->c)
+    {
+      rtsp_client_close(ctx->c);
+    }
+    if(ctx->video_shmid != -1)
+    {
+      cfifo_free(ctx->video_fifo);
+    }
+    if(ctx->audio_shmid != -1)
+    {
+      ;
+    }
+    free(ctx);
+  }
+  ctl->size = 0;
+  ctl->err = 0;
+}
+
+
+
+static void push_ctx_open(struct rtsp_st_ctl_t *ctl)
+{
+  gsf_rtsp_purl_t *pu = (gsf_rtsp_purl_t*)ctl->data;
+  
+  char *name = pu->url;
+  
+  if(strlen(name) == 0 || strlen(name) > 255)
+  {
+    printf("id: GSF_ID_RTSPS_P_OPEN err name [%s]\n", name);
+    ctl->size = 0;
+    return;
+  }
+  
+  struct rtsp_push_ctx_t *ctx = NULL;
+  HASH_FIND_STR(push_ctxs, name, ctx);
+  if (ctx)
+  {
+    ctx->refcnt++;
+    printf("id: GSF_ID_RTSPS_P_OPEN refcnt:%d [%s]\n", ctx->refcnt, name);
+    ctl->size = 0;
+    ctl->err = 0;
+    return;
+  }
+  
+  ctx = calloc(1, sizeof(*ctx));
+  ctx->refcnt++;
+  strncpy(ctx->name, name, sizeof(ctx->name)-1);          
+  printf("id: GSF_ID_RTSPS_P_OPEN [%s] \n", name);
+  
+  struct timespec _ts;  
+  clock_gettime(CLOCK_MONOTONIC, &_ts);
+  ctx->last_time = _ts.tv_sec;
+  
+  struct st_rtsp_client_handler_t handler;
+  handler.ch = pu->ch;
+  handler.st = pu->st;
+  handler.onframe = NULL; // pusher;
+  handler.onerr   = push_err;
+  handler.param   = (void*)ctx;
+  ctx->c = rtsp_client_connect(name, RTSP_TRANSPORT_RTP_UDP, &handler);
+  HASH_ADD_STR(push_ctxs, name, ctx);
+  
+  ctl->size = 0;
+  ctl->err = 0;
+  return;
+}
+
+
+static void push_ctx_close(struct rtsp_st_ctl_t *ctl)
+{
+  gsf_rtsp_purl_t *pu = (gsf_rtsp_purl_t*)ctl->data;
+  
+  char *name = pu->url;
+  if(strlen(name) == 0 || strlen(name) > 255)
+  {
+    ctl->size = 0;
+    return;
+  }
+  
+  struct rtsp_push_ctx_t *ctx = NULL;
+  HASH_FIND_STR(push_ctxs, name, ctx);
+  if (ctx && --ctx->refcnt == 0)
+  {
+    HASH_DEL(push_ctxs, ctx);
+    
+    printf("id: GSF_ID_RTSPS_P_CLOSE free [%s]\n", name);
+    if(ctx->c)
+    {
+      rtsp_client_close(ctx->c);
+    }
+    free(ctx);
+  }
+  else if(ctx)
+  {
+    printf("id: GSF_ID_RTSPS_P_CLOSE refcnt:%d, [%s]\n", ctx->refcnt, name);
+  }
+  
+  ctl->size = 0;
+  ctl->err  = 0;
+}
+
+static void push_ctx_list(struct rtsp_st_ctl_t *ctl)
+{
+  printf("id: GSF_ID_RTSPS_P_LIST ...\n");
+  ctl->size = 0;
+  ctl->err = 0;
+}
+static void push_ctx_clear(struct rtsp_st_ctl_t *ctl)
+{
+  printf("id: GSF_ID_RTSPS_P_CLEAR ...\n");
+  ctl->size = 0;
+  ctl->err = 0;
+}
 
 
 static void *handle_ctl(void *arg)
@@ -285,166 +604,30 @@ static void *handle_ctl(void *arg)
     
     if (ret <= 0)
     {
-      struct timespec _ts;  
-      clock_gettime(CLOCK_MONOTONIC, &_ts);
-      
-      struct rtsp_conn_ctx_t *ctx, *tmp;
-      HASH_ITER(hh, conn_ctxs, ctx, tmp)
-      {
-        if(_ts.tv_sec - ctx->last_time > 5)
-        {
-          printf("re-connect => ctx->name:[%s], cur:%d, last:%d\n"
-                , ctx->name, _ts.tv_sec, ctx->last_time);
-          
-          if(ctx->c)
-          {
-            rtsp_client_close(ctx->c);
-          }
-          
-          struct st_rtsp_client_handler_t handler;
-          handler.onframe = onframe;
-          handler.param   = (void*)ctx;
-          ctx->c = rtsp_client_connect(ctx->name, 0, &handler);         
-          
-          ctx->last_time = _ts.tv_sec;
-        }
-      }
+      conn_ctx_check();
+      push_ctx_check();
       continue;
     }
 
     struct rtsp_st_ctl_t *ctl = (struct rtsp_st_ctl_t*)buffer;
+    printf("recv ctl->id:%d, size:%d\n", ctl->id, ctl->size);
     
-    printf("%s => ctl->id:%d\n", __func__, ctl->id);
-    
+    ctl->err = -1; // default error
     switch(ctl->id)
     {
-      case GSF_ID_RTSPS_C_OPEN: {
-  
-          char *name = ctl->data;
-          struct rtsp_conn_ctx_t *ctx = NULL;
-          if(strlen(name) == 0 || strlen(name) > 255)
-          {
-            printf("%s => id: GSF_ID_RTSPS_C_OPEN err name [%s]\n", __func__, name);
-            ctl->size = 0;
-            break;
-          }
-          HASH_FIND_STR(conn_ctxs, name, ctx);
-          if (ctx)
-          {
-            ctx->refcnt++;
-            
-            printf("%s => id: GSF_ID_RTSPS_C_OPEN refcnt:%d [%s]\n", __func__, ctx->refcnt, name);
-            
-            gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
-            shmid->video_shmid = ctx->video_shmid;
-            shmid->audio_shmid = ctx->audio_shmid;;
-            ctl->size = sizeof(gsf_shmid_t);
-            break;
-          }
-          
-          ctx = calloc(1, sizeof(*ctx));
-          ctx->refcnt++;
-          ctx->audio_shmid = -1;
-          ctx->video_fifo = cfifo_alloc(1*1024*1024,
-                          cfifo_recsize, 
-                          cfifo_rectag, 
-                          cfifo_recrel, 
-                          &ctx->video_shmid,
-                          0);
-          strncpy(ctx->name, name, sizeof(ctx->name)-1);          
-          printf("%s => id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d\n", __func__, name, ctx->video_shmid);
-          
-          struct timespec _ts;  
-          clock_gettime(CLOCK_MONOTONIC, &_ts);
-          ctx->last_time = _ts.tv_sec;
-          
-          struct st_rtsp_client_handler_t handler;
-          handler.onframe = onframe;
-          handler.param   = (void*)ctx;
-          ctx->c = rtsp_client_connect(name, 0, &handler);
-          HASH_ADD_STR(conn_ctxs, name, ctx);
-          
-          gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
-          shmid->video_shmid = ctx->video_shmid;
-          shmid->audio_shmid = ctx->audio_shmid;;
-          ctl->size = sizeof(gsf_shmid_t);
-          
-          break;
-        }
-      case GSF_ID_RTSPS_C_CLOSE: {
-          char *name = ctl->data;
-          struct rtsp_conn_ctx_t *ctx = NULL;
-          if(strlen(name) == 0 || strlen(name) > 255)
-          {
-            ctl->size = 0;
-            break;
-          }
-          HASH_FIND_STR(conn_ctxs, name, ctx);
-          if (ctx && --ctx->refcnt == 0)
-          {
-            HASH_DEL(conn_ctxs, ctx);
-            
-            printf("%s => id: GSF_ID_RTSPS_C_CLOSE free [%s]\n", __func__, name);
-            if(ctx->c)
-            {
-              rtsp_client_close(ctx->c);
-            }
-            if(ctx->video_shmid != -1)
-            {
-              cfifo_free(ctx->video_fifo);
-            }
-            if(ctx->audio_shmid != -1)
-            {
-              ;
-            }
-            free(ctx);
-          }
-          else if(ctx)
-          {
-            printf("%s => id: GSF_ID_RTSPS_C_CLOSE refcnt:%d, [%s]\n", __func__, ctx->refcnt, name);
-          }
-          
-          ctl->size = 0;
-          break;
-        }
-      case GSF_ID_RTSPS_C_LIST: {
-          struct rtsp_conn_ctx_t *ctx, *tmp;
-          HASH_ITER(hh, conn_ctxs, ctx, tmp)
-          {
-            printf("GSF_ID_RTSPS_C_LIST ctx->name:[%s]\n", ctx->name);
-          }
-          
-          ctl->size = 0;
-          break;
-        }
-      case GSF_ID_RTSPS_C_CLEAR: {
-          struct rtsp_conn_ctx_t *ctx, *tmp;
-          HASH_ITER(hh, conn_ctxs, ctx, tmp)
-          {
-            HASH_DEL(conn_ctxs, ctx);
- 
-            printf("GSF_ID_RTSPS_C_CLEAR ctx->name:[%s]\n", ctx->name);
-            
-            if(ctx->c)
-            {
-              rtsp_client_close(ctx->c);
-            }
-            if(ctx->video_shmid != -1)
-            {
-              cfifo_free(ctx->video_fifo);
-            }
-            if(ctx->audio_shmid != -1)
-            {
-              ;
-            }
-            free(ctx);
-          }
-          
-          ctl->size = 0;
-          break;
-        }
+      case GSF_ID_RTSPS_C_OPEN:  { conn_ctx_open(ctl);  break; }
+      case GSF_ID_RTSPS_C_CLOSE: { conn_ctx_close(ctl); break; }
+      case GSF_ID_RTSPS_C_LIST:  { conn_ctx_list(ctl);  break; }
+      case GSF_ID_RTSPS_C_CLEAR: { conn_ctx_clear(ctl); break; }
+      case GSF_ID_RTSPS_P_OPEN:  { push_ctx_open(ctl);  break; }
+      case GSF_ID_RTSPS_P_CLOSE: { push_ctx_close(ctl); break; }
+      case GSF_ID_RTSPS_P_LIST:  { push_ctx_list(ctl);  break; }
+      case GSF_ID_RTSPS_P_CLEAR: { push_ctx_clear(ctl); break; }
+      default:
+        ctl->size = 0;
+        break;
     }
-    
+    printf("send ctl->id:%d, size:%d\n", ctl->id, ctl->size);
     st_sendto(srv_nfd, ctl, sizeof(*ctl)+ctl->size
             , (struct sockaddr*)&from_addr, from_len
             , ST_UTIME_NO_TIMEOUT);
@@ -493,7 +676,7 @@ static void* st_rtsp_ctl_listen(char *ip, unsigned short port)
     printf("st_thread_create err.\n");
     return NULL;
   }
-  printf("%s => ok tid:%p\n", __func__, tid);
+  printf("ok tid:%p\n", tid);
   
   return (void*)tid;
 }

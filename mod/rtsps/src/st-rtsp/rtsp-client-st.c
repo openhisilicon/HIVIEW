@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include "st.h"
 
+#include "ntp-time.h"
 #include "rtsp-client.h"
 #include "rtp-socket.h"
 #include "cstringext.h"
@@ -40,6 +41,10 @@ struct rtsp_client_test_t
   int loop, exited;
   st_thread_t tid;
   struct rtp_context_t* receiver[5];
+  // for pusher;
+  int ch,st;
+  char sdp[2048];
+  struct rtp_media_t* media;
 };
 
 static int rtsp_client_send(void* param, const char* uri, const void* req, size_t bytes)
@@ -47,6 +52,8 @@ static int rtsp_client_send(void* param, const char* uri, const void* req, size_
 	//TODO: check uri and make socket
 	//1. uri != rtsp describe uri(user input)
 	//2. multi-uri if media_count > 1
+	
+	//lock;
 	struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
 	return st_write(ctx->socket, req, bytes, 2000*1000);
 }
@@ -103,19 +110,28 @@ static int onsetup(void* param)
 	char ip[65];
 	u_short rtspport;
 	struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
-	assert(0 == rtsp_client_play(ctx->rtsp, &npt, NULL));
-	
-	ctx->stat = RTSP_CLIENT_STAT_SETUP;
+
 	printf("%s => media_count:%d\n", __func__, rtsp_client_media_count(ctx->rtsp));
 	
 	// Session: 813629027556073;timeout=6
-  char *session = rtsp_client_get_header(ctx->rtsp, "Session");
+  const char *session = rtsp_client_get_header(ctx->rtsp, "Session");
   if(session)
   {
     char *p = strstr(session, "timeout=");
     int ses_timeout = (p)?(int)(atof(p+8)):0;
     ctx->ses_timeout = (ses_timeout >= 3 && ses_timeout <= 3*60)?ses_timeout:ctx->ses_timeout;
   }
+	
+	ctx->stat = RTSP_CLIENT_STAT_SETUP;
+	
+	if(ctx->handler.onframe == NULL)
+	{
+  	assert(0 == rtsp_client_record(ctx->rtsp, &npt, NULL));
+  	return 0;
+  }
+	
+	assert(0 == rtsp_client_play(ctx->rtsp, &npt, NULL));
+	
 	
 	for (i = 0; i < rtsp_client_media_count(ctx->rtsp); i++)
 	{
@@ -184,6 +200,80 @@ static int onpause(void* param)
 	return 0;
 }
 
+static int onannounce(void* param)
+{
+	struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
+	return rtsp_client_setup(ctx->rtsp, ctx->sdp);
+}
+
+
+int onrecord(void* param, int media, const uint64_t *nptbegin, const uint64_t *nptend, const double *scale, const struct rtsp_rtp_info_t* rtpinfo, int count)
+{
+  int i = 0;
+  struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
+  ctx->stat = RTSP_CLIENT_STAT_PLAY;
+
+  printf("%s => media_count:%d\n", __func__, rtsp_client_media_count(ctx->rtsp));
+#if 1
+	for (i = 0; i < rtsp_client_media_count(ctx->rtsp); i++)
+	{
+		int payload;
+		unsigned short port[2];
+		const char* encoding;
+		const struct rtsp_header_transport_t* transport;
+		transport = rtsp_client_get_media_transport(ctx->rtsp, i);
+		encoding = rtsp_client_get_media_encoding(ctx->rtsp, i);
+		payload = rtsp_client_get_media_payload(ctx->rtsp, i);
+		if (RTSP_TRANSPORT_RTP_UDP == transport->transport)
+		{
+			//assert(RTSP_TRANSPORT_RTP_UDP == transport->transport); // udp only
+			assert(0 == transport->multicast); // unicast only
+			assert(transport->rtp.u.client_port1 == ctx->port[i][0]);
+			assert(transport->rtp.u.client_port2 == ctx->port[i][1]);
+
+			port[0] = transport->rtp.u.server_port1;
+			port[1] = transport->rtp.u.server_port2;
+
+			if (*transport->source)
+			{
+        printf("%s => UDP have source ctx:%p, localport[%d,%d], peer:%s, peerport[%d,%d]\n"
+              , __func__, ctx, ctx->port[i][0], ctx->port[i][1], transport->source, port[0], port[1]); 
+                 
+        int ret = ctx->media->add_transport(ctx->media, 
+                  (strstr(encoding, "H264")||strstr(encoding, "H265"))?"video":"audio",
+                  rtp_udp_transport_new2(ctx->rtp[i], transport->source, port));
+			}
+			else
+			{
+        printf("%s => UDP used host ctx:%p, localport[%d,%d], peer:%s, peerport[%d,%d]\n"
+              , __func__, ctx, ctx->port[i][0], ctx->port[i][1], ctx->host, port[0], port[1]);
+
+        int ret = ctx->media->add_transport(ctx->media, 
+                  (strstr(encoding, "H264")||strstr(encoding, "H265"))?"video":"audio",
+                  rtp_udp_transport_new2(ctx->rtp[i], ctx->host, port));
+			}
+		}
+		else if (RTSP_TRANSPORT_RTP_TCP == transport->transport)
+		{
+			//assert(transport->rtp.u.client_port1 == transport->interleaved1);
+			//assert(transport->rtp.u.client_port2 == transport->interleaved2);          
+      int ret = ctx->media->add_transport(ctx->media,
+                (strstr(encoding, "H264")||strstr(encoding, "H265"))?"video":"audio",
+                rtp_tcp_transport_new2(ctx->rtsp, transport->interleaved1, transport->interleaved2, (int(*)(void*,const void*,size_t))rtsp_client_send_interleaved_data));
+		}
+		else
+		{
+			assert(0); // TODO
+		}
+	}
+	ctx->media->play(ctx->media);
+#endif
+
+  return 0;
+}
+
+
+
 void* handle_connect(void *arg)
 {
   struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)arg;
@@ -200,6 +290,8 @@ void* handle_connect(void *arg)
 	handler.onpause = onpause;
 	handler.onteardown = onteardown;
 	handler.onrtp = onrtp;
+	handler.onannounce = onannounce;
+	handler.onrecord = onrecord;
 	snprintf(packet, packet_size, "rtsp://%s/%s", ctx->host, ctx->file); // url
   
   struct sockaddr_in rmt_addr;
@@ -211,11 +303,30 @@ void* handle_connect(void *arg)
     printf("st_connect err.\n");
     goto __exit;
   }
-
-	//ctx->rtsp = rtsp_client_create(NULL, NULL, &handler, ctx);
+	
 	ctx->rtsp = rtsp_client_create(packet, ctx->user, ctx->pwd, &handler, ctx);
 	assert(ctx->rtsp);
-	assert(0 == rtsp_client_describe(ctx->rtsp));
+	
+	if(ctx->handler.onframe == NULL)
+  {
+
+    static const char* pattern_live =
+  		"v=0\n"
+  		"o=- %llu %llu IN IP4 %s\n"
+  		"s=%s\n"
+  		"c=IN IP4 0.0.0.0\n"
+  		"t=0 0\n"
+  		"a=control:*\n";
+
+    ctx->media = rtp_media_live_new(ctx->handler.ch, ctx->handler.st);
+    snprintf(ctx->sdp, sizeof(ctx->sdp), pattern_live, ntp64_now(), ntp64_now(), "0.0.0.0", "hiview");
+    ctx->media->get_sdp(ctx->media, ctx->sdp);
+    assert(0 == rtsp_client_announce(ctx->rtsp, ctx->sdp));
+  }
+  else
+ 	{
+	  assert(0 == rtsp_client_describe(ctx->rtsp));
+  }
 
 	r = st_read(ctx->socket, packet, packet_size, ST_UTIME_NO_TIMEOUT);
 	while(r > 0)
@@ -233,8 +344,6 @@ void* handle_connect(void *arg)
 		  }
 		}
 		#endif
-		
-
 
 	}
   
@@ -244,11 +353,17 @@ void* handle_connect(void *arg)
 	rtsp_client_destroy(ctx->rtsp);
 	
 __exit:
+  printf("%s => ctx:%p, exit.\n", __func__, ctx);
   free(packet);
 	st_netfd_close(ctx->socket);
   ctx->exited = 1;
+  
+  if(ctx->handler.onerr)
+  {
+    ctx->handler.onerr(ctx->handler.param, -1);
+  }
+
   st_thread_exit(NULL);
-  printf("%s => ctx:%p, exit.\n", __func__, ctx);
   return NULL;
 }
 
@@ -303,7 +418,8 @@ void* rtsp_client_connect(const char* url, int protol, struct st_rtsp_client_han
   rtsp_url_parse(_url, ctx->host, &ctx->rtsp_port, ctx->file, ctx->user, ctx->pwd);
 
   ctx->handler = *_handler;
-	ctx->transport = RTSP_TRANSPORT_RTP_UDP;
+	ctx->transport = protol;
+	//ctx->transport = RTSP_TRANSPORT_RTP_UDP;
   //ctx->transport = RTSP_TRANSPORT_RTP_TCP;
   
   //init last_keeptime, ses_timeout;
@@ -340,20 +456,23 @@ int rtsp_client_close(void* st)
   struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t*)st;
   if(!ctx)
     return -1;
-    
+
+  int i = 0;
+  for(i = 0; i < 5; i++)
+  {
+    if(ctx->receiver[i])
+      ctx->receiver[i]->free(ctx->receiver[i]);
+  }
+  
+  if(ctx->media)
+    rtp_media_live_free(ctx->media);
+  
   if(ctx->tid)
   {
     st_thread_interrupt(ctx->tid);
     ctx->loop = 0;
     while(!ctx->exited)
       st_usleep(10*1000);
-  }
-  
-  int i = 0;
-  for(i = 0; i < 5; i++)
-  {
-    if(ctx->receiver[i])
-      ctx->receiver[i]->free(ctx->receiver[i]);
   }
   
   printf("%s => ctx:%p, free.\n", __func__, ctx);

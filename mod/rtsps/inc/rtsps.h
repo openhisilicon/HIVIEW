@@ -20,6 +20,11 @@ enum {
     GSF_ID_RTSPS_C_CLOSE= 3,  // [gsf_rtsp_url_t, nil]
     GSF_ID_RTSPS_C_LIST = 4,  // [nil, gsf_rtsp_conn_t ... N]
     GSF_ID_RTSPS_C_CLEAR= 5,  // [nil, nil]
+    GSF_ID_RTSPS_P_OPEN = 6,  // [gsf_rtsp_purl_t, nil]
+    GSF_ID_RTSPS_P_CLOSE= 7,  // [gsf_rtsp_purl_t, nil]
+    GSF_ID_RTSPS_P_LIST = 8,  // [nil, gsf_rtsp_push_t ... N]
+    GSF_ID_RTSPS_P_CLEAR= 9,  // [nil, nil]
+    
     GSF_ID_RTSPS_END
 };
 
@@ -38,6 +43,17 @@ typedef struct {
   gsf_shmid_t    shmid;
   int            refcnt;
 }gsf_rtsp_conn_t;
+
+typedef struct {
+  int  ch, st;   // channle,stream;
+  int  transp;
+  char url[256]; // rtsp://admin:12345@192.168.1.60:554/1
+}gsf_rtsp_purl_t;
+
+typedef struct {
+  gsf_rtsp_purl_t rtsp_purl;
+  int            refcnt;
+}gsf_rtsp_push_t;
 
 
 #ifdef __cplusplus

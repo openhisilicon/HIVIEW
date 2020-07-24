@@ -113,20 +113,22 @@ int main(int argc, char *argv[])
   {
     if(0)
     {
-      GSF_MSG_DEF(gsf_rtsp_url_t, ru, 8*1024);
-      sprintf(ru->url, "%s", "rtsp://admin:12345@192.168.1.2:554/1");
-      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0, sizeof(gsf_rtsp_url_t), GSF_IPC_RTSPS, 2000);
-      printf("GSF_ID_RTSPS_C_OPEN ret:%d, size:%d\n", ret, __rsize);
+      GSF_MSG_DEF(gsf_rtsp_purl_t, up, 8*1024);
+      up->ch = 0; up->st = 1;
+      sprintf(up->url, "%s", "rtsp://admin:12345@127.0.0.1:5540/1");
+      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_P_OPEN, 0, SET, 0, sizeof(gsf_rtsp_purl_t), GSF_IPC_RTSPS, 2000);
+      printf("GSF_ID_RTSPS_P_OPEN ret:%d, size:%d\n", ret, __rsize);
     }
     
-    sleep(6);
+    sleep(6666);
     
     if(0)
     {
-      GSF_MSG_DEF(gsf_rtsp_url_t, ru, 8*1024);
-      sprintf(ru->url, "%s", "rtsp://admin:12345@192.168.1.2:554/1");
-      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_CLOSE, 0, SET, 0, sizeof(gsf_rtsp_url_t), GSF_IPC_RTSPS, 2000);
-      printf("GSF_ID_RTSPS_C_CLOSE ret:%d, size:%d\n", ret, __rsize);
+      GSF_MSG_DEF(gsf_rtsp_purl_t, up, 8*1024);
+      up->ch = 0; up->st = 1;
+      sprintf(up->url, "%s", "rtsp://admin:12345@127.0.0.1:5540/1");
+      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_P_CLOSE, 0, SET, 0, sizeof(gsf_rtsp_purl_t), GSF_IPC_RTSPS, 2000);
+      printf("GSF_ID_RTSPS_P_CLOSE ret:%d, size:%d\n", ret, __rsize);
     }
     
   }

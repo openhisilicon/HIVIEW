@@ -6,8 +6,9 @@ struct rtp_tcp_transport_t
 	struct rtp_transport_t base;
 	uint8_t m_rtp;
 	uint8_t m_rtcp;
-	rtsp_server_t* m_rtsp;
+	void* m_rtsp;
 	uint8_t m_packet[4 + (1 << 16)];
+	int (*send)(void* rtsp, const void* data, size_t bytes);
 };
 
 
@@ -24,20 +25,12 @@ static int rtp_tcp_transport_send(struct rtp_transport_t* t, int rtcp, const voi
 	if (bytes >= (1 << 16))
 		return E2BIG;
 
-	int i = rtcp ? 1 : 0;
-	if(i)
-	{
-	  u_short port = 0;
-    const char *ip = rtsp_server_get_client(transport->m_rtsp, &port);
-    printf("%s => pid:%d, i:%d, bytes:%d to[%s:%d]\n", __func__, getpid(), i, bytes, ip, port);
-  }
-
 	transport->m_packet[0] = '$';
 	transport->m_packet[1] = rtcp ? transport->m_rtcp : transport->m_rtp;
 	transport->m_packet[2] = (bytes >> 8) & 0xFF;
 	transport->m_packet[3] = bytes & 0xff;
 	memcpy(transport->m_packet + 4, data, bytes);
-	int r = rtsp_server_send_interleaved_data(transport->m_rtsp, transport->m_packet, bytes + 4);
+	int r = transport->send(transport->m_rtsp, transport->m_packet, bytes + 4);
 	return 0 == r ? bytes : r;
 }
 
@@ -50,6 +43,14 @@ static void rtp_tcp_transport_free(struct rtp_transport_t* t)
 
 struct rtp_transport_t* rtp_tcp_transport_new(rtsp_server_t* rtsp, uint8_t rtp, uint8_t rtcp)
 {
+  return rtp_tcp_transport_new2(rtsp, rtp, rtcp, rtsp_server_send_interleaved_data);
+}
+
+
+struct rtp_transport_t*
+    rtp_tcp_transport_new2(void* rtsp, uint8_t rtp, uint8_t rtcp,
+                           int (*send)(void* rtsp, const void* data, size_t bytes))
+{
   struct rtp_tcp_transport_t* transport = calloc(1, sizeof(struct rtp_tcp_transport_t));
   
   transport->base.istcp= 1;
@@ -59,6 +60,7 @@ struct rtp_transport_t* rtp_tcp_transport_new(rtsp_server_t* rtsp, uint8_t rtp, 
   transport->m_rtsp = rtsp;
   transport->m_rtp  = rtp;
   transport->m_rtcp = rtcp;
+  transport->send = send;
   
   return (struct rtp_transport_t*)transport;
 }
@@ -118,6 +120,12 @@ static void rtp_udp_transport_free(struct rtp_transport_t* t)
 
 struct rtp_transport_t* rtp_udp_transport_new(const char* ip, unsigned short port[2])
 {
+  return rtp_udp_transport_new2(NULL, ip, port);
+}
+
+struct rtp_transport_t*
+    rtp_udp_transport_new2(st_netfd_t rtp[2], const char* ip, unsigned short port[2])
+{
   struct rtp_udp_transport_t *transport = calloc(1, sizeof(struct rtp_udp_transport_t));
   
   transport->base.send = rtp_udp_transport_send;
@@ -132,6 +140,13 @@ struct rtp_transport_t* rtp_udp_transport_new(const char* ip, unsigned short por
 	  return NULL;
 	}
 	
+	if(rtp)
+  {
+  	transport->m_socket[0] = rtp[0];
+  	transport->m_socket[1] = rtp[1];
+	  return (struct rtp_transport_t*)transport;
+	}
+	
 	if(rtp_socket_create(NULL, transport->m_socket, port) < 0)
 	{
 	  free(transport);
@@ -140,4 +155,5 @@ struct rtp_transport_t* rtp_udp_transport_new(const char* ip, unsigned short por
 	
   return (struct rtp_transport_t*)transport;
 }
+
 

@@ -10,28 +10,22 @@
 #include "msg_func.h"
 #include "rtsp-st.h"
 
-static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
-{
-  ;
-}
 
-
-static void msg_func_open(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+static rtsp_ctl(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  gsf_rtsp_url_t *ru = (gsf_rtsp_url_t*)req->data;
-  gsf_shmid_t  *shmid = (gsf_shmid_t*)rsp->data;
-  
-  char buf[1024] = {0};
+  char buf[2048] = {0};
   struct rtsp_st_ctl_t *ctl = (struct rtsp_st_ctl_t *)buf;
-  ctl->id = GSF_ID_RTSPS_C_OPEN;
-  sprintf(ctl->data, "%s", ru->url);
-  ctl->size = strlen(ctl->data)+1;
-  rtsp_st_ctl(ctl);
-  if(ctl->size > 0)
+  
+  ctl->id = req->id;
+  memcpy(ctl->data, req->data, req->size);
+  ctl->size = req->size;
+  
+  int ret = rtsp_st_ctl(ctl);
+  if(ret == 0)
   {
-    *shmid = *((gsf_shmid_t*)ctl->data);
-    printf("url:%s, shmid->video_shmid:%d\n", ru->url, shmid->video_shmid);
-    rsp->size = sizeof(gsf_shmid_t);
+    memcpy(rsp->data, ctl->data, ctl->size);
+    rsp->size = ctl->size;
+    rsp->err = ctl->err;
   }
   else
   {
@@ -40,27 +34,50 @@ static void msg_func_open(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   }
 }
 
+static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  ;
+}
+
+static void msg_func_open(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rtsp_ctl(req, isize, rsp, osize);
+}
+
 static void msg_func_close(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  gsf_rtsp_url_t *ru = (gsf_rtsp_url_t*)req->data;
-  
-  char buf[1024] = {0};
-  struct rtsp_st_ctl_t *ctl = (struct rtsp_st_ctl_t *)buf;
-  ctl->id = GSF_ID_RTSPS_C_CLOSE;
-  sprintf(ctl->data, "%s", ru->url);
-  ctl->size = strlen(ctl->data)+1;
-  rtsp_st_ctl(ctl);
-  rsp->size = 0;
+  rtsp_ctl(req, isize, rsp, osize);
 }
 
 static void msg_func_list(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  //gsf_rtsp_conn_t*;
+  rtsp_ctl(req, isize, rsp, osize);
 }
 
 static void msg_func_clear(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  ;
+  rtsp_ctl(req, isize, rsp, osize);
+}
+
+
+static void msg_func_popen(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rtsp_ctl(req, isize, rsp, osize);
+}
+
+static void msg_func_pclose(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rtsp_ctl(req, isize, rsp, osize);
+}
+
+static void msg_func_plist(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rtsp_ctl(req, isize, rsp, osize);
+}
+
+static void msg_func_pclear(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rtsp_ctl(req, isize, rsp, osize);
 }
 
 static msg_func_t *msg_func[GSF_ID_RTSPS_END] = {
@@ -70,6 +87,10 @@ static msg_func_t *msg_func[GSF_ID_RTSPS_END] = {
     [GSF_ID_RTSPS_C_CLOSE]  = msg_func_close,
     [GSF_ID_RTSPS_C_LIST]   = msg_func_list,
     [GSF_ID_RTSPS_C_CLEAR]  = msg_func_clear,
+    [GSF_ID_RTSPS_P_OPEN]   = msg_func_popen,
+    [GSF_ID_RTSPS_P_CLOSE]  = msg_func_pclose,
+    [GSF_ID_RTSPS_P_LIST]   = msg_func_plist,
+    [GSF_ID_RTSPS_P_CLEAR]  = msg_func_pclear,
 };
 
 
