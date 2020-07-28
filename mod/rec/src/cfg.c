@@ -2,7 +2,10 @@
 #include <unistd.h>
 #include "cfg.h"
 
+char rec_parm_path[128] = {0};
+
 gsf_rec_parm_t rec_parm = {
+  .pattern = "", // allowed disk;
   .cfg = {
     [0] = {0,},
   },

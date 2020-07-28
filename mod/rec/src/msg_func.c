@@ -58,9 +58,22 @@ static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   // ser_cfg_update;
 }
 
-static void msg_func_vod(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+static void msg_func_pattern(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  // ser_open_vod;
+  // ser_pattern_update;
+  if(req->set && req->size && strlen(req->data))
+  {
+    strncpy(rec_parm.pattern, req->data, sizeof(rec_parm.pattern)-1);
+    json_parm_save(rec_parm_path, &rec_parm);
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else if (!req->set)
+  {
+    strcpy(rsp->data, rec_parm.pattern);
+    rsp->err  = 0;
+    rsp->size = strlen(rec_parm.pattern) + 1;
+  }
 }
 
 static msg_func_t *msg_func[GSF_ID_REC_END] = {
@@ -68,7 +81,7 @@ static msg_func_t *msg_func[GSF_ID_REC_END] = {
     [GSF_ID_REC_QDISK]    = msg_func_qdisk,
     [GSF_ID_REC_QREC]     = msg_func_qfile,
     [GSF_ID_REC_CFG]      = msg_func_cfg,
-    [GSF_ID_REC_VOD]      = msg_func_vod,
+    [GSF_ID_REC_PATTERN]  = msg_func_pattern,
  };
 
 

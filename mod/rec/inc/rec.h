@@ -22,10 +22,10 @@ extern "C" {
 #define GSF_IPC_REC "ipc:///tmp/rec_rep"
 
 enum {
-  GSF_ID_REC_QDISK = 1,  // [gsf_disk_t .... N];
-  GSF_ID_REC_QREC  = 2,  // [gsf_rec_q_t, gsf_file_t .... N];
-  GSF_ID_REC_CFG   = 3,  // [gsf_rec_cfg_t];
-  GSF_ID_REC_VOD   = 4,  // [gsf_file_t, gsf_rec_media_t];
+  GSF_ID_REC_QDISK    = 1,  // [gsf_disk_t .... N];
+  GSF_ID_REC_QREC     = 2,  // [gsf_rec_q_t, gsf_file_t .... N];
+  GSF_ID_REC_CFG      = 3,  // [gsf_rec_cfg_t];
+  GSF_ID_REC_PATTERN  = 4,  // ["pattern"]; // eg. "/dev/mmcblk0p%[2-9]", "/dev/sd%[a-z]%[1-9]"
   GSF_ID_REC_END
 };
 
@@ -41,11 +41,6 @@ enum {
 	GSF_FILE_TAGS_IO      = (1<<4),  // bit-mask gpio
 	GSF_FILE_TAGS_PIR     = (1<<5),  // bit-mask pir;
 };
-
-typedef struct {
-  int av_shmid;  // av buffer id;
-  // sdp info;
-}gsf_rec_media_t;
 
 
 #ifdef __cplusplus

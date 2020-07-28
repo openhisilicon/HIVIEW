@@ -135,6 +135,14 @@ static int unclosed_cb(void *_ti, ti_file_info_t *info)
   return 0;
 }
 
+
+static int pattern_name(char *pt, char *name)
+{
+  char a[8], b[8], c[8], d[8];
+  return sscanf(name, pt, a, b, c, d);
+}
+
+
 static int scan_cb(struct gsf_disk_q_s *owner, gsf_disk_t *disk)
 {
   int ret = 0;
@@ -142,10 +150,12 @@ static int scan_cb(struct gsf_disk_q_s *owner, gsf_disk_t *disk)
   
   printf("%s => dev_name:%s, mnt_dir:%s\n", __func__, disk->dev_name, disk->mnt_dir);
   
-  #if 0
-  system("df -h");
-  return 0;
-  #endif
+  if(pattern_name(rec_parm.pattern, disk->dev_name) <= 0)
+  {
+    warn("UNMATCH devname:%s, pattern:%s\n", disk->dev_name, rec_parm.pattern);
+    return 0;
+  }
+  info("MATCH devname:%s, pattern:%s\n", disk->dev_name, rec_parm.pattern);
   
   if(disk->grp_id == -1)
   {
@@ -456,19 +466,7 @@ int ser_cfg_update(gsf_rec_cfg_t *cfg)
   return 0;
 }
 
-int ser_open_vod(gsf_file_t *file, gsf_rec_media_t *media)
+int ser_pattern_update(char *pattern)
 {
-  // open file;
-  // generate sdp;
-  
-  struct cfifo_ex *av_fifo = cfifo_alloc(2*1024*1024
-                              , cfifo_recsize
-                              , cfifo_rectag
-                              , NULL
-                              , &media->av_shmid
-                              , 1);
-  
-  // add cfifo to push_task;
-  
   return 0;
 }

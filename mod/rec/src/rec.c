@@ -36,12 +36,14 @@ int main(int argc, char *argv[])
       return -1;
     }
     
-    if(json_parm_load(argv[1], &rec_parm) < 0)
+    strncpy(rec_parm_path, argv[1], sizeof(rec_parm_path)-1);
+    
+    if(json_parm_load(rec_parm_path, &rec_parm) < 0)
     {
-      json_parm_save(argv[1], &rec_parm);
-      json_parm_load(argv[1], &rec_parm);
+      json_parm_save(rec_parm_path, &rec_parm);
+      json_parm_load(rec_parm_path, &rec_parm);
     }
-    info("parm.cfg[0].en:%d\n", rec_parm.cfg[0].en);
+    info("rec_parm => pattern:%s, cfg[0].en:%d\n", rec_parm.pattern, rec_parm.cfg[0].en);
     
     GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_REC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
@@ -64,6 +66,14 @@ int main(int argc, char *argv[])
     }
     
     ser_init();
+    
+    if(0)
+    {
+      GSF_MSG_DEF(char, pattern, 4*1024);
+      strcpy(pattern, "/dev/mmcblk%[0]");
+      int ret = GSF_MSG_SENDTO(GSF_ID_REC_PATTERN, 0, SET, 0, strlen(pattern)+1, GSF_IPC_REC, 2000);
+      printf("GSF_ID_REC_PATTERN SET, ret:%d, size:%d\n", ret, __rsize);
+    }
     
     while(1)
     {

@@ -2,7 +2,7 @@
 #define __msg_func_h__
 
 #include "inc/msg.h"
-
+#include "cfg.h"
 
 /**
  *  msg_func_t
