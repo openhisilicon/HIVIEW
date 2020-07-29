@@ -67,12 +67,20 @@ int main(int argc, char *argv[])
     
     ser_init();
     
-    if(0)
+    if(0) // pattern
     {
       GSF_MSG_DEF(char, pattern, 4*1024);
       strcpy(pattern, "/dev/mmcblk%[0]");
       int ret = GSF_MSG_SENDTO(GSF_ID_REC_PATTERN, 0, SET, 0, strlen(pattern)+1, GSF_IPC_REC, 2000);
       printf("GSF_ID_REC_PATTERN SET, ret:%d, size:%d\n", ret, __rsize);
+    }
+    
+    if(0) // gsf_rec_cfg_t
+    {
+      GSF_MSG_DEF(gsf_rec_cfg_t, cfg, 4*1024);
+      cfg->en = 1;
+      int ret = GSF_MSG_SENDTO(GSF_ID_REC_CFG, 0, SET, 0, sizeof(gsf_rec_cfg_t), GSF_IPC_REC, 2000);
+      printf("GSF_ID_REC_CFG SET, ret:%d, size:%d\n", ret, __rsize);
     }
     
     while(1)

@@ -30,15 +30,20 @@ typedef struct {
 }ser_disk_t;
 
 typedef struct {
+  fd_av_t* fd;
+  unsigned int sync_file_sec;
+  ti_file_info_t info;
+}ser_file_t;
+
+
+typedef struct {
   int stat;
   pthread_t pid;
   pthread_mutex_t lock;
   struct list_head disks;
   ser_disk_t *curr;
-  fd_av_t* fd;
   unsigned int check_disk_sec;
-  unsigned int sync_file_sec;
-  ti_file_info_t info;
+  ser_file_t chs[GSF_REC_CH_NUM];
 }ser_t;
 static ser_t ser;
 
@@ -230,25 +235,27 @@ static int ser_disk_check()
   return 0;
 }
 
-static int ser_file_write(gsf_frm_t *frm)
+static int ser_file_writer(int ch, gsf_frm_t *frm)
 {
   int idr = 0, err = 0;
   char filename[256];
   struct timeval tv;
-  ti_file_info_t *info = &ser.info;
-  
+  ti_file_info_t *info = &ser.chs[ch].info;
+  fd_av_t **fd = &ser.chs[ch].fd;
+  unsigned int *sync_file_sec = &ser.chs[ch].sync_file_sec;
+    
   if(!frm || !frm->size)
     return -1;
   
   idr = (frm->flag & GSF_FRM_FLAG_IDR);
   
 __open:
-  if(ser.fd == NULL)
+  if(*fd == NULL)
   {
     gettimeofday(&tv, NULL);
     info->btime    = tv.tv_sec;
     info->btime_ms = tv.tv_usec/1000;
-    info->channel  = 0;
+    info->channel  = ch;
     info->etime    = info->btime;
     info->tags     = 0;
     info->size     = 0;
@@ -258,12 +265,12 @@ __open:
     pthread_mutex_unlock(&ser.lock);
 
     SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
-    ser.fd = fd_av_open(filename);
+    *fd = fd_av_open(filename);
     
     printf("open filename[%s]\n", filename);
   }
   
-  if((fd_av_size(ser.fd) > SER_FILE_SIZE) && idr)
+  if((fd_av_size(*fd) > SER_FILE_SIZE) && idr)
   {
     SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
         
@@ -272,13 +279,13 @@ __open:
     gettimeofday(&tv, NULL);
     info->etime = tv.tv_sec;
     info->tags  = 0;
-    info->size  = fd_av_size(ser.fd);
+    info->size  = fd_av_size(*fd);
     pthread_mutex_lock(&ser.lock);
     err = ti_sync(ser.curr->ti, TI_CLOSE, info, 1);
     pthread_mutex_unlock(&ser.lock);
 
-    fd_av_close(ser.fd);
-    ser.fd = NULL;
+    fd_av_close(*fd);
+    *fd = NULL;
     goto __open;
   }
   
@@ -305,15 +312,15 @@ __open:
     winfo.a.chs= 1;
   }
   
-  fd_av_write(ser.fd, frm->data, frm->size, &winfo);
+  fd_av_write(*fd, frm->data, frm->size, &winfo);
 
-  if(tv.tv_sec - ser.sync_file_sec < 10)
+  if(tv.tv_sec - *sync_file_sec < 10)
     return 0;
-  ser.sync_file_sec = tv.tv_sec;
+  *sync_file_sec = tv.tv_sec;
   
   info->etime = tv.tv_sec;
   info->tags = 0;
-  info->size = fd_av_size(ser.fd);
+  info->size = fd_av_size(*fd);
   pthread_mutex_lock(&ser.lock);
   err = ti_sync(ser.curr->ti, TI_UPDATE, info, 1);
   pthread_mutex_unlock(&ser.lock);
@@ -327,6 +334,7 @@ __open:
 
 static void* ser_thread(void *param)
 {
+  int i = 0;
   gsf_disk_q_t q = {NULL, scan_cb};
   disk_scan(&q);
   
@@ -342,47 +350,95 @@ static void* ser_thread(void *param)
   char *buf = malloc(512*1024);
   gsf_frm_t *frm = (gsf_frm_t *)buf;
   
-  
-  GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
-  gsf_sdp->video_shmid = -1;
-  gsf_sdp->audio_shmid = -1;
-  if(GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, 0
-                        , 0
-                        , GSF_IPC_CODEC
-                        , 2000) < 0)
-  {
-    printf("%s => get GSF_ID_CODEC_SDP err.\n" ,__func__);
-    return 0;
-  }
-  printf("%s => get GSF_ID_CODEC_SDP ok.\n" ,__func__);
-  
-  void* cfifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
-  
-  cfifo_newest(cfifo, 1);
-  
+  void* cfifo[GSF_REC_CH_NUM] = {NULL};
+  int ep = cfifo_ep_alloc(1);
   
   while(ser.stat == SER_STAT_INIT)
   {
     // disk check;
     ser_disk_check();
     
-    do{
-      //cfifo get;
-      int ret = cfifo_get(cfifo, cfifo_recgut, (unsigned char*)frm);
-      if(ret <= 0)
+    for(i = 0; i < GSF_REC_CH_NUM; i++)
+    {
+      if(!rec_parm.cfg[i].en)
+      {
+        if(cfifo[i])
+        {
+          // stop rec;
+            void* ch = cfifo_get_u(cfifo[i]);
+            cfifo_ep_ctl(ep, CFIFO_EP_DEL, cfifo[i]);
+            cfifo_free(cfifo[i]);
+            cfifo[i] = NULL;
+        }
+      }
+      else
+      {
+        if(!cfifo[i])
+        {
+          // start rec;
+          GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
+          gsf_sdp->video_shmid = -1;
+          gsf_sdp->audio_shmid = -1;
+          if(GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, i, GET, 0
+                                , 0
+                                , GSF_IPC_CODEC
+                                , 2000) < 0)
+          {
+            printf(" get GSF_ID_CODEC_SDP(%d) err.\n" , i);
+            continue;
+          }
+          printf(" get GSF_ID_CODEC_SDP(%d) ok.\n" , i);
+      
+          cfifo[i] = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
+          if(cfifo[i] == NULL)
+          {
+            continue;
+          }
+          cfifo_set_u(cfifo[i], (void*)i);
+          cfifo_newest(cfifo[i], 1);
+          cfifo_ep_ctl(ep, CFIFO_EP_ADD, cfifo[i]);
+        }
+      }
+    }
+
+    struct cfifo_ex* result[255] = {0};
+    int fds = cfifo_ep_wait(ep, 2000, result, 255);
+    if(fds <= 0)
+    {
+       printf("cfifo_ep_wait err fds:%d\n", fds);
+    }
+
+    for(i = 0; i < fds; i++)
+    {
+      do{
+        struct cfifo_ex* fifo = result[i];
+        int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
+        if(ret <= 0)
+        {
           break;
-      // file write;
-      ser_file_write(frm);
-    }while(0);
-    
-    usleep(10*1000);
+        }
+        // file write;
+        void* ch = cfifo_get_u(fifo);
+        ser_file_writer((int)ch, frm);
+      }while(1);
+    }
   }
   
   if(buf)
     free(buf);
     
-  if(cfifo)
-    cfifo_free(cfifo);
+  for(i = 0; i < GSF_REC_CH_NUM; i++)
+  {
+    if(cfifo[i])
+    {
+      // stop rec;
+      cfifo_ep_ctl(ep, CFIFO_EP_DEL, cfifo[i]);
+      cfifo_free(cfifo[i]);
+      cfifo[i] = NULL;
+    }
+  }
+  
+  cfifo_ep_free(ep);
     
   printf("%s => exit.\n", __func__);
   return NULL;

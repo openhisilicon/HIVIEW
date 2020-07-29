@@ -56,6 +56,19 @@ static void msg_func_qfile(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
 static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   // ser_cfg_update;
+  if(req->set && req->ch >= 0 && req->ch < GSF_REC_CH_NUM)
+  {
+    rec_parm.cfg[req->ch] = *((gsf_rec_cfg_t*)req->data);
+    json_parm_save(rec_parm_path, &rec_parm);
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else if (!req->set && req->ch >= 0 && req->ch < GSF_REC_CH_NUM)
+  {
+    *((gsf_rec_cfg_t*)rsp->data) = rec_parm.cfg[req->ch];
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_rec_cfg_t);
+  }
 }
 
 static void msg_func_pattern(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
