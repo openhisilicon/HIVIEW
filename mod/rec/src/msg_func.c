@@ -26,7 +26,14 @@ static void msg_func_qfile(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
     .tags    = 0xffffffff
   };
   int i = 0;
+  
+  struct timespec ts1, ts2;
+  clock_gettime(CLOCK_MONOTONIC, &ts1);
   int size = ser_query_file(&q, files);
+  clock_gettime(CLOCK_MONOTONIC, &ts2);
+  printf("total:%d, cost:%d ms\n", size/sizeof(gsf_file_t), 
+        (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
+  
   if(size > 0 || size <= *osize - sizeof(gsf_msg_t))
   {
     memcpy(rsp->data, files, size);

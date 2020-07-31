@@ -86,6 +86,18 @@ int main(int argc, char *argv[])
     while(1)
     {
       sleep(30);
+      
+      if(0) // gsf_rec_q_t
+      {
+        GSF_MSG_DEF(gsf_rec_q_t, q, 4*1024);
+        q->channel = 0;
+        q->btime = 0;
+        q->etime = 0xffffffff;
+        q->tags  = 0xffffffff;
+        
+        int ret = GSF_MSG_SENDTO(GSF_ID_REC_QREC, 0, SET, 0, sizeof(gsf_rec_q_t), GSF_IPC_REC, 2000);
+        printf("GSF_ID_REC_CFG SET, ret:%d, size:%d\n", ret, __rsize);
+      }
     }
       
     GSF_LOG_DISCONN();

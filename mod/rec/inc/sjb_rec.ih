@@ -1,6 +1,6 @@
 #pragma pack(push, 4)
 
-#define GSF_REC_CH_NUM 2
+#define GSF_REC_CH_NUM 16
 
 STRUCT(gsf_rec_cfg_t)
 {
@@ -10,6 +10,7 @@ STRUCT(gsf_rec_cfg_t)
 
 STRUCT(gsf_rec_parm_t)
 {
+  STRING(pattern, 128);
   ARRAY(gsf_rec_cfg_t,  cfg,  GSF_REC_CH_NUM);
 };
 
