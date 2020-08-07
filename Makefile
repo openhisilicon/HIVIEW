@@ -12,8 +12,10 @@ MOD_DIRS := mod/bsp   \
 			mod/rec   \
 			mod/webs  \
 			mod/onvif \
-			mod/svp \
-			mod/app 
+			mod/svp   \
+			mod/app   \
+			mod/gb28181 \
+			mod/detection
 
 FW_DIRS :=  fw/nm       \
 			fw/cfifo    \
@@ -28,7 +30,8 @@ FW_DIRS :=  fw/nm       \
 			fw/librtsp  \
 			fw/libflv   \
 			fw/h26xbits \
-			fw/gsoap   
+			fw/gsoap    \
+			fw/gb28181
 
 CLEAN_DIRS := $(addprefix _cls_, $(FW_DIRS) $(MOD_DIRS))
 

@@ -123,6 +123,7 @@ static void* live_task(void *parm)
   int ep = cfifo_ep_alloc(1);
   gsf_frm_t *frm = (gsf_frm_t*)malloc(512*1024);
   
+
   while(1)
   {
     
@@ -140,7 +141,7 @@ static void* live_task(void *parm)
           void* ch = cfifo_get_u(gmng.cfifo[i]);
           gsf_mpp_vo_clear(VOLAYER_HD0, (int)ch);
           
-          gsf_mpp_venc_ctl((int)ch*GSF_CODEC_VENC_NUM, GSF_MPP_VENC_CTL_RST, NULL);
+          //gsf_mpp_venc_ctl((int)ch*GSF_CODEC_VENC_NUM, GSF_MPP_VENC_CTL_RST, NULL);
           
           cfifo_ep_ctl(ep, CFIFO_EP_DEL, gmng.cfifo[i]);
           cfifo_free(gmng.cfifo[i]);
@@ -215,6 +216,6 @@ static void* live_task(void *parm)
       }while(1);
     }
   }
-  
+
   return NULL;
 }
