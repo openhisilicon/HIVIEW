@@ -172,7 +172,7 @@ int gsf_mpp_vo_stop(int vodev);
 //vofb;
 enum {
 	VOFB_GUI = 0, // GUI Layer
-	VOFB_MOUSE = 1, // MOUSE Layer
+	//VOFB_MOUSE = 1, // MOUSE Layer
 	VOFB_BUTT
 };
 // FB²ã²Ù×÷

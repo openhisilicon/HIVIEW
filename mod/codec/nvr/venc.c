@@ -148,7 +148,7 @@ static inline int _venc_sdp_fill(VENC_CHN VeChn, PAYLOAD_TYPE_E pt, VENC_PACK_S*
 int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs)
 {
   HI_S32 i = 0, len = 0;
-  
+  //printf("recv gsf_venc_recv data\n");
   for (i = 0; i < pstStream->u32PackCount; i++)
   {
     int pack_size = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;

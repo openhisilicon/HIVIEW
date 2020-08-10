@@ -76,16 +76,23 @@ static int rtpport(void* param, int media, unsigned short *rtp)
 int rtsp_client_options(rtsp_client_t *rtsp, const char* commands);
 static void onrtp(void* param, uint8_t channel, const void* data, uint16_t bytes)
 {
+
 	struct rtsp_client_test_t *ctx = (struct rtsp_client_test_t *)param;
 	rtp_tcp_receiver_input(ctx->receiver[channel/2], channel, data, bytes);
 	
-  struct timespec _ts;
+	//if (++ctx->last_keeptime % 150 == 0)
+	//{
+	//	extern int rtsp_client_get_parameter(struct rtsp_client_t* rtsp, int media, const char* parameter);
+	//	rtsp_client_get_parameter(ctx->rtsp, 2, NULL);
+	//}
+	struct timespec _ts;
 	clock_gettime(CLOCK_MONOTONIC, &_ts);
-	if(_ts.tv_sec - ctx->last_keeptime >= ctx->ses_timeout*0.8)
+
+	if (_ts.tv_sec - ctx->last_keeptime >= ctx->ses_timeout * 0.8)
 	{
-	  ctx->last_keeptime = _ts.tv_sec; 
-    printf("ctx:%p, ses_timeout:%d, GET_PARAMETER.\n", ctx, ctx->ses_timeout);
-	  extern int rtsp_client_get_parameter(struct rtsp_client_t *rtsp, int media, const char* parameter);
+		ctx->last_keeptime = _ts.tv_sec;
+		//printf("ctx:%p, ses_timeout:%d, GET_PARAMETER.\n", ctx, ctx->ses_timeout);
+		extern int rtsp_client_get_parameter(struct rtsp_client_t* rtsp, int media, const char* parameter);
 		rtsp_client_get_parameter(ctx->rtsp, 2, NULL);
 	}
 }
@@ -114,6 +121,8 @@ static int onsetup(void* param)
   {
     char *p = strstr(session, "timeout=");
     int ses_timeout = (p)?(int)(atof(p+8)):0;
+
+	printf("*******************ses timeout %d \n",ses_timeout);
     ctx->ses_timeout = (ses_timeout >= 3 && ses_timeout <= 3*60)?ses_timeout:ctx->ses_timeout;
   }
 	
@@ -303,14 +312,14 @@ void* rtsp_client_connect(const char* url, int protol, struct st_rtsp_client_han
   rtsp_url_parse(_url, ctx->host, &ctx->rtsp_port, ctx->file, ctx->user, ctx->pwd);
 
   ctx->handler = *_handler;
-	ctx->transport = RTSP_TRANSPORT_RTP_UDP;
-  //ctx->transport = RTSP_TRANSPORT_RTP_TCP;
+	//ctx->transport = RTSP_TRANSPORT_RTP_UDP;
+  ctx->transport = RTSP_TRANSPORT_RTP_TCP;
   
   //init last_keeptime, ses_timeout;
   struct timespec _ts;
 	clock_gettime(CLOCK_MONOTONIC, &_ts);
   ctx->last_keeptime = _ts.tv_sec;
-  ctx->ses_timeout = 60;
+  ctx->ses_timeout = 6;
   
   int sock = 0;
   if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {

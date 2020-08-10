@@ -28,18 +28,6 @@ gsf_codec_nvr_t codec_nvr = {
         .bitrate= 2000,
         .profile= 0,
         .qp     = 0,
-    },
-    [2] = {
-        .en     = 1,
-        .type   = 3,
-        .width  = 1920,
-        .height = 1080,
-        .fps    = 30,
-        .gop    = 30,
-        .flow   = 0,
-        .bitrate= 2000,
-        .profile= 0,
-        .qp     = 0,
     }
   },
 };

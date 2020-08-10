@@ -33,6 +33,7 @@ int live_mon()
     gmng.shmid[i][1].video_shmid = gmng.shmid[i][1].audio_shmid = -1;
   }
 	
+    error("app begin run live task\n");
   return pthread_create(&gmng.tid, NULL, live_task, (void*)NULL);
 }
 

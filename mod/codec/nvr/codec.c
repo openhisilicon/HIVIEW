@@ -176,14 +176,14 @@ static int rgn_timer_func(void *u)
   osd.point[0] %= 2000;
   osd.point[1] += 100;
   osd.point[1] %= 2000;
-  printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
+  //printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
   gsf_rgn_osd_set(0, 0, &osd);
   
   vmask.rect[0] += 100;
   vmask.rect[0] %= 2000;
   vmask.rect[1] += 100;
   vmask.rect[1] %= 2000;
-  printf("vmask: x:%d,y:%d,w:%d,h:%d\n", vmask.rect[0], vmask.rect[1], vmask.rect[2], vmask.rect[3]);
+  //printf("vmask: x:%d,y:%d,w:%d,h:%d\n", vmask.rect[0], vmask.rect[1], vmask.rect[2], vmask.rect[3]);
   gsf_rgn_vmask_set(0, 0, &vmask);
   
   return 0;

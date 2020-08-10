@@ -2,6 +2,8 @@
 
 char app_parm_path[128] = {0};
 
+//TODO ÐÞ¸ÄrtspµØÖ·
+
 gsf_app_nvr_t app_nvr = {
   .chsrc[0] = {
     .en = 1,
