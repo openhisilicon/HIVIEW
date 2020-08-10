@@ -297,7 +297,7 @@ int gsf_mpp_cfg_vdec(char* path, gsf_mpp_cfg_t* cfg)
 		astSampleVdec[i].enType = PT_H264;
 		astSampleVdec[i].u32Width = 1920;
 		astSampleVdec[i].u32Height = 1080;
-		astSampleVdec[i].enMode = VIDEO_MODE_STREAM;
+		astSampleVdec[i].enMode = VIDEO_MODE_FRAME;
 		astSampleVdec[i].stSapmleVdecVideo.enDecMode = VIDEO_DEC_MODE_IP;
 		astSampleVdec[i].stSapmleVdecVideo.enBitWidth = DATA_BITWIDTH_8;
 		astSampleVdec[i].stSapmleVdecVideo.u32RefFrameNum = 2;
@@ -1025,7 +1025,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char* data, gsf_mpp_frm_attr_t* attr)
 			astSampleVdec.enType = attr->etype;
 			astSampleVdec.u32Width = 1920;
 			astSampleVdec.u32Height = 1080;
-			astSampleVdec.enMode = VIDEO_MODE_STREAM;
+			astSampleVdec.enMode = VIDEO_MODE_FRAME;
 			astSampleVdec.stSapmleVdecVideo.enDecMode = VIDEO_DEC_MODE_IP;
 			astSampleVdec.stSapmleVdecVideo.enBitWidth = DATA_BITWIDTH_8;
 			astSampleVdec.stSapmleVdecVideo.u32RefFrameNum = 2;
@@ -1045,7 +1045,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char* data, gsf_mpp_frm_attr_t* attr)
 			VDEC_CHN_PARAM_S stChnParam;
 
 			stChnAttr.enType = attr->etype;
-			stChnAttr.enMode = VIDEO_MODE_STREAM;
+			stChnAttr.enMode = VIDEO_MODE_FRAME;
 			stChnAttr.u32PicWidth = attr->width;
 			stChnAttr.u32PicHeight = attr->height;
 			stChnAttr.u32StreamBufSize = attr->width * attr->height;
@@ -1201,11 +1201,12 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char* data, gsf_mpp_frm_attr_t* attr)
 
     // send vdec;
     VDEC_STREAM_S stStream = { 0 };
-    stStream.u64PTS = 0;
+    stStream.u64PTS = attr->pts;//0;
     stStream.pu8Addr = data;
     stStream.u32Len = attr->size;
     stStream.bEndOfFrame = HI_TRUE;
     stStream.bEndOfStream = HI_FALSE;
+    stStream.bDisplay = 1;
     s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
     CHECK_CHN_RET(s32Ret, ch, "HI_MPI_VDEC_SendStream");
     return err;
