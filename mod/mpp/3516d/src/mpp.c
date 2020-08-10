@@ -1176,7 +1176,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char* data, gsf_mpp_frm_attr_t* attr)
 				stChnAttr[i].enPixelFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
 				stChnAttr[i].stFrameRate.s32SrcFrameRate = -1;
 				stChnAttr[i].stFrameRate.s32DstFrameRate = -1;
-				stChnAttr[i].u32Depth = 0; // 0; HI_MPI_VPSS_GetChnFrame;
+				stChnAttr[i].u32Depth = 1; // 0; HI_MPI_VPSS_GetChnFrame;
 				stChnAttr[i].bMirror = HI_FALSE;
 				stChnAttr[i].bFlip = HI_FALSE;
 				stChnAttr[i].stAspectRatio.enMode = ASPECT_RATIO_NONE;
@@ -1193,7 +1193,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char* data, gsf_mpp_frm_attr_t* attr)
 
         // bind  vdec && vpss && vo;
 		s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, ch);
-		s32Ret = SAMPLE_COMM_VPSS_Bind_VO(ch, 1, volayer, ch);
+		s32Ret = SAMPLE_COMM_VPSS_Bind_VO(ch, VPSS_CHN0, volayer, ch);
 
     }
 

@@ -6,6 +6,7 @@
 #include "fw/comm/inc/proc.h"
 #include "mod/bsp/inc/bsp.h"
 #include "mod/svp/inc/svp.h"
+#include "mod/detection/inc/detection.h"
 #include "codec.h"
 #include "cfg.h"
 #include "msg_func.h"
@@ -55,6 +56,68 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 }
 
 static int osd_keepalive[GSF_CODEC_OSD_NUM] = {3,3,3,3,3,3,3,3};
+
+static int sub_recv2(char* msg, int size, int err)
+{
+    gsf_msg_t* pmsg = (gsf_msg_t*)msg;
+
+    //printf("pmsg->id:%d\n", pmsg->id);
+
+    if (pmsg->id == GSF_EV_DETECTION_YOLO3)
+    {
+        /*	struct timespec ts1, ts2;
+            clock_gettime(CLOCK_MONOTONIC, &ts1);*/
+
+        gsf_detection_yolov3_t* mds = (gsf_detection_yolov3_t*)pmsg->data;
+
+        if (mds->cnt == 0)
+        {
+            gsf_osd_t osd;
+            memset(&osd, 0, sizeof(gsf_osd_t));
+            gsf_rgn_osd_set(0, 0, &osd);
+        }
+        else
+        {
+
+            int i = 0;
+
+            gsf_osd_t* osds = (gsf_osd_t*)malloc(mds->cnt * sizeof(gsf_osd_t));
+            for (i = 0; i < mds->cnt; i++)
+            {
+                osds[i].en = 1;
+                osds[i].type = 0;
+                osds[i].fontsize = 0;
+                osds[i].point[0] = (unsigned int)((float)mds->result[i].rect[0] / (float)mds->w * 1920) & (-1);
+                osds[i].point[1] = (unsigned int)((float)mds->result[i].rect[1] / (float)mds->h * 1080) & (-1);
+                osds[i].wh[0] = (unsigned int)((float)mds->result[i].rect[2] / (float)mds->w * 1920) & (-1);
+                osds[i].wh[1] = (unsigned int)((float)mds->result[i].rect[3] / (float)mds->h * 1080) & (-1);
+
+                //sprintf(osds[i].text, "ID: %d", i);
+                //printf("GSF_EV_DETECTION_YOLO3 idx: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
+                //	, i, osds[i].point[0], osds[i].point[1], osds[i].wh[0], osds[i].wh[1]);
+                //gsf_rgn_osd_set(0, i, &osd);
+            }
+            /*   osds[0].en = 1;
+               osds[0].type = 0;
+               osds[0].fontsize = 0;
+               osds[0].point[0] = 100;
+               osds[0].point[1] = 100;
+               osds[0].wh[0] = 200;
+               osds[0].wh[1] = 200;*/
+            gsf_rgn_osd_set_ex(0, 0, osds, mds->cnt);
+
+            free(osds);
+            /*clock_gettime(CLOCK_MONOTONIC, &ts2);
+
+            printf("rgn cost:%d ms\n"
+                , (ts2.tv_sec * 1000 + ts2.tv_nsec / 1000000) - (ts1.tv_sec * 1000 + ts1.tv_nsec / 1000000));*/
+        }
+
+
+    }
+
+    return 0;
+}
 
 static int sub_recv(char *msg, int size, int err)
 {
@@ -346,10 +409,11 @@ int main(int argc, char *argv[])
     GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
     
-    void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
+    //void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
+    void* sub2 = nm_sub_conn(GSF_PUB_DETECTION, sub_recv2);
     printf("nm_sub_conn sub:%p\n", sub);
-    
+    printf("nm_sub_conn sub2:%p\n", sub2);
     
     while(1)
     {
