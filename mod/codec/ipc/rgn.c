@@ -298,7 +298,7 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = 2;
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
 
-		rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
+		rgn_obj[handle].rgn.stChn.enModId = HI_ID_VPSS;
 		rgn_obj[handle].rgn.stChn.s32DevId = 0;
 		rgn_obj[handle].rgn.stChn.s32ChnId = ch * GSF_CODEC_VENC_NUM + i;
 		//printf("handle:%d, ch:%d, i:%d, s32ChnId:%d\n", handle, ch, i, rgn_obj[handle].rgn.stChn.s32ChnId);

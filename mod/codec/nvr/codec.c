@@ -85,7 +85,7 @@ static int sub_recv2(char* msg, int size, int err)
             for (i = 0; i < mds->cnt; i++)
             {
                 osds[i].en = 1;
-                osds[i].type = 0;
+                osds[i].type = mds->result[i].cls;
                 osds[i].fontsize = 0;
                 osds[i].point[0] = (unsigned int)((float)mds->result[i].rect[0] / (float)mds->w * 1920) & (-1);
                 osds[i].point[1] = (unsigned int)((float)mds->result[i].rect[1] / (float)mds->h * 1080) & (-1);
@@ -93,8 +93,8 @@ static int sub_recv2(char* msg, int size, int err)
                 osds[i].wh[1] = (unsigned int)((float)mds->result[i].rect[3] / (float)mds->h * 1080) & (-1);
 
                 //sprintf(osds[i].text, "ID: %d", i);
-                //printf("GSF_EV_DETECTION_YOLO3 idx: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
-                //	, i, osds[i].point[0], osds[i].point[1], osds[i].wh[0], osds[i].wh[1]);
+				printf("GSF_EV_DETECTION_YOLO3 type: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
+					, osds[i].type, osds[i].point[0], osds[i].point[1], osds[i].wh[0], osds[i].wh[1]);
                 //gsf_rgn_osd_set(0, i, &osd);
             }
             /*   osds[0].en = 1;

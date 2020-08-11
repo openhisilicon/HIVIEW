@@ -292,24 +292,24 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 
 		memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
 
-		rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
+		rgn_obj[handle].rgn.stRegion.enType = OVERLAYEX_RGN;
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = 2;
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = 2;
 		rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
 
-		rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
+		rgn_obj[handle].rgn.stChn.enModId = HI_ID_VPSS;
 		rgn_obj[handle].rgn.stChn.s32DevId = 0;
 		rgn_obj[handle].rgn.stChn.s32ChnId = ch * GSF_CODEC_VENC_NUM + i;
 		//printf("handle:%d, ch:%d, i:%d, s32ChnId:%d\n", handle, ch, i, rgn_obj[handle].rgn.stChn.s32ChnId);
 		rgn_obj[handle].rgn.stChnAttr.bShow = 1;//osd->en;//HI_TRUE;
-		rgn_obj[handle].rgn.stChnAttr.enType = OVERLAY_RGN;
+		rgn_obj[handle].rgn.stChnAttr.enType = OVERLAYEX_RGN;
 		rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = 0;//ALIGN_UP(osd->point[0], 2);
 		rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32Y = 0;//ALIGN_UP(osd->point[1], 2);
 		rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer = idx;
 		rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;//(osd->wh[0] && osd->wh[1])?80:0;//0;
-		rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
+		rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 255;
 
 		if (rgn_obj[handle].osd_info == NULL)
 		{
@@ -342,7 +342,8 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 		{
 			if (_osdW != info->osdW || _osdH != info->osdH)
 			{
-				gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_DETACH, &rgn_obj[handle].rgn);
+				int retcode = gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_DETACH, &rgn_obj[handle].rgn);
+				CHECK_CHN_RET(retcode, ch, "GSF_MPP_RGN_DETACH");
 				rgn_obj[handle].stat = GSF_RGN_OBJ_CREATE;
 			}
 		}
@@ -350,7 +351,8 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 		//create;
 		if (rgn_obj[handle].stat < GSF_RGN_OBJ_CREATE)
 		{
-			gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_CREATE, &rgn_obj[handle].rgn);
+			int retcode = gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_CREATE, &rgn_obj[handle].rgn);
+			CHECK_CHN_RET(retcode, ch, "GSF_MPP_RGN_CREATE");
 			rgn_obj[handle].stat = GSF_RGN_OBJ_CREATE;
 		}
 
@@ -359,18 +361,24 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 		{
 			rgn_obj[handle].osd_bmp = malloc(info->osdW * info->osdH * 2);
 
-			gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+			int retcode = gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+			CHECK_CHN_RET(retcode, ch, "GSF_MPP_RGN_SETATTR");
 		}
 		else if (_osdW != info->osdW || _osdH != info->osdH)
 		{
 			rgn_obj[handle].osd_bmp = realloc(rgn_obj[handle].osd_bmp, info->osdW * info->osdH * 2);
-			gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+			int retcode = gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+			CHECK_CHN_RET(retcode, ch, "GSF_MPP_RGN_SETATTR");
 		}
 
 		//attach;
 		if (rgn_obj[handle].stat < GSF_RGN_OBJ_ATTACH)
 		{
-			gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_ATTACH, &rgn_obj[handle].rgn);
+			int retcode = gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_ATTACH, &rgn_obj[handle].rgn);
+			CHECK_CHN_RET(retcode,ch, "GSF_MPP_RGN_ATTACH");
+			
+			//rgn_obj[handle].rgn.stChn.enModId = HI_ID_VO;
+			//gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_ATTACH, &rgn_obj[handle].rgn);
 			rgn_obj[handle].stat = GSF_RGN_OBJ_ATTACH;
 		}
 
@@ -393,6 +401,8 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 					(osd->wh[0] && osd->wh[1]) ? argb8888_1555(0x01FF0000) : 0xffff, 0x0000, 0xffff, 0x0000);
 			}*/
 			// draw rect;
+			int colors_line = 0x01FF00FF;
+
 			if ((osd->wh[0] && osd->wh[1]))
 			{
 				HI_U16* p = rgn_obj[handle].osd_bmp;//+ (info->lineN * info->fontH) * (info->osdW * 2);
@@ -402,6 +412,17 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 				{
 					gsf_osd_t* osd_t = &osds[i];
 
+					switch (osd_t->type)
+					{
+					case 1:
+						colors_line = 0x01FF00FF;
+						break;
+					case 2:
+						colors_line = 0x01FFFF00;
+						break;
+					default:
+						break;
+					}
 
 					int j = 0;
 					int _x = osd_t->point[0], _y = osd_t->point[1];
@@ -416,7 +437,7 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 							= p[(_height - 1 + _y) * info->osdW + j + _x]
 							= p[(_height - 2 + _y) * info->osdW + j + _x]
 							= p[(_height - 3 + _y) * info->osdW + j + _x]
-							= argb8888_1555(0x01FF00FF);
+							= argb8888_1555(colors_line);
 					}
 
 					for (j = 0; j < _height; j++)
@@ -427,7 +448,7 @@ int gsf_rgn_osd_set_ex(int ch, int idx, gsf_osd_t* osds, int osd_count)
 							= p[(j + _y) * info->osdW + _width - 1 + _x]
 							= p[(j + _y) * info->osdW + _width - 2 + _x]
 							= p[(j + _y) * info->osdW + _width - 3 + _x]
-							= argb8888_1555(0x01FF00FF);
+							= argb8888_1555(colors_line);
 					}
 
 				}
@@ -490,24 +511,24 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
     
-    rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
+    rgn_obj[handle].rgn.stRegion.enType = OVERLAYEX_RGN;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
     
-    rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
+    rgn_obj[handle].rgn.stChn.enModId = HI_ID_VPSS;
     rgn_obj[handle].rgn.stChn.s32DevId = 0;
     rgn_obj[handle].rgn.stChn.s32ChnId = ch*GSF_CODEC_VENC_NUM+i;
     //printf("handle:%d, ch:%d, i:%d, s32ChnId:%d\n", handle, ch, i, rgn_obj[handle].rgn.stChn.s32ChnId);
     rgn_obj[handle].rgn.stChnAttr.bShow = osd->en;//HI_TRUE;
-    rgn_obj[handle].rgn.stChnAttr.enType = OVERLAY_RGN;
+    rgn_obj[handle].rgn.stChnAttr.enType = OVERLAYEX_RGN;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = ALIGN_UP(osd->point[0], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32Y = ALIGN_UP(osd->point[1], 2);
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer   = idx;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;//(osd->wh[0] && osd->wh[1])?80:0;//0;
-    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 255;
     
     if(rgn_obj[handle].osd_info == NULL)
     {

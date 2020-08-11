@@ -136,10 +136,9 @@ int main(int argc, char *argv[])
     //     printf("pls input: %s gb28181_parm.json\n", argv[0]);
     //     return -1;
     // }
-    const char *image_path = "./data/nnie_image/test/000100_608x608.bgr";
-    const char *model_path = "./data/nnie_model/detection/yolov3_my_inst.wk";
+    //const char *image_path = "./data/nnie_image/test/000100_608x608.bgr";
+    const char *model_path = "../nnie_model/detection/yolov3_my_inst.wk";
     nnie_id = CNNIE_init(model_path, 608, 608,NULL);
-
 
     // int file_length = 0;
     // FILE *fp = fopen(image_path, "rb");
@@ -158,7 +157,7 @@ int main(int argc, char *argv[])
     // fread(data, file_length, 1, fp);
 
     // fclose(fp);
-    int count = 0;
+ /*   int count = 0;
     YOLOV3_Result* result  = CNNIE_run_with_file(nnie_id, nnie_count++, image_path, 608, 608, 2, 3, 0.2, 0.5,&count); 
     printf("yolov3 NNIE count %d,%d\n",count,result); 
     for (size_t i = 0; i < count; i++)
@@ -167,7 +166,7 @@ int main(int argc, char *argv[])
     }
     printf("yolov3 NNIE ok\n");
 
-    CNNIE_free(result);
+    CNNIE_free(result);*/
 
     // free(data);
     

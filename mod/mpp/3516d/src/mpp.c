@@ -259,7 +259,7 @@ int gsf_mpp_cfg_vdec(char* path, gsf_mpp_cfg_t* cfg)
 
 
     HI_S32 i, s32Ret = HI_SUCCESS;
-    HI_U32 u32VdecChnNum = 1;
+    HI_U32 u32VdecChnNum = 4;
 
     /************************************************
     step1:  init SYS, init common VB(for VPSS and VO)
@@ -674,22 +674,29 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     /************************************************
     step5:  start VO
     *************************************************/
-    stVoConfig.VoDev = vodev;
-    stVoConfig.enVoIntfType = type;
-    stVoConfig.enIntfSync = sync;
-    stVoConfig.enPicSize = enDispPicSize; // unused;
-    stVoConfig.u32BgColor = COLOR_RGB_BLUE;
-    stVoConfig.u32DisBufLen = 3;
-    stVoConfig.enDstDynamicRange = DYNAMIC_RANGE_SDR8;
-    stVoConfig.enVoMode = VO_MODE_1MUX;
-    stVoConfig.enPixFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
-    stVoConfig.stDispRect.s32X = 0;
-    stVoConfig.stDispRect.s32Y = 0;
-    stVoConfig.stDispRect.u32Width = stDispSize.u32Width;
-    stVoConfig.stDispRect.u32Height = stDispSize.u32Height;
-    stVoConfig.stImageSize.u32Width = stDispSize.u32Width;
-    stVoConfig.stImageSize.u32Height = stDispSize.u32Height;
-    stVoConfig.enVoPartMode = VO_PART_MODE_MULTI;//VO_PART_MODE_SINGLE;
+    //stVoConfig.VoDev = vodev;
+    //stVoConfig.enVoIntfType = type;
+    //stVoConfig.enIntfSync = sync;
+    //stVoConfig.enPicSize = enDispPicSize; // unused;
+    //stVoConfig.u32BgColor = COLOR_RGB_BLUE;
+    //stVoConfig.u32DisBufLen = 3;
+    //stVoConfig.enDstDynamicRange = DYNAMIC_RANGE_SDR8;
+    //stVoConfig.enVoMode = VO_MODE_1MUX;
+    //stVoConfig.enPixFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+    //stVoConfig.stDispRect.s32X = 0;
+    //stVoConfig.stDispRect.s32Y = 0;
+    //stVoConfig.stDispRect.u32Width = stDispSize.u32Width;
+    //stVoConfig.stDispRect.u32Height = stDispSize.u32Height;
+    //stVoConfig.stImageSize.u32Width = stDispSize.u32Width;
+    //stVoConfig.stImageSize.u32Height = stDispSize.u32Height;
+    //stVoConfig.enVoPartMode = VO_PART_MODE_MULTI;//VO_PART_MODE_SINGLE;
+	SAMPLE_COMM_VO_GetDefConfig(&stVoConfig);
+	stVoConfig.enDstDynamicRange = DYNAMIC_RANGE_SDR8;
+
+	stVoConfig.enVoIntfType = VO_INTF_HDMI;
+	stVoConfig.enIntfSync = sync;
+
+	stVoConfig.enPicSize = enDispPicSize;
 
 
     s32Ret = SAMPLE_COMM_VO_StartVO(&stVoConfig);
@@ -1192,9 +1199,12 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char* data, gsf_mpp_frm_attr_t* attr)
 		}
 
         // bind  vdec && vpss && vo;
-		s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, ch);
+		
+        //s32Ret = SAMPLE_COMM_VENC_Bind_VPSS(ch, ch, ch);
+        s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, ch);
 		s32Ret = SAMPLE_COMM_VPSS_Bind_VO(ch, VPSS_CHN0, volayer, ch);
 
+        //SAMPLE_COMM_VENC_BindVo(0, ch, ch);;
     }
 
     pthread_mutex_unlock(&vdev->lock);
