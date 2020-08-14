@@ -14,4 +14,3 @@
 ![mod](/svp.jpg)
 ![mod](/multi-sns.jpg)
 ### Thank you for your support
-![pay](/pay.jpg)
