@@ -18,7 +18,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
 
 typedef struct {
   HI_BOOL bLowDelay;
-  HI_U32 u32SupplementConfig;
+  HI_U32  u32SupplementConfig;
 }gsf_mpp_vi_t;
 
 int gsf_mpp_vi_start(gsf_mpp_vi_t *vi);
@@ -26,6 +26,7 @@ int gsf_mpp_vi_stop();
 
 typedef struct {
   VPSS_GRP    VpssGrp;
+  MOD_ID_E  srcModId;
   HI_S32      ViPipe;
   VI_CHN      ViChn; 
   HI_BOOL     enable[VPSS_MAX_PHY_CHN_NUM];
@@ -37,6 +38,7 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 
 typedef struct {
   VENC_CHN        VencChn;
+  MOD_ID_E  srcModId;
   VPSS_GRP        VpssGrp;
   VPSS_CHN        VpssChn;
   PAYLOAD_TYPE_E  enPayLoad;

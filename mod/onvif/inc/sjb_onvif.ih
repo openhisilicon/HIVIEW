@@ -5,6 +5,7 @@ STRUCT(gsf_onvif_cfg_t)
 {
   FIELD(int, port);
   FIELD(int, auth);
+  FIELD(int, chnum);
 };
 
 

@@ -295,6 +295,46 @@ net_rgmii_pinmux()
 	himm 0x12040980	0x120;
 	himm 0x12040984	0x120;	
 }
+
+#rmii
+net_rmii_pinmux()
+{  
+	#pinmux
+	himm 0x1204013C 0x2;
+	himm 0x12040140 0x3;
+	himm 0x12040144 0x2;
+	himm 0x12040148 0x2;
+	himm 0x1204014C 0x2;
+	himm 0x12040150 0x2;
+	himm 0x12040154 0x2;
+	himm 0x12040158 0x2;
+	himm 0x1204015C 0x2;
+	himm 0x1204015C 0x2;
+	himm 0x12040164 0x2;
+	himm 0x12040168 0x2;
+	himm 0x1204016C 0x2;
+	himm 0x12040170 0x2;
+	himm 0x12040174 0x2;
+	himm 0x12040178 0x2;
+
+	#drive capability
+	himm 0x12040948	0x0d0;
+	himm 0x1204094C	0x0c0;
+	himm 0x12040950	0x0d0;
+	himm 0x12040954	0x0d0;
+	himm 0x12040958	0x0d0;
+	himm 0x1204095C	0x0d0;	
+	himm 0x12040960 0x130;
+	himm 0x12040964 0x130;
+	himm 0x12040968 0x130;
+	himm 0x1204096C 0x130;
+	himm 0x12040970 0x130;
+	himm 0x12040974 0x130;
+	himm 0x12040978 0x130;
+	himm 0x1204097C	0x050;
+	himm 0x12040980	0x120;
+	himm 0x12040984	0x120;	
+}
     
 
 i2s_pin_mux()
@@ -323,6 +363,7 @@ b_arg_vo=0
 b_arg_net=0
 b_arg_vi=0
 vo_type="CVBS"
+net_type=0;
 for arg in $@
 do
 	if [ $b_arg_vo -eq 1 ] ; then
@@ -332,6 +373,11 @@ do
 		else
 			vo_type=$arg;
 		fi
+	fi
+
+	if [ $b_arg_net -eq 1 ] ; then
+		b_arg_net=0;
+		net_type=$arg;
 	fi
 
 	case $arg in
@@ -414,9 +460,14 @@ if [ $b_arg_vo -eq 1 ]; then
 	esac
 fi
 
-if [ $b_arg_net -eq 1 ]; then
+if [ $net_type -eq 1 ]; then
 	net_rgmii_pinmux;
-	echo "==============NET MODE================";
+	echo "==============NET MODE RGMII================";
+fi
+
+if [ $net_type -eq 2 ]; then
+	net_rmii_pinmux;
+	echo "==============NET MODE RMII================";
 fi
 
 if [ $b_arg_vi -eq 1 ]; then

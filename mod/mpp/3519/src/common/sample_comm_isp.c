@@ -73,6 +73,8 @@ const ISP_SNS_OBJ_S *g_pstSnsObj[MAX_SENSOR_NUM] =
     &stSnsOs05aObj,HI_NULL
 #elif defined(SNS_OS08A_8M_SINGLE)
     &stSnsOs08a10Obj, HI_NULL
+#elif defined(SNS_IMX334_4K_SINGLE)
+    &stSnsImx334Obj, HI_NULL
 #endif
 };
 #endif
@@ -311,6 +313,7 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stSnsSize.u32Height   = 1944;
         break;
 
+    case SONY_IMX185_MIPI_1080P_30FPS:
     case SONY_IMX290_MIPI_1080P_30FPS:
         stPubAttr.enBayer               = BAYER_RGGB;
         stPubAttr.f32FrameRate          = 30;
@@ -562,6 +565,17 @@ static HI_S32 GetIspPubAttrBySns(ISP_PUB_ATTR_S *pstPubAttr)
         stPubAttr.stSnsSize.u32Height   = 2160;
         break;
 
+	case SONY_IMX334_MIPI_4K_30FPS:
+        stPubAttr.enBayer				= BAYER_RGGB;
+        stPubAttr.f32FrameRate          = 30;
+        stPubAttr.stWndRect.s32X        = 0;
+        stPubAttr.stWndRect.s32Y        = 0;
+        stPubAttr.stWndRect.u32Width    = 3840;
+        stPubAttr.stWndRect.u32Height   = 2160;
+        stPubAttr.stSnsSize.u32Width    = 3840;
+        stPubAttr.stSnsSize.u32Height   = 2160;
+        break;  
+        
     case PANASONIC_MN34120_LVDS_16M_16P25FPS:
         stPubAttr.enBayer               = BAYER_GRBG;
         stPubAttr.f32FrameRate          = 16.25;

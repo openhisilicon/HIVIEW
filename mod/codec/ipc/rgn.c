@@ -425,7 +425,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
       	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
       	bitMap.pData        = rgn_obj[handle].osd_bmp;
          
-      	//make edge; if(osd->wh[0] == 0 && osd->wh[1] == 0)
+      	if(osd->wh[0] == 0 && osd->wh[1] == 0)
       	  gsf_bitmap_make_edge(&bitMap);
         
         gsf_mpp_rgn_bitmap(handle, &bitMap);

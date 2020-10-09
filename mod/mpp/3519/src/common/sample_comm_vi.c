@@ -393,6 +393,57 @@ VI_DEV_ATTR_S DEV_ATTR_MIPI_BASE =
     }
 };
 
+VI_DEV_ATTR_S DEV_ATTR_MIPI_IMX334 =
+{
+    /* interface mode */
+    VI_MODE_MIPI,
+    /* multiplex mode */
+    VI_WORK_MODE_1Multiplex,
+    /* r_mask    g_mask    b_mask*/
+    {0xFFC00000,    0x0},
+    /* progessive or interleaving */
+    VI_SCAN_PROGRESSIVE,
+    /*AdChnId*/
+    { -1, -1, -1, -1},
+    /*enDataSeq, only support yuv*/
+    VI_INPUT_DATA_YUYV,
+
+    /* synchronization information */
+    {
+        /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
+        VI_VSYNC_PULSE, VI_VSYNC_NEG_LOW, VI_HSYNC_VALID_SINGNAL, VI_HSYNC_NEG_HIGH, VI_VSYNC_VALID_SINGAL, VI_VSYNC_VALID_NEG_HIGH,
+
+        /*hsync_hfb    hsync_act    hsync_hhb*/
+        {
+            0,            1280,        0,
+            /*vsync0_vhb vsync0_act vsync0_hhb*/
+            0,            720,        0,
+            /*vsync1_vhb vsync1_act vsync1_hhb*/
+            0,            0,            0
+        }
+    },
+    /* use interior ISP */
+    VI_PATH_ISP,
+    /* input data type */
+    VI_DATA_TYPE_RGB,
+    /* bRever */
+    HI_FALSE,
+    /* DEV CROP */
+    {0, 0, 3840, 2160},
+    {
+        {
+            {3840, 2160},
+            HI_FALSE,
+
+        },
+        {
+            VI_REPHASE_MODE_NONE,
+            VI_REPHASE_MODE_NONE
+        }
+    }
+};
+
+
 
 combo_dev_attr_t LVDS_4lane_SENSOR_IMX136_12BIT_1080_NOWDR_ATTR =
 {
@@ -1878,6 +1929,21 @@ combo_dev_attr_t LVDS_10lane_SENSOR_IMX274_10BIT_8M_2WDR1_ATTR =
     }
 };
 
+/* 8lane 12bit 30fps*/
+combo_dev_attr_t MIPI_4lane_SENSOR_IMX334_12BIT_8M_NOWDR_ATTR =
+{
+	.devno = 0,    
+	.input_mode = INPUT_MODE_MIPI,    
+	.phy_clk_share = PHY_CLK_SHARE_PHY0,  
+	.img_rect = {0, 0, 3840, 2160},
+	.mipi_attr =    
+    {
+        .raw_data_type = RAW_DATA_12BIT,
+        .wdr_mode = HI_MIPI_WDR_MODE_NONE,
+        .lane_id = {0, 1, 2, 3, -1, -1, -1, -1}
+    }
+};
+
 combo_dev_attr_t LVDS_8lane_SENSOR_IMX117_12BIT_12M_NOWDR_ATTR =
 {
     .devno = 0,
@@ -2594,7 +2660,19 @@ combo_dev_attr_t LVDS_6lane_SENSOR_IMX326_12BIT_5M_NOWDR_ATTR =
         }
     }
 };
+combo_dev_attr_t MIPI_4lane_SENSOR_IMX185_12BIT_ATTR =
+{
+    .devno         = 0,
+    .input_mode    = INPUT_MODE_MIPI,      /* input mode */
+    .phy_clk_share = PHY_CLK_SHARE_NONE,
 
+    .mipi_attr =
+    {
+        .raw_data_type = RAW_DATA_12BIT,
+        .wdr_mode      = HI_WDR_MODE_NONE,
+        .lane_id       = {0, 1, 2, 3, -1, -1, -1, -1}
+    }
+};
 
 combo_dev_attr_t MIPI_4lane_SENSOR_IMX290_1080P_12BIT_NOWDR_ATTR =
 {
@@ -3093,7 +3171,7 @@ HI_S32 SAMPLE_COMM_VI_Mode2Param(SAMPLE_VI_MODE_E enViMode, SAMPLE_VI_PARAM_S* p
         default:
             pstViParam->s32ViDevCnt      = 1;
             pstViParam->s32ViDevInterval = 1;
-            pstViParam->s32ViChnCnt      = 1;
+            pstViParam->s32ViChnCnt      = 2; // maohw dev0=>chn0, dev1=>chn1;
             pstViParam->s32ViChnInterval = 1;
             break;
     }
@@ -3238,19 +3316,16 @@ HI_S32 SAMPLE_COMM_VI_SetMipiAttr(COMBO_DEV MipiDev, SAMPLE_VI_CONFIG_S* pstViCo
 /*****************************************************************************
 * function : init mipi
 *****************************************************************************/
-HI_S32 SAMPLE_COMM_VI_StartMIPI(SAMPLE_VI_CONFIG_S* pstViConfig)
+HI_S32 SAMPLE_COMM_VI_StartMIPI(SAMPLE_VI_CONFIG_S* pstViConfig, int mask[2])
 {
     int s32Ret;
-    HI_S32 MipiDevNum = 1;
+    HI_S32 MipiDevNum = 2;
     COMBO_DEV MipiDev;
-
-    if (SAMPLE_SENSOR_DOUBLE == pstViConfig->enSnsNum)
-    {
-        MipiDevNum = 2;
-    }
 
     for (MipiDev = 0; MipiDev < MipiDevNum; MipiDev++)
     {
+        if(!mask[MipiDev]) continue;
+        
         s32Ret = SAMPLE_COMM_VI_SetMipiAttr(MipiDev, pstViConfig);
         if (HI_SUCCESS != s32Ret)
         {
@@ -3265,6 +3340,7 @@ HI_S32 SAMPLE_COMM_VI_StartMIPI(SAMPLE_VI_CONFIG_S* pstViConfig)
 HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *pstViDevAttr)
 {
     VI_DEV_ATTR_S  stViDevAttr;
+	//VI_DEV_ATTR_EX_S stViDevAttr;
 
     memset(&stViDevAttr, 0, sizeof(stViDevAttr));
     switch (enViMode)
@@ -3320,6 +3396,7 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
         stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
         break;
 
+    case SONY_IMX185_MIPI_1080P_30FPS:
     case PANASONIC_MN34220_MIPI_1080P_30FPS:
         memcpy(&stViDevAttr, &DEV_ATTR_MIPI_BASE, sizeof(stViDevAttr));
         stViDevAttr.stDevRect.s32X = 8;
@@ -3460,7 +3537,7 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Width  = 3840;
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Height = 2160;
         stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
-        break;
+        break;        
     case SONY_IMX226_LVDS_9M_30FPS:
         memcpy(&stViDevAttr, &DEV_ATTR_LVDS_BASE, sizeof(stViDevAttr));
         stViDevAttr.stDevRect.s32X = 0;
@@ -3470,8 +3547,8 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Width  = 3000;
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Height = 3000;
         stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
-        break;
-
+        break;        
+        
     case SONY_IMX226_LVDS_12M_30FPS:
 		memcpy(&stViDevAttr, &DEV_ATTR_LVDS_BASE, sizeof(stViDevAttr));
 		stViDevAttr.stDevRect.s32X = 0;
@@ -3504,7 +3581,7 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Height = 3456;
         stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
         break;
-
+        
     case PANASONIC_MN34120_LVDS_4K_30FPS:
         memcpy(&stViDevAttr, &DEV_ATTR_LVDS_BASE, sizeof(stViDevAttr));
         stViDevAttr.stDevRect.s32X = 0;
@@ -3514,7 +3591,7 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Width  = 3840;
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Height = 2160;
         stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
-        break;
+        break;  
 
     case PANASONIC_MN34120_LVDS_1080P_60FPS:
         memcpy(&stViDevAttr, &DEV_ATTR_LVDS_BASE, sizeof(stViDevAttr));
@@ -3525,7 +3602,7 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Width  = 1920;
         stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Height = 1080;
         stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
-        break;
+        break;         
 
     case PANASONIC_MN34220_MIPI_720P_120FPS:
         memcpy(&stViDevAttr, &DEV_ATTR_MIPI_BASE, sizeof(stViDevAttr));
@@ -3658,7 +3735,9 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_VI_MODE_E enViMode, VI_DEV_ATTR_S *
 		stViDevAttr.stBasAttr.stSacleAttr.stBasSize.u32Height = 2160;
 		stViDevAttr.stBasAttr.stSacleAttr.bCompress = HI_FALSE;
 		break;
-
+	case SONY_IMX334_MIPI_4K_30FPS:
+		memcpy(&stViDevAttr, &DEV_ATTR_MIPI_IMX334, sizeof(stViDevAttr));	
+		break;
     default:
         memcpy(&stViDevAttr, &DEV_ATTR_LVDS_BASE, sizeof(stViDevAttr));
     }
@@ -3676,6 +3755,8 @@ HI_S32 SAMPLE_COMM_VI_StartDev(VI_DEV ViDev, SAMPLE_VI_MODE_E enViMode)
     HI_S32 s32IspDev = 0;
     ISP_WDR_MODE_S stWdrMode;
     VI_DEV_ATTR_S  stViDevAttr;
+   //VI_DEV_ATTR_EX_S stViDevAttr;
+   
 
     SAMPLE_COMM_VI_GetDevAttrBySns(enViMode, &stViDevAttr);
 
@@ -3816,13 +3897,13 @@ HI_S32 SAMPLE_COMM_VI_StartChn(VI_CHN ViChn, RECT_S* pstCapRect, SIZE_S* pstTarS
 /*****************************************************************************
 * function : star vi according to product type
 *****************************************************************************/
-HI_S32 SAMPLE_COMM_VI_StartBT1120(SAMPLE_VI_CONFIG_S* pstViConfig)
+HI_S32 SAMPLE_COMM_VI_StartBT1120(SAMPLE_VI_CONFIG_S* pstViConfig, int mask[2])
 {
     HI_S32 i, s32Ret = HI_SUCCESS;
     VI_DEV ViDev;
     VI_CHN ViChn;
-    HI_U32 u32DevNum = 1;
-    HI_U32 u32ChnNum = 1;
+    HI_U32 u32DevNum = 2;
+    HI_U32 u32ChnNum = 2;
     SIZE_S stTargetSize;
     RECT_S stCapRect;
     SAMPLE_VI_MODE_E enViMode;
@@ -3832,12 +3913,15 @@ HI_S32 SAMPLE_COMM_VI_StartBT1120(SAMPLE_VI_CONFIG_S* pstViConfig)
         SAMPLE_PRT("%s: null ptr\n", __FUNCTION__);
         return HI_FAILURE;
     }
+    
     enViMode = pstViConfig->enViMode;
-
+    
+    printf("%s => **************mask = [%d,%d] **********\n",__func__, mask[0], mask[1]);
+    
     /******************************************
      step 1: mipi configure
     ******************************************/
-    s32Ret = SAMPLE_COMM_VI_StartMIPI_BT1120(enViMode);
+    s32Ret = SAMPLE_COMM_VI_StartMIPI_BT1120(enViMode, mask);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("%s: MIPI init failed!\n", __FUNCTION__);
@@ -3846,6 +3930,8 @@ HI_S32 SAMPLE_COMM_VI_StartBT1120(SAMPLE_VI_CONFIG_S* pstViConfig)
 
     for (i = 0; i < u32DevNum; i++)
     {
+        if(!mask[i]) continue;
+          
         ViDev = i;
         s32Ret = SAMPLE_COMM_VI_StartDev(ViDev, enViMode);
         if (HI_SUCCESS != s32Ret)
@@ -3860,6 +3946,8 @@ HI_S32 SAMPLE_COMM_VI_StartBT1120(SAMPLE_VI_CONFIG_S* pstViConfig)
     ******************************************************/
     for (i = 0; i < u32ChnNum; i++)
     {
+        if(!mask[i]) continue;
+          
         ViChn = i;
 
         stCapRect.s32X = 0;
@@ -3986,6 +4074,40 @@ HI_S32 SAMPLE_COMM_VI_BindVpss(SAMPLE_VI_MODE_E enViMode)
     return HI_SUCCESS;
 }
 
+
+HI_S32 SAMPLE_COMM_VI_BindVpss2(SAMPLE_VI_MODE_E enViMode, HI_S32 VpssGrp, HI_S32 ViPipe)
+{
+    HI_S32 s32Ret;
+    MPP_CHN_S stSrcChn;
+    MPP_CHN_S stDestChn;
+    SAMPLE_VI_PARAM_S stViParam;
+
+    s32Ret = SAMPLE_COMM_VI_Mode2Param(enViMode, &stViParam);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("SAMPLE_COMM_VI_Mode2Param failed!\n");
+        return HI_FAILURE;
+    }
+    VpssGrp = VpssGrp;
+    VI_CHN ViChn = ViPipe * stViParam.s32ViChnInterval;
+    stSrcChn.enModId  = HI_ID_VIU;
+    stSrcChn.s32DevId = 0;
+    stSrcChn.s32ChnId = ViChn;
+
+    stDestChn.enModId  = HI_ID_VPSS;
+    stDestChn.s32DevId = VpssGrp;
+    stDestChn.s32ChnId = 0;
+
+    s32Ret = HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
+    if (s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("failed with %#x!\n", s32Ret);
+        return HI_FAILURE;
+    }
+    return HI_SUCCESS;
+}
+
+
 HI_BOOL IsSensorInput(SAMPLE_VI_MODE_E enViMode)
 {
     HI_BOOL bRet = HI_TRUE;
@@ -4066,9 +4188,10 @@ HI_BOOL SAMPLE_COMM_IsViVpssOnline(void)
     return u32OnlineMode;
 }
 
-HI_S32 SAMPLE_COMM_VI_StartMIPI_BT1120(SAMPLE_VI_MODE_E enViMode)
+HI_S32 SAMPLE_COMM_VI_StartMIPI_BT1120(SAMPLE_VI_MODE_E enViMode, int mask[2])
 {
-    HI_S32 fd;
+    HI_S32 fd, i;
+    HI_U32 u32DevNum = 2;
     combo_dev_attr_t* pstcomboDevAttr = NULL;
 
     fd = open("/dev/hi_mipi", O_RDWR);
@@ -4078,24 +4201,31 @@ HI_S32 SAMPLE_COMM_VI_StartMIPI_BT1120(SAMPLE_VI_MODE_E enViMode)
         return -1;
     }
 
-    if ((enViMode == SAMPLE_VI_MODE_BT1120_1080I)
-        || (enViMode == SAMPLE_VI_MODE_BT1120_720P)
-        || (enViMode == SAMPLE_VI_MODE_BT1120_1080P))
+    for(i = 0; i < u32DevNum; i++)
     {
-        pstcomboDevAttr = &MIPI_BT1120_ATTR;
+      if(!mask[i]) continue;
+      
+      if ((enViMode == SAMPLE_VI_MODE_BT1120_1080I)
+          || (enViMode == SAMPLE_VI_MODE_BT1120_720P)
+          || (enViMode == SAMPLE_VI_MODE_BT1120_1080P))
+      {
+          pstcomboDevAttr = &MIPI_BT1120_ATTR;
+          pstcomboDevAttr->devno = i;
+      }
+    	else
+    	{
+    		close(fd);
+    		return -1;
+    	}
+    	
+      if (ioctl(fd, HI_MIPI_SET_DEV_ATTR, pstcomboDevAttr))
+      {
+          printf("set mipi attr failed\n");
+          close(fd);
+          return -1;
+      }
     }
-	else
-	{
-		close(fd);
-		return -1;
-	}
 
-    if (ioctl(fd, HI_MIPI_SET_DEV_ATTR, pstcomboDevAttr))
-    {
-        printf("set mipi attr failed\n");
-        close(fd);
-        return -1;
-    }
     close(fd);
     return HI_SUCCESS;
 }
@@ -4310,6 +4440,10 @@ HI_S32 SAMPLE_COMM_VI_SetMipiAttr(COMBO_DEV MipiDev, SAMPLE_VI_CONFIG_S* pstViCo
             pstcomboDevAttr = &MIPI_4lane_SENSOR_OS08A_12BIT_4K_NOWDR_ATTR;
         }
     }
+	else if (pstViConfig->enViMode == SONY_IMX334_MIPI_4K_30FPS)
+	{
+		pstcomboDevAttr = &MIPI_4lane_SENSOR_IMX334_12BIT_8M_NOWDR_ATTR;
+	}
 
     if (NULL == pstcomboDevAttr)
     {
@@ -4383,6 +4517,7 @@ static HI_S32 GetViCaprectBySns(SAMPLE_VI_MODE_E enViMode, RECT_S *pstRect)
     case PANASONIC_MN34220_SUBLVDS_1080P_30FPS:
     case PANASONIC_MN34220_MIPI_1080P_30FPS:
     case SONY_IMX178_LVDS_1080P_30FPS:
+    case SONY_IMX185_MIPI_1080P_30FPS:
     case SONY_IMX290_MIPI_1080P_30FPS:
     case SONY_IMX122_DC_1080P_30FPS:
     case APTINA_AR0330_MIPI_1080P_30FPS:
@@ -4423,6 +4558,7 @@ static HI_S32 GetViCaprectBySns(SAMPLE_VI_MODE_E enViMode, RECT_S *pstRect)
     case SONY_IMX226_LVDS_4K_30FPS:
 	case SONY_IMX226_LVDS_4K_60FPS:
     case SONY_IMX274_LVDS_4K_30FPS:
+	case SONY_IMX334_MIPI_4K_30FPS:
     case SONY_IMX117_LVDS_4K_30FPS:
     case SONY_IMX377_MIPI_8M_30FPS_10BIT:
     case SONY_IMX377_MIPI_8M_30FPS_12BIT:
@@ -4458,13 +4594,13 @@ static HI_S32 GetViCaprectBySns(SAMPLE_VI_MODE_E enViMode, RECT_S *pstRect)
     return HI_SUCCESS;
 }
 
-HI_S32 SAMPLE_COMM_VI_StartIspAndVi(SAMPLE_VI_CONFIG_S* pstViConfig)
+HI_S32 SAMPLE_COMM_VI_StartIspAndVi(SAMPLE_VI_CONFIG_S* pstViConfig, int mask[2])
 {
     HI_S32 i, s32Ret = HI_SUCCESS;
     VI_DEV ViDev;
     VI_CHN ViChn;
-    HI_U32 u32DevNum = 1;
-    HI_U32 u32ChnNum = 1;
+    HI_U32 u32DevNum = 2;
+    HI_U32 u32ChnNum = 2;
     SIZE_S stTargetSize;
     RECT_S stCapRect;
     SAMPLE_VI_MODE_E enViMode;
@@ -4476,30 +4612,29 @@ HI_S32 SAMPLE_COMM_VI_StartIspAndVi(SAMPLE_VI_CONFIG_S* pstViConfig)
     }
     enViMode = pstViConfig->enViMode;
 
-    if (SAMPLE_SENSOR_DOUBLE == pstViConfig->enSnsNum)
-    {
-        u32DevNum = 2;
-        u32ChnNum = 2;
-    }
+
     /******************************************
      step 1: mipi configure
     ******************************************/
-    s32Ret = SAMPLE_COMM_VI_StartMIPI(pstViConfig);
+    s32Ret = SAMPLE_COMM_VI_StartMIPI(pstViConfig, mask);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("%s: MIPI init failed!\n", __FUNCTION__);
         return HI_FAILURE;
     }
-
+	
+	  printf("%s => **************mask = [%d,%d] **********\n",__func__, mask[0], mask[1]);
+	
     /******************************************
      step 2: configure sensor and ISP (include WDR mode).
      note: you can jump over this step, if you do not use Hi3516A interal isp.
     ******************************************/
     for (i = 0; i < u32DevNum; i++)
     {
+        if(!mask[i]) continue;
         ISP_DEV IspDev = i;
         HI_U32 u32SnsId = i;
-
+        
         s32Ret = SAMPLE_COMM_ISP_Sensor_Regiter_callback(IspDev, u32SnsId);
         if (HI_SUCCESS != s32Ret)
         {
@@ -4523,6 +4658,7 @@ HI_S32 SAMPLE_COMM_VI_StartIspAndVi(SAMPLE_VI_CONFIG_S* pstViConfig)
     ******************************************/
     for (i = 0; i < u32DevNum; i++)
     {
+        if(!mask[i]) continue;
         s32Ret = SAMPLE_COMM_ISP_Run(i);
         if (HI_SUCCESS != s32Ret)
         {
@@ -4537,6 +4673,7 @@ HI_S32 SAMPLE_COMM_VI_StartIspAndVi(SAMPLE_VI_CONFIG_S* pstViConfig)
     ******************************************************/
     for (i = 0; i < u32DevNum; i++)
     {
+        if(!mask[i]) continue;
         ViDev = i;
         s32Ret = SAMPLE_COMM_VI_StartDev(ViDev, enViMode);
         if (HI_SUCCESS != s32Ret)
@@ -4552,8 +4689,9 @@ HI_S32 SAMPLE_COMM_VI_StartIspAndVi(SAMPLE_VI_CONFIG_S* pstViConfig)
     ******************************************************/
     for (i = 0; i < u32ChnNum; i++)
     {
+        if(!mask[i]) continue;
         ViChn = i;
-
+        
         GetViCaprectBySns(enViMode, &stCapRect);
         stTargetSize.u32Width = stCapRect.u32Width;
         stTargetSize.u32Height = stCapRect.u32Height;
@@ -4575,8 +4713,8 @@ HI_S32 SAMPLE_COMM_VI_StopIsp(SAMPLE_VI_CONFIG_S* pstViConfig)
     VI_CHN ViChn;
     HI_S32 i;
     HI_S32 s32Ret;
-    HI_U32 u32DevNum = 1;
-    HI_U32 u32ChnNum = 1;
+    HI_U32 u32DevNum = 2;
+    HI_U32 u32ChnNum = 2;
 
     if (!pstViConfig)
     {
@@ -4584,11 +4722,6 @@ HI_S32 SAMPLE_COMM_VI_StopIsp(SAMPLE_VI_CONFIG_S* pstViConfig)
         return HI_FAILURE;
     }
 
-    if (SAMPLE_SENSOR_DOUBLE == pstViConfig->enSnsNum)
-    {
-        u32DevNum = 2;
-        u32ChnNum = 2;
-    }
     /*** Stop VI Chn ***/
     for (i = 0; i < u32ChnNum; i++)
     {
@@ -4622,24 +4755,54 @@ HI_S32 SAMPLE_COMM_VI_StartVi(SAMPLE_VI_CONFIG_S* pstViConfig)
 {
     HI_S32 s32Ret = HI_SUCCESS;
     SAMPLE_VI_MODE_E enViMode;
-
+    int mask[2] = {0, 0};
+    
     if (!pstViConfig)
     {
         SAMPLE_PRT("%s: null ptr\n", __FUNCTION__);
         return HI_FAILURE;
     }
+    
+    mask[0] = 1;
+    mask[1] = (SAMPLE_SENSOR_DOUBLE == pstViConfig->enSnsNum)?1:0;
 
     enViMode = pstViConfig->enViMode;
     if (!IsSensorInput(enViMode))
     {
-        s32Ret = SAMPLE_COMM_VI_StartBT1120(pstViConfig);
+        s32Ret = SAMPLE_COMM_VI_StartBT1120(pstViConfig, mask);
     }
     else
     {
-        s32Ret = SAMPLE_COMM_VI_StartIspAndVi(pstViConfig);
+        s32Ret = SAMPLE_COMM_VI_StartIspAndVi(pstViConfig, mask);
     }
+    return s32Ret;
+}
 
 
+HI_S32 SAMPLE_COMM_VI_StartVi2(SAMPLE_VI_CONFIG_S* pstViConfig)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    SAMPLE_VI_MODE_E enViMode;
+    int mask[2] = {0, 0};
+    
+    if (!pstViConfig)
+    {
+        SAMPLE_PRT("%s: null ptr\n", __FUNCTION__);
+        return HI_FAILURE;
+    }
+    
+    mask[0] = 0;
+    mask[1] = 1;
+
+    enViMode = pstViConfig->enViMode;
+    if (!IsSensorInput(enViMode))
+    {
+        s32Ret = SAMPLE_COMM_VI_StartBT1120(pstViConfig, mask);
+    }
+    else
+    {
+        s32Ret = SAMPLE_COMM_VI_StartIspAndVi(pstViConfig, mask);
+    }
     return s32Ret;
 }
 
@@ -5802,6 +5965,7 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(PIC_SIZE_E* penSize)
         case OMNIVISION_OV4689_MIPI_1080P_30FPS:
         case APTINA_AR0330_MIPI_1080P_30FPS:
         case SONY_IMX178_LVDS_1080P_30FPS:
+        case SONY_IMX185_MIPI_1080P_30FPS:
         case SONY_IMX290_MIPI_1080P_30FPS:
         case SONY_IMX117_LVDS_1080P_120FPS:
         case SONY_IMX377_MIPI_1080P_120FPS_12BIT:
@@ -5835,6 +5999,7 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(PIC_SIZE_E* penSize)
         case SONY_IMX377_MIPI_8M_60FPS_10BIT:
         case PANASONIC_MN34120_LVDS_4K_30FPS:
         case OMNIVISION_OS08A_MIPI_4K_30FPS:
+		case SONY_IMX334_MIPI_4K_30FPS:
             *penSize = PIC_UHD4K;
             break;
         case SONY_IMX226_LVDS_9M_30FPS:

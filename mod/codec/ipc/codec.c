@@ -183,7 +183,15 @@ static int rgn_timer_func(void *u)
   osd.point[1] += 100;
   osd.point[1] %= 2000;
   printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
+  
+  struct timespec ts1, ts2;  
+  clock_gettime(CLOCK_MONOTONIC, &ts1);
+  
   gsf_rgn_osd_set(0, 0, &osd);
+  
+  clock_gettime(CLOCK_MONOTONIC, &ts2);
+  int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+  printf("gsf_rgn_osd_set cost:%d ms\n", cost);
   
   vmask.rect[0] += 100;
   vmask.rect[0] %= 2000;
@@ -431,6 +439,15 @@ int main(int argc, char *argv[])
           };
 
       #endif
+    #elif defined(GSF_CPU_3519)
+      // imx334-0-0-8-30
+      gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
+      gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 1};
+      gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 1};
+      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
+            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_3840x2160, PIC_720P,}},
+            {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
+          };
     #else
     #error "error unknow gsf_mpp_cfg_t."
     #endif 
@@ -520,7 +537,7 @@ int main(int argc, char *argv[])
     
     //test osd;
     /////////////////////////////////////
-    void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
+    /// void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
     /////////////////////////////////////

@@ -5,6 +5,11 @@ char onvif_parm_path[128] = {0};
 gsf_onvif_cfg_t onvif_cfg = {
   .port = 8000,
   .auth = 0,
+  #if defined(GSF_CPU_3559a)
+  .chnum = 4,
+  #else
+  .chnum = 1,
+  #endif
 };
 
 int json_parm_load(char *filename, gsf_onvif_cfg_t *cfg)

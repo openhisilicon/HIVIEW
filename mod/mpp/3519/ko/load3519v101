@@ -28,6 +28,8 @@ os_mem_size=64;             # 64M, os mem
 mmz_start=0x84000000;       # mmz start addr
 mmz_size=448M;              # 128M, mmz size
 
+net_type=0;
+
 ##################################################################
 
 report_error()
@@ -143,8 +145,9 @@ if [ ${SNS_TYPE0} != "NULL" ] ; then
 			#imx274:viu0: 600M,isp0:300M, viu1:300M,isp1:300M
 			himm 0x1201004c 0x00094c23;
 			himm 0x12010054 0x0004041;
-            spi0_4wire_pin_mux;
-            insmod extdrv/hi_ssp_sony.ko;
+		i2c0_pin_mux;
+            #spi0_4wire_pin_mux;
+            #insmod extdrv/hi_ssp_sony.ko;
             ;;
         imx274_mipi)
             tmp=0x14;
@@ -154,7 +157,47 @@ if [ ${SNS_TYPE0} != "NULL" ] ; then
 			himm 0x12010054 0x0004041;
             himm 0x12010040 0x14;           # sensor0 clk_en, 24MHz
             i2c0_pin_mux;
-            ;;       
+            ;;
+	imx334)
+            tmp=0x11;
+            himm 0x12010040 0x14;           # sensor0 clk_en, 24MHz
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#imx274:viu0: 600M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c23;
+			himm 0x12010054 0x0004041;
+		i2c0_pin_mux;
+            #spi0_4wire_pin_mux;
+            #insmod extdrv/hi_ssp_sony.ko;
+            ;;
+        imx117)
+            tmp=0x11;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x11;           # sensor0 clk_en, 72MHz
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;	
+        imx377)
+            tmp=0x14;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#viu0:600M,isp0:600M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c23;
+			himm 0x12010054 0x00024041;
+            himm 0x12010040 0x14; # sensor0 clk_en, 24MHz 
+            i2c0_pin_mux;
+            ;;   	
+        imx317)
+            tmp=0x11;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x11;           # sensor0 clk_en, 72MHz
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;
         imx290)
             tmp=0x18;
 			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
@@ -163,7 +206,26 @@ if [ ${SNS_TYPE0} != "NULL" ] ; then
 			himm 0x12010054 0x0004;
             himm 0x12010040 0x18;           # sensor0 clk_en, 37.125MHz
             i2c0_pin_mux;
-            ;;       
+            ;;
+        mn34220)
+            tmp=0x18;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x18;           # sensor0 clk_en, 37.125MHz
+            i2c0_pin_mux;
+            ;;
+        mn34120)
+            tmp=0x12;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x12;           # sensor0 clk_en, 54MHz
+            spi0_3wire_pin_mux;
+            insmod extdrv/hi_ssp_3wire.ko;
+            ;;
         ov4689)
             tmp=0x14;
 			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
@@ -181,7 +243,17 @@ if [ ${SNS_TYPE0} != "NULL" ] ; then
 			himm 0x12010054 0x0004041;
             himm 0x12010040 0x14;           # sensor0 clk_en, 24MHz
             i2c0_pin_mux;
-            ;;	                  
+            ;;
+        imx185)
+            tmp=0x18;
+			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
+			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
+			himm 0x1201004c 0x00094c21;
+			himm 0x12010054 0x0004041;
+            himm 0x12010040 0x18;           # sensor0 clk_en, 37.125MHz
+            spi0_4wire_pin_mux;
+            insmod extdrv/hi_ssp_sony.ko;	                  
+            ;;                   
         bt1120)
 			# SDK config:     IVE:396M,  GDC:475M,  VGS:500M,  VEDU:600M,   VPSS:300M 
 			#	viu0:300M,isp0:300M, viu1:300M,isp1:300M
@@ -212,12 +284,19 @@ if [ ${SNS_TYPE1} != "NULL" ] ; then
             himm 0x12010040 $tmp2;           # sensor1 clk_en, 24MHz
             i2c1_pin_mux;
             ;;
-		os08a10)
+	os08a10)
             tmp1=0x1400;
             tmp2=$((tmp+tmp1));
             himm 0x12010040 $tmp2;           # sensor1 clk_en, 24MHz
             i2c1_pin_mux;
-            ;;      
+            ;;  
+        imx185)
+            tmp1=0x1800;
+            tmp2=$((tmp+tmp1));
+            himm 0x12010040 $tmp2;           # sensor0 clk_en, 37.125MHz
+            spi1_4wire_pin_mux;            
+            insmod extdrv/hi_ssp_sony.ko;
+            ;;    
         bt1120)
             himm 0x114c6200 0x0;  #disable dehaze
             himm 0x114d1400 0x0;  #disable acm
@@ -291,7 +370,7 @@ vicap1_pwrdn()
 sys_config()
 {
 	# pinmux configuration
-	sh ./pinmux.sh -net -vi > /dev/null
+	sh pinmux.sh -net $net_type -vi > /dev/null
 
 	if [ ${SNS_TYPE1} != "NULL" ] ; then	
 	vicap1_pwrdn > /dev/null
@@ -357,7 +436,7 @@ insert_ko()
 	insert_sns 	
 	sh ./pinmux.sh -vo BT1120 > /dev/null
 	himm 0x12010044 0x4ff0;
-	insmod extdrv/hi_sil9136.ko norm=12;    #1080P@30fps
+	#insmod extdrv/hi_sil9136.ko norm=12;    #1080P@30fps
 	#insmod extdrv/hi_sil9136.ko norm=13;   #4K@30fps
 	himm 0x12010044 0x4;	
 	echo "==== Your input Sensor0 type is $SNS_TYPE0 ===="
@@ -373,7 +452,7 @@ remove_ko()
 	rmmod hi_pwm
 	rmmod hi_piris
 
-	#rmmod hi3519v101_photo
+	rmmod hi3519v101_photo
 	rmmod hi3519v101_ive
 
 	rmmod hi3519v101_rc
@@ -429,6 +508,7 @@ load_usage()
 	echo "    -total_mem_size          config total mem size [unit: M, default: 512]"
 	echo "    -offline                 vi/vpss offline"
 	echo "    -h                       help information"
+	echo "	  -net			   1:rgmii,2:rmii"
 	echo -e "Available sensors: imx274, imx226, imx290, ov4689 ,os08a10"
 	echo -e "workmode: stitching,single_pipe,double_pipe"
 	echo -e "notes: osmem option can't be used when mmz zone partition is enable\n\n"
@@ -465,6 +545,7 @@ b_arg_online=1
 b_arg_restore=0
 b_arg_mode=0
 b_arg_total_mem=0
+b_arg_net_mode=0
 
 for arg in $@
 do
@@ -504,6 +585,11 @@ do
 		WORK_MODE=$arg;		
 	fi
 
+	if [ $b_arg_net_mode -eq 1 ] ; then
+		b_arg_net_mode=0;
+		net_type=$arg;		
+	fi
+
 	case $arg in
 		"-i")
 			b_arg_insmod=1;
@@ -541,6 +627,9 @@ do
 			;;
 		"-workmode")
 			b_arg_mode=1;
+			;;
+		"-net")
+			b_arg_net_mode=1;
 			;;
 	esac
 done

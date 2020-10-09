@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <signal.h>
 
 #include "sample_comm.h"
 #include "mpp.h"
+
+extern void SAMPLE_VENC_HandleSig(HI_S32 signo);
 
 
 typedef struct {
@@ -60,6 +63,7 @@ static SAMPLE_MPP_SENSOR_T libsns[64] = {
     {SONY_IMX326_MIPI_5M_30FPS,              "imx326-0-0-5-30",       "libsns_imx326.so",         "stSnsImx326Obj"},
     {OMNIVISION_OS05A_MIPI_5M_30FPS,         "os05a-0-0-5-30",        "libsns_os05a.so",          "stSnsOs05aObj"},
     {OMNIVISION_OS08A_MIPI_4K_30FPS,         "os08a-0-0-8-30",        "libsns_os08a10.so",        "stSnsOs08a10Obj"},
+    {SONY_IMX334_MIPI_4K_30FPS,              "imx334-0-0-8-30",       "libsns_imx334.so",         "stSnsImx334Obj"},
   };
 
 static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
@@ -90,10 +94,16 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
     return -1;
   } 
   
-  char loadstr[128];
-  sprintf(loadstr, "%s/ko/load3519v101 -i -sensor0 %s -offline", path, cfg->snsname);
+  char loadstr[256];
+  //sprintf(loadstr, "%s/ko/load3519v101 -i -sensor0 %s -offline", path, cfg->snsname);
+  // fixed vi0=>snsname, vi1=>bt1120;
+  sprintf(loadstr, "%s/ko/load3519v101 -a -sensor0 %s -sensor1 bt1120 -total 1024 -osmem 512 -offline -workmode single_pipe", path, cfg->snsname);
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
+  
+  signal(SIGINT, SAMPLE_VENC_HandleSig);
+  signal(SIGTERM, SAMPLE_VENC_HandleSig);
+  
   
   SENSOR_TYPE = sns->type;
   
@@ -137,7 +147,9 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     PIC_SIZE_E enSize[2] = {PIC_UHD4K, PIC_HD1080};	
 	
     VB_CONF_S stVbConf;
+    
     SAMPLE_VI_CONFIG_S stViConfig = {0};
+    SAMPLE_VI_CONFIG_S stViConfig2 = {0};
     
     HI_S32 s32Ret = HI_SUCCESS;
     HI_U32 u32BlkSize;
@@ -157,7 +169,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
 	    u32BlkSize = SAMPLE_COMM_SYS_CalcPicVbBlkSize(VIDEO_ENCODING_MODE_PAL,\
 	                enSize[0], SAMPLE_PIXEL_FORMAT, SAMPLE_SYS_ALIGN_WIDTH);
 	    stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
-	    stVbConf.astCommPool[0].u32BlkCnt = 10;
+	    stVbConf.astCommPool[0].u32BlkCnt = 10*2;
 	  }
 	  
     if(2) 
@@ -165,7 +177,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
 	    u32BlkSize = SAMPLE_COMM_SYS_CalcPicVbBlkSize(VIDEO_ENCODING_MODE_PAL,\
 	                enSize[1], SAMPLE_PIXEL_FORMAT, SAMPLE_SYS_ALIGN_WIDTH);
 	    stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
-	    stVbConf.astCommPool[1].u32BlkCnt =10;
+	    stVbConf.astCommPool[1].u32BlkCnt =10*2;
 	  }
 
     /******************************************
@@ -192,6 +204,20 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
         SAMPLE_PRT("start vi failed!\n");
         goto END_VENC_1080P_CLASSIC_1;
     }
+    
+    //start-vi2;
+    stViConfig2.enViMode   = SAMPLE_VI_MODE_BT1120_1080P;
+    stViConfig2.enRotate   = ROTATE_NONE;
+    stViConfig2.enNorm     = VIDEO_ENCODING_MODE_AUTO;
+    stViConfig2.enViChnSet = VI_CHN_SET_NORMAL;
+	  stViConfig2.enWDRMode  = WDR_MODE_NONE;
+    s32Ret = SAMPLE_COMM_VI_StartVi2(&stViConfig2);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("start vi2 failed!\n");
+        goto END_VENC_1080P_CLASSIC_1;
+    }
+
 
   return s32Ret;
   
@@ -210,10 +236,10 @@ int gsf_mpp_vi_stop()
 
 int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
 {
-    PIC_SIZE_E enSize[2] = {PIC_UHD4K, PIC_HD1080};	
-    
-    VPSS_GRP VpssGrp;
-    VPSS_CHN VpssChn;
+    PIC_SIZE_E enSize[2] = {PIC_UHD4K, PIC_HD1080};
+    HI_S32   ViPipe = vpss->ViPipe;
+    VPSS_GRP VpssGrp = vpss->VpssGrp;
+    VPSS_CHN VpssChn = 0;
     VPSS_GRP_ATTR_S stVpssGrpAttr = {0};
     VPSS_CHN_ATTR_S stVpssChnAttr = {0};
     VPSS_CHN_MODE_S stVpssChnMode;
@@ -221,13 +247,11 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
     HI_S32 s32Ret = HI_SUCCESS;
     SIZE_S stSize;
 
-
     /******************************************
      step  1: init sys variable 
     ******************************************/
 
     SAMPLE_COMM_VI_GetSizeBySensor(&enSize[0]);
-
     
     /******************************************
      step 4: start vpss and vi bind vpss
@@ -240,7 +264,6 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
     }
     
     //sensor wh size;
-    VpssGrp = 0;
     stVpssGrpAttr.u32MaxW = stSize.u32Width;
     stVpssGrpAttr.u32MaxH = stSize.u32Height;
     stVpssGrpAttr.bIeEn = HI_FALSE;
@@ -261,7 +284,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
 	    goto END_VENC_1080P_CLASSIC_2;
     }
 
-    s32Ret = SAMPLE_COMM_VI_BindVpss(SENSOR_TYPE);
+    s32Ret = SAMPLE_COMM_VI_BindVpss2(SENSOR_TYPE, VpssGrp, ViPipe);
     if (HI_SUCCESS != s32Ret)
     {
 	    SAMPLE_PRT("Vi bind Vpss failed!\n");

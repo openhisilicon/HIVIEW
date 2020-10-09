@@ -177,7 +177,16 @@ static int rgn_timer_func(void *u)
   osd.point[1] += 100;
   osd.point[1] %= 2000;
   printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
+    
+  struct timespec ts1, ts2;  
+  clock_gettime(CLOCK_MONOTONIC, &ts1);
+  
   gsf_rgn_osd_set(0, 0, &osd);
+  
+  clock_gettime(CLOCK_MONOTONIC, &ts2);
+  int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+  printf("gsf_rgn_osd_set cost:%d ms\n", cost);
+    
   
   vmask.rect[0] += 100;
   vmask.rect[0] %= 2000;
