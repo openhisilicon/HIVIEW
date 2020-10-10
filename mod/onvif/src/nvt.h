@@ -536,6 +536,9 @@ extern int get_imaging_conf(int chs, imaging_conf_t *img, int num);
 extern int get_recording_info(recording_info_t *info, char *token);
 extern int set_device_factorydefault(int mask);
 
+extern int ptz_ctl(int chs, int action, int speed);
+
+
 #endif
 
 

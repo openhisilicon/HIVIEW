@@ -1303,16 +1303,19 @@ HI_S32 SAMPLE_COMM_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType, VIDEO_NOR
         return s32Ret;
     }
 
-
-    /******************************************
-     step 2:  Start Recv Venc Pictures
-    ******************************************/
-    s32Ret = HI_MPI_VENC_StartRecvPic(VencChn);
-    if (HI_SUCCESS != s32Ret)
+    if(enType != PT_JPEG) // maohw
     {
-        SAMPLE_PRT("HI_MPI_VENC_StartRecvPic faild with%#x! \n", s32Ret);
-        return HI_FAILURE;
+      /******************************************
+       step 2:  Start Recv Venc Pictures
+      ******************************************/
+      s32Ret = HI_MPI_VENC_StartRecvPic(VencChn);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_VENC_StartRecvPic faild with%#x! \n", s32Ret);
+          return HI_FAILURE;
+      }
     }
+    
     return HI_SUCCESS;
 }
 
@@ -1399,6 +1402,21 @@ HI_S32 SAMPLE_COMM_VENC_SnapStop(VENC_CHN VencChn)
 /******************************************************************************
 * funciton : snap process
 ******************************************************************************/
+//maohw
+static pthread_mutex_t SnapMutex = PTHREAD_MUTEX_INITIALIZER;
+static int(*SnapCB)(int i, VENC_STREAM_S* pstStream, void* u) = NULL;
+static void* SnapU = NULL;
+HI_S32 SAMPLE_COMM_VENC_SnapProcessCB(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+{
+  HI_S32 ret = 0;
+  pthread_mutex_lock(&SnapMutex);
+  SnapCB = cb;
+  SnapU = u;
+  ret = SAMPLE_COMM_VENC_SnapProcess(VencChn, 0, 0);
+  pthread_mutex_unlock(&SnapMutex);
+  
+  return ret;
+}
 
 HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_BOOL bSaveJpg, HI_BOOL bSaveThm)
 {
@@ -1410,8 +1428,8 @@ HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_BOOL bSaveJpg, HI_BOOL 
     HI_S32 s32Ret;
     VENC_RECV_PIC_PARAM_S stRecvParam;
 
-    printf("press any key to snap one pic\n");
-    getchar();
+    //printf("press any key to snap one pic\n");
+    //getchar();
 
     /******************************************
      step 2:  Start Recv Venc Pictures
@@ -1483,6 +1501,10 @@ HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_BOOL bSaveJpg, HI_BOOL 
                 free(stStream.pstPack);
                 stStream.pstPack = NULL;
                 return HI_FAILURE;
+            }
+            if(SnapCB)
+            {
+              SnapCB(0, &stStream, SnapU);
             }
 
             s32Ret = SAMPLE_COMM_VENC_SaveSnap(&stStream, bSaveJpg, bSaveThm);
@@ -2037,8 +2059,8 @@ HI_S32 SAMPLE_COMM_VENC_StartGetStream(VENC_CHN VeChn[],HI_S32 s32Cnt)
     gs_stPara.s32Cnt = s32Cnt;
     for(i=0; i<s32Cnt; i++)
     {
-        gs_stPara.VeChn[i] = VeChn[i];
-        printf("%s => s32Cnt:%d, VeChn:%d\n", __func__, s32Cnt, VeChn[i]);
+        gs_stPara.VeChn[i] = VeChn?VeChn[i]:i;
+        printf("%s => s32Cnt:%d, VeChn:%d\n", __func__, s32Cnt, gs_stPara.VeChn[i]);
     }
     return pthread_create(&gs_VencPid, 0, SAMPLE_COMM_VENC_GetVencStreamProc, (HI_VOID*)&gs_stPara);
 }

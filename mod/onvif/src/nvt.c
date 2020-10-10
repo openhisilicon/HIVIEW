@@ -5729,6 +5729,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tptz__ContinuousMove(struct soap* soap, struct _tptz
   #define VISCA_MAX_SPEED 16
   int index = -1; //tptz__ContinuousMove->ProfileToken
   //tptz__ContinuousMove->Timeout
+  printf("%s => ProfileToken:[%s]\n", __func__, tptz__ContinuousMove->ProfileToken);
   
 	float xSpeed = 0, ySpeed = 0, zSpeed = 0;
   int action = 0, speed = 0;
@@ -5783,7 +5784,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tptz__ContinuousMove(struct soap* soap, struct _tptz
       if(action)
       {
         speed = (zSpeed < 0)?-zSpeed:zSpeed;
-        printf("%s => Zoom action:%d, speed:%d\n", __func__, action, speed);
+        printf("%s => Zoom action:%d, speed:%d, ret:%d\n", __func__, action, speed, ptz_ctl(0, action, speed));
       }
 		}
 	}
@@ -5810,6 +5811,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tptz__Stop(struct soap* soap, struct _tptz__Stop *tp
 {
   int index = -1;//tptz__Stop->ProfileToken
   int action = 0, speed = 0;
+  printf("%s => ProfileToken:[%s]\n", __func__, tptz__Stop->ProfileToken);
   
 	if(tptz__Stop->PanTilt || tptz__Stop->Zoom)
 	{
@@ -5820,10 +5822,9 @@ SOAP_FMAC5 int SOAP_FMAC6 __tptz__Stop(struct soap* soap, struct _tptz__Stop *tp
 
 		if(*tptz__Stop->Zoom == _true)
 		{
-			action = NVC_PTZ_UP_STOP;
+			action = NVC_PTZ_ZOOM_ADD_STOP;
 		}
-
-		printf("%s => Stop action:%d, speed:%d\n", __func__, action, speed);
+    printf("%s => Stop action:%d, speed:%d, ret:%d\n", __func__, action, speed, ptz_ctl(0, action, speed));
 	}
 
 	return SOAP_OK;   

@@ -16,7 +16,7 @@ INCS := -I$(HOME) -Isrc -Iinc  \
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lgsoap -ldl -lrt -lnm -lcjson -lm -lpthread
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lgsoap -lcomm -ldl -lrt -lnm -lcjson -lm -lpthread
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)

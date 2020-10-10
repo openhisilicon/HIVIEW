@@ -331,7 +331,7 @@ HI_S32 SAMPLE_VENC_NORMALP_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -653,7 +653,7 @@ HI_S32 SAMPLE_VENC_SMARTP_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -973,7 +973,7 @@ HI_S32 SAMPLE_VENC_DUALP_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -1296,7 +1296,7 @@ HI_S32 SAMPLE_VENC_BIPREDB_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -1617,7 +1617,7 @@ HI_S32 SAMPLE_VENC_DUALPP_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -1945,7 +1945,7 @@ HI_S32 SAMPLE_VENC_BgModel_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -2288,7 +2288,7 @@ HI_S32 SAMPLE_VENC_IntraRefresh_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file. 
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -2557,7 +2557,7 @@ HI_S32 SAMPLE_VENC_1080P_MJPEG_4K_JPEG(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file.
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -2871,7 +2871,7 @@ HI_S32 SAMPLE_VENC_LOW_DELAY(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file.
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");
@@ -3137,7 +3137,7 @@ HI_S32 SAMPLE_VENC_ROIBG_CLASSIC(HI_VOID)
     /******************************************
      step 6: stream venc process -- get stream, then save it to file.
     ******************************************/
-    s32Ret = SAMPLE_COMM_VENC_StartGetStream(s32ChnNum);
+    s32Ret = SAMPLE_COMM_VENC_StartGetStream(NULL,s32ChnNum);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("Start Venc failed!\n");

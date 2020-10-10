@@ -1659,3 +1659,51 @@ int get_recording_info(recording_info_t *info, char *token)
 	free(_token);
   return chs;
 }
+
+
+#include "fw/comm/inc/serial.h"
+#define TTYAMA4 "/dev/ttyAMA4"
+static int serial_fd = 0;
+
+int ptz_ctl(int chs, int action, int speed)
+{
+  if(serial_fd <= 0)
+  {
+    system("himm 0x120400A0  2;");
+    system("himm 0x120400A4  2;");
+    
+    serial_fd = open(TTYAMA4, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
+    if(serial_fd > 0)
+    {
+      serial_set_param(serial_fd, 9600, 0, 1, 8);
+    }
+    if(serial_fd <= 0)
+      return -1;
+  }
+  
+  int ret = 0;
+  unsigned char buf[6] = {0x81, 0x01, 0x04, 0x07, 0x00, 0xFF};
+  unsigned char* pbuf = NULL;
+    
+  switch(action)
+  {
+    case NVC_PTZ_ZOOM_ADD_START:
+      buf[4] = 0x20 | (speed&0x0F);
+      pbuf = buf;
+      break;
+    case NVC_PTZ_ZOOM_SUB_START:
+      buf[4] = 0x30 | (speed&0x0F);
+      pbuf = buf;
+      break;
+    case NVC_PTZ_ZOOM_ADD_STOP:
+    case NVC_PTZ_ZOOM_SUB_STOP:
+      buf[4] = 0x00;
+      pbuf = buf;
+      break;
+  }
+  
+  if(pbuf)
+    ret = write(serial_fd, pbuf, 6);
+  
+  return ret;
+}

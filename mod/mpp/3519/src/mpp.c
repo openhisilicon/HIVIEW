@@ -430,7 +430,7 @@ int gsf_mpp_venc_dest()
 
 int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
 {
-  return -1;
+  return SAMPLE_COMM_VENC_SnapProcessCB(VencChn, SnapCnt, cb, u);
 }
 
 int gsf_mpp_scene_start(char *path, int scenemode)
@@ -477,13 +477,42 @@ int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
 
 int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn)
 {
-  return 0;
-}
-int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap)
-{
-  return 0;
+  int ret = -1;
+  switch(id)
+  {
+    case GSF_MPP_RGN_CREATE:
+      ret = HI_MPI_RGN_Create(Handle, &rgn->stRegion);
+      break;
+    case GSF_MPP_RGN_DESTROY:
+      ret = HI_MPI_RGN_Destroy(Handle);
+      break;
+    case GSF_MPP_RGN_SETATTR:
+      ret = HI_MPI_RGN_SetAttr(Handle, &rgn->stRegion);
+      break;
+    case GSF_MPP_RGN_GETATTR:
+      ret = HI_MPI_RGN_GetAttr(Handle, &rgn->stRegion);
+      break;
+    case GSF_MPP_RGN_ATTACH:
+      ret = HI_MPI_RGN_AttachToChn(Handle, &rgn->stChn, &rgn->stChnAttr);
+      break;
+    case GSF_MPP_RGN_DETACH:
+      ret = HI_MPI_RGN_DetachFromChn(Handle, &rgn->stChn);
+      break;
+    case GSF_MPP_RGN_SETDISPLAY:
+      ret = HI_MPI_RGN_SetDisplayAttr(Handle, &rgn->stChn, &rgn->stChnAttr);
+      break;
+    case GSF_MPP_RGN_GETDISPLAY:
+      ret = HI_MPI_RGN_GetDisplayAttr(Handle, &rgn->stChn, &rgn->stChnAttr);
+      break;
+  }
+  //printf("handle:%d, id:%d, enType:%d, ret:%d\n", Handle, id, rgn->stRegion.enType, ret);
+  return ret;
 }
 
+int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap)
+{
+  return HI_MPI_RGN_SetBitMap(Handle, bitmap);
+}
 
 
 
