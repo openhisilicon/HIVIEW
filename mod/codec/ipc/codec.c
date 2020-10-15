@@ -448,8 +448,16 @@ int main(int argc, char *argv[])
             {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_3840x2160, PIC_720P,}},
             {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
           };
+    #elif defined(GSF_CPU_3559)
+      // imx458-0-0-8-30
+      gsf_mpp_cfg_t cfg = { .snsname = "imx458", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
+      gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
+      gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
+      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
+            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
+          };
     #else
-    #error "error unknow gsf_mpp_cfg_t."
+      #error "error unknow gsf_mpp_cfg_t."
     #endif 
 
     //maohw strcpy(cfg.snsname, bsp_def.board.sensor[0]);
