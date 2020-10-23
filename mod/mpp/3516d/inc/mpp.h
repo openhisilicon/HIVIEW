@@ -146,6 +146,9 @@ typedef struct {
 int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn);
 int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap);
 
+int gsf_mpp_rgn_canvas_get(RGN_HANDLE Handle, RGN_CANVAS_INFO_S *pstRgnCanvasInfo);
+int gsf_mpp_rgn_canvas_update(RGN_HANDLE Handle);
+
 
 //private for mpp;
 extern int SENSOR_TYPE;
