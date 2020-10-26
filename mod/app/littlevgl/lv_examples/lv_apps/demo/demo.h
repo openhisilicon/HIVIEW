@@ -39,7 +39,7 @@ extern "C" {
 /**
  * Create a demo application
  */
-void demo_create(void);
+lv_obj_t* demo_create(void);
 
 /**********************
  *      MACROS

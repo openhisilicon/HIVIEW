@@ -61,7 +61,7 @@ LV_IMG_DECLARE(img_bubble_pattern)
 /**
  * Create a demo application
  */
-void demo_create(void)
+lv_obj_t* demo_create(void)
 {
     lv_coord_t hres = lv_disp_get_hor_res(NULL);
     lv_coord_t vres = lv_disp_get_ver_res(NULL);
@@ -136,6 +136,8 @@ void demo_create(void)
 #if LV_DEMO_SLIDE_SHOW
     lv_task_create(tab_switcher, 3000, LV_TASK_PRIO_MID, tv);
 #endif
+
+    return tv;
 }
 
 

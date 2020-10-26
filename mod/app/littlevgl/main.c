@@ -68,12 +68,23 @@ static void* lvgl_main(void* p)
      
      
     /*Create a Demo*/
-    demo_create();
+    lv_obj_t* tv = demo_create();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while(lv_running) {
+      
         lv_task_handler();
-        usleep(5000);
+        usleep(5*1000);
+        
+        // test;
+        static cnt = 0;
+        if(++cnt%200 == 0)
+        {
+          static uint8_t tab = 0;
+          tab++;
+          if(tab >= 3) tab = 0;
+          lv_tabview_set_tab_act(tv, tab, true);
+        }
     }
     
     return NULL;

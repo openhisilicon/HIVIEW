@@ -540,6 +540,19 @@ int main(int argc, char *argv[])
 
     venc_start(1);
     
+    // test vo;
+    #if defined(GSF_CPU_3559)
+    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
+    gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+    
+    gsf_mpp_vo_src_t src = {0, 1};
+    gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_4MUX, NULL);
+    gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src);
+    gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src);
+    gsf_mpp_vo_bind(VOLAYER_HD0, 2, &src);
+    gsf_mpp_vo_bind(VOLAYER_HD0, 3, &src);
+    #endif
+
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
     

@@ -163,6 +163,11 @@ int main(int argc, char *argv[])
     
     #endif
      
+    #ifdef GSF_CPU_3559
+    extern int lvgl_stop(void);
+    extern int lvgl_start(int w, int h);
+    lvgl_start(1920, 1080); 
+    #endif
      
      
     //init listen;
