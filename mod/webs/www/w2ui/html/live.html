@@ -11,6 +11,8 @@
 <!--CODE-->
 <script>
 
+var streamx = 1
+
 function flv_load() {
     console.log('isSupported: ' + flvjs.isSupported());
     var mediaDataSource = {
@@ -20,7 +22,7 @@ function flv_load() {
         hasAudio: false,
         autoCleanupSourceBuffer:true,
         //url: 'ws://'+ window.location.hostname + ':' + (window.location.port?1+parseInt(window.location.port,10):81) + '/' + document.getElementsByName('urlinput')[0].value,
-        url: 'ws://'+ window.location.hostname + ':80/flv1',
+        url: 'ws://'+ window.location.hostname + ':80/flv' + streamx,
     }
         console.log('MediaDataSource', mediaDataSource);
         var element = document.getElementsByName('videoElement')[0];
@@ -102,6 +104,14 @@ $(function () {
                 if(event.target == 'refresh')
                 {
                   flv_load();
+                } 
+                else if (event.target == 'stream1')
+                {
+                  streamx = 1;
+                }
+                else if (event.target == 'stream2')
+                {
+                  streamx = 2;
                 }
             }
         });

@@ -60,7 +60,7 @@
                 hasAudio: false,
 				        autoCleanupSourceBuffer:true,
                 //url: 'ws://'+ window.location.hostname + ':' + (window.location.port?1+parseInt(window.location.port,10):81) + '/' + document.getElementsByName('urlinput')[0].value,
-                url: 'ws://'+ window.location.hostname + ':80/flv1',
+                url: 'ws://'+ window.location.hostname + ':80/flv' + document.getElementsByName('urlinput')[0].value,
             }
                 console.log('MediaDataSource', mediaDataSource);
                 var element = document.getElementsByName('videoElement')[0];
@@ -132,7 +132,7 @@
 	<td colspan=4>
 		<div class="mainContainer">
 		  <h3>Live stream using ws </h3>
-		  <!-- <input name="urlinput" class="urlInput" type="text" value="192.168.1.2"/> -->
+		  <input name="urlinput" class="urlInput" type="text" value="1"/>
 			<video name="videoElement" class="centeredVideo" controls autoplay width="1024" height="576">
 				Your browser is too old which doesn't support HTML5 video.
 			</video>

@@ -34,7 +34,7 @@ typedef struct {
   unsigned char* data;
   flv_muxer_t* flv;
   unsigned int pts;
-  int idr, sid;
+  int idr, chn, sid;
   struct mg_mgr *mgr;
   
   pthread_t thread_id;
@@ -204,7 +204,7 @@ static void *send_thread_func(void *param) {
   cfifo_newest(sess->video, 0);
   #if 1
   GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t));
-  GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, 0, SET, sess->sid
+  GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, sess->chn, SET, sess->sid
                   , 0
                   , GSF_IPC_CODEC
                   , 2000);
@@ -326,7 +326,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
       if(!nc->user_data)
       {
         int ret = 0;
-        int channel = 0;
+        int channel = 0, sid = 0;
         sscanf(hm->uri.p, "/flv%d", &channel);
         channel = (channel-1 > 0)?(channel-1):0;
           
@@ -334,7 +334,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
         sdp->video_shmid = -1;
         #if 1
-        ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, channel
+        ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, channel, GET, sid
                               , sizeof(gsf_sdp_t)
                               , GSF_IPC_CODEC
                               , 2000);
@@ -355,8 +355,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         sess->wsbuf[1] = malloc(MAX_FRAME_SIZE);
         printf("sess:%p, malloc:%p\n", sess, sess->wsbuf[0]);
         printf("sess:%p, malloc:%p\n", sess, sess->wsbuf[1]);
-        
-        sess->sid = channel;
+        sess->chn = channel;
+        sess->sid = sid;
         sess->mgr = nc->mgr;
         sess->video = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->video_shmid);
         sess->flv = flv_muxer_create(on_flv_packet, (void*)sess);
