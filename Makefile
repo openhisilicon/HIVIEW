@@ -42,7 +42,7 @@ fw: CHECK_ENV $(FW_DIRS) SUMMARY
 
 SUMMARY:
 	@echo ""
-	@echo "================ GSF-IPC ================"
+	@echo "================ GSF-$(GSF_DEV_TYPE) ================"
 	@echo "All Done."
 	@echo "Env: $(GSF_CPU_ARCH)"
 	@echo "Output: $(GSF_HOME)/lib/$(GSF_CPU_ARCH)"

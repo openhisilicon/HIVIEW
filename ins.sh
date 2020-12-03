@@ -1,0 +1,88 @@
+#!/bin/sh
+
+ins3516d()
+{
+
+INST=/nfs/16d
+echo "ins3516d to [$INST]"
+
+mkdir -p $INST/lib $INST/bin $INST/cfg $INST/ko $INST/model;
+
+cp lib/3516d/*.so*  $INST/lib -arfv;
+cp bin/3516d/*.exe $INST/bin -arfv;
+arm-himix200-linux-strip $INST/lib/*;
+arm-himix200-linux-strip $INST/bin/*;
+
+cp mod/mpp/3516d/ko/* $INST/ko/ -arfv;
+
+cp mod/svp/3516d/model/* $INST/model/ -arfv;
+
+cp mod/mpp/3516d/lib/hisisdk/*.so $INST/lib -arfv;
+arm-himix200-linux-strip $INST/lib/*;
+
+cp mod/mpp/3516d/src/scene_auto/param/*.ini $INST/cfg -arfv;
+
+mkdir -p $INST/www;
+cp mod/webs/www/* $INST/www -arfv;
+
+#### packet .upg #####
+echo "wait minizip ..."
+mkdir -p $INST/upg;
+cp $PROJ/tools/install.sh $INST/upg/ -arfv;
+cd $INST; tar Jcf ./upg/app.xz ko lib bin cfg www model; cd -;
+cd $INST/upg; $PROJ/tools/minizip -o -p 123 cam16d.upg app.xz install.sh;cp -vf ./cam16d.upg /mnt/hgfs/works/; cd -;
+######################
+echo "ok."
+######################
+}
+
+ins3519()
+{
+
+INST=/nfs/3519
+echo "ins3519 to [$INST]"
+
+mkdir -p $INST/lib $INST/bin $INST/cfg $INST/ko;
+
+cp lib/3519/*.so*  $INST/lib -arfv;
+cp bin/3519/*.exe $INST/bin -arfv;
+arm-hisiv500-linux-strip $INST/lib/*;
+arm-hisiv500-linux-strip $INST/bin/*;
+
+cp mod/mpp/3519/ko/* $INST/ko/ -arfv;
+cp mod/mpp/3519/lib/hisisdk/*.so $INST/lib -arfv;
+arm-hisiv500-linux-strip $INST/lib/*;
+
+mkdir -p $INST/www;
+cp mod/mpp/3519/src/scene_auto/ini/*.ini $INST/cfg -arfv;
+cp mod/webs/www/* $INST/www -arfv;
+
+#### packet .upg #####
+echo "wait minizip ..."
+mkdir -p $INST/upg;
+cp $PROJ/tools/install.sh $INST/upg/ -arfv;
+cd $INST; tar Jcf ./upg/app.xz ko lib bin cfg www; cd -;
+cd $INST/upg; $PROJ/tools/minizip -o -p 123 cam19.upg app.xz install.sh;cp -vf ./cam19.upg /mnt/hgfs/works/; cd -;
+######################
+echo "ok."
+######################
+}
+
+
+
+PROJ=`pwd`
+echo "PROJ:[$PROJ]"
+
+case $1 in
+    16d)
+        ins3516d
+        ;;
+    19)
+        ins3519
+        ;;
+    *)
+        echo "usage: $0 {16d|19}"
+        exit 1
+        ;;
+esac
+
