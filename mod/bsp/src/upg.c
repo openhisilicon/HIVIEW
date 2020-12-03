@@ -39,7 +39,8 @@ int upg_start(char *path, int(*cb)(int progress, void *u), void *u)
   gu = u;
   
   char str[128];
-  sprintf(str, "mkdir -p /tmp/upg/;miniunz -o -p 123 %s -d /tmp/upg/;chmod +x /tmp/upg/install.sh", path);
+  sprintf(str, "mkdir -p /tmp/upg/;miniunz -o -p 123 %s -d /tmp/upg/;"
+               "chmod +x /tmp/upg/install.sh;rm -rfv %s;", path, path);
   system(str);
   
   return pthread_create(&gpid, NULL, upg_task, (void*)NULL);

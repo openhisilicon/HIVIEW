@@ -61,9 +61,9 @@ extern pthread_mutex_t __log_mutex;
  */
 #define GSF_LOG_CONN(flag, ms) do{ \
     __log_flag = flag; \
-    if(__log_flag)\
+    if(__log_flag) {\
         __log_push = nm_push_conn(GSF_IPC_LOG);\
-    usleep((ms)*1000);\
+        usleep((ms)*1000);}\
     }while(0)
     
 #define GSF_LOG_DISCONN() do{ \

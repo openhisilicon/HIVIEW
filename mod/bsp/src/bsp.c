@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "inc/gsf.h"
 #include "bsp.h"
@@ -23,7 +26,32 @@ extern gsf_mod_reg_t gmods[GSF_MOD_ID_END];
 
 static int log_recv(char *msg, int size, int err)
 {
-    fprintf(stderr, "L%s", msg);
+    static int cnt = 1;
+    static int l = 0;
+    static int f = 0;
+    static char *logfile[3] = { "/tmp/log0.log", "/tmp/log1.log", "/tmp/log2.log"};
+    
+    if(!f)
+    {
+      f = open(logfile[1], O_RDWR|O_CREAT|O_TRUNC, 0766); close(f);
+      f = open(logfile[2], O_RDWR|O_CREAT|O_TRUNC, 0766); close(f);
+      f = open(logfile[l], O_RDWR|O_CREAT|O_TRUNC, 0766);
+    }
+    
+    if(f)
+    {
+      //fprintf(stderr, "L[%s]", msg);
+      write(f, msg, size);
+      if(++cnt % 128 == 0)
+      {
+        struct stat st;
+        if(fstat(f, &st) == 0 && st.st_size > 128*1024)
+        {
+          close(f);
+          f = open(logfile[++l%3], O_RDWR|O_CREAT|O_TRUNC, 0766);
+        }
+      }
+    }
     return 0;
 }
 
