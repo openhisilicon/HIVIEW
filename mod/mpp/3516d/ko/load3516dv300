@@ -128,7 +128,7 @@ insert_ko()
     insert_audio
 
     insmod hi_mipi_rx.ko
-#    insmod hi_mipi_tx.ko
+    insmod hi_mipi_tx.ko
 #    insmod hi_user.ko
 
 #    insert_gyro
@@ -139,7 +139,7 @@ remove_ko()
 #    rmmod_gyro
 #    rmmod hi_user
     remove_audio
-#    rmmod hi_mipi_tx
+    rmmod hi_mipi_tx
     rmmod hi_mipi_rx
 #    rmmod hi_serdes
 #    rmmod hi_sil9136 &> /dev/null

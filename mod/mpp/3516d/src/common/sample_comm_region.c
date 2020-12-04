@@ -654,7 +654,9 @@ HI_S32 SAMPLE_COMM_REGION_AttachToChn(HI_S32 HandleNum,RGN_TYPE_E enType, MPP_CH
             stChnAttr.unChnAttr.stCoverExChn.stRect.u32Height = 200;
             stChnAttr.unChnAttr.stCoverExChn.stRect.u32Width  = 200;
 
-            stChnAttr.unChnAttr.stCoverExChn.u32Color      = 0x0000ffff;
+            stChnAttr.unChnAttr.stCoverExChn.u32Color      = 0x00ff0000; //r maohw
+            //stChnAttr.unChnAttr.stCoverExChn.u32Color      = 0x0000ff00; //g maohw
+            //stChnAttr.unChnAttr.stCoverExChn.u32Color      = 0x000000ff; //b maohw
             break;
         case MOSAIC_RGN:
             MinHadle = MosaicMinHandle;
