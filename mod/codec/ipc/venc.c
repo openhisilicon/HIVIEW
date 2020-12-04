@@ -78,13 +78,11 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   rec.video.height = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;
   rec.size = 0;
   
-  
   for (i = 0; i < pstStream->u32PackCount && i < GSF_FRM_NAL_NUM; i++)
   {
     rec.video.nal[i] = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;
     rec.size += rec.video.nal[i];
   }
-  
   
   if(i < GSF_FRM_NAL_NUM) rec.video.nal[i] = 0;
   
@@ -111,6 +109,7 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
     _n1-=l;_p1+=l;_p2+=a-l;
     //printf("a:%d, _n1:%d, _p1+:%d, _p2+:%d\n", a, _n1, l, a-l);
   }
+  
   //printf("\n------------------\n");
   return 0;
 }
@@ -173,7 +172,7 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
   
   clock_gettime(CLOCK_MONOTONIC, &ts2);
   int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
-  if(cost > 5)
+  if(cost > 8)
     printf("cfifo_put VeChn:%d, frame size:%d put cost:%d ms\n", VeChn, len+sizeof(gsf_frm_t), cost);
   
   if(ret < 0)

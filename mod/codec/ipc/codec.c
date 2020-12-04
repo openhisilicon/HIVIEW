@@ -13,9 +13,6 @@
 #include "rgn.h"
 #include "venc.h"
 
-
-
-#define VI_2CH_3516d  0  //  1: 2 sensor input; 0: 1 sensor input;
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 
 #ifndef PIC_VGA
@@ -39,6 +36,14 @@
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
+static gsf_resolu_t vores;
+#define vo_res_set(_w, _h) do{vores.w = _w; vores.h = _h;}while(0)
+int vo_res_get(gsf_resolu_t *res)
+{
+  *res = vores;
+  return 0;
+}
+
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
     int ret = 0;
@@ -57,17 +62,10 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
-
-/////////////////////////////////////
-
-static int osd_keepalive[GSF_CODEC_OSD_NUM] = {3,3,3,3,3,3,3,3};
-
 static int sub_recv(char *msg, int size, int err)
 {
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
-  
-  printf("pmsg->id:%d\n", pmsg->id);
-  
+
   if(pmsg->id == GSF_EV_SVP_MD)
   {
     gsf_svp_mds_t *mds = (gsf_svp_mds_t*) pmsg->data;
@@ -75,9 +73,6 @@ static int sub_recv(char *msg, int size, int err)
     int i = 0;
     for(i = 0; i < 4 && i < mds->cnt; i++)
     {
-      
-      osd_keepalive[i] = 3;
-      
       gsf_osd_t osd;
 
       osd.en = 1;
@@ -104,9 +99,6 @@ static int sub_recv(char *msg, int size, int err)
     //lprs->cnt = 1;
     for(i = 0; i < 4 && i < lprs->cnt; i++)
     {
-      
-      osd_keepalive[i] = 3;
-      
       gsf_osd_t osd;
 
       osd.en = 1;
@@ -128,83 +120,119 @@ static int sub_recv(char *msg, int size, int err)
       gsf_rgn_osd_set(0, i, &osd);
     }
   }
-
-  return 0;
-}
-
-static int rgn_timer_func(void *u)
-{
-
-#if 0
-
-  int i = 0;
-  for(i = 0; i < GSF_CODEC_OSD_NUM; i++)
+  #if 0 // 8 limited 
+  else if(pmsg->id == GSF_EV_SVP_YOLO)
   {
-    if(--osd_keepalive[i] > 0)
-      continue;
+    gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*) pmsg->data;
     
-    gsf_osd_t osd;
-    memset(&osd, 0, sizeof(gsf_osd_t));          
-    gsf_rgn_osd_set(0, i, &osd);
-  }
-  return 0;
-  
-#else
-  
-  static gsf_osd_t osd;
-  if(!osd.en)
-  {
-    osd.en = 1;
-    osd.type = 0;
-    osd.fontsize = 0;
-    osd.point[0] = 10;
-    osd.point[1] = 10;
-    osd.wh[0] = 100;
-    osd.wh[1] = 300;
-  }
-  static gsf_vmask_t vmask;
-  if(!vmask.en)
-  {
-    vmask.en = 1;
-    vmask.color = 0x0000ffff;
-    vmask.rect[0] = 100;
-    vmask.rect[1] = 100;
-    vmask.rect[2] = 200;
-    vmask.rect[3] = 200;
-  }
-  
-  time_t rawtime;
-  time(&rawtime);
-  struct tm *info = localtime(&rawtime);
-  strftime(osd.text, 80, "%Y-%m-%d %H:%M:%S", info);
-  
-  osd.point[0] += 100;
-  osd.point[0] %= 2000;
-  osd.point[1] += 100;
-  osd.point[1] %= 2000;
-  printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
-  
-  struct timespec ts1, ts2;  
-  clock_gettime(CLOCK_MONOTONIC, &ts1);
-  
-  gsf_rgn_osd_set(0, 0, &osd);
-  
-  clock_gettime(CLOCK_MONOTONIC, &ts2);
-  int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
-  printf("gsf_rgn_osd_set cost:%d ms\n", cost);
-  
-  vmask.rect[0] += 100;
-  vmask.rect[0] %= 2000;
-  vmask.rect[1] += 100;
-  vmask.rect[1] %= 2000;
-  printf("vmask: x:%d,y:%d,w:%d,h:%d\n", vmask.rect[0], vmask.rect[1], vmask.rect[2], vmask.rect[3]);
-  gsf_rgn_vmask_set(0, 0, &vmask);
-  
-  return 0;
-#endif
-}
+    int i = 0;
+    
+    for(i = yolos->cnt; i < 8; i++)
+    {
+      gsf_osd_t osd = {0};
+      gsf_rgn_osd_set(0, i, &osd);
+    }
+    
+    for(i = 0; i < 8 && i < yolos->cnt; i++)
+    {
+      gsf_osd_t osd;
 
-/////////////////////////////////////
+      osd.en = 1;
+      osd.type = 0;
+      osd.fontsize = 1;
+
+      osd.point[0] = (unsigned int)((float)yolos->box[i].rect[0]/(float)yolos->w*1920)&(-1);
+      osd.point[1] = (unsigned int)((float)yolos->box[i].rect[1]/(float)yolos->h*1080)&(-1);
+      osd.wh[0]    = (unsigned int)((float)yolos->box[i].rect[2]/(float)yolos->w*1920)&(-1);
+      osd.wh[1]    = (unsigned int)((float)yolos->box[i].rect[3]/(float)yolos->h*1080)&(-1);
+      
+      char utf8str[32] = {0};
+      gsf_gb2312_to_utf8(yolos->box[i].label, strlen(yolos->box[i].label), utf8str);
+      sprintf(osd.text, "%s", utf8str);
+      
+      //printf("GSF_EV_SVP_YOLO idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
+      //      , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);
+      gsf_rgn_osd_set(0, i, &osd);
+    }
+    
+  }
+  #else // unlimited;
+  else if(pmsg->id == GSF_EV_SVP_YOLO)
+  {
+    gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*) pmsg->data;
+    
+    int i = 0;
+    
+    #if 0 // test gsf_mpp_vo_crop
+    
+    RECT_S r = {0};
+    if(yolos->cnt)
+    {
+      int W = vores.w, H = vores.h;
+      if(vores.h > vores.w) //for vertical screen
+      {
+       W = vores.w;
+       H = (vores.h/2);
+      }
+
+      float wr = W;
+      wr/= yolos->w;
+      float hr = H;
+      hr/= yolos->h;
+      
+      for(i = 0; i < yolos->cnt; i++)
+      {
+        if(1)
+        {
+          int x = (yolos->box[i].rect[0]) * wr;
+          int y = (yolos->box[i].rect[1]) * hr;
+          int w = (yolos->box[i].rect[2]) * wr;
+          int h = (yolos->box[i].rect[3]) * hr;
+
+          x = (x-w > 0)?x-w:0;
+          y = (y-h > 0)?y-h:0;
+          w = (x + w*2 > W)?W-x:w*2;
+          h = (y + h*2 > H)?H-y:h*2;
+
+          r.s32X = x * 1000 / W;
+          r.s32Y = y * 1000 / H;
+
+          r.u32Width = w * 1000 / W;
+          r.u32Height= h * 1000 / H;
+          //adjust ???;
+          r.u32Width = 1 * 1000 / 4;
+          r.u32Height= 1 * 1000 / 3;
+          
+          break;
+        }
+      }
+    }
+    gsf_mpp_vo_crop(0, 0, &r);
+    
+    #else // test gsf_rgn_rect_set
+    
+    gsf_rgn_rects_t rects = {0};
+
+    rects.size = yolos->cnt;
+    rects.w = yolos->w;
+    rects.h = yolos->h;
+    
+    for(i = 0; i < yolos->cnt; i++)
+    {
+      rects.box[i].rect[0] = yolos->box[i].rect[0];
+      rects.box[i].rect[1] = yolos->box[i].rect[1];
+      rects.box[i].rect[2] = yolos->box[i].rect[2];
+      rects.box[i].rect[3] = yolos->box[i].rect[3];
+      gsf_gb2312_to_utf8(yolos->box[i].label, strlen(yolos->box[i].label), rects.box[i].label);
+    }
+    gsf_rgn_rect_set(0, 0, &rects);
+    #endif
+
+  }
+  #endif
+  
+  return 0;
+}
 
 static int reg2bsp()
 {
@@ -232,7 +260,8 @@ static int getdef(gsf_bsp_def_t *def)
   GSF_MSG_DEF(gsf_msg_t, msg, 4*1024);
   int ret = GSF_MSG_SENDTO(GSF_ID_BSP_DEF, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
   gsf_bsp_def_t *cfg = (gsf_bsp_def_t*)__pmsg->data;
-  printf("GET GSF_ID_BSP_DEF To:%s, ret:%d, model:%s\n", GSF_IPC_BSP, ret, cfg->board.model);
+  printf("GET GSF_ID_BSP_DEF To:%s, ret:%d, type:%s, snscnt:%d, sensor:[%s]\n"
+        , GSF_IPC_BSP, ret, cfg->board.type, cfg->board.snscnt, cfg->board.sensor[0]);
 
   if(ret < 0)
     return ret;
@@ -329,140 +358,119 @@ int venc_start(int start)
 }
 
 
-
-int main(int argc, char *argv[])
+int mpp_start(gsf_bsp_def_t *def)
 {
-    int i = 0;
-    gsf_bsp_def_t bsp_def;
-    if(argc < 2)
-    {
-      printf("pls input: %s codec_parm.json\n", argv[0]);
-      return -1;
-    }
-    
-    strncpy(codec_parm_path, argv[1], sizeof(codec_parm_path)-1);
-    
-    if(json_parm_load(codec_parm_path, &codec_ipc) < 0)
-    {
-      json_parm_save(codec_parm_path, &codec_ipc);
-      json_parm_load(codec_parm_path, &codec_ipc);
-    }
-    info("parm.venc[0].type:%d, width:%d\n", codec_ipc.venc[0].type, codec_ipc.venc[0].width);
-
-    // register to bsp && get bsp_def;
-    #if 1
-    if(reg2bsp() < 0)
-      return -1;
-
-    if(getdef(&bsp_def) < 0)
-      return -1;
-    #else
-    sprintf(bsp_def.board.sensor[0], "%s", "sc2335");
-    #endif
-
-    GSF_LOG_CONN(0, 100);
-    
+    // init mpp;
     // -------------------  vi => vpss => venc  -------------------- //
     // channel: CH0        CH1        CH2         CH3         CH4    //
     // vi:      pipe0      pipe1      pipe2       pipe3       ...    //
     // vpss:    G0[0,1]    G1[0,1]    G2[0,1]     G3[0,1]     ...    //
     // venc:    V0 V1 S2   V3 V4 S5   V6 V7 S8    V9 V10 S11  ...    //
     // ------------------------------------------------------------- //
+    int i = 0;
+    static gsf_mpp_cfg_t cfg;
+    static gsf_rgn_ini_t rgn_ini;
+    static gsf_venc_ini_t venc_ini;
+    static gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN];
     
-    // init mpp;
+    #define VPSS(_i, _g, _p, _ch, _en0, _en1, _sz0, _sz1) do{ \
+      vpss[_i].VpssGrp=_g; vpss[_i].ViPipe=_p; vpss[_i].ViChn=_ch;\
+      vpss[_i].enable[0]=_en0;vpss[_i].enable[1]=_en1;\
+      vpss[_i].enSize[0]=_sz0;vpss[_i].enSize[1]=_sz1;}while(0)
+    
+    //only used sensor[0];
+    strcpy(cfg.snsname, def->board.sensor[0]);
+    cfg.snscnt = def->board.snscnt;
+
     #ifdef GSF_CPU_3559a
-    
+    {
       #if (AVS_4CH_3559a == 0)
-      // imx334-0-0-8-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 4, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 4, .st_num = 2};
-      gsf_venc_ini_t venc_ini = {.ch_num = 4, .st_num = 2};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-              {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-              {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-              {.VpssGrp = 2, .ViPipe = 2, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-              {.VpssGrp = 3, .ViPipe = 3, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-            };
+      {
+        // imx334-0-0-8-30
+        cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
+        rgn_ini.ch_num = 4; rgn_ini.st_num = 2;
+        venc_ini.ch_num = 4; venc_ini.st_num = 2;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+        VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_720P);
+        VPSS(2, 2, 2, 0, 1, 1, PIC_3840x2160, PIC_720P);
+        VPSS(3, 3, 3, 0, 1, 1, PIC_3840x2160, PIC_720P);
+            
+      }
       #else
-      // imx334-0-0-8-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 4, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 1};
-      gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 1};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-              {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-              {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-              {.VpssGrp = 2, .ViPipe = 2, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-              {.VpssGrp = 3, .ViPipe = 3, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-            };
+      {
+        // imx334-0-0-8-30
+        cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
+        rgn_ini.ch_num = 1; rgn_ini.st_num = 1;
+        venc_ini.ch_num = 1; venc_ini.st_num = 1;
+        VPSS(0, 0, 0, 0, 1, 0, PIC_1080P, PIC_720P);
+        VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
+        VPSS(2, 2, 2, 0, 1, 0, PIC_1080P, PIC_720P);
+        VPSS(3, 3, 3, 0, 1, 0, PIC_1080P, PIC_720P);
+      }
       #endif
 
-
+    }
     #elif defined(GSF_CPU_3519a)
-    // imx334-0-0-8-60
-    gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
-    gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
-    gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
-    gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = { 
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-          };
-    
+    {
+      // imx334-0-0-8-60
+      cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
+      rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+      venc_ini.ch_num = 1; venc_ini.st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+    }
     #elif defined(GSF_CPU_3516d)
-    
-      #if (VI_2CH_3516d == 0)
-      // imx335-0-0-4-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx335", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 4, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
-      gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_2592x1536, PIC_720P,}},
-          };
-      #else
-      // imx327-2-0-2-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx327", .snscnt = 2, .lane = 2, .wdr  = 0, .res  = 2, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 1};
-      gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 1};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-            {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-          };
-      #endif
-    
+    {
+      if(cfg.snscnt < 2)
+      {
+        // imx335-0-0-4-30
+        cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+        venc_ini.ch_num = 1; venc_ini.st_num = 2;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+      }
+      else
+      {
+        // imx327-2-0-2-30
+        cfg.lane = 2; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+        rgn_ini.ch_num = 2; rgn_ini.st_num = 1;
+        venc_ini.ch_num = 2; venc_ini.st_num = 1;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
+        
+      }
+    }
     #elif defined(GSF_CPU_3516e)
-    
-      #if 1
+    {
       // sc2335-0-0-2-30
-      gsf_mpp_cfg_t cfg = { .snsname = "sc2335", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 2, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
-      gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_1080P, PIC_720P,}},
-          };
-
-      #endif
+      cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+      rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+      venc_ini.ch_num = 1; venc_ini.st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P); 
+    }
     #elif defined(GSF_CPU_3519)
+    {
       // imx334-0-0-8-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx334", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 1};
-      gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 1};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-            {.VpssGrp = 1, .ViPipe = 1, .ViChn = 0, .enable = {1, 0,}, .enSize = {PIC_1080P, PIC_720P,}},
-          };
+      cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
+      rgn_ini.ch_num = 2; rgn_ini.st_num = 1;
+      venc_ini.ch_num = 2; venc_ini.st_num = 1;
+      VPSS(0, 0, 0, 0, 1, 0, PIC_3840x2160, PIC_720P);
+      VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
+    }
     #elif defined(GSF_CPU_3559)
+    {
       // imx458-0-0-8-30
-      gsf_mpp_cfg_t cfg = { .snsname = "imx458", .snscnt = 1, .lane = 0, .wdr  = 0, .res  = 8, .fps  = 30, };
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 1, .st_num = 2};
-      gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
-      gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN] = {
-            {.VpssGrp = 0, .ViPipe = 0, .ViChn = 0, .enable = {1, 1,}, .enSize = {PIC_3840x2160, PIC_720P,}},
-          };
+      cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
+      rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+      venc_ini.ch_num = 1; venc_ini.st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+    }
     #else
+    {
       #error "error unknow gsf_mpp_cfg_t."
-    #endif 
-
-    //maohw strcpy(cfg.snsname, bsp_def.board.sensor[0]);
-    p_venc_ini = &venc_ini;
+    }
+    #endif
     
+    p_venc_ini = &venc_ini;
     
     char home_path[256] = {0};
     proc_absolute_path(home_path);
@@ -524,7 +532,6 @@ int main(int argc, char *argv[])
     #endif
     gsf_mpp_scene_start(scene_ini, 0);
 
-
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
     gsf_mpp_avs_t avs = {
       .AVSGrp = 0,
@@ -536,33 +543,88 @@ int main(int argc, char *argv[])
     };
     gsf_mpp_avs_start(&avs);
     #endif
+    
+    return 0;
+}
 
+int main(int argc, char *argv[])
+{
+    gsf_bsp_def_t bsp_def;
+    if(argc < 2)
+    {
+      printf("pls input: %s codec_parm.json\n", argv[0]);
+      return -1;
+    }
+    
+    strncpy(codec_parm_path, argv[1], sizeof(codec_parm_path)-1);
+    
+    if(json_parm_load(codec_parm_path, &codec_ipc) < 0)
+    {
+      json_parm_save(codec_parm_path, &codec_ipc);
+      json_parm_load(codec_parm_path, &codec_ipc);
+    }
+    
+    info("parm.venc[0].type:%d, width:%d\n"
+          , codec_ipc.venc[0].type
+          , codec_ipc.venc[0].width);
 
+    // register to bsp && get bsp_def;
+    if(reg2bsp() < 0)
+      return -1;
+
+    if(getdef(&bsp_def) < 0)
+      return -1;
+
+    GSF_LOG_CONN(1, 100);
+
+    mpp_start(&bsp_def);
+    
     venc_start(1);
     
     // test vo;
-    #if defined(GSF_CPU_3559)
-    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
-    gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     
-    gsf_mpp_vo_src_t src = {0, 1};
-    gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_4MUX, NULL);
-    gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src);
-    gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src);
-    gsf_mpp_vo_bind(VOLAYER_HD0, 2, &src);
-    gsf_mpp_vo_bind(VOLAYER_HD0, 3, &src);
+    int mipi_800x1280 = 1;
+    if(mipi_800x1280)
+    {
+      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
+      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
+      
+      //---- 800x640 -----//
+      //---- 800x640 -----//
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
+
+      gsf_mpp_vo_src_t src0 = {0, 0};
+      gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+      gsf_mpp_vo_src_t src1 = {1, 0};
+      gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src1);
+      
+      //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 0, ROTATION_90);
+      //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 1, ROTATION_90);
+      vo_res_set(800, 1280);
+    }
+    else
+    {
+      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
+      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      
+      gsf_mpp_vo_src_t src0 = {0, 0};
+      gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+
+      vo_res_set(1920, 1080);
+    }
     #endif
 
     //init listen;
-    void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
+    void* rep = nm_rep_listen(GSF_IPC_CODEC
+                      , NM_REP_MAX_WORKERS
+                      , NM_REP_OSIZE_MAX
+                      , req_recv);
     
-    //test osd;
-    /////////////////////////////////////
-    /// void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
-    /////////////////////////////////////
-    
     
     while(1)
     {

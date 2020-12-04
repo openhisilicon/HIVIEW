@@ -27,6 +27,8 @@ else ifeq ($(GSF_CPU_ARCH), 3519)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
 else ifeq ($(GSF_CPU_ARCH), 3516d)
+#LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+#        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker
 else ifeq ($(GSF_CPU_ARCH), 3519a)

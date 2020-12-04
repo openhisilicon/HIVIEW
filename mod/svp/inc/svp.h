@@ -18,6 +18,7 @@ enum {
     GSF_ID_SVP_CFG    = 1,  // gsf_svp_t;
     GSF_ID_SVP_MD     = 2,  // ch, gsf_svp_md_t
     GSF_ID_SVP_LPR    = 3,  // ch, gsf_svp_lpr_t
+    GSF_ID_SVP_YOLO   = 4,  // ch, gsf_svp_yolo_t
     GSF_ID_SVP_END
 };
 
@@ -28,6 +29,7 @@ enum {
 enum {
   GSF_EV_SVP_MD  = 1, // gsf_svp_mds_t;
   GSF_EV_SVP_LPR = 2, // gsf_svp_lprs_t;
+  GSF_EV_SVP_YOLO= 3, // gsf_svp_yolos_t;
 };
 
 
@@ -37,15 +39,6 @@ typedef struct {
   int level;
   int rect[4];
 }gsf_svp_md_t;
-
-
-typedef struct {
-  int vpssgrp;  // grp
-  int vpssch;   // ch
-  int level;
-  int rect[4];
-}gsf_svp_lpr_t;
-
 
 typedef struct {
   int thr;        //thr 
@@ -59,6 +52,12 @@ typedef struct {
   int w, h;
   gsf_md_result_t result[20];
 }gsf_svp_mds_t;
+
+
+typedef struct {
+  int thr;        //thr 
+  int rect[4];    //区域位置
+}gsf_svp_lpr_t;
 
 
 typedef struct {
@@ -79,6 +78,26 @@ typedef struct {
   int w, h;
   gsf_lpr_result_t result[20];
 }gsf_svp_lprs_t;
+
+
+typedef struct {
+  int thr;        //thr 
+  int rect[4];    //区域位置
+}gsf_svp_yolo_t;
+
+
+typedef struct {
+  float score;
+  int rect[4];
+  char label[32];
+}gsf_yolo_box_t;
+
+typedef struct {
+  int pts;   // u64PTS/1000
+  int cnt;
+  int w, h;
+  gsf_yolo_box_t box[64];
+}gsf_svp_yolos_t;
 
 
 #ifdef __cplusplus

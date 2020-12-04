@@ -39,6 +39,7 @@ enum {
 
 typedef struct {
   int resolu;
+  int w, h;
 }gsf_resolu_t;
 
 typedef struct {

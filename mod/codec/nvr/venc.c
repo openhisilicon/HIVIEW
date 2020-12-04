@@ -173,7 +173,7 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
   
   clock_gettime(CLOCK_MONOTONIC, &ts2);
   int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
-  if(cost > 5)
+  if(cost > 10)
     printf("cfifo_put VeChn:%d, frame size:%d put cost:%d ms\n", VeChn, len+sizeof(gsf_frm_t), cost);
   
   if(ret < 0)

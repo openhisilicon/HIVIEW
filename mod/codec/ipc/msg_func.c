@@ -13,6 +13,7 @@
 #include "rgn.h"
 
 extern int venc_start(int start);
+extern int vo_res_get(gsf_resolu_t *res);
 
 static void msg_func_venc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
@@ -154,8 +155,26 @@ static void msg_func_snap(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   return;
 }
 
-
-
+static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rsp->err  = 0;
+  rsp->size = 0;
+  
+  if(req->set)
+  {
+    ;
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else
+  {
+    gsf_resolu_t *res = (gsf_resolu_t*)rsp->data;
+    vo_res_get(res);
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_resolu_t);
+  }
+  return;
+}
 
 static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
@@ -166,6 +185,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_OSD]    = msg_func_osd,
     [GSF_ID_CODEC_VMASK]  = msg_func_vmask,
     [GSF_ID_CODEC_SNAP]   = msg_func_snap,
+    [GSF_ID_CODEC_VORES]  = msg_func_vores,
  };
 
 

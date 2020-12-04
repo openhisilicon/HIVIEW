@@ -12,9 +12,26 @@
 #include "mpp.h"
 #include "live.h"
 
+extern int vo_res_get(gsf_resolu_t *res);
+
 static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  rsp->err  = -1;
+  rsp->err  = 0;
+  rsp->size = 0;
+  
+  if(req->set)
+  {
+    ;
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else
+  {
+    gsf_resolu_t *res = (gsf_resolu_t*)rsp->data;
+    vo_res_get(res);
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_resolu_t);
+  }
 }
 
 static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)

@@ -41,7 +41,7 @@ enum {
 };
 
 #define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*3+8*1) + (type)*(8*3) + (st)*(8) + idx)
-static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_IPC_CHN)*(8*3+8*1)];
+static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_IPC_CHN)*(8*3/*osd*/+8*1/*vmask*/)];
 
 int utf8_byte_num(unsigned char firstCh)
 {
@@ -273,11 +273,13 @@ static unsigned short argb8888_1555(unsigned int color)
   return (unsigned short)(a << 15 | r<<(10) | g<<5 | b);
 }
 
-
+//#define __RGN_CANVAS // __RGN_CANVAS is bad
 
 int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
 {
   int i = 0;
+  unsigned int ARGB8888_RED = argb8888_1555(0x01FF0000);
+  
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
     if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
@@ -287,9 +289,22 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
     
+    
+    float wr = codec_ipc.venc[i].width; 
+    wr /= codec_ipc.venc[0].width;
+    float hr = codec_ipc.venc[i].height;
+    hr /= codec_ipc.venc[0].height;
+    
+    osd->point[0] *= wr;
+    osd->point[1] *= hr;
+    
+    osd->wh[0] *= wr;
+    osd->wh[1] *= hr;
+    
+    
     rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//ARGB8888_RED;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
@@ -305,7 +320,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer   = idx;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;//(osd->wh[0] && osd->wh[1])?80:0;//0;
     rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
-    
+        
     if(rgn_obj[handle].osd_info == NULL)
     {
       rgn_obj[handle].osd_info = (gsf_rgn_osd_t*)calloc(1, sizeof(gsf_rgn_osd_t));
@@ -316,9 +331,15 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     int _osdW = info->osdW;
     int _osdH = info->osdH;
     
-    gsf_parse_text(osd->text, info->lines, &info->lineN, &info->colN);
-    
-    gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
+    if(osd->text[0])
+    {
+      gsf_parse_text(osd->text, info->lines, &info->lineN, &info->colN);
+      gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
+    }
+    else
+    {
+      info->fontW = info->fontH = info->fontS = info->lineN = info->colN = 0;
+    }
     
     info->osdW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
     info->osdH = info->fontH * info->lineN + 1;
@@ -352,88 +373,121 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     //set attr; 
     if(rgn_obj[handle].osd_bmp == NULL)
     {
+      #ifdef __RGN_CANVAS
+      rgn_obj[handle].osd_bmp = (char*)1;
+      #else
       rgn_obj[handle].osd_bmp = malloc(info->osdW*info->osdH*2);
-
+      #endif
       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
     }
     else if(_osdW != info->osdW || _osdH != info->osdH)
     {
+      #ifdef __RGN_CANVAS
+      rgn_obj[handle].osd_bmp = (char*)1;
+      #else
       rgn_obj[handle].osd_bmp = realloc(rgn_obj[handle].osd_bmp, info->osdW*info->osdH*2);
+      #endif
       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
     }
 
     //attach;
     if(rgn_obj[handle].stat < GSF_RGN_OBJ_ATTACH)
     {
+      //printf("GSF_MPP_RGN_ATTACH ch:%d, i:%d, idx:%d\n", ch, i, idx);
       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_ATTACH, &rgn_obj[handle].rgn);
       rgn_obj[handle].stat = GSF_RGN_OBJ_ATTACH;
     }
     
-    // bitmap;
-    if(1)
+    if((info->lineN == 0) && osd->wh[0] == 0 && osd->wh[1] == 0)
     {
-        BITMAP_S  bitMap;
-        
-      	memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
-      	
+      return 0;
+    }
+    
+    // bitmap;
+    BITMAP_S bitMap;
+    
+    #ifdef __RGN_CANVAS
+      RGN_CANVAS_INFO_S stRgnCanvasInfo = {0};
+      if((gsf_mpp_rgn_canvas_get(handle, &stRgnCanvasInfo) < 0)
+        || (stRgnCanvasInfo.stSize.u32Width == 0)
+        || (stRgnCanvasInfo.stSize.u32Height == 0))
+      {
+        printf("gsf_mpp_rgn_canvas_get err, ch:%d, i:%d, idx:%d\n", ch, i, idx);
+        return -1;
+      }
+      HI_U16 *p = bitMap.pData = (HI_VOID*)(HI_UL)stRgnCanvasInfo.u64VirtAddr;
+      memset(p, 0, stRgnCanvasInfo.stSize.u32Height*stRgnCanvasInfo.u32Stride);
+      bitMap.u32Width	    = stRgnCanvasInfo.u32Stride/2;
+      bitMap.u32Height	  = info->osdH;
+      bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
+    #else
+      bitMap.u32Width	    = info->osdW;
+    	bitMap.u32Height	  = info->osdH;
+    	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
+    	bitMap.pData        = rgn_obj[handle].osd_bmp;
+    	memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+    #endif
+    
+    //bitmap;
+    {
       	// draw string;
       	int l = 0;
       	for (l = 0; l < info->lineN; l++)
       	{
       	    gsf_font_utf8_draw_line(info->fontW,
-      	          info->osdW,
+      	          bitMap.u32Width,
                   info->fontS,
-                  rgn_obj[handle].osd_bmp + l * info->osdW * info->fontH*2,
+                  rgn_obj[handle].osd_bmp + l * bitMap.u32Width * info->fontH*2,
           		    info->lines[l], "",
-          		    (osd->wh[0] && osd->wh[1])?argb8888_1555(0x01FF0000):0xffff, 0x0000, 0xffff, 0x0000);
+          		    (osd->wh[0] && osd->wh[1])?ARGB8888_RED:0xffff, 0x0000, 0xffff, 0x0000);
       	}
       	// draw rect;
       	if((osd->wh[0] && osd->wh[1]))
       	{
-          HI_U16 *p = rgn_obj[handle].osd_bmp + (info->lineN*info->fontH)*(info->osdW*2);
-          HI_U16 leftH = info->osdH - (info->lineN*info->fontH);
+          HI_U16 *p = (HI_U16*)rgn_obj[handle].osd_bmp; //+ (info->lineN*info->fontH)*(bitMap.u32Width*2);
+          HI_U16 boxH = info->osdH; //- (info->lineN*info->fontH);
+          HI_U16 boxW = info->osdW;
           
         	int j = 0;
-          for(j = 0; j < info->osdW; j++)
+          for(j = 0; j < boxW; j++)
           {
-            p[0*info->osdW + j]
-            = p[1*info->osdW + j]  
-            = p[2*info->osdW + j] 
-            = p[3*info->osdW + j] 
-            = p[(leftH-1)*info->osdW + j]
-            = p[(leftH-2)*info->osdW + j]
-            = p[(leftH-3)*info->osdW + j] 
-            = p[(leftH-4)*info->osdW + j]
-            = argb8888_1555(0x01FF0000);
+            p[0*bitMap.u32Width + j]
+            = p[1*bitMap.u32Width + j]  
+            = p[2*bitMap.u32Width + j] 
+            = p[3*bitMap.u32Width + j] 
+            = p[(boxH-1)*bitMap.u32Width + j]
+            = p[(boxH-2)*bitMap.u32Width + j]
+            = p[(boxH-3)*bitMap.u32Width + j] 
+            = p[(boxH-4)*bitMap.u32Width + j]
+            = ARGB8888_RED;
           }
-          for(j = 0; j < leftH; j++)
+          for(j = 0; j < boxH; j++)
           {
-            p[j*info->osdW + 0]
-            = p[j*info->osdW + 1]
-            = p[j*info->osdW + 2]
-            = p[j*info->osdW + 3]
-            = p[j*info->osdW + info->osdW-1] 
-            = p[j*info->osdW + info->osdW-2]
-            = p[j*info->osdW + info->osdW-3] 
-            = p[j*info->osdW + info->osdW-4]
-            = argb8888_1555(0x01FF0000);
+            p[j*bitMap.u32Width + 0]
+            = p[j*bitMap.u32Width + 1]
+            = p[j*bitMap.u32Width + 2]
+            = p[j*bitMap.u32Width + 3]
+            = p[j*bitMap.u32Width + boxW-1] 
+            = p[j*bitMap.u32Width + boxW-2]
+            = p[j*bitMap.u32Width + boxW-3] 
+            = p[j*bitMap.u32Width + boxW-4]
+            = ARGB8888_RED;
           }
       	}
-        
-        bitMap.u32Width	    = info->osdW;
-      	bitMap.u32Height	  = info->osdH;
-      	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
-      	bitMap.pData        = rgn_obj[handle].osd_bmp;
-         
-      	if(osd->wh[0] == 0 && osd->wh[1] == 0)
-      	  gsf_bitmap_make_edge(&bitMap);
-        
-        gsf_mpp_rgn_bitmap(handle, &bitMap);
     }
     
+  	if(info->lineN && osd->wh[0] == 0 && osd->wh[1] == 0)
+  	  gsf_bitmap_make_edge(&bitMap);
+
+    #ifdef __RGN_CANVAS
+    gsf_mpp_rgn_canvas_update(handle);
+    #else
+    gsf_mpp_rgn_bitmap(handle, &bitMap);
     gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
-    
+    #endif
   }
+  
+  return 0;
 }
 
 int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
@@ -477,6 +531,224 @@ int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
     //display;
     gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
     
+  }
+  
+  return 0;
+}
+
+
+
+int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
+{
+  int i = 0, r = 0;
+  unsigned int ARGB8888_RED = argb8888_1555(0x01FF0000);
+  
+  for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
+  {
+    if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+      continue;
+    
+    int handle = GSF_RGN_OBJ_HANDLE(ch, OBJ_OSD, i, idx);
+    
+    memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
+    
+    rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(codec_ipc.venc[i].width, 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(codec_ipc.venc[i].height, 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
+    
+    rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
+    rgn_obj[handle].rgn.stChn.s32DevId = 0;
+    rgn_obj[handle].rgn.stChn.s32ChnId = ch*GSF_CODEC_VENC_NUM+i;
+    rgn_obj[handle].rgn.stChnAttr.bShow = HI_TRUE;
+    rgn_obj[handle].rgn.stChnAttr.enType = OVERLAY_RGN;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = 0;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32Y = 0;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer   = idx;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;//80;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
+    
+    if(rgn_obj[handle].osd_info == NULL)
+    {
+      rgn_obj[handle].osd_info = (gsf_rgn_osd_t*)calloc(1, sizeof(gsf_rgn_osd_t));
+    }
+
+    gsf_rgn_osd_t *info = rgn_obj[handle].osd_info;
+
+    int _osdW = info->osdW;
+    int _osdH = info->osdH;
+
+
+    info->osdW = rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width;
+    info->osdH = rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height;    
+    
+    //printf("_osdW:%d, osdW:%d, _osdH:%d, osdH:%d\n", _osdW, info->osdW, _osdH, info->osdH);
+    
+    //check;
+    if(rgn_obj[handle].stat >= GSF_RGN_OBJ_ATTACH)
+    {
+      if(_osdW != info->osdW || _osdH != info->osdH)
+      {  
+         gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_DETACH, &rgn_obj[handle].rgn);
+         rgn_obj[handle].stat = GSF_RGN_OBJ_CREATE;
+      }
+    }
+
+    //create;
+    if(rgn_obj[handle].stat < GSF_RGN_OBJ_CREATE)
+    {
+       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_CREATE, &rgn_obj[handle].rgn);
+       rgn_obj[handle].stat = GSF_RGN_OBJ_CREATE;
+    }
+    
+    //set attr; 
+    if(rgn_obj[handle].osd_bmp == NULL)
+    {
+      #ifdef __RGN_CANVAS
+      rgn_obj[handle].osd_bmp = (char*)1;
+      #else
+      rgn_obj[handle].osd_bmp = malloc(info->osdW*info->osdH*2);
+      #endif
+      gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+    }
+    else if(_osdW != info->osdW || _osdH != info->osdH)
+    {
+      #ifdef __RGN_CANVAS
+      rgn_obj[handle].osd_bmp = (char*)1;
+      #else
+      rgn_obj[handle].osd_bmp = realloc(rgn_obj[handle].osd_bmp, info->osdW*info->osdH*2);
+      #endif
+      gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+    }
+   
+    //attach;
+    if(rgn_obj[handle].stat < GSF_RGN_OBJ_ATTACH)
+    {
+      //printf("GSF_MPP_RGN_ATTACH ch:%d, i:%d, idx:%d\n", ch, i, idx);
+      gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_ATTACH, &rgn_obj[handle].rgn);
+      rgn_obj[handle].stat = GSF_RGN_OBJ_ATTACH;
+    }
+   
+    BITMAP_S  bitMap;
+    
+    #ifdef __RGN_CANVAS
+      RGN_CANVAS_INFO_S stRgnCanvasInfo = {0};
+      if((gsf_mpp_rgn_canvas_get(handle, &stRgnCanvasInfo) < 0)
+        || (stRgnCanvasInfo.stSize.u32Width == 0)
+        || (stRgnCanvasInfo.stSize.u32Height == 0))
+      {
+        return -1;
+      }
+      bitMap.pData = (HI_VOID*)(HI_UL)stRgnCanvasInfo.u64VirtAddr;
+      bitMap.u32Width	    = stRgnCanvasInfo.u32Stride/2;
+      bitMap.u32Height	  = info->osdH;
+      bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
+      memset(bitMap.pData, 0, stRgnCanvasInfo.stSize.u32Height*stRgnCanvasInfo.u32Stride);
+
+    #else
+      bitMap.u32Width	    = info->osdW;
+    	bitMap.u32Height	  = info->osdH;
+    	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
+    	bitMap.pData        = rgn_obj[handle].osd_bmp;
+  	  memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+    #endif
+        
+    for(r = 0; r < rects->size; r++)
+    {
+      int boxX = 0, boxY = 0, boxW = 0, boxH = 0;
+      
+      if(rects->box[r].label[0])
+      {
+        gsf_parse_text(rects->box[r].label, info->lines, &info->lineN, &info->colN);
+        gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, 1/*fontsize*/, &info->fontW, &info->fontH, &info->fontS);
+      }
+      else
+      {
+         info->fontW = info->fontH = info->fontS = info->lineN = info->colN = 0;
+      }
+      
+      if(rects->box[r].rect[2] && rects->box[r].rect[3])
+      {
+        
+        boxX = (unsigned int)((float)rects->box[r].rect[0]/(float)rects->w*info->osdW)&(-1);
+        boxY = (unsigned int)((float)rects->box[r].rect[1]/(float)rects->h*info->osdH)&(-1);
+        
+        int _boxW = (unsigned int)((float)rects->box[r].rect[2]/(float)rects->w*info->osdW)&(-1);
+        int _boxH = (unsigned int)((float)rects->box[r].rect[3]/(float)rects->h*info->osdH)&(-1); 
+       
+        boxW = (_boxW > boxW)?ALIGN_UP(_boxW, 2):boxW;
+        boxH = (_boxH > boxH)?ALIGN_UP(_boxH, 2):boxH;
+      }
+      
+      if((info->lineN == 0) && boxW == 0 && boxH == 0)
+      {
+        continue;
+      }
+
+      // bitmap;
+      {
+          char *osd_bmp = bitMap.pData + boxX*2 + boxY*(bitMap.u32Width*2);
+        	
+          // draw string;
+          int labelW = (info->fontW + info->fontS)*info->colN - info->fontS+1;
+          int labelH = info->fontH * info->lineN + 1;
+          if((boxX + labelW <= info->osdW) && (boxY + labelH <= info->osdH))
+        	{
+          	int l = 0;
+          	for (l = 0; l < info->lineN; l++)
+          	{
+          	    gsf_font_utf8_draw_line(info->fontW,
+          	          bitMap.u32Width,
+                      info->fontS,
+                      osd_bmp + l * bitMap.u32Width * info->fontH*2,
+              		    info->lines[l], "",
+              		    (boxW && boxW)?ARGB8888_RED:0xffff, 0x0000, 0xffff, 0x0000);
+          	}
+        	}
+        	
+        	// draw rect;
+        	if(boxW && boxW)
+        	{
+            HI_U16 *p = (HI_U16*)osd_bmp;
+            boxW = (boxX + boxW > info->osdW)?info->osdW-boxX:boxW;
+            boxH = (boxY + boxH > info->osdH)?info->osdH-boxY:boxH;
+            
+          	int j = 0;
+            for(j = 0; j < boxW; j++)
+            {
+              p[0*bitMap.u32Width + j]
+              = p[1*bitMap.u32Width + j]  
+              = p[2*bitMap.u32Width + j] 
+              = p[3*bitMap.u32Width + j] 
+              = p[(boxH-1)*bitMap.u32Width + j]
+              = p[(boxH-2)*bitMap.u32Width + j]
+              = p[(boxH-3)*bitMap.u32Width + j] 
+              = p[(boxH-4)*bitMap.u32Width + j]
+              = ARGB8888_RED;
+            }
+            for(j = 0; j < boxH; j++)
+            {
+              p[j*bitMap.u32Width + 0]
+              = p[j*bitMap.u32Width + 1]
+              = p[j*bitMap.u32Width + 2]
+              = p[j*bitMap.u32Width + 3]
+              = p[j*bitMap.u32Width + boxW-1] 
+              = p[j*bitMap.u32Width + boxW-2]
+              = p[j*bitMap.u32Width + boxW-3] 
+              = p[j*bitMap.u32Width + boxW-4]
+              = ARGB8888_RED;
+            }
+        	}
+      }
+    }
+    #ifdef __RGN_CANVAS
+    gsf_mpp_rgn_canvas_update(handle);
+    #else
+    gsf_mpp_rgn_bitmap(handle, &bitMap);
+    gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
+    #endif
   }
   
   return 0;

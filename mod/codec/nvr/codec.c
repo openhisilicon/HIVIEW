@@ -35,6 +35,13 @@
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
+static gsf_resolu_t vores;
+#define vo_res_set(_w, _h) do{vores.w = _w; vores.h = _h;}while(0)
+int vo_res_get(gsf_resolu_t *res)
+{
+  *res = vores;
+  return 0;
+}
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -60,7 +67,7 @@ static int sub_recv(char *msg, int size, int err)
 {
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
   
-  printf("pmsg->id:%d\n", pmsg->id);
+  //printf("pmsg->id:%d\n", pmsg->id);
   
   if(pmsg->id == GSF_EV_SVP_MD)
   {
@@ -125,81 +132,6 @@ static int sub_recv(char *msg, int size, int err)
 
   return 0;
 }
-
-static int rgn_timer_func(void *u)
-{
-
-#if 0 
-
-  int i = 0;
-  for(i = 0; i < GSF_CODEC_OSD_NUM; i++)
-  {
-    if(--osd_keepalive[i] > 0)
-      continue;
-    
-    gsf_osd_t osd;
-    memset(&osd, 0, sizeof(gsf_osd_t));          
-    gsf_rgn_osd_set(0, i, &osd);
-  }
-  return 0;
-  
-#else
-  
-  static gsf_osd_t osd;
-  if(!osd.en)
-  {
-    osd.en = 1;
-    osd.type = 0;
-    osd.fontsize = 0;
-    osd.point[0] = 10;
-    osd.point[1] = 10;
-    osd.wh[0] = 100;
-    osd.wh[1] = 300;
-  }
-  static gsf_vmask_t vmask;
-  if(!vmask.en)
-  {
-    vmask.en = 1;
-    vmask.color = 0x0000ffff;
-    vmask.rect[0] = 100;
-    vmask.rect[1] = 100;
-    vmask.rect[2] = 200;
-    vmask.rect[3] = 200;
-  }
-  
-  time_t rawtime;
-  time(&rawtime);
-  struct tm *info = localtime(&rawtime);
-  strftime(osd.text, 80, "%Y-%m-%d %H:%M:%S", info);
-  
-  osd.point[0] += 100;
-  osd.point[0] %= 2000;
-  osd.point[1] += 100;
-  osd.point[1] %= 2000;
-  printf("osd: x:%d,y:%d\n", osd.point[0], osd.point[1]);
-    
-  struct timespec ts1, ts2;  
-  clock_gettime(CLOCK_MONOTONIC, &ts1);
-  
-  gsf_rgn_osd_set(0, 0, &osd);
-  
-  clock_gettime(CLOCK_MONOTONIC, &ts2);
-  int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
-  printf("gsf_rgn_osd_set cost:%d ms\n", cost);
-    
-  
-  vmask.rect[0] += 100;
-  vmask.rect[0] %= 2000;
-  vmask.rect[1] += 100;
-  vmask.rect[1] %= 2000;
-  printf("vmask: x:%d,y:%d,w:%d,h:%d\n", vmask.rect[0], vmask.rect[1], vmask.rect[2], vmask.rect[3]);
-  gsf_rgn_vmask_set(0, 0, &vmask);
-  
-  return 0;
-#endif
-}
-
-
 
 static gsf_venc_ini_t *p_venc_ini = NULL;
 
@@ -296,22 +228,6 @@ int main(int argc, char *argv[])
       json_parm_load(argv[1], &codec_nvr);
     }
     
-    while(1)
-    {
-      //register To;
-      GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
-      reg->mid = GSF_MOD_ID_CODEC;
-      strcpy(reg->uri, GSF_IPC_CODEC);
-      int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
-      printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
-      
-      static int cnt = 3;
-      if(ret == 0)
-        break;
-      if(cnt-- < 0)
-        return -1;
-      sleep(1);
-    }
     if(1)
     {
       //get bsp_def;
@@ -334,6 +250,9 @@ int main(int argc, char *argv[])
     printf("home_path:[%s]\n", home_path);
     gsf_mpp_cfg(home_path, NULL);
     
+    
+    #if defined(GSF_CPU_3559a)
+    
     //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
     gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
     gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
@@ -343,19 +262,65 @@ int main(int argc, char *argv[])
     gsf_rgn_ini_t rgn_ini = {.ch_num = 8, .st_num = 1};
     gsf_venc_ini_t venc_ini = {.ch_num = 8, .st_num = 1};
     p_venc_ini = &venc_ini;
+    
+    #else
+    
+    int mipi_800x1280 = 1;
+    if(mipi_800x1280)
+    {
+      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
+      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
+      
+      //---- 800x640 -----//
+      //---- 800x640 -----//
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
+      vo_res_set(800, 1280);
+    }
+    else
+    {
+      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
+      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+      
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      vo_res_set(1920, 1080);
+    }
+    
+    live_mon();
+    
+    gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 1};
+    gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 1};
+    p_venc_ini = &venc_ini;
+    
+    #endif
   
     //internal-init rgn, venc;
     gsf_rgn_init(&rgn_ini);
     gsf_venc_init(&venc_ini);
   
     //test vdec => vpss => venc;
-    venc_start(1);
+    ///venc_start(1);
     
+    // regtister;
+    while(1)
+    {
+      //register To;
+      GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
+      reg->mid = GSF_MOD_ID_CODEC;
+      strcpy(reg->uri, GSF_IPC_CODEC);
+      int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
+      printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
+      
+      static int cnt = 3;
+      if(ret == 0)
+        break;
+      if(cnt-- < 0)
+        return -1;
+      sleep(1);
+    }
     
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
     
-    void *rgn_timer = timer_add(1000, rgn_timer_func, NULL);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
     
