@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     //TODO;
     
     //init listen;
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
 
     while(1)
     {                        

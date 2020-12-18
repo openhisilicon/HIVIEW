@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "fw/comm/inc/proc.h"
+
 #include "sample_ive_main.h"  // SAMPLE_IVE_Md();
 #include "sample_nnie_main.h"
 
@@ -59,7 +61,8 @@ HI_VOID SAMPLE_IVE_HandleSig2(HI_S32 s32Signo)
   signal(SIGTERM,SIG_IGN);
   
   //SAMPLE_IVE_Md_HandleSig();
-  extern int lpr_stop(); lpr_stop();
+  //extern int lpr_stop(); lpr_stop();
+  extern int yolo_stop(); yolo_stop();
   
   exit(-1);
 }
@@ -86,13 +89,18 @@ int main(int argc, char *argv[])
     
     svp_pub = nm_pub_listen(GSF_PUB_SVP);
     
+    char home_path[256] = {0};
+    proc_absolute_path(home_path);
+    sprintf(home_path, "%s/../", home_path);
+    printf("home_path:[%s]\n", home_path);
+    
     printf("init algorithm library...\n");
     //SAMPLE_IVE_Md();
-    
-    extern int lpr_start(); lpr_start();
+    //extern int lpr_start(); lpr_start();
+    extern int yolo_start(char *home_path); yolo_start(home_path);
     
     //init listen;
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_SVP
                     , NM_REP_MAX_WORKERS
                     , NM_REP_OSIZE_MAX
@@ -104,7 +112,7 @@ int main(int argc, char *argv[])
       sleep(5);
     }
     
-    SAMPLE_IVE_Md_HandleSig();
+    //SAMPLE_IVE_Md_HandleSig();
     
     GSF_LOG_DISCONN();
 

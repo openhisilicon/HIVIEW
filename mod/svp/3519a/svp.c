@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     extern int sample_start(); sample_start();
     
     //init listen;
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_SVP
                     , NM_REP_MAX_WORKERS
                     , NM_REP_OSIZE_MAX
