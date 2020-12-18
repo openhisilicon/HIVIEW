@@ -6,8 +6,10 @@
 CC := $(shell echo ${GSF_CC})
 AR := $(shell echo ${GSF_AR})
 
+HOME := $(shell echo ${GSF_HOME})
+
 LVGL_DIR ?= ${shell pwd}
-CFLAGS ?= -Wall -Wshadow -Wundef -Wmaybe-uninitialized -O3 -g0 -I$(LVGL_DIR)/
+CFLAGS ?= -Wall -Wshadow -Wundef -Wmaybe-uninitialized -O3 -g0 -I$(LVGL_DIR)/ -I$(HOME)
 LDFLAGS ?= -lpthread
 BIN = liblittlevgl.a
 

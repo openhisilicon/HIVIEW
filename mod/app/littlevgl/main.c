@@ -2,14 +2,24 @@
 #include "lv_drivers/display/fbdev.h"
 #include "lv_drivers/indev/mouse_hid.h"
 #include "lv_examples/lv_apps/demo/demo.h"
+
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <sys/select.h>
+
+#include "mod/svp/inc/svp.h"
 
 static pthread_t tid;
 static int lv_running = 0, lv_w = 1280, lv_h = 1024;
 static void* lvgl_main(void* p);
+static int msq = -1;
+
 
 int lvgl_stop(void)
 {
@@ -25,6 +35,24 @@ int lvgl_start(int w, int h)
   return pthread_create(&tid, NULL, lvgl_main, NULL);
 }
 
+typedef struct msgbuf
+{
+    __syscall_slong_t mtype;    /* type of received/sent message */
+    char mtext[0];      /* text of the message */
+}msgbuf;
+
+static int sub_recv(char *msg, int size, int err)
+{
+  gsf_msg_t *pmsg = (gsf_msg_t*)msg;
+  if(pmsg->id == GSF_EV_SVP_YOLO)
+  {
+    int len = pmsg->size;
+    msgbuf *mbuf = (msgbuf*)(pmsg->data - sizeof(msgbuf));
+    mbuf->mtype = 1;
+    msgsnd(msq, mbuf, len, IPC_NOWAIT);
+  }
+  return 0;
+}
 
 static void* lvgl_main(void* p)
 {
@@ -65,31 +93,107 @@ static void* lvgl_main(void* p)
     lv_img_set_src(cursor_obj, &mouse_ico);
     //lv_img_set_src(cursor_obj, LV_SYMBOL_CALL);
     lv_indev_set_cursor(mouse_indev, cursor_obj);
-     
-     
-    /*Create a Demo*/
-    lv_obj_t* tv = demo_create();
+    
+    lv_coord_t hres = lv_disp_get_hor_res(NULL);
+    lv_coord_t vres = lv_disp_get_ver_res(NULL);
 
+    static lv_style_t style_tv_body_bg;
+    lv_style_copy(&style_tv_body_bg, &lv_style_plain);
+    style_tv_body_bg.body.main_color = lv_color_hex(0x487fb7);
+    LV_COLOR_SET_A(style_tv_body_bg.body.main_color, 0x00);
+    style_tv_body_bg.body.grad_color = lv_color_hex(0x487fb7);
+    LV_COLOR_SET_A(style_tv_body_bg.body.grad_color, 0x00);
+    style_tv_body_bg.body.padding.top = 0;
+    
+    static lv_style_t style_tv_body_fg;
+    lv_style_copy(&style_tv_body_fg, &lv_style_plain);
+    style_tv_body_fg.body.main_color = LV_COLOR_RED;
+    LV_COLOR_SET_A(style_tv_body_fg.body.main_color, 40);
+    style_tv_body_fg.body.grad_color = LV_COLOR_RED;
+    LV_COLOR_SET_A(style_tv_body_fg.body.grad_color, 40);
+    style_tv_body_fg.body.padding.top = 0;
+    style_tv_body_fg.body.border.color = LV_COLOR_RED;
+    style_tv_body_fg.body.border.width = 4;
+    
+    static lv_style_t style_label; // lv_style_plain_color
+    lv_style_copy(&style_label, &lv_style_plain);
+    style_label.text.color = LV_COLOR_WHITE;
+    style_label.text.font  = &lv_font_roboto_28;
+
+    lv_obj_t *win = lv_obj_create(lv_disp_get_scr_act(NULL), NULL);
+    lv_obj_set_size(win, hres, vres);
+    lv_obj_set_style(win, &style_tv_body_bg);
+    
+    lv_obj_t *obj_note = lv_obj_create(win, NULL);
+    lv_obj_t *label_note = lv_label_create(obj_note, NULL);
+    lv_obj_set_style(label_note, &style_label);
+    lv_obj_align(label_note, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style(obj_note, &style_tv_body_fg);
+    lv_obj_set_size(obj_note, hres/1, vres/4/4);
+    lv_obj_set_x(obj_note, 0);
+    lv_obj_set_y(obj_note, vres/1.5);
+    lv_label_set_text(label_note, "LittlevGL && https://github.com/openhisilicon/HIVIEW");
+    
+    int i = 0, cnt = 0;
+    lv_obj_t *obj[64];
+    lv_obj_t *label[64];
+    
+    for(i = 0; i < 64; i++)
+    {
+      obj[i] = lv_obj_create(win, NULL);
+      label[i] = lv_label_create(obj[i], NULL);
+      lv_obj_set_style(label[i], &lv_style_plain_color);
+      lv_obj_set_style(obj[i], &style_tv_body_fg);
+      lv_obj_set_size(obj[i], 0, 0);
+    }
+
+    /*Create a Demo*/
+    //lv_obj_t* tv = demo_create();
+    msq = msgget(111, IPC_CREAT | 0666);
+    void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
+    
     /*Handle LitlevGL tasks (tickless mode)*/
     while(lv_running) {
       
-        lv_task_handler();
-        usleep(5*1000);
+        int ret = 0;
+        char _buf[16*1024];
+        msgbuf *mbuf = (msgbuf*)_buf;
         
-        // test;
-        static cnt = 0;
-        if(++cnt%200 == 0)
+        lv_task_handler();
+        
+        if((ret = msgrcv(msq, _buf, sizeof(_buf), 0, IPC_NOWAIT)) > 0)
         {
-          static uint8_t tab = 0;
-          tab++;
-          if(tab >= 3) tab = 0;
-          lv_tabview_set_tab_act(tv, tab, true);
+          gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*)mbuf->mtext;
+          
+          float wr = hres;
+          wr/= yolos->w;
+          float hr = (vres > hres)?(vres/2):vres; //for vertical screen
+          hr/= yolos->h;
+          
+          yolos->cnt = (yolos->cnt > 64)?64:yolos->cnt;
+          
+          for(i = yolos->cnt; i < cnt; i++)
+          {
+            lv_obj_set_size(obj[i], 0, 0);
+          }
+          
+          for(i = 0; i < yolos->cnt; i++)
+          {
+            lv_label_set_text(label[i], yolos->box[i].label);
+            lv_obj_set_size(obj[i], yolos->box[i].rect[2] * wr, yolos->box[i].rect[3] * hr);
+            lv_obj_set_x(obj[i], yolos->box[i].rect[0] *wr);
+            lv_obj_set_y(obj[i], yolos->box[i].rect[1] *hr);
+          }
+          cnt = yolos->cnt;
+        }
+        else
+        {
+          usleep(5*1000);
         }
     }
     
     return NULL;
 }
-
 
 /*Set in lv_conf.h as `LV_TICK_CUSTOM_SYS_TIME_EXPR`*/
 uint32_t custom_tick_get(void)
@@ -100,7 +204,6 @@ uint32_t custom_tick_get(void)
         gettimeofday(&tv_start, NULL);
         start_ms = (tv_start.tv_sec * 1000000 + tv_start.tv_usec) / 1000;
     }
-
     struct timeval tv_now;
     gettimeofday(&tv_now, NULL);
     uint64_t now_ms;

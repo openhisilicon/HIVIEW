@@ -65,6 +65,22 @@ void sysmon_create(void)
 
     /*Make the window content responsive*/
     lv_win_set_layout(win, LV_LAYOUT_PRETTY);
+    
+    
+    
+    static lv_style_t style_tv_body_bg;
+    lv_style_copy(&style_tv_body_bg, &lv_style_plain);
+    
+    style_tv_body_bg.body.main_color = lv_color_hex(0x487fb7);
+    LV_COLOR_SET_A(style_tv_body_bg.body.main_color, 0x00);
+    style_tv_body_bg.body.grad_color = lv_color_hex(0x487fb7);
+    LV_COLOR_SET_A(style_tv_body_bg.body.grad_color, 0x00);
+    
+    style_tv_body_bg.body.padding.top = 0;
+    
+    lv_win_set_style(win, LV_WIN_STYLE_BG, &style_tv_body_bg);
+    
+    
 
     /*Create a chart with two data lines*/
     chart = lv_chart_create(win, NULL);

@@ -12,6 +12,10 @@
 
 GSF_LOG_GLOBAL_INIT("APP", 8*1024);
 
+extern int lvgl_stop(void);
+extern int lvgl_start(int w, int h);
+
+
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
     int ret = 0;
@@ -30,16 +34,16 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
+//default lt;
+#if defined(GSF_CPU_3559a)
+static int lt = 4;
+#else
+static int lt = 1;
+#endif
+
 int vo_ly(int num)
 {
-  #if defined(GSF_CPU_3559a)
-  static int lt = 4;
-  #else
-  static int lt = 1;
-  #endif
-  
   static int voch[GSF_CODEC_NVR_CHN] = {0,1,2,3};
-  
   GSF_MSG_DEF(gsf_layout_t, ly, 8*1024);
   
   if(num >= 1 && num <= 4)
@@ -132,6 +136,27 @@ static int reg2bsp()
   return 0;
 }
 
+static int vores_get(gsf_resolu_t *res)
+{
+  while(1)
+  {
+    //register To;
+    GSF_MSG_DEF(gsf_resolu_t, _res, 8*1024);
+    int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VORES, 0, GET, 0, 0, GSF_IPC_CODEC, 2000);
+    printf("GSF_ID_CODEC_VORES To:%s, ret:%d, size:%d\n", GSF_IPC_CODEC, ret, __rsize);
+    static int cnt = 6;
+    if(ret == 0)
+    {
+      *res = *_res;
+      break;
+    }
+    if(cnt-- < 0)
+      return -1;
+    sleep(1);
+  }
+  return 0;
+}
+
 int main(int argc, char *argv[])
 {
     if(argc < 2)
@@ -150,28 +175,30 @@ int main(int argc, char *argv[])
     
     // joint multiple mods to works;
     
+    // get res;
+    gsf_resolu_t res = {0};
+    vores_get(&res);
+    if(!res.w || !res.h)
+    {
+      printf("vores_get err.\n");
+      return -1;
+    }
+    
+    //change lt = 2 for vertical screen;
+    lt = (res.h > res.w)?2:lt;
+
+    //kbd_mon("/dev/ttyAMA2");
+    lvgl_start(res.w, res.h);
+
     #ifdef GSF_DEV_NVR
     #warning "...... GSF_DEV_NVR defined ......"
-    
     live_mon();
-    
-    //kbd_mon("/dev/ttyAMA2");
-    
-    extern int lvgl_stop(void);
-    extern int lvgl_start(int w, int h);
-    //lvgl_start(1280, 1024);
-    
+    #else
+    #warning "...... GSF_DEV_NVR undefined ......"
     #endif
-     
-    #ifdef GSF_CPU_3559
-    extern int lvgl_stop(void);
-    extern int lvgl_start(int w, int h);
-    lvgl_start(1920, 1080); 
-    #endif
-     
-     
+
     //init listen;
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_APP
                     , NM_REP_MAX_WORKERS
                     , NM_REP_OSIZE_MAX

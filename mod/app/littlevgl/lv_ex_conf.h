@@ -54,6 +54,7 @@
 /*Touch pad calibration with 4 points*/
 #define LV_USE_TPCAL       0
 
+
 #endif /*LV_EX_CONF_H*/
 
 #endif /*End of "Content enable"*/

@@ -9,7 +9,7 @@ TARG := bin/app.exe
 #============================================================= 
 
 INCS := -I$(HOME) -Isrc -Iinc \
-        -I$(HOME)/fw/comm/inc 
+        -I$(HOME)/fw/comm/inc
         
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")

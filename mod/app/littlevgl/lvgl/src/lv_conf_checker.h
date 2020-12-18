@@ -421,10 +421,10 @@
 #define LV_FONT_ROBOTO_16    1
 #endif
 #ifndef LV_FONT_ROBOTO_22
-#define LV_FONT_ROBOTO_22    0
+#define LV_FONT_ROBOTO_22    1
 #endif
 #ifndef LV_FONT_ROBOTO_28
-#define LV_FONT_ROBOTO_28    0
+#define LV_FONT_ROBOTO_28    1
 #endif
 
 /* Demonstrate special features */

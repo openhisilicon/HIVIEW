@@ -175,9 +175,11 @@ static void* live_task(void *parm)
         gmng.shmid[i][1].video_shmid = gmng.shmid[i][1].audio_shmid = -1;
         extern int vo_ly(int num); vo_ly(0);
       }
-      
-      //printf("i:%d, en:%d, host:[%s], onvif:%d, rtsp:%d\n", i, gmng.chsrc[i].en, gmng.chsrc[i].host, gmng.onvif[i], gmng.rtsp[i][0]);
-            
+      #if 0
+      printf("i:%d, en:%d, host:[%s],st1:[%s],st2[%s], onvif:%d, rtsp:%d\n"
+            , i, gmng.chsrc[i].en, gmng.chsrc[i].host, gmng.chsrc[i].st1, gmng.chsrc[i].st2
+            , gmng.onvif[i], gmng.rtsp[i][0]);
+      #endif      
       if(gmng.chsrc[i].en)
       {
         if(strlen(gmng.chsrc[i].host) > 0 && gmng.onvif[i] == 0)

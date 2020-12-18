@@ -20,8 +20,8 @@
  *====================*/
 
 /* Maximal horizontal and vertical resolution to support by the library.*/
-#define LV_HOR_RES_MAX          (1920)
-#define LV_VER_RES_MAX          (1080)
+#define LV_HOR_RES_MAX          (3840)
+#define LV_VER_RES_MAX          (2480)
 
 /* Color depth:
  * - 1:  1 byte per pixel
@@ -258,8 +258,8 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  * https://fonts.google.com/specimen/Roboto  */
 #define LV_FONT_ROBOTO_12    0
 #define LV_FONT_ROBOTO_16    1
-#define LV_FONT_ROBOTO_22    0
-#define LV_FONT_ROBOTO_28    0
+#define LV_FONT_ROBOTO_22    1
+#define LV_FONT_ROBOTO_28    1
 
 /*Pixel perfect monospace font
  * http://pelulamu.net/unscii/ */
