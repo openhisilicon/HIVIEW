@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
       json_parm_load(onvif_parm_path, &onvif_cfg);
     }
     
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_ONVIF
                     , NM_REP_MAX_WORKERS
                     , NM_REP_OSIZE_MAX

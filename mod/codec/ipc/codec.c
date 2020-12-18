@@ -332,7 +332,7 @@ int venc_start(int start)
     }
     
     if(!start)
-      continue;  
+      continue;
     
     if(j < p_venc_ini->st_num) // st_num+1(JPEG);
     {
@@ -581,13 +581,17 @@ int main(int argc, char *argv[])
     
     venc_start(1);
     
-    // test vo;
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     
-    int mipi_800x1280 = 1;
+    // only test aio;
+    gsf_mpp_audio_start(NULL);
+    
+    // test vo;
+    int mipi_800x1280 = 0;
     if(mipi_800x1280)
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
       gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
       
       //---- 800x640 -----//
@@ -606,9 +610,8 @@ int main(int argc, char *argv[])
     else
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
-      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
-
       gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
       
       gsf_mpp_vo_src_t src0 = {0, 0};
       gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);

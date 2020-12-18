@@ -331,7 +331,10 @@ void* handle_connect(void *arg)
 	r = st_read(ctx->socket, packet, packet_size, ST_UTIME_NO_TIMEOUT);
 	while(r > 0)
 	{
-		assert(0 == rtsp_client_input(ctx->rtsp, packet, r));
+	  if((r = rtsp_client_input(ctx->rtsp, packet, r)) != 0)
+	  {
+	     printf("rtsp_client_input err r:%d packet[%s]\n", r, packet);
+	  }
 		r = st_read(ctx->socket, packet, packet_size, ST_UTIME_NO_TIMEOUT);		
 		
 		#if 0 // io-collect
@@ -348,7 +351,7 @@ void* handle_connect(void *arg)
 	}
   
   if(ctx->stat >= RTSP_CLIENT_STAT_SETUP)
-	  assert(0 == rtsp_client_teardown(ctx->rtsp));
+    rtsp_client_teardown(ctx->rtsp);
 	
 	rtsp_client_destroy(ctx->rtsp);
 	

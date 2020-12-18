@@ -3,6 +3,8 @@ export GSF_DEV_TYPE=ipc
 export GSF_HOME=`pwd`
 export GSF_CC="arm-hisiv500-linux-gcc"
 export GSF_AR=arm-hisiv500-linux-ar
+#export GSF_CC="arm-hisiv600-linux-gcc"
+#export GSF_AR=arm-hisiv600-linux-ar
 export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_CPU_3519"
 export GSF_LDFLAGS=""
 

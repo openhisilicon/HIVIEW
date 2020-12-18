@@ -1,0 +1,17 @@
+export GSF_CPU_ARCH=3559
+export GSF_DEV_TYPE=nvr
+export GSF_HOME=`pwd`
+export GSF_CC="arm-himix200-linux-gcc"
+export GSF_AR=arm-himix200-linux-ar
+export GSF_CFLAGS="-g -fstack-protector -fPIC -DGSF_CPU_3559 -DGSF_DEV_NVR"
+export GSF_LDFLAGS=""
+
+if [ ! -d ${GSF_HOME}/lib/${GSF_CPU_ARCH} ]
+then
+	mkdir -p ${GSF_HOME}/lib/${GSF_CPU_ARCH}
+fi
+
+if [ ! -d ${GSF_HOME}/bin/${GSF_CPU_ARCH} ]
+then
+	mkdir -p ${GSF_HOME}/bin/${GSF_CPU_ARCH}
+fi

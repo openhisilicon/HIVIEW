@@ -178,7 +178,7 @@ static void *live_send_task(void *arg)
         //gettimeofday(&tv1, NULL);
         int ret = st_netfd_poll(m_evfd, POLLIN|POLLET, 1000*1000);
         //gettimeofday(&tv2, NULL);
-        //if(m->track[MEDIA_TRACK_VIDEO].pollcnt++%30 == 0)
+        //if(++m->track[MEDIA_TRACK_VIDEO].pollcnt%30 == 0)
         //  printf("pid:%d, m:%p => st_netfd_poll ret:%d, cost:%d\n", getpid(), m, ret, (tv2.tv_sec*1000+tv2.tv_usec/1000)-(tv1.tv_sec*1000+tv1.tv_usec/1000));
       }
       // get data;

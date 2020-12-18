@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
                   , sub_recv);
 
   //local listen;
-  GSF_LOG_CONN(0, 100);
+  GSF_LOG_CONN(1, 100);
   _rep = nm_rep_listen(GSF_IPC_WEBS
                   , 1
                   , NM_REP_OSIZE_MAX
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
     //register To;
     GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
     reg->mid = GSF_MOD_ID_WEBS;
-    strcpy(reg->uri, "");
+    strcpy(reg->uri, GSF_IPC_WEBS);
     int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
     printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
 

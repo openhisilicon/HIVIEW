@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     }
     info("rec_parm => pattern:%s, cfg[0].en:%d\n", rec_parm.pattern, rec_parm.cfg[0].en);
     
-    GSF_LOG_CONN(0, 100);
+    GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_REC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
 
     while(0) // DEBUG;

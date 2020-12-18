@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
     
     #else
     
-    int mipi_800x1280 = 1;
+    int mipi_800x1280 = 0;
     if(mipi_800x1280)
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);

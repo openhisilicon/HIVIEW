@@ -9,9 +9,15 @@ gsf_bsp_def_t bsp_def = {
   .board = {
     .model = "IPC123",
     .sn    = "123456",
+#if defined(GSF_CPU_3559)
+    .type  = "HI3559V200_E_4_2",
+    .snscnt = 1,
+    .sensor = {"imx458", "", },
+#else    
     .type  = "HI3516DV300_E_4_2",
     .snscnt = 1,
     .sensor = {"imx335", "", },
+#endif
     .caps   = 0xFFFFFFFF,
     },
   .base = {

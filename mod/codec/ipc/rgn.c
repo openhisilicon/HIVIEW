@@ -277,6 +277,7 @@ static unsigned short argb8888_1555(unsigned int color)
 
 int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
 {
+  
   int i = 0;
   unsigned int ARGB8888_RED = argb8888_1555(0x01FF0000);
   

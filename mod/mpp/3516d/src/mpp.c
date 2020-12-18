@@ -486,6 +486,19 @@ int gsf_mpp_isp_ctl(int ch, int id, void *args)
   return ret;
 }
 
+// only test;
+static pthread_t aio_pid;
+extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
+int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
+{
+  return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+}
+
+int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
+{
+  return 0;
+}
+
 
 //HI_S32 HI_MPI_RGN_Create(RGN_HANDLE Handle,const RGN_ATTR_S *pstRegion);
 //HI_S32 HI_MPI_RGN_Destroy(RGN_HANDLE Handle);
@@ -800,8 +813,11 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
     // only set width = height = 0, tell gsf_mpp_vo_vsend to recreate vdec&vpss;
     vdev->layer[volayer].chs[i].width = vdev->layer[volayer].chs[i].height = 0;
   }
+
+  if(vdev->layer[volayer].cnt)
+    SAMPLE_COMM_VO_StopChn(volayer, vdev->layer[volayer].cnt);
+
   
-  SAMPLE_COMM_VO_StopChn(volayer, vdev->layer[volayer].cnt);
   if(vdev->layer[volayer].chs[i].src_type >= VO_SRC_VDVP)
   {
     SAMPLE_COMM_VDEC_Stop(vdev->layer[volayer].cnt);

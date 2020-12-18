@@ -504,7 +504,7 @@ HI_S32 SAMPLE_COMM_VO_StartLayer(VO_LAYER VoLayer, const VO_VIDEO_LAYER_ATTR_S* 
         SAMPLE_PRT("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
-
+    printf("%s => HI_MPI_VO_EnableVideoLayer\n", __func__);
     return s32Ret;
 }
 
@@ -518,7 +518,7 @@ HI_S32 SAMPLE_COMM_VO_StopLayer(VO_LAYER VoLayer)
         SAMPLE_PRT("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
-
+    printf("%s => HI_MPI_VO_DisableVideoLayer\n", __func__);
     return s32Ret;
 }
 
@@ -1120,6 +1120,23 @@ HI_S32 SAMPLE_COMM_VO_StartVO(SAMPLE_VO_CONFIG_S *pstVoConfig)
             SAMPLE_COMM_VO_StopDev(VoDev);
             return s32Ret;
         }
+        printf("%s => SAMPLE_COMM_VO_StartLayer VO_INTF_MIPI\n", __func__);
+    }
+    else if (VO_INTF_MIPI == enVoIntfType)
+    {
+      VO_CSC_S stGhCSC = {0};
+      int s32Ret = HI_MPI_VO_GetGraphicLayerCSC(0, &stGhCSC);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_VO_GetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+      }
+      stGhCSC.enCscMatrix = VO_CSC_MATRIX_IDENTITY;
+      s32Ret = HI_MPI_VO_SetGraphicLayerCSC(0, &stGhCSC);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_VO_SetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+      }
+      printf("%s => SAMPLE_COMM_VO_StartLayer VO_INTF_MIPI\n", __func__);
     }
 
     /******************************
