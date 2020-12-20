@@ -4,15 +4,17 @@
 ## Business cooperation, contact Email: thomas@hiview-tech.cn  
 ## RoadMap:
 ### 1. Design products in the form of core board + base board (customizable);
-### 2. Continue to increase the function development of Openhisilicon project;
-### 3. Finally complete the open product, users can run their own programs (based on Openhisilicon);
-##   
-![fw](/fw.png)
-![webs](/webs.jpg)
-![rtsps1](/rtspserv1.jpg)
-![nvr](/nvr.jpg)
-![lpr](/svp.jpg)
-![sns](/multi-sns.jpg)
-![dsi](/mipi-dsi.jpg)
+![16dv300](/res/16dv300-c.jpg) ![59v200](/res/59v200-c.jpg)
+![16dv300](/res/16dv300-b.jpg)
+### 2. Continue to improve OpenHisilicon project;
+### 3. Support users to develop their own products based on OpenHisilicon;
+## Features:
+![fw](/res/fw.jpg)
+![webs](/res/webs.jpg)
+![rtsps1](/res/rtspserv1.jpg)
+![nvr](/res/nvr.jpg)
+![lpr](/res/svp.jpg)
+![sns](/res/multi-sns.jpg)
+![dsi](/res/mipi-dsi.jpg)
 ### Thank you for your support
-![pay](/pay.jpg)
+![pay](/res/pay.jpg)
