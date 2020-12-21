@@ -27,6 +27,8 @@
 #include "hifb.h"
 #include "mpp.h"
 
+
+
 extern HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, HI_U32 u32SupplementConfig);
 extern HI_S32 SAMPLE_VENC_CheckSensor(SAMPLE_SNS_TYPE_E   enSnsType,SIZE_S  stSize);
 extern HI_S32 SAMPLE_VENC_ModifyResolution(SAMPLE_SNS_TYPE_E   enSnsType,PIC_SIZE_E *penSize,SIZE_S *pstSize);
@@ -147,7 +149,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
 
 static void * dl = NULL;
 static int snscnt = 0;
-int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
+int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 {
   char snsstr[64];
   sprintf(snsstr, "%s-%d-%d-%d-%d"
@@ -162,7 +164,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   
   snscnt = cfg->snscnt;
   char loadstr[256];
-  sprintf(loadstr, "%s/ko/load3559v200 -i -osmem 64 -sensor0 %s", path, cfg->snsname);
+  sprintf(loadstr, "%s/ko/load3559v200 -i -sensor0 %s", path, cfg->snsname);
   int i = 0;
   for(i = 1; i < snscnt; i++)
   {
@@ -210,6 +212,17 @@ __err:
   dlerror();
   return -1;
 }
+
+
+int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
+{
+  if(cfg && cfg->snscnt > 0)
+    return gsf_mpp_cfg_sns(path, cfg);
+  else
+    return gsf_mpp_cfg_vdec(path, cfg);
+}
+
+
 
 int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
 {
@@ -461,6 +474,28 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
     case GSF_MPP_VENC_CTL_IDR:
       ret = HI_MPI_VENC_RequestIDR(VencChn, HI_TRUE);
       break;
+    case GSF_MPP_VENC_CTL_RST:
+      ret = HI_MPI_VENC_StopRecvFrame(VencChn);
+      if (ret != HI_SUCCESS)
+      {
+        printf("HI_MPI_VENC_StopRecvFrame err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      ret = HI_MPI_VENC_ResetChn(VencChn);
+      if (ret != HI_SUCCESS)
+      {
+        printf("HI_MPI_VENC_ResetChn err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      VENC_RECV_PIC_PARAM_S  stRecvParam;
+      stRecvParam.s32RecvPicNum = -1;
+      ret = HI_MPI_VENC_StartRecvFrame(VencChn,&stRecvParam);
+      if (ret != HI_SUCCESS)
+      {
+        printf("HI_MPI_VENC_StartRecvFrame err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      break;
     default:
       break;
   }
@@ -469,6 +504,26 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
 }
 
 int gsf_mpp_isp_ctl(int ch, int id, void *args)
+{
+  int ret = -1;
+  switch(id)
+  {
+    default:
+      break;
+  }
+  printf("ch:%d, id:%d, ret:%d\n", ch, id, ret);
+  return ret;
+}
+
+// only test;
+static pthread_t aio_pid;
+extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
+int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
+{
+  return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+}
+
+int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
 {
   return 0;
 }
@@ -522,6 +577,20 @@ int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap)
   return HI_MPI_RGN_SetBitMap(Handle, bitmap);
 }
 
+int gsf_mpp_rgn_canvas_get(RGN_HANDLE Handle, RGN_CANVAS_INFO_S *pstRgnCanvasInfo)
+{
+  int s32Ret = HI_MPI_RGN_GetCanvasInfo(Handle, pstRgnCanvasInfo);
+  if(HI_SUCCESS != s32Ret)
+  {
+      SAMPLE_PRT("HI_MPI_RGN_GetCanvasInfo failed with %#x!\n", s32Ret);
+      return HI_FAILURE;
+  }
+  return s32Ret;
+}
+int gsf_mpp_rgn_canvas_update(RGN_HANDLE Handle)
+{
+ return HI_MPI_RGN_UpdateCanvas(Handle); 
+}
 
 
 typedef struct {
@@ -584,6 +653,93 @@ static int layer2vdev[VO_MAX_LAYER_NUM] = {
 };
 
 
+int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
+{
+    char loadstr[64];
+    sprintf(loadstr, "%s/ko/load3516dv300 -i", path);
+    printf("%s => loadstr: %s\n", __func__, loadstr);
+    system(loadstr);
+    
+    signal(SIGINT, SAMPLE_VDEC_HandleSig);
+    signal(SIGTERM, SAMPLE_VDEC_HandleSig);
+    
+    
+    HI_S32 i, s32Ret = HI_SUCCESS;
+    HI_U32 u32VdecChnNum = 4;
+
+    /************************************************
+    step1:  init SYS, init common VB(for VPSS and VO)
+    *************************************************/
+    SIZE_S stDispSize;
+    PIC_SIZE_E enDispPicSize = PIC_1080P;
+    s32Ret =  SAMPLE_COMM_SYS_GetPicSize(enDispPicSize, &stDispSize);
+    if(s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("sys get pic size fail for %#x!\n", s32Ret);
+        goto END1;
+    }
+
+	  stDispSize.u32Height = (stDispSize.u32Height == 1080)?1088:stDispSize.u32Height;
+
+    VB_CONFIG_S stVbConfig;
+    memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
+    stVbConfig.u32MaxPoolCnt             = 128;
+    stVbConfig.astCommPool[0].u32BlkCnt  = 10*u32VdecChnNum;
+    stVbConfig.astCommPool[0].u64BlkSize = COMMON_GetPicBufferSize(stDispSize.u32Width, stDispSize.u32Height,
+                                                PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_SEG, 0);
+    s32Ret = SAMPLE_COMM_SYS_Init(&stVbConfig);
+    if(s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("init sys fail for %#x!\n", s32Ret);
+        goto END1;
+    }
+
+    /************************************************
+    step2:  init module VB or user VB(for VDEC)
+    *************************************************/
+    SAMPLE_VDEC_ATTR astSampleVdec[VDEC_MAX_CHN_NUM];
+    for(i=0; i<u32VdecChnNum; i++)
+    {
+        astSampleVdec[i].enType                           = PT_H264;
+        astSampleVdec[i].u32Width                         = 1920;
+        astSampleVdec[i].u32Height                        = 1080;
+        astSampleVdec[i].enMode                           = VIDEO_MODE_FRAME;
+        astSampleVdec[i].stSapmleVdecVideo.enDecMode      = VIDEO_DEC_MODE_IP;//VIDEO_DEC_MODE_IPB;
+        astSampleVdec[i].stSapmleVdecVideo.enBitWidth     = DATA_BITWIDTH_8;
+        astSampleVdec[i].stSapmleVdecVideo.u32RefFrameNum = 3;
+        astSampleVdec[i].u32DisplayFrameNum               = 2;
+        astSampleVdec[i].u32FrameBufCnt = astSampleVdec[i].stSapmleVdecVideo.u32RefFrameNum + astSampleVdec[i].u32DisplayFrameNum + 1;
+    }
+    s32Ret = SAMPLE_COMM_VDEC_InitVBPool(u32VdecChnNum, &astSampleVdec[0]);
+    if(s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("init mod common vb fail for %#x!\n", s32Ret);
+        goto END2;
+    }
+  
+  
+    VDEC_MOD_PARAM_S stModParam;
+  
+    CHECK_RET(HI_MPI_VDEC_GetModParam(&stModParam), "HI_MPI_VDEC_GetModParam");
+    stModParam.enVdecVBSource = g_enVdecVBSource;
+    CHECK_RET(HI_MPI_VDEC_SetModParam(&stModParam), "HI_MPI_VDEC_GetModParam");
+  
+    for(i = 0; i < VO_MAX_DEV_NUM; i++)
+    {
+      pthread_mutex_init(&vo_mng[i].lock, NULL);
+      //pthread_mutex_destroy(&mutex);
+    }
+    return 0;
+  
+END2:
+    SAMPLE_COMM_VDEC_ExitVBPool();
+END1:
+    SAMPLE_COMM_SYS_Exit();
+  return s32Ret;
+}
+
+
+
 
 
 //启动视频输出设备;
@@ -633,7 +789,8 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     vo_mng[vodev].intf = stVoConfig.enVoIntfType;
     vo_mng[vodev].sync = stVoConfig.enIntfSync;
     printf("vodev:%d, intf:%d, sync:%d, u32Width:%d, u32Height:%d\n"
-            , vodev, vo_mng[vodev].intf, vo_mng[vodev].sync, stDispSize.u32Width, stDispSize.u32Height);
+            , vodev, vo_mng[vodev].intf, vo_mng[vodev].sync, stDispSize.u32Width, stDispSize.u32Height);         
+            
     return s32Ret;
 }
 
@@ -685,8 +842,11 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
     // only set width = height = 0, tell gsf_mpp_vo_vsend to recreate vdec&vpss;
     vdev->layer[volayer].chs[i].width = vdev->layer[volayer].chs[i].height = 0;
   }
+
+  if(vdev->layer[volayer].cnt)
+    SAMPLE_COMM_VO_StopChn(volayer, vdev->layer[volayer].cnt);
+
   
-  SAMPLE_COMM_VO_StopChn(volayer, vdev->layer[volayer].cnt);
   if(vdev->layer[volayer].chs[i].src_type >= VO_SRC_VDVP)
   {
     SAMPLE_COMM_VDEC_Stop(vdev->layer[volayer].cnt);
@@ -697,6 +857,47 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
   
   pthread_mutex_unlock(&vdev->lock);
   
+ 
+  if(0)
+  {
+      HI_S32             s32Ret;
+      HI_S32             HandleNum;
+      RGN_TYPE_E         enType;
+      MPP_CHN_S          stChn;
+      
+      HandleNum = 1;
+      enType = COVEREX_RGN;
+      
+      for(i = 0; i < 2; i++)
+      {
+        stChn.enModId = HI_ID_VO;
+        stChn.s32DevId = 0;
+        stChn.s32ChnId = i;
+        SAMPLE_COMM_REGION_DetachFrmChn(HandleNum, enType, &stChn);
+      }
+      
+      SAMPLE_COMM_REGION_Destroy(HandleNum, enType);
+      
+      s32Ret = SAMPLE_COMM_REGION_Create(HandleNum,enType);
+      if(HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("SAMPLE_COMM_REGION_Create failed!\n");
+      }
+      
+      for(i = 0; i < 2; i++)
+      {
+        stChn.enModId = HI_ID_VO;
+        stChn.s32DevId = 0;
+        stChn.s32ChnId = i;
+        
+        s32Ret = SAMPLE_COMM_REGION_AttachToChn(HandleNum,enType,&stChn);
+        if(HI_SUCCESS != s32Ret)
+        {
+            SAMPLE_PRT("SAMPLE_COMM_REGION_AttachToChn failed!\n");
+        }
+      }   
+  }
+ 
   return err;
 }
 
@@ -802,8 +1003,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     CHECK_CHN_RET(HI_MPI_VDEC_GetChnParam(ch, &stChnParam), ch, "HI_MPI_VDEC_GetChnParam");
     if (PT_H264 == stChnAttr.enType || PT_H265 == stChnAttr.enType)
     {
-        stChnParam.stVdecVideoParam.enDecMode         = VIDEO_DEC_MODE_IPB;
-        stChnParam.stVdecVideoParam.enCompressMode    = COMPRESS_MODE_TILE;
+        stChnParam.stVdecVideoParam.enDecMode         = VIDEO_DEC_MODE_IP;//16dv300 !!!VIDEO_DEC_MODE_IPB;
+        stChnParam.stVdecVideoParam.enCompressMode    = COMPRESS_MODE_NONE;//16dv300 !!!COMPRESS_MODE_TILE;
         stChnParam.stVdecVideoParam.enVideoFormat     = VIDEO_FORMAT_TILE_64x16;
         stChnParam.stVdecVideoParam.enOutputOrder     = VIDEO_OUTPUT_ORDER_DISP; //VIDEO_OUTPUT_ORDER_DEC
     }
@@ -813,7 +1014,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
         stChnParam.stVdecPictureParam.u32Alpha        = 255;
     }
     stChnParam.u32DisplayFrameNum = 2;
-    CHECK_CHN_RET(HI_MPI_VDEC_SetChnParam(ch, &stChnParam), ch, "HI_MPI_VDEC_GetChnParam");
+    CHECK_CHN_RET(HI_MPI_VDEC_SetChnParam(ch, &stChnParam), ch, "HI_MPI_VDEC_SetChnParam");
     CHECK_CHN_RET(HI_MPI_VDEC_StartRecvStream(ch), ch, "HI_MPI_VDEC_StartRecvStream");
     
     // 
@@ -971,6 +1172,41 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
 }
 
 
+
+//裁剪通道源图像区域到显示通道(局部放大)
+int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect)
+{
+  HI_S32 s32Ret = HI_SUCCESS;
+  VO_ZOOM_ATTR_S stZoomWindow;
+  #if 0
+  stZoomWindow.enZoomType = VO_ZOOM_IN_RECT;
+  stZoomWindow.stZoomRect.s32X =  ALIGN_UP(rect->s32X, 2);
+  stZoomWindow.stZoomRect.s32Y =  ALIGN_UP(rect->s32Y, 2);
+  stZoomWindow.stZoomRect.u32Width = ALIGN_UP(rect->u32Width, 2);
+  stZoomWindow.stZoomRect.u32Height = ALIGN_UP(rect->u32Height, 2);
+  #else
+  stZoomWindow.enZoomType = VO_ZOOM_IN_RATIO;
+  stZoomWindow.stZoomRatio.u32XRatio = rect->s32X;
+  stZoomWindow.stZoomRatio.u32YRatio = rect->s32Y;
+  stZoomWindow.stZoomRatio.u32WRatio = rect->u32Width;
+  stZoomWindow.stZoomRatio.u32HRatio = rect->u32Height;
+  #endif
+  
+  /* set zoom window */
+  s32Ret = HI_MPI_VO_SetZoomInWindow(volayer, ch, &stZoomWindow);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("Set zoom attribute, s32Ret:%#x, u32XRatio[%d,%d,%d,%d]\n"
+        , s32Ret
+        , stZoomWindow.stZoomRatio.u32XRatio, stZoomWindow.stZoomRatio.u32YRatio
+        , stZoomWindow.stZoomRatio.u32WRatio, stZoomWindow.stZoomRatio.u32HRatio);
+    return HI_FAILURE;
+  }
+
+  return s32Ret;
+}
+
+
 static struct fb_bitfield s_r16 = {10, 5, 0};
 static struct fb_bitfield s_g16 = {5, 5, 0};
 static struct fb_bitfield s_b16 = {0, 5, 0};
@@ -981,10 +1217,12 @@ static struct fb_bitfield s_r32 = {16,8,0};
 static struct fb_bitfield s_g32 = {8,8,0};
 static struct fb_bitfield s_b32 = {0,8,0};
 
+
 static int vo_fd[VOFB_BUTT];
 
 int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
 {
+    int i = 0, j = 0, x = 0, y = 0;
     HI_CHAR file[32] = "/dev/fb0";
     
     switch (vofb)
@@ -1017,7 +1255,14 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         SAMPLE_PRT("FBIOPUT_SHOW_HIFB failed!\n");
         return -1;
     }
-    
+    #if 0
+    HIFB_CAPABILITY_S stCap;
+    if ( ioctl(fd, FBIOGET_CAPABILITY_HIFB, &stCap) < 0)
+    {
+        SAMPLE_PRT("FBIOGET_CAPABILITY_HIFB failed!\n");
+        return -1;
+    }
+    #endif
     /* 2. set the screen original position */
     HIFB_POINT_S stPoint = {0, 0};
     stPoint.s32XPos = 0;
@@ -1062,12 +1307,19 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         default:
             break;
     }
-
+#if 1
     var.transp= s_a32;
     var.red   = s_r32;
     var.green = s_g32;
     var.blue  = s_b32;
     var.bits_per_pixel = 32;
+#else
+    var.transp= s_a16;
+    var.red   = s_r16;
+    var.green = s_g16;
+    var.blue  = s_b16;
+    var.bits_per_pixel = 16;
+#endif
     var.activate = FB_ACTIVATE_NOW;
     
     /* 5. set the variable screeninfo */
@@ -1097,8 +1349,8 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
     }
     stAlpha.bAlphaEnable = HI_TRUE;
     stAlpha.bAlphaChannel = HI_FALSE;
-    stAlpha.u8Alpha0 = 0xff; // 当最高位为0时,选择该值作为Alpha
-    stAlpha.u8Alpha1 = 0x0; // 当最高位为1时,选择该值作为Alpha
+    stAlpha.u8Alpha0 = 0x0;//0xff; // 当最高位为0时,选择该值作为Alpha
+    stAlpha.u8Alpha1 = 0xff;//0x0; // 当最高位为1时,选择该值作为Alpha
     stAlpha.u8GlobalAlpha = 0x0;//在Alpha通道使能时起作用
     
     if (ioctl(fd, FBIOPUT_ALPHA_HIFB,  &stAlpha) < 0)
@@ -1126,7 +1378,55 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
 		    close(fd);
         return -1;
     }
+    
+    if(vo_mng[0].intf == VO_INTF_MIPI)
+    {
+      VO_CSC_S stGhCSC = {0};
+      int s32Ret = HI_MPI_VO_GetGraphicLayerCSC(0, &stGhCSC);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_VO_GetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+      }
+      stGhCSC.enCscMatrix = VO_CSC_MATRIX_IDENTITY;
+      s32Ret = HI_MPI_VO_SetGraphicLayerCSC(0, &stGhCSC);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_VO_SetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+      }
+    }
+  
     memset(pShowScreen, 0x00, fix.smem_len);
+    
+    #if 0
+    void *ptemp;
+    ptemp = (pShowScreen + 100*u32FixScreenStride);
+    for (y = 0; y < 100; y++)
+    {
+        for (x = 0; x < 800; x++)
+        {
+          *((HI_U32*)ptemp + y*u32FixScreenStride/4 + x) = 0xFFff0000;
+        }
+    }
+    
+    ptemp = (pShowScreen + 200*u32FixScreenStride);
+    for (y = 0; y < 100; y++)
+    {
+        for (x = 0; x < 800; x++)
+        {
+          *((HI_U32*)ptemp + y*u32FixScreenStride/4 + x) = 0xFF00ff00;
+        }
+    }
+    
+    ptemp = (pShowScreen + 300*u32FixScreenStride);
+    for (y = 0; y < 100; y++)
+    {
+        for (x = 0; x < 800; x++)
+        {
+          *((HI_U32*)ptemp + y*u32FixScreenStride/4 + x) = 0xFF0000ff;
+        }
+    }
+    #endif
+    
     munmap(pShowScreen, fix.smem_len);
     
     if(!hide)

@@ -215,7 +215,7 @@ HI_S32 SAMPLE_VENC_SYS_Init(HI_U32 u32SupplementConfig,SAMPLE_SNS_TYPE_E  enSnsT
 
     u64BlkSize = COMMON_GetPicBufferSize(stSnsSize.u32Width, stSnsSize.u32Height, PIXEL_FORMAT_YVU_SEMIPLANAR_422, DATA_BITWIDTH_8, COMPRESS_MODE_SEG,DEFAULT_ALIGN);
     stVbConf.astCommPool[0].u64BlkSize   = u64BlkSize;
-    stVbConf.astCommPool[0].u32BlkCnt    = 10*2;
+    stVbConf.astCommPool[0].u32BlkCnt    = 20;
 
     u64BlkSize = COMMON_GetPicBufferSize(720, 576, PIXEL_FORMAT_YVU_SEMIPLANAR_422, DATA_BITWIDTH_8, COMPRESS_MODE_SEG,DEFAULT_ALIGN);
     stVbConf.astCommPool[1].u64BlkSize   = u64BlkSize;
@@ -288,26 +288,44 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
     ISP_CTRL_PARAM_S    stIspCtrlParam;
     HI_U32              u32FrameRate;
 
-
     enSnsType = pstViConfig->astViInfo[0].stSnsInfo.enSnsType;
 
-    pstViConfig->as32WorkingViId[0]                           = 0;
-    //pstViConfig->s32WorkingViNum                              = 1;
-
-    pstViConfig->astViInfo[0].stSnsInfo.MipiDev            = SAMPLE_COMM_VI_GetComboDevBySensor(pstViConfig->astViInfo[0].stSnsInfo.enSnsType, 0);
-    pstViConfig->astViInfo[0].stSnsInfo.s32BusId           = 0;
-
-    //pstViConfig->astViInfo[0].stDevInfo.ViDev              = ViDev0;
-    pstViConfig->astViInfo[0].stDevInfo.enWDRMode          = WDR_MODE_NONE;
-
-    if(HI_TRUE == bLowDelay)
+    int i = 0;
+    for(i = 0; i < pstViConfig->s32WorkingViNum; i++)
     {
-        pstViConfig->astViInfo[0].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_ONLINE;
-    }
-    else
-    {
-        pstViConfig->astViInfo[0].stPipeInfo.enMastPipeMode     = VI_OFFLINE_VPSS_OFFLINE;
-    }
+      pstViConfig->as32WorkingViId[i] = i;
+      //pstViConfig->s32WorkingViNum  = 1;
+
+      pstViConfig->astViInfo[i].stSnsInfo.MipiDev   = SAMPLE_COMM_VI_GetComboDevBySensor(pstViConfig->astViInfo[i].stSnsInfo.enSnsType, i);
+      
+      // Sensor绑定的I2C/SPI设备号
+      pstViConfig->astViInfo[i].stSnsInfo.s32BusId  = i;
+
+      // maohw ViDev = MipiDev;
+      pstViConfig->astViInfo[i].stDevInfo.ViDev   =   pstViConfig->astViInfo[i].stSnsInfo.MipiDev;
+      
+      pstViConfig->astViInfo[i].stDevInfo.enWDRMode = WDR_MODE_NONE;
+
+      if(HI_TRUE == bLowDelay)
+      {
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_ONLINE;
+      }
+      else
+      {
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_OFFLINE_VPSS_OFFLINE;
+      }
+      //pstViConfig->astViInfo[0].stPipeInfo.aPipe[0]          = ViPipe0;
+      pstViConfig->astViInfo[i].stPipeInfo.aPipe[1]          = -1;
+      pstViConfig->astViInfo[i].stPipeInfo.aPipe[2]          = -1;
+      pstViConfig->astViInfo[i].stPipeInfo.aPipe[3]          = -1;
+
+      //pstViConfig->astViInfo[0].stChnInfo.ViChn              = ViChn;
+      //pstViConfig->astViInfo[0].stChnInfo.enPixFormat        = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+      //pstViConfig->astViInfo[0].stChnInfo.enDynamicRange     = enDynamicRange;
+      pstViConfig->astViInfo[i].stChnInfo.enVideoFormat      = VIDEO_FORMAT_LINEAR;
+      pstViConfig->astViInfo[i].stChnInfo.enCompressMode     = COMPRESS_MODE_SEG;//COMPRESS_MODE_SEG;
+	  }
+	  
     s32Ret = SAMPLE_VENC_SYS_Init(u32SupplementConfig,enSnsType);
     if(s32Ret != HI_SUCCESS)
     {
@@ -315,16 +333,6 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
         return s32Ret;
     }
 
-    //pstViConfig->astViInfo[0].stPipeInfo.aPipe[0]          = ViPipe0;
-    pstViConfig->astViInfo[0].stPipeInfo.aPipe[1]          = -1;
-    pstViConfig->astViInfo[0].stPipeInfo.aPipe[2]          = -1;
-    pstViConfig->astViInfo[0].stPipeInfo.aPipe[3]          = -1;
-
-    //pstViConfig->astViInfo[0].stChnInfo.ViChn              = ViChn;
-    //pstViConfig->astViInfo[0].stChnInfo.enPixFormat        = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
-    //pstViConfig->astViInfo[0].stChnInfo.enDynamicRange     = enDynamicRange;
-    pstViConfig->astViInfo[0].stChnInfo.enVideoFormat      = VIDEO_FORMAT_LINEAR;
-    pstViConfig->astViInfo[0].stChnInfo.enCompressMode     = COMPRESS_MODE_SEG;//COMPRESS_MODE_SEG;
     s32Ret = SAMPLE_COMM_VI_SetParam(pstViConfig);
     if (HI_SUCCESS != s32Ret)
     {
@@ -333,21 +341,26 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
     }
 
     SAMPLE_COMM_VI_GetFrameRateBySensor(enSnsType, &u32FrameRate);
-
-    s32Ret = HI_MPI_ISP_GetCtrlParam(pstViConfig->astViInfo[0].stPipeInfo.aPipe[0], &stIspCtrlParam);
-    if (HI_SUCCESS != s32Ret)
+    
+    for(i = 0; i < pstViConfig->s32WorkingViNum; i++)
     {
-        SAMPLE_PRT("HI_MPI_ISP_GetCtrlParam failed with %d!\n", s32Ret);
-        return s32Ret;
-    }
-    stIspCtrlParam.u32StatIntvl  = u32FrameRate/30;
 
-    s32Ret = HI_MPI_ISP_SetCtrlParam(pstViConfig->astViInfo[0].stPipeInfo.aPipe[0], &stIspCtrlParam);
-    if (HI_SUCCESS != s32Ret)
-    {
-        SAMPLE_PRT("HI_MPI_ISP_SetCtrlParam failed with %d!\n", s32Ret);
-        return s32Ret;
-    }
+      s32Ret = HI_MPI_ISP_GetCtrlParam(pstViConfig->astViInfo[i].stPipeInfo.aPipe[0], &stIspCtrlParam);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_ISP_GetCtrlParam failed with %d!\n", s32Ret);
+          return s32Ret;
+      }
+      stIspCtrlParam.u32StatIntvl  = u32FrameRate/30;
+
+      s32Ret = HI_MPI_ISP_SetCtrlParam(pstViConfig->astViInfo[i].stPipeInfo.aPipe[0], &stIspCtrlParam);
+      if (HI_SUCCESS != s32Ret)
+      {
+          SAMPLE_PRT("HI_MPI_ISP_SetCtrlParam failed with %d!\n", s32Ret);
+          return s32Ret;
+      }
+
+	  }
 
     s32Ret = SAMPLE_COMM_VI_StartVi(pstViConfig);
     if (HI_SUCCESS != s32Ret)
@@ -408,7 +421,7 @@ HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RA
             stVpssChnAttr[i].enPixelFormat                = enPixelFormat;
             stVpssChnAttr[i].stFrameRate.s32SrcFrameRate  = -1;
             stVpssChnAttr[i].stFrameRate.s32DstFrameRate  = -1;
-            stVpssChnAttr[i].u32Depth                     = 0;
+            stVpssChnAttr[i].u32Depth                     = 1; // maohw HI_MPI_VPSS_GetChnFrame;
             stVpssChnAttr[i].bMirror                      = HI_FALSE;
             stVpssChnAttr[i].bFlip                        = HI_FALSE;
             stVpssChnAttr[i].enVideoFormat                = VIDEO_FORMAT_LINEAR;

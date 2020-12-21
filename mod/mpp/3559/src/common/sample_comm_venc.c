@@ -2079,7 +2079,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             }
         }
         /* Set Venc Fd. */
-        VencFd[i] = HI_MPI_VENC_GetFd(i);
+        VencFd[i] = HI_MPI_VENC_GetFd(VencChn/*i*/);
         if (VencFd[i] < 0)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetFd failed with %#x!\n",
@@ -2091,7 +2091,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
             maxfd = VencFd[i];
         }
 
-        s32Ret = HI_MPI_VENC_GetStreamBufInfo (i, &stStreamBufInfo[i]);
+        s32Ret = HI_MPI_VENC_GetStreamBufInfo (VencChn/*i*/, &stStreamBufInfo[i]);
         if (HI_SUCCESS != s32Ret)
         {
             SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo failed with %#x!\n", s32Ret);
@@ -2134,7 +2134,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     *******************************************************/
                     memset(&stStream, 0, sizeof(stStream));
 
-                    s32Ret = HI_MPI_VENC_QueryStatus(i, &stStat);
+                    s32Ret = HI_MPI_VENC_QueryStatus(/*i*/pstPara->VeChn[i], &stStat);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_QueryStatus chn[%d] failed with %#x!\n", i, s32Ret);
@@ -2168,7 +2168,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                      step 2.4 : call mpi to get one-frame stream
                     *******************************************************/
                     stStream.u32PackCount = stStat.u32CurPacks;
-                    s32Ret = HI_MPI_VENC_GetStream(i, &stStream, HI_TRUE);
+                    s32Ret = HI_MPI_VENC_GetStream(/*i*/pstPara->VeChn[i], &stStream, HI_TRUE);
                     if (HI_SUCCESS != s32Ret)
                     {
                         free(stStream.pstPack);
@@ -2209,7 +2209,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
                     /*******************************************************
                      step 2.6 : release stream
                      *******************************************************/
-                    s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
+                    s32Ret = HI_MPI_VENC_ReleaseStream(/*i*/pstPara->VeChn[i], &stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
                         SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed!\n");

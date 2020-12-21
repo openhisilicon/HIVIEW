@@ -108,9 +108,13 @@ int gsf_mpp_scene_stop();
 
 enum {
   GSF_MPP_VENC_CTL_IDR = 0,
+  GSF_MPP_VENC_CTL_RST = 1,
 };
-
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
+
+enum {
+  GSF_MPP_ISP_CTL_XXX = 0,
+};
 int gsf_mpp_isp_ctl(int ch, int id, void *args);
 
 typedef struct {
@@ -145,6 +149,11 @@ typedef struct {
 
 int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn);
 int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap);
+
+int gsf_mpp_rgn_canvas_get(RGN_HANDLE Handle, RGN_CANVAS_INFO_S *pstRgnCanvasInfo);
+int gsf_mpp_rgn_canvas_update(RGN_HANDLE Handle);
+
+
 
 //vodev;
 enum {
@@ -181,6 +190,7 @@ enum {
 typedef enum {
   VO_LAYOUT_NONE  = 0, VO_LAYOUT_10MUX = 10,
   VO_LAYOUT_1MUX  = 1, VO_LAYOUT_12MUX = 12,
+  VO_LAYOUT_2MUX  = 2,
   VO_LAYOUT_4MUX  = 4, VO_LAYOUT_16MUX = 16,
   VO_LAYOUT_6MUX  = 6, VO_LAYOUT_25MUX = 25,
   VO_LAYOUT_8MUX  = 8, VO_LAYOUT_36MUX = 36,
@@ -231,6 +241,10 @@ typedef struct {
 }gsf_mpp_vo_src_t;
 
 int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src);
+
+
+//设置通道源图像裁剪区域(用于局部放大)
+int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
 
 //private for mpp;

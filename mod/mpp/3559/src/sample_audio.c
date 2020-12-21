@@ -1113,11 +1113,13 @@ HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID)
             goto AIAO_ERR0;
         }
     }
-
+#if 0 //maohw
     printf("\nplease press twice ENTER to exit this sample\n");
     getchar();
     getchar();
-
+#else
+    while(1) sleep(1);
+#endif
     if (HI_TRUE == gs_bAoVolumeCtrl)
     {
         s32Ret = SAMPLE_COMM_AUDIO_DestoryTrdAoVolCtrl(AoDev);
@@ -1657,11 +1659,12 @@ HI_S32 sample_audio_main(int argc, char* argv[])
         SAMPLE_AUDIO_Usage();
         return HI_FAILURE;
     }
-
+#if 0 //maohw
 #ifndef __HuaweiLite__
     signal(SIGINT, SAMPLE_AUDIO_HandleSig);
     signal(SIGTERM, SAMPLE_AUDIO_HandleSig);
 #endif
+
 
 #if defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
     SAMPLE_AUDIO_RegisterVQEModule();
@@ -1674,6 +1677,7 @@ HI_S32 sample_audio_main(int argc, char* argv[])
         printf("%s: system init failed with %d!\n", __FUNCTION__, s32Ret);
         return HI_FAILURE;
     }
+#endif
 
     SAMPLE_AUDIO_AddLibPath();
 
@@ -1729,9 +1733,9 @@ HI_S32 sample_audio_main(int argc, char* argv[])
 
     HI_MPI_AENC_AacDeInit();
     HI_MPI_ADEC_AacDeInit();
-
+#if 0 //maohw
     SAMPLE_COMM_SYS_Exit();
-
+#endif
     return s32Ret;
 }
 

@@ -5483,7 +5483,7 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
             }
             else if (1 == s32SnsIdx)
             {
-                dev = 2;
+                dev =  1; //maohw dev = 2;
             }
             break;
 

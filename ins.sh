@@ -15,7 +15,7 @@ arm-himix200-linux-strip $INST/bin/*;
 
 cp mod/mpp/3516d/ko/* $INST/ko/ -arfv;
 
-cp mod/svp/3516d/model/* $INST/model/ -arfv;
+cp mod/svp/3516d/model/*.wk $INST/model/ -arfv;
 
 cp mod/mpp/3516d/lib/hisisdk/*.so $INST/lib -arfv;
 arm-himix200-linux-strip $INST/lib/*;
@@ -35,6 +35,46 @@ cd $INST/upg; $PROJ/tools/minizip -o -p 123 cam16d.upg app.xz install.sh;cp -vf 
 echo "ok."
 ######################
 }
+
+ins3559v200()
+{
+
+INST=/nfs/59v200
+echo "ins3559v200 to [$INST]"
+
+mkdir -p $INST/lib $INST/bin $INST/cfg $INST/ko $INST/model;
+
+cp lib/3559/*.so*  $INST/lib -arfv;
+cp bin/3559/*.exe $INST/bin -arfv;
+arm-himix200-linux-strip $INST/lib/*;
+arm-himix200-linux-strip $INST/bin/*;
+
+cp mod/mpp/3559/ko/* $INST/ko/ -arfv;
+
+cp mod/svp/3559/model/*.wk $INST/model/ -arfv;
+
+cp mod/mpp/3559/lib/hisisdk/*.so $INST/lib -arfv;
+arm-himix200-linux-strip $INST/lib/*;
+
+cp mod/mpp/3559/src/scene_auto/param/*.ini $INST/cfg -arfv;
+
+mkdir -p $INST/www;
+cp mod/webs/www/* $INST/www -arfv;
+
+#### packet .upg #####
+echo "wait minizip ..."
+mkdir -p $INST/upg;
+cp $PROJ/tools/install.sh $INST/upg/ -arfv;
+cd $INST; tar Jcf ./upg/app.xz ko lib bin cfg www model; cd -;
+cd $INST/upg; $PROJ/tools/minizip -o -p 123 cam59v200.upg app.xz install.sh;cp -vf ./cam59v200.upg /mnt/hgfs/works/; cd -;
+######################
+echo "ok."
+######################
+}
+
+
+
+
 
 ins3519()
 {
@@ -68,8 +108,6 @@ echo "ok."
 ######################
 }
 
-
-
 PROJ=`pwd`
 echo "PROJ:[$PROJ]"
 
@@ -80,8 +118,11 @@ case $1 in
     19)
         ins3519
         ;;
+    59)
+        ins3559v200
+        ;;
     *)
-        echo "usage: $0 {16d|19}"
+        echo "usage: $0 {16d|19|59}"
         exit 1
         ;;
 esac
