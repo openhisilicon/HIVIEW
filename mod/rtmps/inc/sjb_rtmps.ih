@@ -1,0 +1,10 @@
+#pragma pack(push, 4)
+
+STRUCT(gsf_rtmps_t)
+{
+  FIELD(int, port);
+  FIELD(int, auth);
+};
+
+
+#pragma pack(pop)
