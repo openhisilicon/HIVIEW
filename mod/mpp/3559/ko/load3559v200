@@ -91,6 +91,8 @@ insert_ko()
 
     # sys config
     insmod sys_config.ko chip=$CHIP_TYPE sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1, g_cmos_yuv_flag=$YUV_TYPE0
+    # maohw
+    himm 0x114F0048 0x0400;himm 0x114F004C 0x0400;
 #    insmod hi_tzasc.ko
     insmod hi3559v200_base.ko
     insmod hi3559v200_sys.ko
@@ -133,9 +135,9 @@ insert_ko()
     insmod hi3559v200_hdmi.ko
 
     insert_audio
-
+#maohw
     insmod hi_mipi_rx.ko
-#    insmod hi_mipi_tx.ko
+    insmod hi_mipi_tx.ko
 #    insmod hi_user.ko
 
 #    insert_gyro
@@ -146,7 +148,8 @@ remove_ko()
 #    rmmod_gyro
 #    rmmod hi_user
     remove_audio
-#    rmmod hi_mipi_tx
+#maohw
+    rmmod hi_mipi_tx
     rmmod hi_mipi_rx
 #    rmmod hi_serdes
 #    rmmod hi_sil9136 &> /dev/null
