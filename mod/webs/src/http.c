@@ -586,7 +586,7 @@ void handle_config(struct mg_connection *nc, int ev, void *pp)
   
   
   // call process;
-  char out[8*1024] = {0};
+  char out[80*1024] = {0};
   mod_call(req, args, body, out, sizeof(out));
   
   if(qs)

@@ -75,7 +75,7 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
     return ret;
   }
   
-  GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t) + 8*1024);
+  GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t) + 80*1024);
 
   cb = &sjb_maps[j];
     
@@ -116,7 +116,10 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
       cJSON_Delete(json2);
       
       if(cb->rspn && i < __pmsg->size/cb->rsps - 1)
+      {
         strncat(out, ",\r\n", osize-strlen(out)-1);
+        //printf("osize:%d, strlen(out)-1:%d\n", osize, strlen(out)-1);
+      }
     }
   }
   else

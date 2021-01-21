@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "inc/gsf.h"
 #include "mod/bsp/inc/bsp.h"
+#include "fw/comm/inc/proc.h"
 
 #include "http.h"
 #include "mod_call.h"
@@ -12,7 +13,7 @@
 #include "cfg.h"
 #include "webs.h"
 
-GSF_LOG_GLOBAL_INIT("WEBS", 8*1024);
+GSF_LOG_GLOBAL_INIT("WEBS", 8*8*1024);
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -105,6 +106,19 @@ int main(int argc, char *argv[])
   }
   info("cfg.port:%d, cfg.auth:%d\n", webs_cfg.port, webs_cfg.auth);
 
+  //add reclink to /mnt/rec00000001/data;
+  char reclink[128] = {0};
+  char home_path[128] = {0};
+  proc_absolute_path(home_path);
+  sprintf(reclink, "%s/../www/rec", home_path);
+  if(access(reclink, 0) == -1)
+  {
+    char cmdstr[256] = {0};
+    sprintf(cmdstr, "ln -s /mnt/rec00000001/data %s", reclink);
+    printf("cmdstr[%s]\n", cmdstr);
+    system(cmdstr);
+  }
+  
   //nanomsg port; you can use chrome to open index.html to test;
   web_pub  = nm_pub_listen("ws://*:7789");
   web_rep  = nm_rep_listen("ws://*:7790"

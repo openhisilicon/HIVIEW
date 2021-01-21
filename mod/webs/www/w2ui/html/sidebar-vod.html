@@ -1,33 +1,207 @@
+<link rel="stylesheet" href="js/mydate.css">
+<script src="js/mydate.js"></script>
+
 <div class="content">
+    <div id="example_title" style="text-align:center">
+      <form action="" class="from-search">
+        <label class="search-label"><text>channel:</text><input type="text" name="channel" value="0"></label>
+        <label class="search-label"><text>tags:</text><input type="text" name="tags" value="0"></label>
+        <label class="search-label"><text>btime:</text><input onclick="MyDatePick({fmt:'datetime'})" type="text" name="btime" value=""></label>
+        <label class="search-label"><text>etime:</text><input onclick="MyDatePick({fmt:'datetime'})" type="text" name="etime" value=""></label>
+        <div style="height: 15px"></div>
+        <button class="w2ui-btn">Search</button>
+      </form>
+    </div>
     <div id="example_view"></div>
     <div id="example_code"></div>
 </div>
 
 <!--CODE-->
-<div id="sidebar" style="height: 300px; width: 180px; float: left"></div>
-<div style="clear: both"/>
-
+<div id="selected-tab" style="min-width: 310px;width: 100%; height: 600px;"></div>
+<!--
+<div id="sidebar" style="height: 600px; min-width: 210px;width: 100%; float: left; overflow-x: hidden; overflow-y:hidden;"></div>  -->
+<div style="clear: both"></div>
 <!--CODE-->
+
+
 <script>
+//补位
+function formatNum(num, strlength) {
+  if(num.toString().length >=strlength){
+     return num
+    }else{
+      return (Array(strlength).join("0") + num).slice(-strlength);
+   }
+}
+//播放视频
+function playVideo(obj){ 
+  var info =  w2ui['grid-video'].get($(obj).data('id')); 
+  vUrl = '/rec/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.tags,3)+'.mp4'; 
+  if (flvjs.isSupported()) { 
+  var videoElement = document.getElementById('videoElement');
+  var flvPlayer = flvjs.createPlayer({
+	  type: 'mp4',
+	  url: vUrl
+  });
+  flvPlayer.attachMediaElement(videoElement);
+  flvPlayer.load();
+  flvPlayer.play();  
+  }
+}
+//下载视频
+function downVideo(obj){ 
+  var info =  w2ui['grid-video'].get($(obj).data('id'));
+  var filename = formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.tags,3);
+  var a = document.createElement("a"), 
+        e = document.createEvent("MouseEvents");
+    e.initEvent("click", false, false);
+    vUrl = '/rec/'+filename+'.mp4';
+    a.href = vUrl;
+    a.download =filename;
+    a.dispatchEvent(e);
+}
+//日期转换时间戳
+function dateToUnix(string) {
+    var f = string.split(' ', 2);
+    var d = (f[0] ? f[0] : '').split('/', 3);
+    var t = (f[1] ? f[1] : '').split(':', 3);
+    return (new Date(
+        parseInt(d[0], 10) || null,
+        (parseInt(d[1], 10) || 1) - 1,
+        parseInt(d[2], 10) || null,
+        parseInt(t[0], 10) || null,
+        parseInt(t[1], 10) || null,
+        parseInt(t[2], 10) || null
+    )).getTime() / 1000;
+}
+//时间戳转换日期
+function timestampToTime(timestamp) {
+      if (timestamp=='') {timestamp = Date.parse(new Date())/1000;}
+       var date = new Date(timestamp * 1000);
+       var Y = date.getFullYear() + '/';
+       var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '/';
+       var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' ';
+       var h = (date.getHours() < 10 ? '0'+date.getHours() : date.getHours()) + ':';
+       var m = (date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes()) + ':';
+       var s = (date.getSeconds() < 10 ? '0'+date.getSeconds() : date.getSeconds());
+        return Y+M+D+h+m+s;
+}
+//加载列表
+function loadVideo(){
+      var nodeslevel = []; 
+      //var query = {channel:0,btime:0,etime:31100,tags:0};
+      let query = {};
+      let formValue = $('form').serializeArray();
+      $.each(formValue, function() {
+          query[this.name] = this.value;
+          if (this.name=='channel'||this.name=='tags') {
+              query[this.name] = parseInt(this.value)
+          }
+          if (this.name=='btime'||this.name=='etime') {
+              query[this.name] = dateToUnix(this.value)
+          }
+      });
+     // console.log(JSON.stringify(query));
+      $.post('//'+ window.location.hostname + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) {
+        if (status == "success") {
+			if (result['code'] == 0){
+				$(result['data']).each(function(index,data){ 
+				if(data.btime !='undefined'){
+					nodeslevel[index] = data;
+					nodeslevel[index]['recid'] = index+1;
+					nodeslevel[index]['btime'] = data.btime;
+					// nodeslevel[index]['lname'] = data.tags;
+					nodeslevel[index]['play'] = '<a href="javascript:;" data-id="'+(index+1)+'" onClick="playVideo(this)" class="playVideo">播放</a>';
+					nodeslevel[index]['down'] =  '<a href="javascript:;" data-id="'+(index+1)+'" onClick="downVideo(this)" class="playVideo">下载</a>';
+					nodeslevel[index]['datetime'] = timestampToTime(data.btime);
+				} 
+			  });
+			}else{
+				console.log("error code :"+result['code']);
+			}
+          w2ui['grid-video'].clear(); 
+          w2ui['grid-video'].add(nodeslevel);
+          w2ui['grid-video'].refresh();
+        }
+      },'json').error(function (xhr, status, info) { 
+            //console.log(xhr);
+            console.log(status);
+            //console.log(info);
+      })
+} 
+</script>
+
+
+<script>  
+
 $(function () {
-    
-    $().w2destroy('sidebar2');
-  
-    $('#sidebar').w2sidebar({
-        name: 'sidebar2',
-        img: null,
-        nodes: [ 
-            { id: 'level-1', text: 'Level 1', img: 'icon-folder', expanded: true, group: true,
-              nodes: [ { id: 'level-1-1', text: 'Level 1.1', icon: 'fa-star-empty' },
-                       { id: 'level-1-2', text: 'Level 1.2', icon: 'fa-star-empty' },
-                       { id: 'level-1-3', text: 'Level 1.3', icon: 'fa-star-empty' }
-                     ]
-            }
-        ]
+    var date = new Date();
+    var Y = date.getFullYear() + '/';
+    var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '/';
+    var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' '; 
+    //初始化
+    $("input[name=btime]").val(Y+M+D+"00:00:00");
+    $("input[name=etime]").val(Y+M+D+'23:59:59');
+
+    $().w2grid({ 
+        name: 'grid-video', 
+        show: {
+            toolbarInput:  true,
+            toolbarSearch: true, 
+        },
+        multiSearch: true,
+        columns: [                
+            { field: 'recid', caption: 'ID', size: '10%', sortable: true, attr: 'align=center' },
+            { field: 'datetime', caption: 'Time', size: '50%', sortable: true, attr: 'align=center'},
+            { field: 'play', caption: 'Play', size: '18%',  attr: 'align=center'},
+            { field: 'down', caption: 'Down', size: '18%',  attr: 'align=center'},
+        ],
+        // onClick: function (event) { 
+        //     var record = this.get(event.recid);
+        //     console.log(record);
+        // },
+        records: []
     });
-});
 
-w2ui['main_layout'].content('main', '<div style="padding: 12px 20px; font-size: 18px;">Vod Player</div>');
+    $('#selected-tab').w2render('grid-video'); 
 
+    loadVideo();  
+});  
+w2ui['main_layout'].content('main', '<div style="padding: 12px 20px; font-size: 18px;"><video id="videoElement" class="showVideo"  width="100%" muted="muted" controls autoplay>  Your browser is too old which doesn\'t support TML5 video.</video></div>');
+
+
+$("form").submit(function(e){ 
+  loadVideo();
+  return false;
+});  
 
 </script>
+<style type="text/css">
+.playVideo{
+  text-decoration: none;
+  color: #1e83c9;
+}
+#layout_main_layout_panel_left{
+  width: 330px!important;
+}
+#layout_main_layout_resizer_left,#layout_main_layout_panel_main{
+  left:330px!important;
+}
+.date-box{
+  z-Index:999;
+}
+label.search-label {
+    display: block;
+    text-align: left;
+    line-height: 36px;
+    padding-left: 10px;
+}
+label.search-label text {
+    display: block;
+    width: 70px;
+    float: left;
+}
+.w2ui-btn{
+  cursor: pointer!important;
+}
+</style>
