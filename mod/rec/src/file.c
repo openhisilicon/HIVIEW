@@ -62,11 +62,11 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* ะดสำ
              {
               if (!avc.chroma_format_idc || avc.nb_sps < 1 || avc.sps[0].bytes < 4) 
               {
-                printf("video wait for key frame [idc:%d, nb_sps:%d, sps:%d]\n"
+                printf("GSF_ENC_H264 => video wait for key frame [idc:%d, nb_sps:%d, sps:%d]\n"
                       , avc.chroma_format_idc, avc.nb_sps, avc.sps[0].bytes);
                 return 0;
               }
-              printf("video add vtrack.\n");
+              printf("GSF_ENC_H264 => add vtrack info->v.w:%d, info->v.h:%d\n", info->v.w, info->v.h);
       				int extra_data_size = mpeg4_avc_decoder_configuration_record_save(&avc, extra_data, sizeof(extra_data));
       				assert(extra_data_size > 0); // check buffer length
       		    
@@ -84,11 +84,14 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* ะดสำ
              size_t n = hevc_annexbtomp4(&hevc, buf, size, _hdl->s_buffer, _hdl->s_length);
              if(_hdl->vtrack == -1)
              {
-              if (hevc.numOfArrays < 1) 
-                  return 0; // wait for key frame
-                  
+              if (hevc.numOfArrays < 1)
+              { 
+                printf("GSF_ENC_H265 => wait for key frame\n");
+                return 0; 
+              }    
       				int extra_data_size = mpeg4_hevc_decoder_configuration_record_save(&hevc, extra_data, sizeof(extra_data));
       				assert(extra_data_size > 0); // check buffer length
+      				printf("GSF_ENC_H265 => add vtrack info->v.w:%d, info->v.h:%d\n", info->v.w, info->v.h);
       				_hdl->vtrack = fmp4_writer_add_video(_hdl->w, MOV_OBJECT_HEVC, info->v.w, info->v.h, extra_data, extra_data_size);
             }
             if(_hdl->vtrack != -1)

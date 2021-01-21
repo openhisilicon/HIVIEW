@@ -486,7 +486,10 @@ static int ti_q_cb(struct ti_query_cond_t *cond, ti_file_info_t *info)
    
   if(uargs->c >= 1024)
     return -1;
-  
+  #if 0
+  printf("i:%d, ch:%d, btime:[%d.%d], etime[%d], size:%d\n"
+        , uargs->c, info->channel, info->btime, info->btime_ms, info->etime, info->size);
+  #endif
   uargs->files[uargs->c++] = *((gsf_file_t*)info);
   return 0;
 }

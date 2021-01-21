@@ -18,21 +18,19 @@ static void msg_func_qfile(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
 {
   // ser_query_file;
   gsf_file_t files[1024];
-  gsf_rec_q_t q = 
-  {
-    .channel = 0, 
-    .btime   = 0, 
-    .etime   = 0xffffffff, 
-    .tags    = 0xffffffff
-  };
+  gsf_rec_q_t *q = (gsf_rec_q_t*)req->data;
+
   int i = 0;
   
   struct timespec ts1, ts2;
   clock_gettime(CLOCK_MONOTONIC, &ts1);
-  int size = ser_query_file(&q, files);
+  int size = ser_query_file(q, files);
   clock_gettime(CLOCK_MONOTONIC, &ts2);
-  printf("total:%d, cost:%d ms\n", size/sizeof(gsf_file_t), 
-        (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
+  
+  printf("q[ch:%d, btime:%d, etime:%d, tags:0x%x] total:%d, cost:%d ms\n"
+        , q->channel, q->btime, q->etime, q->tags
+        , size/sizeof(gsf_file_t)
+        , (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
   
   if(size > 0 || size <= *osize - sizeof(gsf_msg_t))
   {
