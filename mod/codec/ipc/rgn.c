@@ -22,6 +22,13 @@ typedef struct {
     int   osdH;         //Î»Í¼¸ß¶È    
 }gsf_rgn_osd_t;
 
+typedef struct {
+  int cnt;
+  struct {
+    //HI_U16 *a;int w;int h;  
+    int a;int w;int h;  
+  }box[128];
+}box_t;
 
 enum {
   GSF_RGN_OBJ_NONE   = 0,
@@ -33,6 +40,7 @@ typedef struct {
   gsf_mpp_rgn_t rgn;
   gsf_rgn_osd_t *osd_info;
   char          *osd_bmp;
+  box_t         box_tmp;
 }gsf_rgn_obj_t;
 
 enum {
@@ -539,14 +547,16 @@ int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
 
 
 
-int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
+int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
 {
-  int i = 0, r = 0;
+  int i = 0, r = 0, b = 0;
   unsigned int ARGB8888_RED = argb8888_1555(0x01FF0000);
   
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
     if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+      continue;
+    if(!((1<<i) & mask))
       continue;
     
     int handle = GSF_RGN_OBJ_HANDLE(ch, OBJ_OSD, i, idx);
@@ -611,6 +621,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
       rgn_obj[handle].osd_bmp = (char*)1;
       #else
       rgn_obj[handle].osd_bmp = malloc(info->osdW*info->osdH*2);
+      memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
       #endif
       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
     }
@@ -620,6 +631,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
       rgn_obj[handle].osd_bmp = (char*)1;
       #else
       rgn_obj[handle].osd_bmp = realloc(rgn_obj[handle].osd_bmp, info->osdW*info->osdH*2);
+      memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
       #endif
       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
     }
@@ -646,16 +658,30 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
       bitMap.u32Width	    = stRgnCanvasInfo.u32Stride/2;
       bitMap.u32Height	  = info->osdH;
       bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
-      memset(bitMap.pData, 0, stRgnCanvasInfo.stSize.u32Height*stRgnCanvasInfo.u32Stride);
-
+      //memset(bitMap.pData, 0, stRgnCanvasInfo.stSize.u32Height*stRgnCanvasInfo.u32Stride);
     #else
       bitMap.u32Width	    = info->osdW;
     	bitMap.u32Height	  = info->osdH;
     	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
     	bitMap.pData        = rgn_obj[handle].osd_bmp;
-  	  memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+    	//memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
     #endif
-        
+       
+    for(r = 0; r < rgn_obj[handle].box_tmp.cnt; r++)
+  	{
+      HI_U16 *p = (HI_U16*)((char*)bitMap.pData + rgn_obj[handle].box_tmp.box[r].a);
+      int w = rgn_obj[handle].box_tmp.box[r].w;
+      int h = rgn_obj[handle].box_tmp.box[r].h;
+      
+    	int j = 0, k = 0;
+    	for(k = 0; k < h; k++)
+      for(j = 0; j < w; j++)
+      {
+        p[k*bitMap.u32Width + j] = 0x00;
+      }
+  	}
+    rgn_obj[handle].box_tmp.cnt = 0;
+    
     for(r = 0; r < rects->size; r++)
     {
       int boxX = 0, boxY = 0, boxW = 0, boxH = 0;
@@ -707,6 +733,10 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
               		    info->lines[l], "",
               		    (boxW && boxW)?ARGB8888_RED:0xffff, 0x0000, 0xffff, 0x0000);
           	}
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)osd_bmp - (char*)bitMap.pData);
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = labelW;
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].h = labelH;
+          	rgn_obj[handle].box_tmp.cnt++;
         	}
         	
         	// draw rect;
@@ -729,6 +759,16 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
               = p[(boxH-4)*bitMap.u32Width + j]
               = ARGB8888_RED;
             }
+            
+            rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)p - (char*)bitMap.pData);
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = boxW;
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].h = 4;
+            rgn_obj[handle].box_tmp.cnt++;
+            rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)(p+(boxH-4)*bitMap.u32Width) - (char*)bitMap.pData);
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = boxW;
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].h = 4;
+            rgn_obj[handle].box_tmp.cnt++;
+            
             for(j = 0; j < boxH; j++)
             {
               p[j*bitMap.u32Width + 0]
@@ -741,15 +781,39 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects)
               = p[j*bitMap.u32Width + boxW-4]
               = ARGB8888_RED;
             }
+            
+            rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)p - (char*)bitMap.pData);
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = 4;
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].h = boxH;
+            rgn_obj[handle].box_tmp.cnt++;
+            rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)(p+(boxW-4)) - (char*)bitMap.pData);
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = 4;
+          	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].h = boxH;
+            rgn_obj[handle].box_tmp.cnt++;
+            
         	}
       }
     }
+    
+    {
+    #if 0
+    struct timespec ts1, ts2;  
+    clock_gettime(CLOCK_MONOTONIC, &ts1);
+    #endif
+
     #ifdef __RGN_CANVAS
     gsf_mpp_rgn_canvas_update(handle);
     #else
     gsf_mpp_rgn_bitmap(handle, &bitMap);
     gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
     #endif
+    
+  	#if 0
+    clock_gettime(CLOCK_MONOTONIC, &ts2);
+    int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+    printf("gsf_mpp_rgn_bitmap cost:%d ms\n", cost);
+  	#endif
+  	}
   }
   
   return 0;

@@ -23,7 +23,7 @@ typedef struct {
 int gsf_rgn_init(gsf_rgn_ini_t *ini);
 
 int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd);
-int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects);
+int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask);
 int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask);
 
 #endif // __rgn_h__

@@ -19,8 +19,10 @@
 #define PIC_VGA PIC_D1_NTSC
 #endif
 
-#define PIC_WIDTH(w) \
+#define PIC_WIDTH(w, h) \
             (w >= 3840)?PIC_3840x2160:\
+            (w >= 2592 && h >= 1944)?PIC_2592x1944:\
+            (w >= 2592 && h >= 1536)?PIC_2592x1536:\
             (w >= 1920)?PIC_1080P:\
             (w >= 1280)?PIC_720P: \
             (w >= 720)?PIC_D1_NTSC: \
@@ -225,7 +227,7 @@ static int sub_recv(char *msg, int size, int err)
       rects.box[i].rect[3] = yolos->box[i].rect[3];
       gsf_gb2312_to_utf8(yolos->box[i].label, strlen(yolos->box[i].label), rects.box[i].label);
     }
-    gsf_rgn_rect_set(0, 0, &rects);
+    gsf_rgn_rect_set(0, 0, &rects, 1);
     #endif
 
   }
@@ -310,7 +312,7 @@ int venc_start(int start)
       .VpssChn    = (j<p_venc_ini->st_num)?j:0,
 #endif
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
-      .enSize     = PIC_WIDTH(codec_ipc.venc[j].width),
+      .enSize     = PIC_WIDTH(codec_ipc.venc[j].width, codec_ipc.venc[j].height),
       .enRcMode   = SAMPLE_RC_CBR,
       .u32Profile = 0,
       .bRcnRefShareBuf = HI_TRUE,
@@ -422,11 +424,23 @@ int mpp_start(gsf_bsp_def_t *def)
     {
       if(cfg.snscnt < 2)
       {
-        // imx335-0-0-4-30
-        cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+	  
+	  	if(strstr(cfg.snsname, "imx327"))
+		{
+			// imx327-0-0-2-30
+	        cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+	        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+	        venc_ini.ch_num = 1; venc_ini.st_num = 2;
+	        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+		}
+		else
+		{
+        	// imx335-0-0-4-30
+	        cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+	        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+	        venc_ini.ch_num = 1; venc_ini.st_num = 2;
+	        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+		}
       }
       else
       {
