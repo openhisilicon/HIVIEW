@@ -798,6 +798,26 @@ combo_dev_attr_t MIPI_2lane_CHN0_SENSOR_OV9284_10BIT_8M_NOWDR_ATTR =
     }
 };
 
+
+combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX334_12BIT_8M_NOWDR_ATTR =
+{
+    .devno = 0,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 3840, 2160},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {0, 1, 2, 3}
+        }
+    }
+};
+
+
+
 combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX415_12BIT_8M_NOWDR_ATTR =
 {
     .devno = 0,
@@ -1918,6 +1938,48 @@ VI_DEV_ATTR_S DEV_ATTR_OV9284_1M_BASE =
 };
 
 
+VI_DEV_ATTR_S DEV_ATTR_IMX334_8M_BASE =
+{
+    VI_MODE_MIPI,
+    VI_WORK_MODE_1Multiplex,
+    {0xFFF00000,    0x0},
+    VI_SCAN_PROGRESSIVE,
+    { -1, -1, -1, -1},
+    VI_DATA_SEQ_YUYV,
+
+    {
+        /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
+        VI_VSYNC_PULSE, VI_VSYNC_NEG_LOW, VI_HSYNC_VALID_SINGNAL, VI_HSYNC_NEG_HIGH, VI_VSYNC_VALID_SINGAL, VI_VSYNC_VALID_NEG_HIGH,
+
+        /*hsync_hfb    hsync_act    hsync_hhb*/
+        {
+            0,            1280,        0,
+            /*vsync0_vhb vsync0_act vsync0_hhb*/
+            0,            720,        0,
+            /*vsync1_vhb vsync1_act vsync1_hhb*/
+            0,            0,            0
+        }
+    },
+    VI_DATA_TYPE_RGB,
+    HI_FALSE,
+    {3840 , 2160},
+    {
+        {
+            {3840 , 2160},
+        },
+        {
+            VI_REPHASE_MODE_NONE,
+            VI_REPHASE_MODE_NONE
+        }
+    },
+    {
+        WDR_MODE_NONE,
+        2160
+    },
+    DATA_RATE_X1
+};
+
+
 VI_DEV_ATTR_S DEV_ATTR_IMX415_8M_BASE =
 {
     VI_MODE_MIPI,
@@ -1958,6 +2020,8 @@ VI_DEV_ATTR_S DEV_ATTR_IMX415_8M_BASE =
     },
     DATA_RATE_X1
 };
+
+
 
 VI_DEV_ATTR_S DEV_ATTR_IMX415_2M_BASE =
 {
@@ -3097,6 +3161,10 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX415_12BIT_8M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             break;
 
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
+            memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX334_12BIT_8M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            break;
+
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX415_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             break;
@@ -3587,6 +3655,10 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_DEV_ATTR_S
             memcpy(pstViDevAttr, &DEV_ATTR_IMX415_8M_BASE, sizeof(VI_DEV_ATTR_S));
             break;
 
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
+            memcpy(pstViDevAttr, &DEV_ATTR_IMX334_8M_BASE, sizeof(VI_DEV_ATTR_S));
+            break;
+
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
             memcpy(pstViDevAttr, &DEV_ATTR_IMX415_2M_BASE, sizeof(VI_DEV_ATTR_S));
             break;
@@ -3730,6 +3802,7 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
 
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
         case SONY_IMX415_MIPI_8M_20FPS_12BIT:
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_3840x2160_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             break;
 
@@ -3857,6 +3930,11 @@ HI_S32 SAMPLE_COMM_VI_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
         case SONY_IMX415_MIPI_8M_20FPS_12BIT:
             memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_3840x2160_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
+            break;
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
+            memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_3840x2160_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
+            //maohw for sml sns board;
+            pstChnAttr->bFlip = HI_TRUE;
             break;
 
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
@@ -5271,6 +5349,7 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E* penS
         case OMNIVISION_OV12870_MIPI_8M_30FPS_10BIT:
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
         case SONY_IMX415_MIPI_8M_20FPS_12BIT:
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
             *penSize = PIC_3840x2160;
             break;
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
@@ -5365,6 +5444,7 @@ HI_S32 SAMPLE_COMM_VI_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu3
 
         case SONY_IMX458_MIPI_8M_30FPS_10BIT:
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:
         case OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT:
         case OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_WDR2TO1_HLCG:
@@ -5471,6 +5551,7 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
         case SONY_IMX415_MIPI_8M_20FPS_12BIT:
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
+        case SONY_IMX334_MIPI_8M_30FPS_12BIT:  
         case OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT:
         case OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_WDR2TO1_HLCG:

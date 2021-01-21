@@ -340,6 +340,16 @@ ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX415_MIPI_8M_20FPS =
     1,
 };
 
+ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX415_MIPI_2M_60FPS =
+{
+    {0, 0, 1920, 1080},
+    {1920, 1080},
+    60,
+    BAYER_GBRG,
+    WDR_MODE_NONE,
+    0,
+};
+
 HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR_S* pstPubAttr)
 {
     switch (enSnsType)
@@ -462,7 +472,9 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
         case SONY_IMX415_MIPI_8M_20FPS_12BIT:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX415_MIPI_8M_20FPS, sizeof(ISP_PUB_ATTR_S));
             break;
-
+        case SONY_IMX415_MIPI_2M_60FPS_12BIT:
+            memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX415_MIPI_2M_60FPS, sizeof(ISP_PUB_ATTR_S));
+            break;
         default:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX327_2M_30FPS, sizeof(ISP_PUB_ATTR_S));
             break;
@@ -544,6 +556,7 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
 
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
         case SONY_IMX415_MIPI_8M_20FPS_12BIT:
+        case SONY_IMX415_MIPI_2M_60FPS_12BIT:
             return &stSnsImx415Obj;
 
         default:

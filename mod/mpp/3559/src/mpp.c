@@ -94,8 +94,9 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {OMNIVISION_OV12870_MIPI_12M_30FPS_10BIT,           "ov12870-0-0-12-30", "libsns_ov12870.so", "stSnsOv12870Obj"},
     {OMNIVISION_OV9284_MIPI_1M_60FPS_10BIT,             "ov9284-0-0-1-60", "libsns_ov9284.so", "stSnsOv9284Obj"},
     {SONY_IMX415_MIPI_8M_30FPS_12BIT,                   "imx415-0-0-8-30", "libsns_imx415.so", "stSnsImx415Obj"},
-    {SONY_IMX415_MIPI_8M_20FPS_12BIT,                   "imx415-0-0-8-30", "libsns_imx415.so", "stSnsImx415Obj"},
-    {SONY_IMX415_MIPI_2M_60FPS_12BIT,                   "imx415-0-0-2-30", "libsns_imx415.so", "stSnsImx415Obj"},
+    {SONY_IMX415_MIPI_8M_20FPS_12BIT,                   "imx415-0-0-8-20", "libsns_imx415.so", "stSnsImx415Obj"},
+    {SONY_IMX415_MIPI_2M_60FPS_12BIT,                   "imx415-0-0-2-60", "libsns_imx415.so", "stSnsImx415Obj"},
+    {SONY_IMX334_MIPI_8M_30FPS_12BIT,                   "imx334-0-0-8-30", "libsns_imx334.so", "stSnsImx334Obj"},
     {OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT,             "ov2775-0-0-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
     {OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_WDR2TO1,     "ov2775-0-1-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
     {OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_WDR2TO1_HLCG,"ov2775-0-2-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
@@ -164,7 +165,12 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   snscnt = cfg->snscnt;
   char loadstr[256];
-  sprintf(loadstr, "%s/ko/load3559v200 -i -sensor0 %s", path, cfg->snsname);
+  
+  if(strstr(cfg->snsname, "imx334")) // 24Mclk && i2c;
+    sprintf(loadstr, "%s/ko/load3559v200 -i -sensor0 %s", path, "imx458");
+  else
+    sprintf(loadstr, "%s/ko/load3559v200 -i -sensor0 %s", path, cfg->snsname);
+  
   int i = 0;
   for(i = 1; i < snscnt; i++)
   {
