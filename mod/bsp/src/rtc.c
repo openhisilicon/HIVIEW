@@ -192,8 +192,8 @@ int zone_set(int zone)
   printf("zone_env:[%s]\n", zone_env);
   putenv(zone_env);
   
-  //sprintf(cmd, "sed '/^export TZ=/{h;s/=.*/=%s/};${x;/^$/{s//export TZ=%s/;H};x}' /etc/profile", z, z);
-  sprintf(cmd, "echo -e \"\nexport TZ=%s\" >> /etc/profile", z);
+  sprintf(cmd, "sed -i '/^export TZ=/{h;s/=.*/=%s/};${x;/^$/{s//export TZ=%s/;H};x}' /etc/profile", z, z);
+  //sprintf(cmd, "echo -e \"\nexport TZ=%s\" >> /etc/profile", z);
   printf("cmd:[%s]\n", cmd);
   system(cmd);
   tzset();

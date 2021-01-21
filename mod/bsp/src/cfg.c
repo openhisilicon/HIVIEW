@@ -12,16 +12,16 @@ gsf_bsp_def_t bsp_def = {
 #if defined(GSF_CPU_3559)
     .type  = "HI3559V200_E_4_2",
     .snscnt = 1,
-    .sensor = {"imx458", "", },
+    .sensor = {"imx334", "", },
 #else    
     .type  = "HI3516DV300_E_4_2",
     .snscnt = 1,
-    .sensor = {"imx335", "", },
+    .sensor = {"imx327", "", },
 #endif
     .caps   = 0xFFFFFFFF,
     },
   .base = {
-    .name = "gsfIpc",
+    .name = "HIVIEW",
     .language = 0,
     .zone     = -8*60,
   },
