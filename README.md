@@ -5,10 +5,9 @@
 ## RoadMap:
 ### 1. Design products in the form of core board + base board (customizable);
 ![16dv300](/res/16dv300-c.jpg) ![59v200](/res/59v200-c.jpg)
-![16dv300](/res/16dv300-b.jpg)
-### 2. Continue to improve OpenHisilicon project;
-### 3. Support users to develop their own products based on OpenHisilicon;
-![p1](/res/p1.jpg) ![p2](/res/p2.jpg)
+<img src=/res/16dv300-b.jpg width=80% />
+### 2. Support users to develop their own products based on OpenHisilicon;
+<img src=/res/p1.jpg width=360 height=250 /> <img src=/res/p2.jpg width=360 height=250 />
 ## Features:
 ![fw](/res/fw.jpg)
 ![webs](/res/webs.jpg)
@@ -16,6 +15,6 @@
 ![nvr](/res/nvr.jpg)
 ![lpr](/res/svp.jpg)
 ![sns](/res/multi-sns.jpg)
-![dsi](/res/mipi-dsi.jpg)
+<img src=/res/mipi-dsi.jpg width=88% />
 ### Thank you for your support
 ![pay](/res/pay.jpg)
