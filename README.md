@@ -8,6 +8,7 @@
 ![16dv300](/res/16dv300-b.jpg)
 ### 2. Continue to improve OpenHisilicon project;
 ### 3. Support users to develop their own products based on OpenHisilicon;
+![p1](/res/p1.jpg) ![p2](/res/p2.jpg)
 ## Features:
 ![fw](/res/fw.jpg)
 ![webs](/res/webs.jpg)
