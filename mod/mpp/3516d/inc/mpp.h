@@ -120,6 +120,7 @@ int gsf_mpp_isp_ctl(int ch, int id, void *args);
 typedef struct {
   int AeChn;
   PAYLOAD_TYPE_E enPayLoad;
+  int stereo;
   void *uargs;
   int (*cb)(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 }gsf_mpp_aenc_t;
@@ -218,6 +219,9 @@ typedef struct {
 //发送视频数据到显示通道(创建VDEC通道)
 int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
 
+//发送音频数据到 audio 解码输出;
+int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+
 //解码状态;
 typedef struct {
     int left_byte;    // vdec
@@ -241,6 +245,9 @@ typedef struct {
 
 int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src);
 
+//audio ao_bind_ai;
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
+
 
 //设置通道源图像裁剪区域(用于局部放大)
 int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
@@ -253,5 +260,9 @@ extern int SENSOR1_TYPE;
 extern SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM];
 extern ISP_SNS_OBJ_S* g_pstSnsObj[MAX_SENSOR_NUM];
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
+
+
+#define HI_ACODEC_TYPE_INNER //for audio;
+
 
 #endif

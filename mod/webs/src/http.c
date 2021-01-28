@@ -31,9 +31,10 @@ extern unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 #define MAX_FRAME_SIZE (500*1024)
 typedef struct {
   struct cfifo_ex* video;
+  struct cfifo_ex* audio;
   unsigned char* data;
   flv_muxer_t* flv;
-  unsigned int pts;
+  unsigned int vpts, apts;
   int idr, chn, sid;
   struct mg_mgr *mgr;
   
@@ -139,7 +140,7 @@ static int flv_send_header(lws_session_t *sess)
 	raw[1] = 'L';
 	raw[2] = 'V';
 	raw[3] = 0x01; // File version
-	raw[4] = 0x01;// | 0x04; // Type flags (audio:0x04 & video:0x01)
+	raw[4] = 0x01 | 0x04; // Type flags (audio:0x04 & video:0x01)
 	be_write_uint32(raw + 5, 9); // Data offset
 	be_write_uint32(raw + 9, 0); // PreviousTagSize0(Always 0)
   len += (9+4);
@@ -184,8 +185,8 @@ static int on_flv_packet(void* sess, int type, const void* data, size_t bytes, u
 {
   #if 0
   char *_data = (char*)data;
-	printf("write FLV Tag, bytes:%d [%02X,%02X,%02X,%02X,%02X,%02X]\n"
-	      , bytes, _data[0], _data[1], _data[2], _data[3], _data[4], _data[5]);
+	printf("FLV type:%d, bytes:%d [%02X,%02X,%02X,%02X,%02X,%02X]\n"
+	      , type, bytes, _data[0], _data[1], _data[2], _data[3], _data[4], _data[5]);
 	#endif      
 	return flv_send_tag(sess, type, data, bytes, timestamp);
 }
@@ -200,8 +201,19 @@ static void *send_thread_func(void *param) {
   lws_session_t *sess = (lws_session_t*) param;
   struct mg_mgr *mgr = sess->mgr;
   pthread_detach(pthread_self());
+
+  int ep = cfifo_ep_alloc(1);
   
-  cfifo_newest(sess->video, 0);
+  if(sess->video)
+  {
+  	cfifo_ep_ctl(ep, CFIFO_EP_ADD, sess->video);
+	cfifo_newest(sess->video, 0);
+  }
+  if(sess->audio)
+  {
+  	cfifo_ep_ctl(ep, CFIFO_EP_ADD, sess->audio);
+  	cfifo_newest(sess->audio, 0);
+  }
   #if 1
   GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t));
   GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, sess->chn, SET, sess->sid
@@ -209,71 +221,89 @@ static void *send_thread_func(void *param) {
                   , GSF_IPC_CODEC
                   , 2000);
   #endif
+  
   while(!sess->thread_exit)
   {
-    if(sess && sess->video)
+    
+    int cnt = 0;
+    struct cfifo_ex* result[255];
+    cnt = cfifo_ep_wait(ep, 1000, result, 255);
+    if(cnt <= 0)
     {
-      gsf_frm_t *rec = (gsf_frm_t *)sess->data;
-      int ret = cfifo_get(sess->video, cfifo_recgut, (unsigned char*)sess->data);
-      sess->idr = (sess->idr)?:(rec->flag&GSF_FRM_FLAG_IDR);
-      //printf("sess:%p, sess->video:%p, ret:%d, idr:%d\n", sess, sess->video, ret, sess->idr);
+       printf("cfifo_ep_wait err cnt:%d\n", cnt);
+       continue;
+    }
+    
+    for(i = 0; i < cnt; i++)
+    {
+      struct cfifo_ex* fifo = result[i];
       
-      if(ret < 0)
+      while(!sess->thread_exit)
       {
-          //printf("cfifo err ret:%d\n", ret);
-      }
-      else if (ret == 0)
-      {
-        //printf("cfifo empty ret:%d\n", ret);
-      }
-      else if (ret > 0 && sess->idr)
-      {
-        //printf("cfifo frame ret:%d\n", ret);
-        if(rec->video.nal[0] /*&& rec->video.encode == 0*/)
+        gsf_frm_t *rec = (gsf_frm_t *)sess->data;
+        int ret = cfifo_get(fifo, cfifo_recgut, (unsigned char*)sess->data);
+        sess->idr = (sess->idr)?:(rec->flag&GSF_FRM_FLAG_IDR);
+               
+        if(ret < 0)
         {
-          if(!sess->pts)
+            printf("cfifo err ret:%d\n", ret);
+            break;
+        }
+        else if (ret == 0)
+        {
+          //printf("cfifo empty ret:%d\n", ret);
+          break;
+        }
+        else if (ret > 0 && sess->idr)
+        {
+          //printf("cfifo frame ret:%d\n", ret);
+
+          if(rec->type == GSF_FRM_VIDEO && rec->video.encode == GSF_ENC_H264)
           {
-            flv_send_header(sess);
-            sess->pts = rec->pts;
-          }
-          
-          if(flv_muxer_avc(sess->flv // sps-pps-vcl
-                  , rec->data
-                  , rec->size
-                  , rec->pts - sess->pts
-                  , rec->pts - sess->pts) < 0)
-          {
-            printf("flv_muxer_avc err.\n");
-          }
-          
-          #if 0
-          unsigned int  *nal   = rec->video.nal;
-          unsigned char *offset = rec->data;
-          for (i = 0; i < GSF_FRM_NAL_NUM; i++)
-          {
-            if(nal[i] == 0)
-              break;
-            #if 1
-            printf("nal[%d]:%d [%02x %02x %02x %02x %02x %02x]\n", i, nal[i]
-                  , offset[0],offset[1],offset[2],offset[3],offset[4],offset[5]);
-            #endif
-            if(flv_muxer_h264_nalu(sess->flv
-                    , offset + 4
-                    , nal[i] - 4
-                    , rec->pts - sess->pts
-                    , rec->pts - sess->pts) < 0)
+            if(!sess->vpts)
             {
-              printf("flv_muxer_h264_nalu err.\n");
+              printf("V rec->type:%d, seq:%d, utc:%u, size:%d\n", rec->type, rec->seq, rec->utc, rec->size);
+              flv_send_header(sess);
+              sess->vpts = rec->pts;
             }
-            offset += nal[i];
+
+            if(flv_muxer_avc(sess->flv // sps-pps-vcl
+                    , rec->data
+                    , rec->size
+                    , rec->pts - sess->vpts
+                    , rec->pts - sess->vpts) < 0)
+            {
+              printf("flv_muxer_avc err.\n");
+            }
+            
           }
-          #endif
+          else if(rec->type == GSF_FRM_AUDIO && rec->audio.encode == GSF_ENC_AAC)
+          {
+            if(!sess->vpts)
+              continue;
+            
+            if(!sess->apts)
+            {
+              printf("A rec->type:%d, seq:%d, utc:%u, size:%d\n", rec->type, rec->seq, rec->utc, rec->size);
+              sess->apts = rec->pts;
+            }
+            
+            if(flv_muxer_aac(sess->flv // sps-pps-vcl
+                    , rec->data
+                    , rec->size
+                    , rec->pts - sess->apts
+                    , rec->pts - sess->apts) < 0)
+            {
+              printf("flv_muxer_aac err.\n");
+            }
+          }
         }
       }
-
     }
-    usleep(10*1000);
+
   }
+  
+  cfifo_ep_free(ep);
   
   if(sess)
   {
@@ -297,6 +327,13 @@ static void *send_thread_func(void *param) {
       session_cnt--;
       cfifo_free(sess->video);
     }
+    
+    if(sess->audio)
+    {
+      printf("close audio:%p \n", sess->audio);
+      cfifo_free(sess->audio);
+    }
+    
     if(sess->flv)
     {
        printf("flv_muxer_destroy:%p \n", sess->flv);
@@ -332,7 +369,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
           
           
         GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
-        sdp->video_shmid = -1;
+        sdp->video_shmid = sdp->audio_shmid = -1;
         #if 1
         ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, channel, GET, sid
                               , sizeof(gsf_sdp_t)
@@ -359,12 +396,15 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         sess->sid = sid;
         sess->mgr = nc->mgr;
         sess->video = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->video_shmid);
+        sess->audio = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->audio_shmid);
+        
         sess->flv = flv_muxer_create(on_flv_packet, (void*)sess);
         
         pthread_create(&sess->thread_id, NULL, send_thread_func, sess);
         nc->user_data = sess;
         printf("SET nc:%p, user_data:%p, thread_id:%p\n", nc, nc->user_data, sess->thread_id);
-        printf("open ok video:%p, flv:%p, uri:%.*s\n", sess->video, sess->flv, (int) hm->uri.len, hm->uri.p);
+        printf("open ok video_shmid:%d, audio_shmid:%d, flv:%p, uri:%.*s\n"
+            , sdp->video_shmid, sdp->audio_shmid, sess->flv, (int) hm->uri.len, hm->uri.p);
       }
 
       break;

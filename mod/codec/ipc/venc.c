@@ -4,10 +4,13 @@
 
 #include "venc.h"
 
-#define FRAME_MAX_SIZE (500*1024)
+#define VFRAME_MAX_SIZE (500*1024)
+#define AFRAME_MAX_SIZE (2*1024)
 
 static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
 venc_mgr_t venc_mgr[GSF_CODEC_IPC_CHN*GSF_CODEC_VENC_NUM];
+int audio_shmid = -1;
+struct cfifo_ex* audio_fifo = NULL;
 
 unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
@@ -37,7 +40,7 @@ unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
     if(n1 >= size)
     {
         gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
+        return (rec->flag & GSF_FRM_FLAG_IDR)?rec->utc:0;
     }
     else
     {
@@ -45,7 +48,7 @@ unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
         char *p = (char*)(&rec);
         memcpy(p, p1, n1);
         memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
+        return (rec.flag & GSF_FRM_FLAG_IDR)?rec.utc:0;
     }
     
     return 0;
@@ -158,7 +161,7 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
       _venc_sdp_fill(VeChn, PT, &pstStream->pstPack[i], pack_size);
   }
   
-  if(len+sizeof(gsf_frm_t) > FRAME_MAX_SIZE)
+  if(len+sizeof(gsf_frm_t) > VFRAME_MAX_SIZE)
   {
     printf("drop VeChn:%d, bigframe size:%d \n", VeChn, len+sizeof(gsf_frm_t));
     goto __err;
@@ -189,6 +192,104 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
 __err:
   return 0;
 }
+
+
+
+unsigned int cfifo_recput_au(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+{
+  int i = 0, a = 0, l = 0, _n1 = n1;
+  unsigned char *p = NULL, *_p1 = p1, *_p2 = p2;
+
+  AUDIO_STREAM_S* pstStream = (AUDIO_STREAM_S*)u;
+
+  //printf("\n------------------\n");
+	struct timespec _ts;  
+  clock_gettime(CLOCK_MONOTONIC, &_ts);
+
+  gsf_frm_t rec;
+  rec.type = GSF_FRM_AUDIO;
+  rec.flag = GSF_FRM_FLAG_IDR;
+  rec.seq  = pstStream->u32Seq;
+  rec.utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
+  rec.pts  = pstStream->u64TimeStamp/1000;
+  
+  rec.audio.encode = GSF_ENC_AAC;
+  rec.audio.chn = 2;
+  rec.audio.sp  = 1024;
+  rec.audio.bps = 48; // 48k;
+  rec.size = 0;
+  
+  rec.size = pstStream->u32Len;
+  
+  //printf("rec[flag:%d, seq:%d, pts:%d, size:%d]\n"
+  //      , rec.flag, rec.seq, rec.pts, rec.size);
+  
+  p = (unsigned char*)(&rec);
+  a = sizeof(gsf_frm_t);
+  
+  l = CFIFO_MIN(a, _n1);
+  memcpy(_p1, p, l);
+  memcpy(_p2, p+l, a-l);
+  _n1-=l;_p1+=l;_p2+=a-l;
+  //printf("a:%d, _n1:%d, _p1+:%d, _p2+:%d\n", a, _n1, l, a-l);
+
+  p = pstStream->pStream;
+  a = pstStream->u32Len;
+  
+  l = CFIFO_MIN(a, _n1);
+  memcpy(_p1, p, l);
+  memcpy(_p2, p+l, a-l);
+  _n1-=l;_p1+=l;_p2+=a-l;
+  //printf("a:%d, _n1:%d, _p1+:%d, _p2+:%d\n", a, _n1, l, a-l);
+
+  //printf("\n------------------\n");
+  return 0;
+}
+
+
+
+int gsf_aenc_recv(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs)
+{
+#if 0
+  printf("AeChn:%d, PT:%d, PTS:%llu ms, u32Len:%d, uargs:%p\n"
+      , AeChn, PT, pstStream->u64TimeStamp/1000, pstStream->u32Len, uargs);
+#endif
+
+  HI_S32 i = 0, len = 0;
+  
+  len = pstStream->u32Len;
+  
+  if(len+sizeof(gsf_frm_t) > AFRAME_MAX_SIZE)
+  {
+    printf("drop AeChn:%d, bigframe size:%d \n", AeChn, len+sizeof(gsf_frm_t));
+    goto __err;
+  }
+
+  struct timespec ts1, ts2;  
+  clock_gettime(CLOCK_MONOTONIC, &ts1);
+ 
+  int ret = cfifo_put(audio_fifo,  len+sizeof(gsf_frm_t), cfifo_recput_au, (unsigned char*)pstStream);
+  
+  clock_gettime(CLOCK_MONOTONIC, &ts2);
+  int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+  if(cost > 8)
+    printf("cfifo_put AeChn:%d, frame size:%d put cost:%d ms\n", AeChn, len+sizeof(gsf_frm_t), cost);
+  
+  if(ret < 0)
+  {
+    printf("cfifo AeChn:%d, err ret:%d\n", AeChn, ret);
+    goto __err;
+  }
+  else if (ret == 0)
+  {
+    printf("cfifo AeChn:%d, is full, framesize:%d\n", AeChn, len+sizeof(gsf_frm_t));
+    assert(0);
+  }
+
+__err:
+  return 0;
+}
+
 
 
 int gsf_venc_init(gsf_venc_ini_t *ini)
@@ -230,5 +331,12 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
                           0);
     }
   }
+  
+  audio_fifo = cfifo_alloc(32*1024,
+                  cfifo_recsize, 
+                  cfifo_rectag, 
+                  cfifo_recrel, 
+                  &audio_shmid,
+                  0);
   return 0;
 }

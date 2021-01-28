@@ -424,23 +424,22 @@ int mpp_start(gsf_bsp_def_t *def)
     {
       if(cfg.snscnt < 2)
       {
-	  
-	  	if(strstr(cfg.snsname, "imx327"))
-		{
-			// imx327-0-0-2-30
-	        cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
-	        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-	        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-	        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-		}
-		else
-		{
-        	// imx335-0-0-4-30
-	        cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-	        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-	        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-	        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
-		}
+        if(strstr(cfg.snsname, "imx327"))
+        {
+        	// imx327-0-0-2-30
+              cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+              venc_ini.ch_num = 1; venc_ini.st_num = 2;
+              VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+        }
+        else
+        {
+            	// imx335-0-0-4-30
+              cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+              venc_ini.ch_num = 1; venc_ini.st_num = 2;
+              VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+        }
       }
       else
       {
@@ -597,8 +596,16 @@ int main(int argc, char *argv[])
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     
-    // only test aio;
-    gsf_mpp_audio_start(NULL);
+    // test aenc;
+    gsf_mpp_aenc_t aenc = {
+      .AeChn = 0,
+      .enPayLoad = PT_AAC,
+      .uargs = NULL,
+      .cb = gsf_aenc_recv,
+    };
+    gsf_mpp_audio_start(&aenc);
+    //gsf_mpp_audio_start(NULL);
+    
     
     // test vo;
     #if 0

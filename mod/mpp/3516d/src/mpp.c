@@ -503,16 +503,42 @@ int gsf_mpp_isp_ctl(int ch, int id, void *args)
   return ret;
 }
 
-// only test;
-static pthread_t aio_pid;
-extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
-  return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+  static int init = 0;
+  
+  if(!init)
+  {
+    init = 1;
+    extern HI_S32 sample_audio_init();
+    sample_audio_init();
+  }
+  
+  if(aenc == NULL)
+  { //test ai->ao;
+    static pthread_t aio_pid;
+    extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
+    return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+  }
+  else
+  {
+    extern HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc);
+    return SAMPLE_AUDIO_AiAenc(aenc);
+  }
+  return 0;
 }
 
-int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
+int gsf_mpp_audio_stop(gsf_mpp_aenc_t *aenc)
 {
+  if(aenc == NULL)
+  {
+    ;  
+  }
+  else
+  {
+    extern HI_S32 SAMPLE_AUDIO_AiAencStop(gsf_mpp_aenc_t *aenc);
+    return SAMPLE_AUDIO_AiAencStop(aenc);
+  }
   return 0;
 }
 
@@ -1100,6 +1126,20 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   //printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x\n", ch, s32Ret);
   return err;
 }
+
+
+int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+{
+  //audio dec bind vo;
+  return 0;
+}
+
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
+{
+  //ao bind ai;
+  return 0;
+}
+
 
 //Çå³ý½âÂëÏÔÊ¾BUFF
 int gsf_mpp_vo_clear(int volayer, int ch)

@@ -12,6 +12,7 @@
 <script>
 
 var streamx = 1
+var audio = false
 
 function flv_load() {
     console.log('isSupported: ' + flvjs.isSupported());
@@ -19,7 +20,7 @@ function flv_load() {
         type: "flv",
         isLive: true,
         //cors: true,
-        hasAudio: false,
+        hasAudio: audio,
         autoCleanupSourceBuffer:true,
         //url: 'ws://'+ window.location.hostname + ':' + (window.location.port?1+parseInt(window.location.port,10):81) + '/' + document.getElementsByName('urlinput')[0].value,
         url: 'ws://'+ window.location.hostname + ':80/flv' + streamx,
@@ -97,7 +98,9 @@ $(function () {
                 { type: 'button', id: 'refresh', text: 'Refresh', icon: 'fa-wrench' },
                 { type: 'break' },
                 { type: 'radio', id: 'stream1', text: 'Stream1', icon: 'fa-heart' },
-                { type: 'radio', id: 'stream2', text: 'Stream2', icon: 'fa-star' }
+                { type: 'radio', id: 'stream2', text: 'Stream2', icon: 'fa-star' },
+                { type: 'break' },
+                { type: 'check', id: 'audio', text: 'audio', icon: 'fa-check', checked: false }
             ],
             onClick: function (event) {
                 console.log('Target: '+ event.target, event);
@@ -112,6 +115,10 @@ $(function () {
                 else if (event.target == 'stream2')
                 {
                   streamx = 2;
+                }
+                else if (event.target == 'audio')
+                {
+                  audio = !event.object.checked;
                 }
             }
         });

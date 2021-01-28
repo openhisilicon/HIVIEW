@@ -48,7 +48,7 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   gsf_sdp_t *sdp = (gsf_sdp_t*)rsp->data;
   
   sdp->video_shmid = venc_mgr[req->ch*3 + req->sid].video_shmid;
-  sdp->audio_shmid = -1;
+  sdp->audio_shmid = audio_shmid;
   sdp->venc = codec_ipc.venc[req->sid];
   sdp->aenc = codec_ipc.aenc;
   sdp->val[0]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0];

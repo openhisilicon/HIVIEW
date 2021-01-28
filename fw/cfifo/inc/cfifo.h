@@ -38,10 +38,14 @@ struct cfifo_ex *cfifo_shmat(cfifo_recsize_t rec_size
 void cfifo_free(struct cfifo_ex *fifo_ex);
 
 // newest
-void cfifo_newest(struct cfifo_ex *fifo_ex, unsigned int tag);
+// param: tag =0, rec_newest; =1, rec_newest_tag;
+// return: rec_tag;
+unsigned int cfifo_newest(struct cfifo_ex *fifo_ex, unsigned int tag);
 
-// oldest
-void cfifo_oldest(struct cfifo_ex *fifo_ex, unsigned int tag);
+// oldest 
+// param: tag =0, rec_oldest; =1, rec_oldest_tag; >1, rec_oldset_seek(rec_tag >= tag)
+// return: rec_tag;
+unsigned int cfifo_oldest(struct cfifo_ex *fifo_ex, unsigned int tag);
 
 // put
 signed int cfifo_put(struct cfifo_ex *fifo_ex

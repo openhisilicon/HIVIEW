@@ -17,7 +17,7 @@ TARG := lib/librtmp.so
 
 #============================================================= 
 
-INCS := -Isrc -Iinc -Isrc/btree
+INCS := -Isrc -Iinc -I../libflv/inc
 SRCS := $(shell ls src/*.c)
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIBS += 

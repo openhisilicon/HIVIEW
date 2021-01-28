@@ -13,6 +13,7 @@ MOD_DIRS := mod/bsp   \
 			mod/webs  \
 			mod/onvif \
 			mod/svp \
+			mod/rtmps \
 			mod/app 
 
 FW_DIRS :=  fw/nm       \
