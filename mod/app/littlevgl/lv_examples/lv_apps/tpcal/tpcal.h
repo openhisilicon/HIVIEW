@@ -17,8 +17,8 @@ extern "C" {
 #include "lvgl.h"
 #include "lv_ex_conf.h"
 #else
-#include "../../../lvgl/lvgl.h"
-#include "../../../lv_ex_conf.h"
+#include "lvgl/lvgl.h"
+#include "lv_ex_conf.h"
 #endif
 
 

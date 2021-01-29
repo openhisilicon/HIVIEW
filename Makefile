@@ -29,7 +29,8 @@ FW_DIRS :=  fw/nm       \
 			fw/librtsp  \
 			fw/libflv   \
 			fw/h26xbits \
-			fw/gsoap   
+			fw/gsoap \
+			fw/lvgl 
 
 CLEAN_DIRS := $(addprefix _cls_, $(FW_DIRS) $(MOD_DIRS))
 

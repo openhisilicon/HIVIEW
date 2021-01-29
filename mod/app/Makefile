@@ -9,13 +9,13 @@ TARG := bin/app.exe
 #============================================================= 
 
 INCS := -I$(HOME) -Isrc -Iinc \
-        -I$(HOME)/fw/comm/inc
+        -I$(HOME)/fw/comm/inc 
         
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -Llittlevgl -llittlevgl -lcomm -lcfifo -lrt -lnm -lcjson -lm -lpthread
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -Llittlevgl -llittlevgl -llvgl -lcomm -lcfifo -lrt -lnm -lcjson -lm -lpthread
 
 $(TARG): SJB $(OBJS)
 	@$(MAKE) -C littlevgl || exit "$$?"
