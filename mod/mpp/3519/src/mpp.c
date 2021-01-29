@@ -196,7 +196,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     stViConfig.enViMode   = SENSOR_TYPE;
     stViConfig.enRotate   = ROTATE_NONE;
     stViConfig.enNorm     = VIDEO_ENCODING_MODE_AUTO;
-    stViConfig.enViChnSet = VI_CHN_SET_NORMAL;
+    stViConfig.enViChnSet = VI_CHN_SET_FLIP; //VI_CHN_SET_NORMAL; // maohw VI_CHN_SET_FLIP for sml imx334;
     stViConfig.enWDRMode  = WDR_MODE_NONE;
     s32Ret = SAMPLE_COMM_VI_StartVi(&stViConfig);
     if (HI_SUCCESS != s32Ret)
