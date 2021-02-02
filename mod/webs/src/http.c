@@ -749,46 +749,66 @@ void handle_stat(struct mg_connection *nc, int ev, void *pp)
 }
 
 
-
+#define MSG_HANDER_REG(c) do { \
+  mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL));\
+  mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL));\
+  mg_register_http_endpoint(c, "/snap", handle_snap MG_UD_ARG(NULL));    \
+  mg_register_http_endpoint(c, "/stat", handle_stat MG_UD_ARG(NULL));    \
+}while(0)
 
 
 static void* ws_task(void* parm)
 {
+  // https://github.com/cesanta/mongoose-os-docs/blob/master/mongoose-os/userguide/security.md
+  // ./openssl req  -nodes -new -x509  -keyout key.pem -out cert.pem
+  // https://www.cnblogs.com/ylaoda/p/12032992.html
    
   char address[64];
   //sprintf(address, "%d", (int)parm);
   sprintf(address, "0.0.0.0:%d", (int)parm);
   
   struct mg_mgr mgr;
-  struct mg_connection *c;
+  struct mg_connection *c, *https;
   const char *err = NULL;
 
-  
   mg_mgr_init(&mgr, NULL);
     
   struct mg_bind_opts opts;
   memset(&opts, 0, sizeof(opts));
   opts.error_string = &err;
-  if ((c = mg_bind_opt(&mgr, address, ev_handler, opts)) == NULL) {
-    fprintf(stderr, "mg_bind(%s) failed: %s\n", address, err);
-    return NULL;
-  }
   
   char www_path[128] = {0};
   proc_absolute_path(www_path);
+  
   sprintf(www_path, "%s/../www", www_path);
   printf("www_path:[%s]\n", www_path);
   s_http_server_opts.auth_domain = "MyRealm";
   s_http_server_opts.document_root = www_path;  // Serve current directory
   
-  mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL)); // upgrade;
-  mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL)); // config;
-  mg_register_http_endpoint(c, "/snap", handle_snap MG_UD_ARG(NULL));     // snap picture;
-  mg_register_http_endpoint(c, "/stat", handle_stat MG_UD_ARG(NULL));     // stat (eg. upg_progress);
-  
+  if ((c = mg_bind_opt(&mgr, address, ev_handler, opts)) == NULL) {
+    fprintf(stderr, "mg_bind(%s) failed: %s\n", address, err);
+    return NULL;
+  }
+
   // Set up HTTP server parameters
   mg_set_protocol_http_websocket(c);
+  MSG_HANDER_REG(c);
   
+  char ssl_cert[128];
+  char ssl_key[128];
+  sprintf(ssl_cert, "%s/cert.pem", www_path);
+  sprintf(ssl_key, "%s/key.pem", www_path);
+  opts.ssl_cert = ssl_cert;
+  opts.ssl_key  = ssl_key;
+  https = mg_bind_opt(&mgr, "443", ev_handler, opts);
+  if(https == NULL)
+  {
+    fprintf(stderr, "mg_bind(%s) failed: %s\n", "443", err);
+    return NULL;
+  }
+  
+  mg_set_protocol_http_websocket(https);
+  MSG_HANDER_REG(https);
   
   while (s_received_signal == 0) {
     mg_mgr_poll(&mgr, 1000);

@@ -3115,7 +3115,7 @@ struct {								\
 #endif
 
 #ifndef MG_ENABLE_SSL
-#define MG_ENABLE_SSL 0
+#define MG_ENABLE_SSL 1
 #endif
 
 #ifndef MG_ENABLE_SYNC_RESOLVER

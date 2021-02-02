@@ -16,14 +16,16 @@ var audio = false
 
 function flv_load() {
     console.log('isSupported: ' + flvjs.isSupported());
+
+    var ishttps = ('https:' == document.location.protocol)?true:false
+
     var mediaDataSource = {
         type: "flv",
         isLive: true,
         //cors: true,
         hasAudio: audio,
         autoCleanupSourceBuffer:true,
-        //url: 'ws://'+ window.location.hostname + ':' + (window.location.port?1+parseInt(window.location.port,10):81) + '/' + document.getElementsByName('urlinput')[0].value,
-        url: 'ws://'+ window.location.hostname + ':80/flv' + streamx,
+        url: (ishttps == true?'wss://':'ws://') + window.location.hostname + (ishttps == true?':443/flv':':80/flv') + streamx,
     }
         console.log('MediaDataSource', mediaDataSource);
         var element = document.getElementsByName('videoElement')[0];

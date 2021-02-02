@@ -8,12 +8,12 @@ TARG := bin/webs.exe
 
 #============================================================= 
 
-INCS := -I$(HOME) -Isrc -Iinc -I$(HOME)/fw/libwebsockets/inc -DMG_ENABLE_HTTP_STREAMING_MULTIPART
+INCS := -I$(HOME) -Isrc -Iinc -I$(HOME)/fw/openssl/openssl-1.1.0l -DMG_ENABLE_HTTP_STREAMING_MULTIPART
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lm
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lssl -lcrypto -lm
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
