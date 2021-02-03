@@ -8,6 +8,7 @@
 <img src=/res/16dv300-b.jpg width=66% />
 ### 2. Support users to develop their own products based on OpenHisilicon;
 <img src=/res/p1.jpg width=360 height=250 /> <img src=/res/p2.jpg width=360 height=250 />
+### 3. https://github.com/openhisilicon/PRODUCT
 ## Features:
 <img src=/res/fw.jpg width=88% />
 <img src=/res/webs.jpg width=88% />
