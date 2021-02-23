@@ -24,6 +24,8 @@ enum {
     GSF_ID_BSP_WLIST= 7, // gsf_wifi_list_t[N];
     GSF_ID_BSP_BASE = 8, // gsf_base_t;
     GSF_ID_BSP_USER = 9, // gsf_user_t[N];
+    GSF_ID_BSP_VPN  = 10,// gsf_vpn_t;
+    GSF_ID_BSP_VSTAT= 11,// gsf_vpn_stat_t;
     GSF_ID_BSP_END  
 };
 

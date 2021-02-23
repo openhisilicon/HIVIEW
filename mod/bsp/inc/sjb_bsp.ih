@@ -73,6 +73,21 @@ STRUCT(gsf_time_t)
 };
 
 
+STRUCT(gsf_vpn_t)
+{
+  FIELD(int,    en);  // 0: disable, 1: enable;
+  STRING(type,  64);  // "zerotier"
+  STRING(nwid,  64);  // "b6079f73c6705645"
+  STRING(auth,  64);  // "auth"
+};
+
+STRUCT(gsf_vpn_stat_t)
+{
+  //"200 listnetworks b6079f73c6705645 openhisilicon 46:97:63:7f:b0:c9 OK PUBLIC ztyxa66jmd 10.10.10.99/24"
+  STRING(network, 256);
+};
+
+
 STRUCT(gsf_bsp_def_t)
 {
   FIELD(gsf_board_t, board);
@@ -89,6 +104,7 @@ STRUCT(gsf_bsp_parm_t)
   FIELD(gsf_eth_t,   eth);
   FIELD(gsf_wifi_t,  wifi);
   FIELD(gsf_ntp_t,   ntp);
+  FIELD(gsf_vpn_t,   vpn);
   ARRAY(gsf_user_t, users, 8);
 };
 

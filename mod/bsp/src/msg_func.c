@@ -240,6 +240,38 @@ static void msg_func_user(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 
+static void msg_func_vpn(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    rsp->size = 0;
+    rsp->err = netinf_vpn_set((gsf_vpn_t*)req->data);
+    if(rsp->err == 0)
+    {
+      bsp_parm.vpn = *((gsf_vpn_t*)req->data);
+      json_parm_save(bsp_parm_path, &bsp_parm);
+    }
+  }
+  else
+  {
+    gsf_vpn_t *vpn = (gsf_vpn_t*)rsp->data;
+    *vpn = bsp_parm.vpn;
+    rsp->size = sizeof(gsf_vpn_t);
+    rsp->err = 0;
+  }
+}
+
+
+static void msg_func_vstat(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  gsf_vpn_stat_t *st = (gsf_vpn_stat_t*)rsp->data;
+  netinf_vpn_stat(st);
+  rsp->size = sizeof(gsf_vpn_stat_t);
+  rsp->err = 0;
+}
+
+
+
 static msg_func_t *msg_func[GSF_ID_BSP_END] = {
     [GSF_ID_MOD_CLI]    = msg_func_cli,
     [GSF_ID_BSP_TIME]   = msg_func_time,
@@ -251,6 +283,8 @@ static msg_func_t *msg_func[GSF_ID_BSP_END] = {
     [GSF_ID_BSP_WLIST]  = msg_func_wlist,
     [GSF_ID_BSP_BASE]   = msg_func_base,
     [GSF_ID_BSP_USER]   = msg_func_user,
+    [GSF_ID_BSP_VPN]    = msg_func_vpn,
+    [GSF_ID_BSP_VSTAT]  = msg_func_vstat,
 };
 
 
