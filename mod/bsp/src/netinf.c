@@ -102,5 +102,9 @@ int netinf_vpn_stat(gsf_vpn_stat_t *st)
       break;
     }
   }
+  
+  if(fd)
+    fclose(fd);
+    
   return 0;
 }
