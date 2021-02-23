@@ -8,11 +8,13 @@ int netinf_init(void)
 {
   //init driver;
   wifi_init();
-  system("zerotier-one -d");  
-  
+   
   //init ipaddr;
   gsf_eth_t *eth = &bsp_parm.eth;
-  return netinf_eth_set(eth);
+  netinf_eth_set(eth);
+  system("zerotier-one -d"); 
+  
+  return 0;
 }
 
 int netinf_eth_set(gsf_eth_t *eth)
