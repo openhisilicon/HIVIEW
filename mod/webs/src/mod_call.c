@@ -31,6 +31,8 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   {GSF_ID_BSP_ETH,  "GSF_ID_BSP_ETH",  GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_eth_t,  (sjb_cb*)sjb_bind_gsf_eth_t,  sizeof(gsf_eth_t),  sizeof(gsf_eth_t), 0},
   {GSF_ID_BSP_NTP,  "GSF_ID_BSP_NTP",  GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_ntp_t,  (sjb_cb*)sjb_bind_gsf_ntp_t,  sizeof(gsf_ntp_t),  sizeof(gsf_ntp_t), 0},
   {GSF_ID_BSP_WIFI, "GSF_ID_BSP_WIFI", GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_wifi_t, (sjb_cb*)sjb_bind_gsf_wifi_t, sizeof(gsf_wifi_t), sizeof(gsf_wifi_t),0},
+  {GSF_ID_BSP_VPN,  "GSF_ID_BSP_VPN",  GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_vpn_t,  (sjb_cb*)sjb_bind_gsf_vpn_t,  sizeof(gsf_vpn_t),  sizeof(gsf_vpn_t), 0},
+  {GSF_ID_BSP_VSTAT,"GSF_ID_BSP_VSTAT",GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_vpn_stat_t,(sjb_cb*)sjb_bind_gsf_vpn_stat_t,sizeof(gsf_vpn_stat_t),sizeof(gsf_vpn_stat_t), 0},
 
 //codec;
   {GSF_ID_CODEC_VENC,  "GSF_ID_CODEC_VENC", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_venc_t,   (sjb_cb*)sjb_bind_gsf_venc_t,sizeof(gsf_venc_t), sizeof(gsf_venc_t),0},
