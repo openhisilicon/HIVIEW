@@ -8,7 +8,7 @@
 
 #include "inc/gsf.h"
 #include "bsp.h"
-
+#include "fw/comm/inc/proc.h"
 #include "cfg.h"      // config
 #include "netinf.h"   // netinf
 #include "wdg.h"      // watchdog
@@ -23,6 +23,8 @@ GSF_LOG_GLOBAL_INIT("BSP", 8*1024);
 void* bsp_pub = NULL;
 
 extern gsf_mod_reg_t gmods[GSF_MOD_ID_END];
+
+char home_path[128] = {0};
 
 static int log_recv(char *msg, int size, int err)
 {
@@ -160,6 +162,11 @@ int main(int argc, char *argv[])
       json_parm_load(bsp_parm_path, &bsp_parm);
     }
     info("parm.ipaddr:%s\n", bsp_parm.eth.ipaddr);
+
+    //home_path;
+    proc_absolute_path(home_path);
+    sprintf(home_path, "%s/..", home_path);
+    printf("home_path:[%s]\n", home_path);
 
     // maohw wdg_open();
     netinf_init();

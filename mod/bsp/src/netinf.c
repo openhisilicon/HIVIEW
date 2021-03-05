@@ -3,6 +3,7 @@
 #include "wifi.h"
 #include "fw/comm/inc/netcfg.h"
 
+int vpn_init(gsf_vpn_t *vpn);
 
 int netinf_init(void)
 {
@@ -12,7 +13,9 @@ int netinf_init(void)
   //init ipaddr;
   gsf_eth_t *eth = &bsp_parm.eth;
   netinf_eth_set(eth);
-  system("zerotier-one -d"); 
+  
+  //init vpn;
+  vpn_init(&bsp_parm.vpn);
   
   return 0;
 }
@@ -62,6 +65,41 @@ int netinf_wifi_set(gsf_wifi_t *wifi)
 int netinf_wifi_list(gsf_wifi_list_t list[128])
 {
   return wifi_list(list);
+}
+
+static pthread_t once;
+static void* once_run(void* parm)
+{
+  pthread_detach(pthread_self());
+  
+  while(1)
+  {
+    char str[128];
+    sprintf(str, "dmesg | grep \"%s\" ", "crng init done");
+    FILE* fd = popen(str, "r");
+    if(fd)
+    {
+      if (fgets(str, sizeof(str), fd))
+      {
+        printf("%s => %s\n", __func__, str);
+        if(strstr(str, "crng init done"))
+        {
+          system("zerotier-one -d");
+          fclose(fd);
+          break;
+        }
+      }
+      fclose(fd);
+    }
+    sleep(1);
+  }
+  printf("%s => exit.\n", __func__);
+  return NULL;
+}
+
+int vpn_init(gsf_vpn_t *vpn)
+{
+  return pthread_create(&once, NULL, once_run, NULL);
 }
 
 int netinf_vpn_set(gsf_vpn_t *vpn)
