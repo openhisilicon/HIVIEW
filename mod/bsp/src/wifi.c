@@ -50,10 +50,68 @@ int wifi_set(gsf_wifi_t *wifi)
 
 int wifi_list(gsf_wifi_list_t list[128])
 {
-  int cnt = 0;
-  // iw (https://mirrors.edge.kernel.org/pub/software/network)
-  // -- WirelessTools (iwconfig, iwlist, iwspy, iwpriv, ifrename)
+  int cnt = 0;    
+  char cmd[256] = {0};
+  sprintf(cmd, "%s/wifi/wpa_cli -i eth0 scan", home_path); system(cmd);
   
+  int line = 0;
+  sprintf(cmd, "%s/wifi/wpa_cli -i eth0 scan_result", home_path);
+  FILE* fd = popen(cmd, "r");
+  while(fd)
+  {
+    if (fgets(cmd, sizeof(cmd), fd))
+    {
+      if(line++ == 0)
+        continue;
+      
+      if(cnt >= 128)
+        break;
+      
+      int t = 0;
+      char *left = cmd;
+      char *token = NULL;
+      
+      enum {
+        TOKEN_BSSID = 0, TOKEN_FREQ = 1, TOKEN_SIGNAL = 2, TOKEN_FLAGS = 3, TOKEN_SSID = 4
+      };
+      
+      cmd[strlen(cmd)-1] = '\0';
+      //printf("cnt:%d, cmd:[%02x, %02x]\n", cnt, cmd[strlen(cmd)-2], cmd[strlen(cmd)-1]);
+      
+      while(token = strsep(&left, "\t"))
+      {
+        if(!strlen(token))
+          continue;
+          
+        //printf("token:[%s]\n", token);
+        switch(t++)
+        {
+          case TOKEN_BSSID:
+            strncpy(list[cnt].mac, token, sizeof(list[cnt].mac)-1);
+            break;
+          case TOKEN_FREQ:
+            break;
+          case TOKEN_SIGNAL:
+            break;
+          case TOKEN_FLAGS:
+            list[cnt].encrypt = strstr(token, "WPA")?1:0;
+            break;
+          case TOKEN_SSID:
+            strncpy(list[cnt].ssid, token, sizeof(list[cnt].ssid)-1);
+            break;
+        }
+      }
+      cnt++;
+    }
+    else
+    {
+      break;
+    }
+  }
+  
+  if(fd)
+    fclose(fd);
+    
   return cnt;
 }
 
