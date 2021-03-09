@@ -196,7 +196,17 @@ int main(int argc, char *argv[])
     
     while(1)
     {
-        sleep(1);
+        sleep(10);
+        #if 0 // test wifi scan;
+        int i = 0;
+        GSF_MSG_DEF(gsf_msg_t, msg, sizeof(gsf_wifi_list_t)*128);
+        int ret = GSF_MSG_SENDTO(GSF_ID_BSP_WLIST, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
+        gsf_wifi_list_t *wlist = (gsf_wifi_list_t*)__pmsg->data;
+        for(i = 0; i < __pmsg->size/sizeof(gsf_wifi_list_t); i++)
+        {
+          printf("wlist[%d].mac:%s, encrypt:%d, ssid:%s\n", i, wlist[i].mac, wlist[i].encrypt, wlist[i].ssid);
+        }
+        #endif
     }
     
     nm_rep_close(rep);

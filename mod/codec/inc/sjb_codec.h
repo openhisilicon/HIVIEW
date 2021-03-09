@@ -9,6 +9,13 @@
 #define GSF_CODEC_SNAP_IDX  (GSF_CODEC_ST_NUM)
 #define GSF_CODEC_VENC_NUM  (GSF_CODEC_ST_NUM+1)
 
+typedef enum {
+  GSF_LENS_IRC   = 1, // arg1: 0-day, 1-night
+  GSF_LENS_ZOOM  = 2, // arg1: 0-++, 1---, arg2: speed;
+  GSF_LENS_FOCUS = 3, // arg1: 0-++, 1---, arg2: speed;
+}GSF_LENS_CMD_E;
+
+
 #include "fw/cjson/inc/sjb_api.ih"
 #include "mod/codec/inc/sjb_codec.ih"
 #include "fw/cjson/inc/sjb_end.ih"

@@ -40,6 +40,7 @@ unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
     if(n1 >= size)
     {
         gsf_frm_t *rec = (gsf_frm_t*)p1;
+        //printf("%s => 1 rec->type:%d, seq:%d, utc:%u\n", __FILE__, rec->type, rec->seq, rec->utc);
         return (rec->flag & GSF_FRM_FLAG_IDR)?rec->utc:0;
     }
     else
@@ -48,6 +49,7 @@ unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
         char *p = (char*)(&rec);
         memcpy(p, p1, n1);
         memcpy(p+n1, p2, size-n1);
+        //printf("%s => 2 rec->type:%d, seq:%d, utc:%u\n", __FILE__, rec.type, rec.type, rec.utc);
         return (rec.flag & GSF_FRM_FLAG_IDR)?rec.utc:0;
     }
     
@@ -124,7 +126,6 @@ static inline int _venc_sdp_fill(VENC_CHN VeChn, PAYLOAD_TYPE_E pt, VENC_PACK_S*
   {
     case PT_H264:
       {
-        
         int sdp_val = (pstPack->DataType.enH264EType == H264E_NALU_SPS)? GSF_SDP_VAL_SPS:
                       (pstPack->DataType.enH264EType == H264E_NALU_PPS)? GSF_SDP_VAL_PPS:
                       (pstPack->DataType.enH264EType == H264E_NALU_SEI)? GSF_SDP_VAL_SEI: -1;
@@ -139,7 +140,18 @@ static inline int _venc_sdp_fill(VENC_CHN VeChn, PAYLOAD_TYPE_E pt, VENC_PACK_S*
       }
     case PT_H265:
       {
-        break; 
+        int sdp_val = (pstPack->DataType.enH265EType == H265E_NALU_SPS)? GSF_SDP_VAL_SPS:
+                      (pstPack->DataType.enH265EType == H265E_NALU_PPS)? GSF_SDP_VAL_PPS:
+                      (pstPack->DataType.enH265EType == H265E_NALU_VPS)? GSF_SDP_VAL_VPS:
+                      (pstPack->DataType.enH265EType == H265E_NALU_SEI)? GSF_SDP_VAL_SEI: -1;
+        if(sdp_val < 0)
+        {
+          break;
+        }
+        assert(pack_size <= sizeof(venc_mgr[VeChn].val[sdp_val].data));
+        venc_mgr[VeChn].val[sdp_val].size =pack_size-4;
+        memcpy(venc_mgr[VeChn].val[sdp_val].data, pstPack->pu8Addr + pstPack->u32Offset+4, venc_mgr[VeChn].val[sdp_val].size);
+        break;
       }
     default:
       break;

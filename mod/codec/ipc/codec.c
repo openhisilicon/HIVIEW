@@ -12,6 +12,7 @@
 #include "mpp.h"
 #include "rgn.h"
 #include "venc.h"
+#include "lens.h"
 
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 
@@ -373,6 +374,7 @@ int mpp_start(gsf_bsp_def_t *def)
     static gsf_mpp_cfg_t cfg;
     static gsf_rgn_ini_t rgn_ini;
     static gsf_venc_ini_t venc_ini;
+    static gsf_lens_ini_t lens_ini;
     static gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN];
     
     #define VPSS(_i, _g, _p, _ch, _en0, _en1, _sz0, _sz1) do{ \
@@ -422,15 +424,18 @@ int mpp_start(gsf_bsp_def_t *def)
     }
     #elif defined(GSF_CPU_3516d)
     {
+      //cpu type; 
+      strcpy(cfg.type, def->board.type);
+      
       if(cfg.snscnt < 2)
       {
         if(strstr(cfg.snsname, "imx327"))
         {
-        	  // imx327-0-0-2-30
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+        	// imx327-0-0-2-30
+          cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+          venc_ini.ch_num = 1; venc_ini.st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
         }
         else if(strstr(cfg.snsname, "imx415"))
         {
@@ -441,12 +446,20 @@ int mpp_start(gsf_bsp_def_t *def)
         }
         else
         {
-          	// imx335-0-0-4-30
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+          // imx335-0-0-4-30
+          cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+          venc_ini.ch_num = 1; venc_ini.st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
         }
+        
+        #if 0
+        cfg.lane = 0; cfg.wdr = 0; cfg.res = 5; cfg.fps = 30;
+        rgn_ini.ch_num = 1; rgn_ini.st_num = 1;
+        venc_ini.ch_num = 1; venc_ini.st_num = 1;
+        VPSS(0, 0, 0, 0, 1, 0, PIC_2592x1944, PIC_720P);
+        #endif
+        
       }
       else
       {
@@ -456,7 +469,6 @@ int mpp_start(gsf_bsp_def_t *def)
         venc_ini.ch_num = 2; venc_ini.st_num = 1;
         VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
         VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
-        
       }
     }
     #elif defined(GSF_CPU_3516e)
@@ -478,11 +490,19 @@ int mpp_start(gsf_bsp_def_t *def)
     }
     #elif defined(GSF_CPU_3559)
     {
+      #if 1
       // imx458-0-0-8-30
       cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
       rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
       venc_ini.ch_num = 1; venc_ini.st_num = 2;
       VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+      #else
+      // imx335-0-0-4-30
+      cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+      rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+      venc_ini.ch_num = 1; venc_ini.st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+      #endif
     }
     #else
     {
@@ -502,6 +522,11 @@ int mpp_start(gsf_bsp_def_t *def)
     //internal-init rgn, venc;
     gsf_rgn_init(&rgn_ini);
     gsf_venc_init(&venc_ini);
+    
+    lens_ini.ch_num = 1;  // lens number;
+    strncpy(lens_ini.sns, cfg.snsname, sizeof(lens_ini.sns)-1);
+    strncpy(lens_ini.lens, "LENS-NAME", sizeof(lens_ini.lens)-1);
+    gsf_lens_init(&lens_ini);
 
     // vi start;
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
@@ -598,7 +623,7 @@ int main(int argc, char *argv[])
     GSF_LOG_CONN(1, 100);
 
     mpp_start(&bsp_def);
-    
+
     venc_start(1);
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)

@@ -24,6 +24,7 @@ enum {
     GSF_ID_CODEC_VORES    = 8,  // ch, sid, gsf_resolu_t;
     GSF_ID_CODEC_VOLY     = 9,  // ch, sid, gsf_layout_t;
     GSF_ID_CODEC_VOMV     = 10, // ch, sid, gsf_rect_t;
+    GSF_ID_CODEC_LENS     = 11, // ch, sid, gsf_lens_t;
     GSF_ID_CODEC_END
 };
 
@@ -76,6 +77,8 @@ typedef struct {
   gsf_venc_t venc;
   gsf_sdp_val_t val[4];
 }gsf_sdp_t;
+
+
 
 #ifdef __cplusplus
 }

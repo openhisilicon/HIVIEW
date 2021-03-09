@@ -100,6 +100,7 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
   int i = 0;
   for(i = 0; i < SAMPLE_SNS_TYPE_BUTT; i++)
   {
+    //printf("libsns[%d].name:%s, name:%s\n", i, libsns[i].name, name);
     if(strstr(libsns[i].name, name))
     {
       return &libsns[i];

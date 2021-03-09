@@ -1,11 +1,11 @@
 <div class="content">
     <div id="example_title" style="text-align:center">
-    <button class="w2ui-btn" onclick="">FOCUS+</button>
+    <button class="w2ui-btn" onclick="ircutDay()">IRC-D</button>
     <div style="height: 15px"></div>
-    <button class="w2ui-btn" onclick="">ZOOM+</button>
-    <button class="w2ui-btn" onclick="">ZOOM-</button>
+    <button class="w2ui-btn" onclick="zoomPlus()">ZOOM+</button>
+    <button class="w2ui-btn" onclick="zoomMinus()">ZOOM-</button>
     <div style="height: 15px"></div>
-    <button class="w2ui-btn" onclick="">FOCUS-</button>
+    <button class="w2ui-btn" onclick="ircutNight()">IRC-N</button>
     </div>
     
     <div id="example_view"></div>
@@ -80,5 +80,61 @@ $(function () {
     load_html('main', 'live');
        
 });
- 
+
+function ircutDay() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 1, "arg1": 0}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+function ircutNight() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 1, "arg1": 1}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+function zoomPlus() {
+
+}
+
+function zoomMinus() {
+
+}
+
+
+
 </script>

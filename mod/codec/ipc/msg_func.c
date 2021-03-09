@@ -11,6 +11,7 @@
 #include "msg_func.h"
 #include "mpp.h"
 #include "rgn.h"
+#include "lens.h"
 
 extern int venc_start(int start);
 extern int vo_res_get(gsf_resolu_t *res);
@@ -176,6 +177,30 @@ static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
   return;
 }
 
+static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  rsp->err  = 0;
+  rsp->size = 0;
+  rsp->ch = req->ch;
+  rsp->sid = req->sid;
+
+  gsf_lens_t *lens = (gsf_lens_t*)req->data;
+  switch(lens->cmd)
+  {
+    case GSF_LENS_IRC:
+      rsp->err = gsf_lens_ircut(req->ch, lens->arg1);
+      break;
+    case GSF_LENS_ZOOM:
+      rsp->err = gsf_lens_zoom(req->ch, lens->arg1, lens->arg2);
+      break;
+    case GSF_LENS_FOCUS:
+      rsp->err = gsf_lens_focus(req->ch, lens->arg1, lens->arg2);
+      break;
+  }
+  return;
+}
+
+
 static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
     [GSF_ID_CODEC_VENC]   = msg_func_venc,
@@ -186,6 +211,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_VMASK]  = msg_func_vmask,
     [GSF_ID_CODEC_SNAP]   = msg_func_snap,
     [GSF_ID_CODEC_VORES]  = msg_func_vores,
+    [GSF_ID_CODEC_LENS]   = msg_func_lens,
  };
 
 

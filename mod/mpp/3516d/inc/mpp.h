@@ -11,6 +11,8 @@ typedef struct {
   int   wdr;          // wdr mode
   int   res;          // resolution
   int   fps;          // frame rate
+  int   slave;        // slave mode
+  char  type[32];     // cpu type;
 }gsf_mpp_cfg_t;
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
