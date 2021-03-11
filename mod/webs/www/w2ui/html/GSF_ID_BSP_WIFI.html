@@ -1,0 +1,126 @@
+<div class="content">
+    <div id="main_view"></div>
+    <div id="example_code"></div>
+</div>
+
+<!--CODE-->
+
+<div id="req-id" style="width: 400px; height: 200px;"></div>
+<div id="res-id" style="position:relative;left:500px;top:-200px;width:400px;height:200px"></div>
+<label  id="nwid" style="position:relative;left:10px;top:-180px;">When wifi opened,the wired IP:192.168.1.2</label>
+<button id="get-id" class="w2ui-btn" style="position:relative;left:100px;top:-180px;">GET</button>
+<button id="set-id" class="w2ui-btn" style="position:relative;left:200px;top:-180px;">SET</button>
+<button id="get-st" class="w2ui-btn" style="position:relative;left:300px;top:-180px;">WLIST</button>
+<div id="rsp-id" style="position:relative;left:0px;top:-160px;width:900px;height:400px"></div>
+
+<!--CODE-->
+<script>
+$(function () {
+
+    const options = {
+      mode: 'code'
+    }
+
+    console.log( w2ui['sidebar1'].selected);
+
+    const req_ele = document.getElementById("req-id")
+    const req_edit = new JSONEditor(req_ele, options)
+    // set json
+    const req_init = {
+        "id": "GSF_ID_BSP_WIFI",
+        "args":"G0C0S0",
+        "data":{}
+    }
+    req_edit.set(req_init);
+
+
+    const res_ele = document.getElementById("res-id")
+    const res_edit = new JSONEditor(res_ele, options)
+    // set json
+    const res_init = {
+    	"code":	0
+    }
+    res_edit.set(res_init);
+
+
+    const rsp_ele = document.getElementById("rsp-id")
+    const rsp_edit = new JSONEditor(rsp_ele, options)
+    // set json
+    const rsp_init = {
+    	"code": 0
+    }
+    rsp_edit.set(rsp_init);
+
+    $("#get-id").click(function(){
+      
+      const req = req_edit.get();
+      
+      $.ajax({
+        async: true,
+        type: "post",
+        url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+        data: JSON.stringify(req.data),
+        contentType: 'application/json', // req body type;
+        dataType: "json", // rsp body type;
+        success: function (data) {
+          rsp_edit.set(data);
+        },
+        error: function () {
+          //TODO;
+        }
+      });
+
+    });
+
+    $("#get-st").click(function(){
+    
+      const req = {
+          "id": "GSF_ID_BSP_WLIST",
+          "args":"G0C0S0",
+          "data":{}
+      }
+      
+      $.ajax({
+        async: true,
+        type: "post",
+        url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+        data: JSON.stringify(req.data),
+        contentType: 'application/json', // req body type;
+        dataType: "json", // rsp body type;
+        success: function (data) {
+          rsp_edit.set(data);
+        },
+        error: function () {
+          //TODO;
+        }
+      });
+
+    });
+
+
+    $("#set-id").click(function(){
+     
+      const req = req_edit.get();
+      const rsp = rsp_edit.get();
+      var args = req.args;
+      
+      $.ajax({
+        async: true,
+        type: "post",
+        url:  '/config?id=' + req.id + '&' + 'args=' + args.replace("G0","G1"),
+        data: JSON.stringify(rsp.data),
+        contentType: 'application/json', // req body type;
+        dataType: "json", // rsp body type;
+        success: function (data) {
+          res_edit.set(data);
+        },
+        error: function () {
+          //TODO;
+        }
+      });
+    
+    
+    });
+
+});
+</script>

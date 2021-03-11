@@ -8,6 +8,7 @@
 
 #include "sadp.h"
 #include "cfg.h"
+#include "fw/comm/inc/netcfg.h"
 
 typedef struct {
   int fd, runing;
@@ -95,9 +96,19 @@ void* pu_recv_task(void *parm)
 
 int sadp_pu_init(gsf_sadp_ini_t *ini)
 {
+  int i = 0;
   gsf_sadp_pu_t *pu = &__pu;
   
-  char cmdstr[64];
+  do{
+    unsigned int flag = 0;
+    netcfg_status(ini->ethname, &flag);
+    if(flag & IFF_UP)
+      break;
+    printf("wait dev:%s is up.\n", ini->ethname);
+    sleep(1);
+  }while(i++ < 3);
+
+  char cmdstr[128];
   //set keepalive parm;
   system("echo 60 > /proc/sys/net/ipv4/tcp_keepalive_time");
 	system("echo 10 > /proc/sys/net/ipv4/tcp_keepalive_intvl");
@@ -110,9 +121,7 @@ int sadp_pu_init(gsf_sadp_ini_t *ini)
 	system("echo  819200 > /proc/sys/net/core/rmem_default");
 	//set mc, modify ipaddr, re-add route;
   system("echo 5 > /proc/sys/net/ipv4/igmp_max_memberships");
-  sprintf(cmdstr, "route add -net 224.0.0.0 netmask 240.0.0.0 dev %s", ini->ethname);
-  system(cmdstr);
-  
+  sprintf(cmdstr, "route add -net 224.0.0.0 netmask 240.0.0.0 dev %s", ini->ethname); system(cmdstr);
   
   if(pu->runing)
   {
@@ -128,6 +137,12 @@ int sadp_pu_init(gsf_sadp_ini_t *ini)
   {
     return -1;
   }
+  
+  struct timeval tv;
+	tv.tv_sec  = 3;
+	tv.tv_usec = 0;
+	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+  setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
   
   int ret = bind_mc(fd, pu->ini.mcaddr, pu->ini.mcport, pu->ini.ethname);
   if(ret < 0)

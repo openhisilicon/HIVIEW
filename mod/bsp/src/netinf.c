@@ -23,7 +23,10 @@ int netinf_init(void)
 int netinf_eth_set(gsf_eth_t *eth)
 {
   dhcpc_stop("eth0");
-   
+  
+  int ret = netcfg_set_mac_addr("eth0", eth->mac);
+  printf("ret:%d, eth->mac:[%s]\n", ret, eth->mac);
+  
   if(!eth->dhcp)
   {
     netcfg_set_ip_addr("eth0", eth->ipaddr);
@@ -50,9 +53,10 @@ int netinf_eth_get(gsf_eth_t *eth)
   netcfg_get_gw_addr(name,   eth->gateway);
   netcfg_get_mask_addr(name, eth->netmask);
   netcfg_get_dns("/etc/resolv.conf", eth->dns1, eth->dns2);
-
-  //netcfg_get_mac_addr(name,  eth->mac);
-
+  char _mac[6] = {0};
+  netcfg_get_mac_addr(name, _mac);
+  sprintf(eth->mac, "%02X:%02X:%02X:%02X:%02X:%02X", _mac[0], _mac[1], _mac[2], _mac[3], _mac[4], _mac[5]);
+  printf("eth->mac:[%s]\n", eth->mac);
   return 0;
 }
 
@@ -67,6 +71,7 @@ int netinf_wifi_list(gsf_wifi_list_t list[128])
   return wifi_list(list);
 }
 
+extern int sadp_init();
 static pthread_t once;
 static void* once_run(void* parm)
 {
@@ -85,6 +90,7 @@ static void* once_run(void* parm)
         if(strstr(str, "crng init done"))
         {
           system("zerotier-one -d");
+          sadp_init();
           fclose(fd);
           break;
         }

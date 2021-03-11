@@ -26,29 +26,31 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
   return 0;
 }
 
-
+#define SADP_ADDR "238.238.238.238"
 
 int main(int argc, char *argv[])
 {
-  if(argc < 3)
+  if(argc < 4)
   {
-    printf("pls %s 238.238.238.238/192.168.1.2 , timeout\n", argv[0]);
+    printf("pls: %s eth0/ztyxa66jmd %s/192.168.1.2 3\n", argv[0], SADP_ADDR);
     return 0;
   }
 
   gsf_sadp_ini_t puini = {
     .ethname= "eth0",
     .lcaddr = "0.0.0.0",
-    .mcaddr = "238.238.238.238",
+    .mcaddr = SADP_ADDR,
     .mcport = 8888,
     .cb = sadp_recv_func,
   };
+ 
+  strncpy(puini.ethname,  argv[1], sizeof(puini.ethname)-1); // "ztyxa66jmd"
  
   int ret = sadp_pu_init(&puini);
   printf("sadp_pu_init ret:%d\n", ret);
 
   gsf_sadp_peer_t dst1;
-  strcpy(dst1.ipaddr, argv[1]);
+  strcpy(dst1.ipaddr, argv[2]);
   dst1.port = 8888;
   
 
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
   
   while(1)
   {
-    sadp_cu_gset(dst, &in, out, &osize, atoi(argv[2]));
+    sadp_cu_gset(dst, &in, out, &osize, atoi(argv[3]));
     printf("\n\n");
     sleep(1);
   }

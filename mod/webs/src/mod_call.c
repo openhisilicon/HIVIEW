@@ -27,10 +27,12 @@ typedef struct {
 sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
 
 //bsp;
+  {GSF_ID_BSP_BASE, "GSF_ID_BSP_BASE", GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_base_t, (sjb_cb*)sjb_bind_gsf_base_t, sizeof(gsf_base_t), sizeof(gsf_base_t),0},
   {GSF_ID_BSP_TIME, "GSF_ID_BSP_TIME", GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_time_t, (sjb_cb*)sjb_bind_gsf_time_t, sizeof(gsf_time_t), sizeof(gsf_time_t),0},
   {GSF_ID_BSP_ETH,  "GSF_ID_BSP_ETH",  GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_eth_t,  (sjb_cb*)sjb_bind_gsf_eth_t,  sizeof(gsf_eth_t),  sizeof(gsf_eth_t), 0},
   {GSF_ID_BSP_NTP,  "GSF_ID_BSP_NTP",  GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_ntp_t,  (sjb_cb*)sjb_bind_gsf_ntp_t,  sizeof(gsf_ntp_t),  sizeof(gsf_ntp_t), 0},
   {GSF_ID_BSP_WIFI, "GSF_ID_BSP_WIFI", GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_wifi_t, (sjb_cb*)sjb_bind_gsf_wifi_t, sizeof(gsf_wifi_t), sizeof(gsf_wifi_t),0},
+  {GSF_ID_BSP_WLIST,"GSF_ID_BSP_WLIST",GSF_IPC_BSP,(sjb_cb*)NULL,         (sjb_cb*)sjb_bind_gsf_wifi_list_t,    0,            sizeof(gsf_wifi_list_t),1},
   {GSF_ID_BSP_VPN,  "GSF_ID_BSP_VPN",  GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_vpn_t,  (sjb_cb*)sjb_bind_gsf_vpn_t,  sizeof(gsf_vpn_t),  sizeof(gsf_vpn_t), 0},
   {GSF_ID_BSP_VSTAT,"GSF_ID_BSP_VSTAT",GSF_IPC_BSP,(sjb_cb*)sjb_bind_gsf_vpn_stat_t,(sjb_cb*)sjb_bind_gsf_vpn_stat_t,sizeof(gsf_vpn_stat_t),sizeof(gsf_vpn_stat_t), 0},
 

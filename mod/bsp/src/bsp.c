@@ -18,6 +18,8 @@
 
 #include "msg_func.h"
 
+#define SADP_ADDR "238.238.238.238"
+
 GSF_LOG_GLOBAL_INIT("BSP", 8*1024);
 
 void* bsp_pub = NULL;
@@ -107,13 +109,13 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
   {
     char buf[16*1024] = {0};
     gsf_sadp_msg_t *req = (gsf_sadp_msg_t*)buf;
-    gsf_sadp_peer_t dst = {"238.238.238.238", 8888};
+    gsf_sadp_peer_t dst = {SADP_ADDR, 8888};
     
     req->ver   = 0;
     req->modid = in->modid;
     memcpy(&req->msg, out, *osize);
     
-    printf("send MC to 238.238.238.238:8888, modid:%d, msgid:%d\n", in->modid, out->id);
+    printf("send MC to %s:8888, modid:%d, msgid:%d\n", SADP_ADDR, in->modid, out->id);
     sadp_cu_gset(&dst, req, NULL, NULL, 0);
     
     *osize = 0;
@@ -124,7 +126,24 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
   return 0;
 }
 
+int sadp_init()
+{
+      // sadp;
+    gsf_sadp_ini_t puini = {
+      .ethname = "eth0",
+      .lcaddr = "0.0.0.0",
+      .mcaddr = SADP_ADDR,
+      .mcport = 8888,
+      .cb = sadp_recv_func,
+    };
+    if(bsp_parm.base.mcastdev[0])
+    {
+      strncpy(puini.ethname, bsp_parm.base.mcastdev, sizeof(puini.ethname)-1); // "ztyxa66jmd"
+    }
 
+    int ret = sadp_pu_init(&puini);
+    printf("sadp_pu_init ret:%d\n", ret);
+}
 
 int main(int argc, char *argv[])
 {
@@ -174,25 +193,12 @@ int main(int argc, char *argv[])
     zone_set(bsp_parm.base.zone);
     ntp_set(&bsp_parm.ntp);
 
-    
-    //system("ifconfig eth0:1 192.168.1.2");
-
-
-    // sadp;
-    gsf_sadp_ini_t puini = {
-      .ethname = "eth0",
-      .lcaddr = "0.0.0.0",
-      .mcaddr = "238.238.238.238",
-      .mcport = 8888,
-      .cb = sadp_recv_func,
-    };
-    int ret = sadp_pu_init(&puini);
-    printf("sadp_pu_init ret:%d\n", ret);
-    
     void* rep = nm_rep_listen(GSF_IPC_BSP
                     , NM_REP_MAX_WORKERS
                     , NM_REP_OSIZE_MAX
                     , req_recv);
+    
+    sadp_init();
     
     while(1)
     {

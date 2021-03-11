@@ -23,7 +23,7 @@ int netcfg_find_listen_port(int nPort);
 int netcfg_add_seg_route(const char *name, const char *route, const char *net_mask);
 int netcfg_del_seg_route(const char *name, const char *route, const char *net_mask);
 int netcfg_same_subnet(char *sub_mask, char *ip_a, char *ip_b);
-
+int netcfg_status(char *name,unsigned int *flag);
 
 #ifdef __cplusplus
 }

@@ -26,7 +26,7 @@ int wifi_init(void)
 int wifi_set(gsf_wifi_t *wifi)
 {
   char cmd[256] = {0};
-  sprintf(cmd, "killall udhcpc udhcpd wpa_supplicant hostapd"); system(cmd);
+  sprintf(cmd, "killall -9 udhcpc udhcpd wpa_supplicant hostapd"); system(cmd);
   
   if(wifi->en)
   {
@@ -37,7 +37,7 @@ int wifi_set(gsf_wifi_t *wifi)
       //sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=%s/}' %s/wifi/hostapd.conf", wifi->ssid, home_path); system(cmd);
       //sprintf(cmd, "sed -i '/^wpa_passphrase=/{h;s/=.*/=%s/}' %s/wifi/hostapd.conf", wifi->pwd, home_path); system(cmd);
     }
-    sprintf(cmd, "%s/wifi/%s", home_path, (wifi->ap)?"ap_reset.sh":"wifi_reset.sh"); system(cmd);
+    sprintf(cmd, "%s/wifi/%s", home_path, (wifi->ap)?"ap.sh":"wifi.sh"); system(cmd);
   }
   
   //gsf_eth_t for wifi ipaddr;
@@ -77,6 +77,10 @@ int wifi_list(gsf_wifi_list_t list[128])
       
       cmd[strlen(cmd)-1] = '\0';
       //printf("cnt:%d, cmd:[%02x, %02x]\n", cnt, cmd[strlen(cmd)-2], cmd[strlen(cmd)-1]);
+      
+      list[cnt].quality = 0;
+      list[cnt].frequency = 0;
+      list[cnt].channle = 0;
       
       while(token = strsep(&left, "\t"))
       {

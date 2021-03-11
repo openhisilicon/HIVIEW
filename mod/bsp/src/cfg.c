@@ -24,6 +24,7 @@ gsf_bsp_def_t bsp_def = {
     .name = "HIVIEW",
     .language = 0,
     .zone     = -8*60,
+    .mcastdev = "eth0",
   },
   .eth  = {
     .dhcp = 0,
@@ -33,6 +34,7 @@ gsf_bsp_def_t bsp_def = {
     .gateway = "192.168.0.1",
     .dns1    = "202.96.134.133",
     .dns2    = "202.96.128.86",
+    //.mac   =  system is initialized using a random MAC;
   },
   .wifi = {
     .en = 0,
