@@ -1,13 +1,15 @@
 <div class="content">
     <div id="example_title" style="text-align:center">
     <button class="w2ui-btn" onclick="ircutDay()">IRC-D</button>
-    <div style="height: 15px"></div>
-    <button class="w2ui-btn" onclick="zoomPlus()">ZOOM+</button>
-    <button class="w2ui-btn" onclick="zoomMinus()">ZOOM-</button>
-    <div style="height: 15px"></div>
     <button class="w2ui-btn" onclick="ircutNight()">IRC-N</button>
+    <div style="height: 15px"></div>
+    <button class="w2ui-btn" onmousedown="zoomPlus()" onmouseup="zoomStop()">ZOOM+</button>
+    <button class="w2ui-btn" onmousedown="zoomMinus()" onmouseup="zoomStop()">ZOOM-</button>
+    <div style="height: 15px"></div>
+    <button class="w2ui-btn" onclick="lensCal()">LensCal(cautious)</button>
+    <div style="height: 15px"></div>
+    <input id="range" type="range" min="1" max="10" value="5"/>
     </div>
-    
     <div id="example_view"></div>
     <div id="example_code"></div>
 </div>
@@ -128,13 +130,95 @@ function ircutNight() {
 }
 
 function zoomPlus() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 3, "arg1": 1, "arg2": document.getElementById("range").value}
+    }
 
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
 }
 
 function zoomMinus() {
-
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 3, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
 }
 
+function zoomStop() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 2, "arg1": 0}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
 
+function lensCal() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 5, "arg1": 0}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
 
 </script>

@@ -32,6 +32,15 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
 
+
+typedef struct {
+  void *uargs;
+  int (*cb)(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs);
+}gsf_mpp_af_t;
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af);
+
+
 //vpss;
 typedef struct {
   VPSS_GRP    VpssGrp;
@@ -115,9 +124,9 @@ enum {
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
 
 enum {
-  GSF_MPP_ISP_CTL_XXX = 0,
+  GSF_MPP_ISP_CTL_IR = 0, // 0: Day, 1: Night
 };
-int gsf_mpp_isp_ctl(int ch, int id, void *args);
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
 typedef struct {
   int AeChn;

@@ -11,6 +11,8 @@ typedef struct {
   int   wdr;          // wdr mode
   int   res;          // resolution
   int   fps;          // frame rate
+  int   slave;        // slave mode
+  char  type[32];     // cpu type;
 }gsf_mpp_cfg_t;
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
@@ -29,6 +31,15 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+
+
+typedef struct {
+  void *uargs;
+  int (*cb)(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs);
+}gsf_mpp_af_t;
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af);
+
 
 //vpss;
 typedef struct {
@@ -113,13 +124,14 @@ enum {
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
 
 enum {
-  GSF_MPP_ISP_CTL_XXX = 0,
+  GSF_MPP_ISP_CTL_IR = 0, // 0: Day, 1: Night
 };
-int gsf_mpp_isp_ctl(int ch, int id, void *args);
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
 typedef struct {
   int AeChn;
   PAYLOAD_TYPE_E enPayLoad;
+  int stereo;
   void *uargs;
   int (*cb)(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 }gsf_mpp_aenc_t;
@@ -218,6 +230,9 @@ typedef struct {
 //发送视频数据到显示通道(创建VDEC通道)
 int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
 
+//发送音频数据到 audio 解码输出;
+int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+
 //解码状态;
 typedef struct {
     int left_byte;    // vdec
@@ -233,14 +248,16 @@ int gsf_mpp_vo_setfps(int volayer, int ch, int fps);
 //清除解码显示BUFF
 int gsf_mpp_vo_clear(int volayer, int ch);
 
-
 //VO-BIND-VPSS for DVR;
 typedef struct {
-  VPSS_GRP  VpssGrp; 
+  VPSS_GRP  VpssGrp;
   VPSS_CHN  VpssChn;
 }gsf_mpp_vo_src_t;
 
 int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src);
+
+//audio ao_bind_ai;
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 
 
 //设置通道源图像裁剪区域(用于局部放大)
@@ -254,5 +271,9 @@ extern int SENSOR1_TYPE;
 extern SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM];
 extern ISP_SNS_OBJ_S* g_pstSnsObj[MAX_SENSOR_NUM];
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
+
+
+#define HI_ACODEC_TYPE_INNER //for audio;
+
 
 #endif

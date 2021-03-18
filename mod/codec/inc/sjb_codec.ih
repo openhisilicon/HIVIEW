@@ -67,5 +67,12 @@ STRUCT(gsf_codec_nvr_t)
   ARRAY(gsf_venc_t, venc, GSF_CODEC_VENC_NUM);
 };
 
+STRUCT(gsf_lens_t)
+{
+  FIELD(int, cmd); // GSF_LENS_CMD_E
+  FIELD(int, arg1);
+  FIELD(int, arg2);
+};
+
 
 #pragma pack(pop)

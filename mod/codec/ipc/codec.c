@@ -556,6 +556,9 @@ int mpp_start(gsf_bsp_def_t *def)
     
     gsf_mpp_vi_start(&vi);
     
+    //start af;
+    gsf_lens_af_start(0);
+    
     // vpss start;
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
     for(i = 0; i < 4; i++)

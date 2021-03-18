@@ -664,7 +664,12 @@ HI_S32 SAMPLE_COMM_REGION_GetMinHandle(RGN_TYPE_E enType);
 
 HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAiAo(AUDIO_DEV AiDev, AI_CHN AiChn, AUDIO_DEV AoDev, AO_CHN AoChn);
 HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAiAenc(AUDIO_DEV AiDev, AI_CHN AiChn, AENC_CHN AeChn);
+
 HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAencAdec(AENC_CHN AeChn, ADEC_CHN AdChn, FILE* pAecFd);
+//maohw
+HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAencAdecCb(AENC_CHN AeChn, int (*cb)(AENC_CHN AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs), void *uargs);
+
+
 HI_S32 SAMPLE_COMM_AUDIO_CreatTrdFileAdec(ADEC_CHN AdChn, FILE* pAdcFd);
 HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAoVolCtrl(AUDIO_DEV AoDev);
 HI_S32 SAMPLE_COMM_AUDIO_DestoryTrdAi(AUDIO_DEV AiDev, AI_CHN AiChn);
@@ -701,7 +706,7 @@ HI_VOID SAMPLE_COMM_VDEC_StopGetPic(HI_S32 s32ChnNum, VDEC_THREAD_PARAM_S *pstVd
 HI_S32 SAMPLE_COMM_VDEC_Start(HI_S32 s32ChnNum, SAMPLE_VDEC_ATTR *pastSampleVdec);
 HI_S32 SAMPLE_COMM_VDEC_Stop(HI_S32 s32ChnNum);
 
-//maohw
+//maohw ////
 #define MAX_SENSOR_NUM      2
 #define ISP_MAX_DEV_NUM     4
 #include "mpp.h"

@@ -40,6 +40,13 @@ extern VB_POOL g_ahPicVbPool[VB_MAX_POOLS];
 extern VB_POOL g_ahTmvVbPool[VB_MAX_POOLS];
 extern HI_VOID SAMPLE_VDEC_HandleSig(HI_S32 signo);
 
+//from sample_af.c;
+extern int sample_af_main(gsf_mpp_af_t *af);
+
+//from sample_ir_auto.c;
+extern HI_S32 ISP_IrSwitchToIr(VI_PIPE ViPipe);
+extern HI_S32 ISP_IrSwitchToNormal(VI_PIPE ViPipe);
+
 
 typedef struct {
   int   type;
@@ -260,6 +267,13 @@ int gsf_mpp_vi_stop()
   SAMPLE_COMM_SYS_Exit();
   return s32Ret;
 }
+
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af)
+{
+  return sample_af_main(af);
+}
+
 
 
 int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
@@ -492,15 +506,18 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
-int gsf_mpp_isp_ctl(int ch, int id, void *args)
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
 {
   int ret = -1;
   switch(id)
   {
+    case GSF_MPP_ISP_CTL_IR:
+      ret = ((int)args)?ISP_IrSwitchToIr(ViPipe):ISP_IrSwitchToNormal(ViPipe);
+      break;
     default:
       break;
   }
-  printf("ch:%d, id:%d, ret:%d\n", ch, id, ret);
+  printf("ViPipe:%d, id:%d, ret:%d\n", ViPipe, id, ret);
   return ret;
 }
 

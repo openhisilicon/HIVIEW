@@ -190,11 +190,17 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
     case GSF_LENS_IRC:
       rsp->err = gsf_lens_ircut(req->ch, lens->arg1);
       break;
+    case GSF_LENS_STOP:
+      rsp->err = gsf_lens_stop(req->ch);
+      break;
     case GSF_LENS_ZOOM:
       rsp->err = gsf_lens_zoom(req->ch, lens->arg1, lens->arg2);
       break;
     case GSF_LENS_FOCUS:
       rsp->err = gsf_lens_focus(req->ch, lens->arg1, lens->arg2);
+      break;
+    case GSF_LENS_CAL:
+      rsp->err = gsf_lens_cal(req->ch);
       break;
   }
   return;

@@ -18,11 +18,11 @@ INCS := -I$(HOME) -I$(GSF_DEV_TYPE) -Iinc \
 SRCS := $(shell find $(GSF_DEV_TYPE) -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lpthread -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lm
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lcomm -lpthread -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lm
          
 ifeq ($(GSF_CPU_ARCH), 3516a)
-LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog -l_iniparser \
-        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker -l_hiacs -l_hiir_auto
 else ifeq ($(GSF_CPU_ARCH), 3519)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
@@ -30,7 +30,7 @@ else ifeq ($(GSF_CPU_ARCH), 3516d)
 #LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
 #        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
-        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker
+        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker -l_hiir_auto
 else ifeq ($(GSF_CPU_ARCH), 3519a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lhive_RES -laacenc -laacdec

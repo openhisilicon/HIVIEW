@@ -40,6 +40,13 @@ extern VB_POOL g_ahPicVbPool[VB_MAX_POOLS];
 extern VB_POOL g_ahTmvVbPool[VB_MAX_POOLS];
 extern HI_VOID SAMPLE_VDEC_HandleSig(HI_S32 signo);
 
+//from sample_af.c;
+extern int sample_af_main(gsf_mpp_af_t *af);
+
+//from sample_ir_auto.c;
+extern HI_S32 ISP_IrSwitchToIr(VI_PIPE ViPipe);
+extern HI_S32 ISP_IrSwitchToNormal(VI_PIPE ViPipe);
+
 
 typedef struct {
   int   type;
@@ -108,11 +115,13 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     
   };
 
+
 static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
 {
   int i = 0;
   for(i = 0; i < SAMPLE_SNS_TYPE_BUTT; i++)
   {
+    //printf("libsns[%d].name:%s, name:%s\n", i, libsns[i].name, name);
     if(strstr(libsns[i].name, name))
     {
       return &libsns[i];
@@ -277,6 +286,13 @@ int gsf_mpp_vi_stop()
   SAMPLE_COMM_SYS_Exit();
   return s32Ret;
 }
+
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af)
+{
+  return sample_af_main(af);
+}
+
 
 
 int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
@@ -509,28 +525,57 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
-int gsf_mpp_isp_ctl(int ch, int id, void *args)
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
 {
   int ret = -1;
   switch(id)
   {
+    case GSF_MPP_ISP_CTL_IR:
+      ret = ((int)args)?ISP_IrSwitchToIr(ViPipe):ISP_IrSwitchToNormal(ViPipe);
+      break;
     default:
       break;
   }
-  printf("ch:%d, id:%d, ret:%d\n", ch, id, ret);
+  printf("ViPipe:%d, id:%d, ret:%d\n", ViPipe, id, ret);
   return ret;
 }
 
-// only test;
-static pthread_t aio_pid;
-extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
-  return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+  static int init = 0;
+  
+  if(!init)
+  {
+    init = 1;
+    extern HI_S32 sample_audio_init();
+    sample_audio_init();
+  }
+  
+  if(aenc == NULL)
+  { //test ai->ao;
+    static pthread_t aio_pid;
+    extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
+    return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+  }
+  else
+  {
+    extern HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc);
+    return SAMPLE_AUDIO_AiAenc(aenc);
+  }
+  return 0;
 }
 
-int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
+int gsf_mpp_audio_stop(gsf_mpp_aenc_t *aenc)
 {
+  if(aenc == NULL)
+  {
+    ;  
+  }
+  else
+  {
+    extern HI_S32 SAMPLE_AUDIO_AiAencStop(gsf_mpp_aenc_t *aenc);
+    return SAMPLE_AUDIO_AiAencStop(aenc);
+  }
   return 0;
 }
 
@@ -1118,6 +1163,20 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   //printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x\n", ch, s32Ret);
   return err;
 }
+
+
+int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+{
+  //audio dec bind vo;
+  return 0;
+}
+
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
+{
+  //ao bind ai;
+  return 0;
+}
+
 
 //Çå³ý½âÂëÏÔÊ¾BUFF
 int gsf_mpp_vo_clear(int volayer, int ch)
