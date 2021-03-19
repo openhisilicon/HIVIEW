@@ -15,6 +15,7 @@ STRUCT(gsf_base_t)
   STRING(name,   32);   // name;
   FIELD(int, language); // language;
   FIELD(int, zone);     // timezone;
+  STRING(mcastdev, 32); // mcast dev eth0, vlan ...
 };
 
 STRUCT(gsf_user_t)
@@ -32,6 +33,7 @@ STRUCT(gsf_eth_t)
   STRING(gateway, 64);
   STRING(dns1,    64);
   STRING(dns2,    64);
+  STRING(mac,     64);
 };
 
 STRUCT(gsf_wifi_t)
@@ -79,6 +81,7 @@ STRUCT(gsf_vpn_t)
   STRING(type,  64);  // "zerotier"
   STRING(nwid,  64);  // "b6079f73c6705645"
   STRING(auth,  64);  // "auth"
+  
 };
 
 STRUCT(gsf_vpn_stat_t)
