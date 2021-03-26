@@ -20,6 +20,8 @@
 
 ### Thanks for your support
 
+#### Paypal:
 https://www.paypal.com/paypalme/hiviewtech
 
+#### Wechat:
 ![pay](/res/pay.jpg)
