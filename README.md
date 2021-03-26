@@ -18,5 +18,8 @@
 <img src=/res/multi-sns.jpg width=88% />
 <img src=/res/mipi-dsi.jpg width=88% />
 
-### Thank you for your support
+### Thanks for your support
+
+https://www.paypal.com/paypalme/hiviewtech
+
 ![pay](/res/pay.jpg)
