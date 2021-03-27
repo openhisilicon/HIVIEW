@@ -25,12 +25,14 @@ extern "C" {
 
 #include "hi_common.h"
 #include "sample_comm.h"
+#include "mppex.h"
 
 #define MIPI_DEV_NODE       "/dev/hi_mipi"
 
 #define MAX_FRAME_WIDTH     8192
 
 SAMPLE_VI_DUMP_THREAD_INFO_S g_stViDumpRawThreadInfo;
+
 
 
 combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_NOWDR_ATTR =
@@ -2660,12 +2662,13 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX415_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             break;
-            
+
         default:
             SAMPLE_PRT("not support enSnsType: %d\n", enSnsType);
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
     }
 
+	mppex_GetComboAttrBySns(enSnsType, MipiDev, pstComboAttr);
 
     return HI_SUCCESS;
 }
@@ -3103,7 +3106,8 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_DEV_ATTR_S
         default:
             memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX327_2M_BASE, sizeof(VI_DEV_ATTR_S));
     }
-
+	
+	mppex_GetDevAttrBySns(enSnsType, pstViDevAttr);
     return HI_SUCCESS;
 }
 
@@ -3230,7 +3234,8 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
         default:
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_1920x1080_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
     }
-
+	
+	mppex_GetPipeAttrBySns(enSnsType, pstPipeAttr);
     return HI_SUCCESS;
 }
 
@@ -3330,7 +3335,7 @@ HI_S32 SAMPLE_COMM_VI_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S
         default:
             memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_1920x1080_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
     }
-
+	mppex_GetChnAttrBySns(enSnsType, pstChnAttr);
     return HI_SUCCESS;
 }
 
@@ -4737,7 +4742,7 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E* penS
             *penSize = PIC_1080P;
             break;
     }
-
+	mppex_GetSizeBySensor(enMode, penSize);
     return s32Ret;
 }
 
@@ -4813,6 +4818,7 @@ HI_S32 SAMPLE_COMM_VI_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu3
 
     }
 
+	mppex_GetFrameRateBySensor(enMode, pu32FrameRate);
     return s32Ret;
 }
 
@@ -5474,7 +5480,8 @@ HI_S32 SAMPLE_VI_GetFrameBlkInfo(SAMPLE_VI_FRAME_CONFIG_S *pstFrmCfg, HI_S32 s32
 
     enPixelFormat = pstFrmCfg->enPixelFormat;
 
-    if (enPixelFormat == PIXEL_FORMAT_YVU_SEMIPLANAR_422)
+    if (enPixelFormat == PIXEL_FORMAT_YVU_SEMIPLANAR_422 
+      ||enPixelFormat == PIXEL_FORMAT_YUV_SEMIPLANAR_422) //maohw
     {
         u32Stride = ALIGN_UP((pstFrmCfg->u32Width * 8 + 7) >> 3, DEFAULT_ALIGN);
         u32LStride  = u32Stride;

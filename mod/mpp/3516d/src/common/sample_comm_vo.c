@@ -3924,7 +3924,7 @@ static HI_VOID SAMPLE_PRIVATE_VO_InitScreen720x1280(HI_S32 s32fd)
 }
 
 // maohw .beg
-static int DSI_Single(HI_S32 fd, int addr ,int val)
+static void DSI_Single(HI_S32 fd, int addr ,int val)
 {
     HI_S32     s32Ret;
     cmd_info_t cmd_info;
@@ -3947,7 +3947,7 @@ static int DSI_Single(HI_S32 fd, int addr ,int val)
 
 }
 
-static int DSI_Cmd(HI_S32 fd, int val)
+static void DSI_Cmd(HI_S32 fd, int val)
 {
     HI_S32     s32Ret;
     cmd_info_t cmd_info;
@@ -3969,7 +3969,7 @@ static int DSI_Cmd(HI_S32 fd, int val)
 
 }
 
-static int DSI_Multi3(HI_S32 fd, int addr , char val0, char val1, char val2)
+static void DSI_Multi3(HI_S32 fd, int addr , char val0, char val1, char val2)
 {
   HI_S32     s32Ret;
   cmd_info_t cmd_info;
