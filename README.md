@@ -5,7 +5,7 @@
 ## RoadMap:
 ### 1. Design products in the form of core board + base board (customizable);
 <img src=/res/16dv300-c.jpg width=200 height=200 /> <img src=/res/59v200-c.jpg width=200 height=200 /><img src=/res/16av300-c.jpg width=200 height=200 />
-<img src=/res/16dv300-b.jpg width=75% />
+<img src=/res/16dv300-b1.jpg width=41% /> <img src=/res/16dv300-b.jpg width=41% />
 ### 2. Support users to develop their own products based on OpenHisilicon;
 <img src=/res/p1.jpg width=360 height=250 /> <img src=/res/p2.jpg width=360 height=250 />
 ### 3. https://github.com/openhisilicon/PRODUCT
