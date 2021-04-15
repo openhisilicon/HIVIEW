@@ -79,8 +79,9 @@ int main(int argc, char *argv[])
 
     {
       nvt_parm_t* parm = (nvt_parm_t*)calloc(1, sizeof(nvt_parm_t));
-      parm->port = onvif_cfg.port;
+      parm->port   = onvif_cfg.port;
       parm->ch_num = onvif_cfg.chnum;
+      parm->auth   = onvif_cfg.auth;
       //parm->msg_cb = NULL;
       nvt_init(parm);
       nvt_start();

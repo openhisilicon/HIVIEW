@@ -1390,14 +1390,43 @@ int set_dev_portinfo(port_info_t *info)
     return ret;
 }
 
+
+static int getuser(gsf_user_t *user, int num)
+{
+  GSF_MSG_DEF(gsf_msg_t, msg, 4*1024);
+  int ret = GSF_MSG_SENDTO(GSF_ID_BSP_USER, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
+  gsf_user_t *userlist = (gsf_user_t*)__pmsg->data;
+  int userlist_num = __pmsg->size/sizeof(gsf_user_t);
+  printf("GET GSF_ID_BSP_USER To:%s, ret:%d, userlist num:%d\n"
+        , GSF_IPC_BSP, ret, __pmsg->size/sizeof(gsf_user_t));
+
+  if(ret < 0)
+    return ret;
+
+  if(user)
+    memcpy(user, userlist, ((userlist_num > num)?num:userlist_num)*sizeof(gsf_user_t));
+
+  return ret;
+}
+
 int get_user_info(user_info_t * info)
 {
     int ret = 0;
-#if 0
-    memset(info->buf, 0, sizeof(info->buf));
-    memcpy(info->buf, ((sdk_msg_t*)msg_buf)->data, sizeof(info->buf));
-    info->size = (((sdk_msg_t*)msg_buf)->size)/sizeof(sdk_user_right_t);
-#endif
+
+    //only admin user for test;
+    static gsf_user_t userlist[8];
+    if(userlist[0].name[0] == '\0')
+    {
+      getuser(userlist, 8);
+    }
+      
+    user_right_t *ur = (user_right_t*)info->buf;
+    snprintf(ur->user_name, sizeof(ur->user_name)-1, "%s", userlist[0].name);
+    snprintf(ur->user_pwd, sizeof(ur->user_pwd)-1, "%s", userlist[0].pwd);
+    ur->local_right = ur->remote_right = userlist[0].caps;
+    printf("userlist[0] name:[%s], pwd:[%s]\n", userlist[0].name, userlist[0].pwd);
+    info->size = 1;
+
     return ret;
 }
 
@@ -1661,6 +1690,8 @@ int get_recording_info(recording_info_t *info, char *token)
 }
 
 
+//To be improved
+
 #include "fw/comm/inc/serial.h"
 #define TTYAMA4 "/dev/ttyAMA4"
 static int serial_fd = 0;
@@ -1669,8 +1700,11 @@ int ptz_ctl(int chs, int action, int speed)
 {
   if(serial_fd <= 0)
   {
-    system("himm 0x120400A0  2;");
-    system("himm 0x120400A4  2;");
+    #if defined(GSF_CPU_3519)
+    system("himm 0x120400A0 2;himm 0x120400A4 2;");
+    #elif defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+    system("himm 0x111F0000 0x502;himm 0x111F0004 0x402;");
+    #endif
     
     serial_fd = open(TTYAMA4, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
     if(serial_fd > 0)

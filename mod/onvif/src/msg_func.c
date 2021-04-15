@@ -28,13 +28,18 @@ static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   if(req->set)
   {
     gsf_onvif_cfg_t *cfg = (gsf_onvif_cfg_t*)req->data;
+    onvif_cfg = *cfg;
+    json_parm_save(onvif_parm_path, &onvif_cfg);
+    rsp->err  = 0;
+    rsp->size = 0;
   }
   else
   {
     gsf_onvif_cfg_t *cfg = (gsf_onvif_cfg_t*)rsp->data;
+    *cfg = onvif_cfg;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_onvif_cfg_t);
   }
-   
-   
 }
 
 

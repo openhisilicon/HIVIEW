@@ -36,7 +36,18 @@ int nvt_wsse_auth(struct soap *soap)
     	}
 
       // find pwd: soap->header->wsse__Security->UsernameToken->Username
-      char pwd[32] = "12345";
+      printf("%s => check find Username:[%s] ...\n", __func__, soap->header->wsse__Security->UsernameToken->Username);
+      user_info_t userlist = {0,};
+      user_right_t *ur = (user_right_t*)userlist.buf;
+      
+      get_user_info(&userlist);
+      if(!userlist.size || strcmp(ur->user_name, soap->header->wsse__Security->UsernameToken->Username))
+      {
+        printf("%s => check find Username:[%s], err.\n", __func__, soap->header->wsse__Security->UsernameToken->Username);
+        return -1;
+      }
+      printf("%s => check find ok Username:[%s], pwd[%s].\n", __func__, ur->user_name, ur->user_pwd);
+      char *pwd =  ur->user_pwd;
   		{
   			if(soap_wsse_verify_Password(soap, pwd) == SOAP_OK)
   			{
@@ -5726,7 +5737,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tptz__SetHomePosition(struct soap* soap, struct _tpt
 
 SOAP_FMAC5 int SOAP_FMAC6 __tptz__ContinuousMove(struct soap* soap, struct _tptz__ContinuousMove *tptz__ContinuousMove, struct _tptz__ContinuousMoveResponse *tptz__ContinuousMoveResponse)
 {
-  #define VISCA_MAX_SPEED 16
+  #define VISCA_MAX_SPEED 8
   int index = -1; //tptz__ContinuousMove->ProfileToken
   //tptz__ContinuousMove->Timeout
   printf("%s => ProfileToken:[%s]\n", __func__, tptz__ContinuousMove->ProfileToken);
