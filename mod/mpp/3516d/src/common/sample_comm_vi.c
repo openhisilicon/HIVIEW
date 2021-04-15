@@ -2050,7 +2050,7 @@ static VI_CHN_ATTR_S CHN_ATTR_4000x3000_420_SDR8_LINEAR =
     { -1, -1}
 };
 
-static VI_CHN_ATTR_S CHN_ATTR_3840x2160_420_SDR8_LINEAR =
+VI_CHN_ATTR_S CHN_ATTR_3840x2160_420_SDR8_LINEAR =
 {
     {3840, 2160},
     PIXEL_FORMAT_YVU_SEMIPLANAR_420,
@@ -4894,7 +4894,7 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
             dev = 0;
             break;
     }
-
+    mppex_GetComboDevBySensor(enMode, s32SnsIdx, &dev);
     return dev;
 }
 

@@ -6,12 +6,12 @@
  *  This file only for hiview-tech
  * DESCRIBE:
  *  Support yuv input:
- *  MIPI_YUV_2M_60FPS_8BIT
- *  MIPI_YUV_8M_30FPS_8BIT
- *  MIPI_YUVPKG_2M_60FPS_8BIT
- *  BT1120_YUV_2M_60FPS_8BIT
- *  BT656_YUV_0M_60FPS_8BIT
- *  BT601_YUV_0M_60FPS_8BIT
+ *  v MIPI_YUV_2M_60FPS_8BIT
+ *  v MIPI_YUV_8M_30FPS_8BIT
+ *  v MIPI_YUVPKG_2M_60FPS_8BIT
+ *  v BT1120_YUV_2M_60FPS_8BIT
+ *  x BT656_YUV_0M_60FPS_8BIT
+ *  x BT601_YUV_0M_60FPS_8BIT
  */
 
 #include "mpp.h"
@@ -22,6 +22,7 @@ int mppex_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR_S* pstPipeA
 int mppex_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S* pstChnAttr);
 int mppex_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E* penSize);
 int mppex_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu32FrameRate);
+int mppex_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 s32SnsIdx, combo_dev_t* dev);
 
 int mppex_hook_register();
 int mppex_hook_sns(gsf_mpp_cfg_t *cfg);

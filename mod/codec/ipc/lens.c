@@ -6,7 +6,7 @@
 #include "lens.h"
 #include "mpp.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 static gsf_lens_ini_t _ini;
 static pthread_t serial_tid;

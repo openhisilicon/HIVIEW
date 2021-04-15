@@ -154,6 +154,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
 
 int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 {
+  int i = 0;
   char snsstr[64];
   sprintf(snsstr, "%s-%d-%d-%d-%d"
           , cfg->snsname, cfg->lane, cfg->wdr, cfg->res, cfg->fps);
@@ -169,8 +170,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   snscnt = cfg->snscnt;
   char loadstr[256];
-  sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, cfg->snsname);
-  int i = 0;
+  if(strstr(cfg->snsname, "bt1120"))
+    sprintf(loadstr, "%s/ko/load3516dv300 -i -yuv0 1", path);
+  else
+    sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, cfg->snsname);
+
   for(i = 1; i < snscnt; i++)
   {
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
@@ -222,9 +226,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg);
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
-  #if 1 //NOTICE: mppex only for hiview-tech, other hardware #if 0;
   mppex_hook_register();
-  #endif
   	
   if(cfg && cfg->snscnt > 0)
     return gsf_mpp_cfg_sns(path, cfg);
