@@ -20,6 +20,7 @@ enum {
     GSF_CLI_POWEROFF = 0,
     GSF_CLI_RESTART  = 1,
     GSF_CLI_REGISTER = 2,   ///< gsf_mod_reg_t
+    GSF_CLI_VERSION  = 3,
 };
 
 

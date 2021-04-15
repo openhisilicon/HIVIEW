@@ -192,10 +192,33 @@ int zone_set(int zone)
   printf("zone_env:[%s]\n", zone_env);
   putenv(zone_env);
   
-  sprintf(cmd, "sed -i '/^export TZ=/{h;s/=.*/=%s/};${x;/^$/{s//export TZ=%s/;H};x}' /etc/profile", z, z);
+  //sprintf(cmd, "sed -i '/^export TZ=/{h;s/=.*/=%s/};${x;/^$/{s//export TZ=%s/;H};x}' /etc/profile", z, z);
   //sprintf(cmd, "echo -e \"\nexport TZ=%s\" >> /etc/profile", z);
-  printf("cmd:[%s]\n", cmd);
-  system(cmd);
+  //printf("cmd:[%s]\n", cmd);
+  //system(cmd);
+
+  FILE *fp=fopen("/etc/profile","rb+");
+  if(fp)
+  {
+  	char data[16*1024] = {0};
+  	char *end = data + fread(data,1,sizeof(data),fp);fseek(fp,0,SEEK_SET);
+  	char *tzb = strstr(data, "export TZ=");
+  	if(!tzb)
+  	{
+  	  fwrite(data, 1, end-data, fp);
+  	}
+  	else
+  	{ 
+  	  fwrite(data, 1, tzb-data, fp);
+  	  char *tze = strstr(tzb, "\n");
+  	  if(tze) fwrite(tze+1, 1, end-(tze+1), fp);
+  	}
+  	
+  	if(end[-1] != '\n') fprintf(fp, "\n");
+    fprintf(fp, "export TZ=%s\n", z);
+    
+    fclose(fp);
+  }
   tzset();
   
   printf( "daylight = %d\n", daylight);

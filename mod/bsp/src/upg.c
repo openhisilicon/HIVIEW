@@ -31,6 +31,7 @@ void* upg_task(void *parm)
     	  break;
     	}
   }
+  gcb = NULL;
 }
 
 int upg_start(char *path, int(*cb)(int progress, void *u), void *u)
@@ -44,4 +45,10 @@ int upg_start(char *path, int(*cb)(int progress, void *u), void *u)
   system(str);
   
   return pthread_create(&gpid, NULL, upg_task, (void*)NULL);
+}
+
+
+int upg_runing(void)
+{
+  return gcb?1:0; 
 }

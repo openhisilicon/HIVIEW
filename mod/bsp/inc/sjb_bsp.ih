@@ -22,6 +22,7 @@ STRUCT(gsf_user_t)
 {
   STRING(name,   32);
   STRING(pwd,    32);
+  FIELD(uint64, caps);
 };
 
 STRUCT(gsf_eth_t)

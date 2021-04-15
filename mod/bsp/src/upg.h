@@ -21,4 +21,7 @@
 // start upgrade;
 int upg_start(char *path, int(*cb)(int progress, void *u), void *u);
 
+// isruning;
+int upg_runing(void);
+
 #endif

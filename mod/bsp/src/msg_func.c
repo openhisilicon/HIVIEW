@@ -15,7 +15,7 @@
 #include "msg_func.h"
 
 extern void* bsp_pub;
-
+extern char home_path[128];
 
 gsf_mod_reg_t gmods[GSF_MOD_ID_END] = {
   [GSF_MOD_ID_BSP] = {.uri = GSF_IPC_BSP},
@@ -67,6 +67,26 @@ static void msg_func_cli(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
         
         rsp->size = sizeof(gmods);
         memcpy(rsp->data, gmods, sizeof(gmods));
+      }
+      break;
+    case GSF_CLI_VERSION:
+      {
+        // get version-string;
+        FILE *fp;
+        char buf[256] = {0};
+        sprintf(buf, "cat %s/version", home_path);
+        if((fp = popen(buf, "r")) != NULL)
+        {
+          buf[0] = '\0';
+          while(fgets(buf, 256, fp) != NULL)
+          {
+            sprintf(rsp->data, "%s", buf);
+            break;
+          }
+          pclose(fp);
+        }
+        rsp->size = strlen(rsp->data)+1;
+        rsp->err = 0;
       }
       break;
     default:
@@ -126,8 +146,20 @@ static void msg_func_upg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   int ret = 0;
   rsp->size = 0;
+  rsp->err = 0;
   
-  rsp->err = upg_start(req->data, upg_cb, NULL);
+  if(req->sid == GSF_SID_BSP_UPG_REBOOT)
+  {
+    if(!upg_runing())
+    {
+      printf("reboot system...\n");
+      system("nohup sh -c 'sleep 2; reboot' > /tmp/reboot.log&");
+    }
+  }
+  else if(strlen(req->data))
+  {
+    rsp->err = upg_start(req->data, upg_cb, NULL);
+  }
 }
 
 static void msg_func_def(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)

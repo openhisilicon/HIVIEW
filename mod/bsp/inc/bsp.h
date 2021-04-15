@@ -30,6 +30,11 @@ enum {
 };
 
 enum {
+  GSF_SID_BSP_UPG_UPGRADE = 0, // /path/xxx.upg;
+  GSF_SID_BSP_UPG_REBOOT  = 1, // reboot;
+};
+
+enum {
   GSF_EV_BSP_REBOOT  = 1, // nil;
   GSF_EV_BSP_UPGRADE = 2, // nil;
   GSF_EV_BSP_MOD_REG = 3, // gsf_mod_reg_t;
