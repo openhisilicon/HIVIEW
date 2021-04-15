@@ -1,0 +1,278 @@
+.date-box {
+    position: absolute;
+    box-sizing: border-box;
+    width: 308px;
+    cursor: default;
+    border: 1px solid #e9ecef;
+    padding: 10px 5px;
+    text-align: center;
+    box-shadow: 1px 1px 10px #dee2e6;
+    background-color: #fff;
+    font-size: 14px;
+    outline: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.date-area-ymt {
+    display: flex;
+    box-sizing: border-box;
+}
+
+.date-area-year,
+.date-area-month,
+.date-area-today {
+    position: relative;
+    box-sizing: border-box;
+    padding: 0 4px;
+}
+
+.date-area-year {
+    flex: 0 1 44%;
+}
+
+.date-area-month {
+    flex: 0 1 38%;
+}
+
+.date-area-today {
+    flex: 0 1 18%;
+}
+
+.date-area-week {
+    display: flex;
+    box-sizing: border-box;
+    padding: 5px 0;
+}
+
+.date-area-day {
+    display: flex;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+
+.date-area-tc {
+    display: flex;
+    position: relative;
+}
+
+.date-area-time,
+.date-area-clear,
+.date-area-ok {
+    border-top: 1px solid #e9ecef;
+    padding-top: 10px;
+}
+
+.date-area-time {
+    flex: 0 1 64%;
+}
+
+.date-area-clear,
+.date-area-ok {
+    flex: 0 1 18%;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.date-select-year,
+.date-select-month,
+.date-select-hour,
+.date-select-minute,
+.date-select-second {
+    display: flex;
+    flex-wrap: wrap;
+    position: absolute;
+    left: 0;
+    width:100%;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    border-top: none;
+    background-color: #f8f9fa;
+    z-index: 9999;
+}
+
+.date-select-month {
+    width: 100%;
+}
+
+.date-select-year {
+    height: 180px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    padding: 10px 0;
+}
+
+.date-select-hour,
+.date-select-minute,
+.date-select-second {
+    bottom: 48px;
+}
+
+.date-option-year,
+.date-option-month,
+.date-option-hour,
+.date-option-minute,
+.date-option-second {
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 500;
+}
+
+.date-option-year,
+.date-option-month {
+    flex: 0 1 33.33333333%;
+    height: 40px;
+    line-height: 40px;
+}
+
+.date-option-year:hover,
+.date-option-month:hover,
+.date-option-hour:hover,
+.date-option-minute:hover,
+.date-option-second:hover {
+    background-color: #dee2e6;
+}
+
+.date-option-year.selected,
+.date-option-month.selected {
+    background-color: #007bff;
+}
+
+.date-option-hour {
+    flex: 0 1 16.66666666%;
+    line-height: 60px;
+}
+
+.date-option-minute,
+.date-option-second {
+    flex: 0 1 10%;
+    line-height: 40px;
+}
+
+.date-btn-year,
+.date-btn-month,
+.date-btn-today,
+.date-btn-prev,
+.date-btn-next,
+.date-btn-time,
+.date-btn-clear,
+.date-btn-ok {
+    display: inline-block;
+    font-weight: 600;
+    border: 1px solid #e9ecef;
+    border-radius: 3px;
+    height: 26px;
+    line-height: 26px;
+    cursor: pointer;
+}
+
+.date-btn-year,
+.date-btn-month {
+    box-sizing: border-box;
+    color: #333333;
+    width: calc(100% - 52px);
+}
+
+.date-btn-today,
+.date-btn-prev,
+.date-btn-next {
+    box-sizing: border-box;
+    color: #007bff;
+}
+
+.date-btn-today,
+.date-btn-clear,
+.date-btn-ok {
+    width: 100%;
+}
+
+.date-btn-clear,
+.date-btn-ok {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.date-btn-prev,
+.date-btn-next {
+    width: 26px;
+}
+
+.date-btn-time {
+    font-weight: 500;
+    width: 32px;
+    margin: 0 5px;
+}
+
+.date-btn-time.open {
+    color: #fff;
+    background-color: #007bff;
+}
+
+.date-item-week,
+.date-item-day {
+    flex: 0 1 14.28571428%;
+    font-weight: 500;
+    height: 28px;
+    line-height: 28px;
+    border-radius: 3px;
+}
+
+.date-item-week {
+    font-weight: 600;
+}
+
+.date-item-weekend {
+    color: #dc3545;
+}
+
+.date-item-day:hover {
+    background-color: #e9ecef;
+}
+
+.date-item-dayoutmonth {
+    opacity: .3;
+}
+
+.date-item-day.selected:not(.date-item-today) {
+    background-color: #dee2e6;
+}
+
+.date-item-today {
+    color: #fff;
+    background-color: #007bff;
+}
+
+@media only screen and (max-width: 576px) {
+  .date-box {
+    position: fixed;
+    width: calc(100vw - 2px);
+    height: 372px;
+    border-color: #007bff;
+    right: 0;
+    margin: auto;
+  }
+    .date-select-year{
+            height: 240px;
+}
+  .date-option-year,  .date-option-month{
+    height: 48px;
+    line-height: 48px;
+  }
+  .date-btn-year, .date-btn-month, .date-btn-today, .date-btn-prev, .date-btn-next, .date-btn-time, .date-btn-clear, .date-btn-ok {
+    height: 40px;
+    line-height: 40px;
+  }
+
+  .date-btn-year, .date-btn-month {
+    width: calc(100% - 80px);
+  }
+
+  .date-btn-prev, .date-btn-next {
+    width: 40px;
+  }
+  .date-item-week, .date-item-day{
+    height: 36px;
+    line-height: 36px;
+  }
+}

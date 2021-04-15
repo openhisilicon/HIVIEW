@@ -16,6 +16,7 @@ extern "C" {
 
 enum {
   GSF_ID_WEBS_CFG = 1,   // gsf_webs_cfg_t;
+  GSF_ID_WEBS_USER= 2,   // gsf_user_t[N];
   GSF_ID_WEBS_END
 };
 

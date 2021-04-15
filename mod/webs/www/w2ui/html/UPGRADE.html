@@ -17,14 +17,52 @@
   <div id="upprog"></div>
   <div id="wrprog"></div>
   <br><br>
+  <button id="reboot-id" class="btn" onclick="">REBOOT</button>
 </td>
 
 <!--CODE-->
 <script>
 $(function () {
   
+    $("#reboot-id").click(function(){
+      
+      w2confirm('Confirm reboot device?', 
+      function (btn) 
+      {
+         console.log(btn); 
+         if(btn == 'Yes')
+         {
+            rebootDevice();
+         }
+      })
+      
+    });
+  
 });
 
+
+function rebootDevice() {
+  const req = {
+    "id": "GSF_ID_BSP_UPG",
+    "args":"G0C0S1",
+    "data":{}
+  }
+  
+  $.ajax({
+    async: true,
+    type: "post",
+    url:  '/control?id=' + req.id + '&' + 'args=' + req.args,
+    data: JSON.stringify(req.data),
+    contentType: 'application/json', // req body type;
+    dataType: "json", // rsp body type;
+    success: function (data) {
+      rsp_edit.set(data);
+    },
+    error: function () {
+      //TODO;
+    }
+  });
+}
 
 //upgrade
 function updateProgress(evt) {
@@ -35,7 +73,14 @@ function updateProgress(evt) {
 }
 
 function uploadFile() {
-  var file_data = new FormData(document.getElementById('filename'));
+  //var file_data = new FormData(document.getElementById('filename'));
+  var file_data = new FormData();
+  
+  // formData.append('userpic[]', myFileInput.files[0], 'chris1.jpg');
+  // formData.append('userpic[]', myFileInput.files[1], 'chris2.jpg');
+  //file_data.append(file.name, file.files[0], file.files[0].name);
+  file_data.append("my_var_name", file.files[0], file.files[0].name);
+  
   var timer;
   $.ajax({
   	url: 'http://' + window.location.hostname + '/upload',

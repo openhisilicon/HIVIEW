@@ -97,7 +97,7 @@ $(function () {
     $('#toolbar').w2toolbar({
             name: 'live-toolbar',
             items: [
-                { type: 'button', id: 'refresh', text: 'Refresh', icon: 'fa-wrench' },
+                { type: 'button', id: 'play', text: 'Play', icon: 'fa-wrench' },
                 { type: 'break' },
                 { type: 'radio', id: 'stream1', text: 'Stream1', icon: 'fa-heart' },
                 { type: 'radio', id: 'stream2', text: 'Stream2', icon: 'fa-star' },
@@ -106,7 +106,7 @@ $(function () {
             ],
             onClick: function (event) {
                 console.log('Target: '+ event.target, event);
-                if(event.target == 'refresh')
+                if(event.target == 'play')
                 {
                   flv_load();
                 } 

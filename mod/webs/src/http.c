@@ -18,6 +18,7 @@
 #include "gsf_urldec.h"
 
 #include "http.h"
+#include "cfg.h"
 
 
 extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
@@ -206,8 +207,8 @@ static void *send_thread_func(void *param) {
   
   if(sess->video)
   {
-  	cfifo_ep_ctl(ep, CFIFO_EP_ADD, sess->video);
-	cfifo_newest(sess->video, 0);
+    cfifo_ep_ctl(ep, CFIFO_EP_ADD, sess->video);
+	  cfifo_newest(sess->video, 0);
   }
   if(sess->audio)
   {
@@ -357,9 +358,18 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
     }
 
     case MG_EV_WEBSOCKET_HANDSHAKE_REQUEST: {
-      struct http_message *hm = (struct http_message *) p;
+      struct http_message *hm = (struct http_message *) p;      
       printf("MG_EV_WEBSOCKET_HANDSHAKE_REQUEST [%.*s], nc:%p, user_data:%p\n"
             , (int) hm->uri.len, hm->uri.p, nc, nc->user_data);
+            
+      if(webs_cfg.auth)
+        if (!mg_http_is_authorized(hm, hm->uri, s_http_server_opts.auth_domain, s_http_server_opts.global_auth_file,
+                                 MG_AUTH_FLAG_IS_GLOBAL_PASS_FILE)) {
+        printf("%s => MG_EV_WEBSOCKET_HANDSHAKE_REQUEST !mg_http_is_authorized\n", __func__);
+        mg_http_send_digest_auth_request(nc, s_http_server_opts.auth_domain);
+        return;
+        }
+    
       if(!nc->user_data)
       {
         int ret = 0;
@@ -476,9 +486,24 @@ void handle_upload(struct mg_connection *nc, int ev, void *p) {
   struct mg_http_multipart_part *mp = (struct mg_http_multipart_part *) p;
 
   switch (ev) {
+    case MG_EV_HTTP_MULTIPART_REQUEST: {
+      struct http_message *hm = (struct http_message *) p;
+      printf("%s => [%.*s], nc:%p, user_data:%p\n"
+            ,__func__, (int) hm->uri.len, hm->uri.p, nc, nc->user_data);
+      if(webs_cfg.auth)
+        if (!mg_http_is_authorized(hm, hm->uri, s_http_server_opts.auth_domain, s_http_server_opts.global_auth_file,
+                                 MG_AUTH_FLAG_IS_GLOBAL_PASS_FILE)) {
+        mg_http_send_digest_auth_request(nc, s_http_server_opts.auth_domain);
+        return;
+        }
+      break;
+    }
     case MG_EV_HTTP_PART_BEGIN: {
       
       if (data == NULL) {
+        
+        printf("var_name:%s, file_name:%s\n",mp->var_name, mp->file_name);
+        
         if(strstr(mp->file_name, ".upg"))
         {
           if(upg_stat == 1)
@@ -577,6 +602,13 @@ void handle_config(struct mg_connection *nc, int ev, void *pp)
   if(hm->query_string.len == 0)
     return;
 
+  if(webs_cfg.auth)
+    if (!mg_http_is_authorized(hm, hm->uri, s_http_server_opts.auth_domain, s_http_server_opts.global_auth_file,
+                             MG_AUTH_FLAG_IS_GLOBAL_PASS_FILE)) {
+    mg_http_send_digest_auth_request(nc, s_http_server_opts.auth_domain);
+    return;
+    }
+
   char req[128] = {0};
   char args[128] = {0};
   char *p = NULL, *body = NULL;
@@ -652,6 +684,13 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
  
   if(hm->query_string.len == 0)
     return;
+  
+  if(webs_cfg.auth)
+    if (!mg_http_is_authorized(hm, hm->uri, s_http_server_opts.auth_domain, s_http_server_opts.global_auth_file,
+                             MG_AUTH_FLAG_IS_GLOBAL_PASS_FILE)) {
+    mg_http_send_digest_auth_request(nc, s_http_server_opts.auth_domain);
+    return;
+    }
     
   // GET /snap?args=G0C0S0
   int ret = 0;
@@ -749,12 +788,89 @@ void handle_stat(struct mg_connection *nc, int ev, void *pp)
 }
 
 
+void handle_control(struct mg_connection *nc, int ev, void *pp)
+{
+  struct http_message* hm = (struct http_message*)pp;
+
+  if(ev == MG_EV_CLOSE)
+    return;
+ 
+  if(hm->query_string.len == 0)
+    return;
+
+  char req[128] = {0};
+  char args[128] = {0};
+  char *p = NULL;
+
+  char *qs = (char*)malloc(hm->query_string.len + 1);
+  sprintf(qs, "%.*s", hm->query_string.len, hm->query_string.p);
+  
+  // GET /control?id=GSF_ID_BSP_UPG&args=G0C0S1&body=
+  
+  if(p = strstr(qs, "id="))
+    sscanf(p, "id=%127[^&]", req);
+  if(p = strstr(qs, "args="))
+    sscanf(p, "args=%127[^&]", args);
+ 
+  printf("qs >>> id:[%s], args:[%s]\n", req, args);
+
+  int channel = -1, gset = -1, sid = -1;
+  sscanf(args, "G%dC%dS%d", &gset, &channel, &sid);
+  
+  char out[8*1024] = {0};
+  
+  //TODO;
+  int ret = -1;
+  if(strstr(req, "GSF_ID_BSP_UPG"))
+  {
+    GSF_MSG_DEF(gsf_msg_t, msg, 4*1024);
+    ret = GSF_MSG_SENDTO(GSF_ID_BSP_UPG, channel, gset, sid
+                        , 0
+                        , GSF_IPC_BSP
+                        , 2000);
+  }
+  
+  sprintf(out, "{\"code\":%d}", ret);
+  
+  if(qs)
+    free(qs);
+
+  mg_printf(nc, "HTTP/1.1 200 OK\r\n");
+  mg_printf(nc, "Content-Length: %lu\r\n\r\n", strlen(out));
+  mg_printf(nc, out);
+  
+  nc->flags |= MG_F_SEND_AND_CLOSE;
+}
+
+
+
+
 #define MSG_HANDER_REG(c) do { \
   mg_register_http_endpoint(c, "/upload", handle_upload MG_UD_ARG(NULL));\
   mg_register_http_endpoint(c, "/config", handle_config MG_UD_ARG(NULL));\
   mg_register_http_endpoint(c, "/snap", handle_snap MG_UD_ARG(NULL));    \
   mg_register_http_endpoint(c, "/stat", handle_stat MG_UD_ARG(NULL));    \
+  mg_register_http_endpoint(c, "/control", handle_control MG_UD_ARG(NULL)); \
 }while(0)
+
+
+static int getuser(gsf_user_t *user, int num)
+{
+  GSF_MSG_DEF(gsf_msg_t, msg, 4*1024);
+  int ret = GSF_MSG_SENDTO(GSF_ID_BSP_USER, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
+  gsf_user_t *userlist = (gsf_user_t*)__pmsg->data;
+  int userlist_num = __pmsg->size/sizeof(gsf_user_t);
+  printf("GET GSF_ID_BSP_USER To:%s, ret:%d, userlist num:%d\n"
+        , GSF_IPC_BSP, ret, __pmsg->size/sizeof(gsf_user_t));
+
+  if(ret < 0)
+    return ret;
+
+  if(user)
+    memcpy(user, userlist, ((userlist_num > num)?num:userlist_num)*sizeof(gsf_user_t));
+
+  return ret;
+}
 
 
 static void* ws_task(void* parm)
@@ -782,9 +898,33 @@ static void* ws_task(void* parm)
   
   sprintf(www_path, "%s/../www", www_path);
   printf("www_path:[%s]\n", www_path);
-  s_http_server_opts.auth_domain = "MyRealm";
   s_http_server_opts.document_root = www_path;  // Serve current directory
   
+  char auth_file[128];
+  sprintf(auth_file, "%s/.htpasswd", www_path);
+  s_http_server_opts.global_auth_file = NULL;
+  
+  if(access(auth_file, 0) != -1)
+    unlink(auth_file);
+ 
+  if(webs_cfg.auth)
+  {
+    s_http_server_opts.auth_domain = "MyRealm";
+    s_http_server_opts.global_auth_file = auth_file;
+    
+    gsf_user_t userlist[8];
+    memset(userlist, 0, sizeof(userlist));
+    getuser(userlist, 8);
+    //only admin user for test;
+    if(strstr(userlist[0].name, "admin"))
+    {
+      char cmdstr[256] = {0};
+      sprintf(cmdstr, "printf %s:MyRealm: > %s;printf %s:MyRealm:%s | md5sum | awk '{print $1}' >> %s;"
+                      , userlist[0].name, auth_file, userlist[0].name, userlist[0].pwd, auth_file);
+      system(cmdstr);
+    }
+  }
+
   if ((c = mg_bind_opt(&mgr, address, ev_handler, opts)) == NULL) {
     fprintf(stderr, "mg_bind(%s) failed: %s\n", address, err);
     return NULL;
@@ -815,7 +955,7 @@ static void* ws_task(void* parm)
   }
   
   mg_mgr_free(&mgr);
-    
-    return NULL;
+  printf("%s => exit.\n", __func__);
+  return NULL;
 }
 

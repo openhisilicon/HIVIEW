@@ -30,7 +30,7 @@ $(function () {
         ]
     });
     
-    w2ui['main_layout'].content('top', '<div style="padding: 12px 20px; font-size: 18px;">HiView Demos</div>');
+    w2ui['main_layout'].content('top', '<div style="padding: 12px 20px; font-size: 18px;">HiView Webs</div>');
     load_html('left', 'sidebar-live');
 
 });

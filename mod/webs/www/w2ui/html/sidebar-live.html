@@ -6,7 +6,7 @@
     <button class="w2ui-btn" onmousedown="zoomPlus()" onmouseup="zoomStop()">ZOOM+</button>
     <button class="w2ui-btn" onmousedown="zoomMinus()" onmouseup="zoomStop()">ZOOM-</button>
     <div style="height: 15px"></div>
-    <button class="w2ui-btn" onclick="lensCal()">LensCal(cautious)</button>
+    <button class="w2ui-btn" onclick="lensCalClick()">LensCal</button>
     <div style="height: 15px"></div>
     <input id="range" type="range" min="1" max="10" value="5"/>
     </div>
@@ -219,6 +219,18 @@ function lensCal() {
         //TODO;
       }
     });
+}
+
+function lensCalClick() {
+    w2confirm('WARNING: Confirm correction lens?', 
+    function (btn)
+    {
+       console.log(btn); 
+       if(btn == 'Yes')
+       {
+          lensCal();
+       }
+    })
 }
 
 </script>

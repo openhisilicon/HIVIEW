@@ -90,6 +90,28 @@ int sub_recv(char *msg, int size, int err)
   return 0;
 }
 
+
+static int reg2bsp()
+{
+  while(1)
+  {
+    //register To;
+    GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
+    reg->mid = GSF_MOD_ID_WEBS;
+    strcpy(reg->uri, GSF_IPC_WEBS);
+    int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
+    printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
+    
+    static int cnt = 3;
+    if(ret == 0)
+      break;
+    if(cnt-- < 0)
+      return -1;
+    sleep(1);
+  }
+  return 0;
+}
+
 int main(int argc, char *argv[])
 {
   if(argc < 2)
@@ -134,22 +156,8 @@ int main(int argc, char *argv[])
                   , 1
                   , NM_REP_OSIZE_MAX
                   , req_recv);
-  while(1)
-  {
-    //register To;
-    GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);
-    reg->mid = GSF_MOD_ID_WEBS;
-    strcpy(reg->uri, GSF_IPC_WEBS);
-    int ret = GSF_MSG_SENDTO(GSF_ID_MOD_CLI, 0, SET, GSF_CLI_REGISTER, sizeof(gsf_mod_reg_t), GSF_IPC_BSP, 2000);
-    printf("GSF_CLI_REGISTER To:%s, ret:%d, size:%d\n", GSF_IPC_BSP, ret, __rsize);
 
-    static int cnt = 3;
-    if(ret == 0)
-      break;
-    if(cnt-- < 0)
-      return -1;
-    sleep(1);
-  }
+  reg2bsp();
 
   // udpsend port;
   //rawudp_open("192.168.0.166", 5555);
