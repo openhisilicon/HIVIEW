@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include "cfg.h"
 
+char rtsps_parm_path[128] = {0};
+
 gsf_rtsps_t rtsps_parm = {
   .port = 554,
   .auth = 0,

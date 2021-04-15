@@ -73,10 +73,12 @@ int main(int argc, char *argv[])
     return -1;
   }
   
-  if(json_parm_load(argv[1], &rtsps_parm) < 0)
+  strncpy(rtsps_parm_path, argv[1], sizeof(rtsps_parm_path)-1);
+  
+  if(json_parm_load(rtsps_parm_path, &rtsps_parm) < 0)
   {
-    json_parm_save(argv[1], &rtsps_parm);
-    json_parm_load(argv[1], &rtsps_parm);
+    json_parm_save(rtsps_parm_path, &rtsps_parm);
+    json_parm_load(rtsps_parm_path, &rtsps_parm);
   }
 
   #if 0

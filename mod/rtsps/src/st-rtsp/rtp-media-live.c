@@ -293,7 +293,7 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   
   static const char* pattern_video =
     "m=video 0 RTP/AVP %d\n"
-    "a=rtpmap:%d H264/90000\n"
+    "a=rtpmap:%d %s/90000\n"
     "a=range:npt=now-\n"
     "a=recvonly\n"
     "a=control:video\n"
@@ -301,21 +301,6 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
     "packetization-mode=1;"
     "sprop-parameter-sets=";
 
-  struct rtp_payload_t s_rtpfunc = {
-    RTPAlloc,
-    RTPFree,
-    RTPPacket,
-  };
-  
-  extern uint32_t rtp_ssrc(void);
-  uint32_t ssrc = rtp_ssrc();
-  m->track[MEDIA_TRACK_VIDEO].m_rtppacker = 
-      rtp_payload_encode_create(RTP_PAYLOAD_H264, "H264", (uint16_t)ssrc, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
-
-	struct rtp_event_t event;
-	event.on_rtcp = NULL;
-	m->track[MEDIA_TRACK_VIDEO].m_rtp = rtp_create(&event, NULL, ssrc, ssrc, 90000, 4*1024, 1);
-	rtp_set_info(m->track[MEDIA_TRACK_VIDEO].m_rtp, "RTSPServer", "live.h264");
 
   GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
   gsf_sdp->video_shmid = -1;
@@ -328,6 +313,31 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
     printf("%s => get SDP err.\n" ,__func__);
     return 0;
   }
+
+  struct rtp_payload_t s_rtpfunc = {
+    RTPAlloc,
+    RTPFree,
+    RTPPacket,
+  };
+  
+  extern uint32_t rtp_ssrc(void);
+  uint32_t ssrc = rtp_ssrc();
+  
+  if(gsf_sdp->venc.type == GSF_ENC_H265)
+    m->track[MEDIA_TRACK_VIDEO].m_rtppacker = 
+        rtp_payload_encode_create(RTP_PAYLOAD_H265, "H265", (uint16_t)ssrc, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
+  else
+    m->track[MEDIA_TRACK_VIDEO].m_rtppacker = 
+        rtp_payload_encode_create(RTP_PAYLOAD_H264, "H264", (uint16_t)ssrc, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
+
+	struct rtp_event_t event;
+	event.on_rtcp = NULL;
+	m->track[MEDIA_TRACK_VIDEO].m_rtp = rtp_create(&event, NULL, ssrc, ssrc, 90000, 4*1024, 1);
+	
+	if(gsf_sdp->venc.type == GSF_ENC_H265)
+	  rtp_set_info(m->track[MEDIA_TRACK_VIDEO].m_rtp, "RTSPServer", "live.h265");
+	else
+	  rtp_set_info(m->track[MEDIA_TRACK_VIDEO].m_rtp, "RTSPServer", "live.h264");
   
   m->track[MEDIA_TRACK_VIDEO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
   m->track[MEDIA_TRACK_VIDEO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_VIDEO].m_reader);
@@ -345,8 +355,13 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   }
   
   char media[1024] = {0};
-  snprintf(media, sizeof(media), pattern_video, RTP_PAYLOAD_H264, RTP_PAYLOAD_H264,
-          RTP_PAYLOAD_H264, 0,0,0);
+  if(gsf_sdp->venc.type == GSF_ENC_H265)
+    snprintf(media, sizeof(media), pattern_video, RTP_PAYLOAD_H265, RTP_PAYLOAD_H265, "H265",
+            RTP_PAYLOAD_H265, 0,0,0);
+  else
+    snprintf(media, sizeof(media), pattern_video, RTP_PAYLOAD_H264, RTP_PAYLOAD_H264, "H264",
+            RTP_PAYLOAD_H264, 0,0,0);
+
   //media += parameters;
   //media += '\n';
   strcat(media, "\n");

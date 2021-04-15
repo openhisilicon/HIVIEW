@@ -5,8 +5,9 @@
 #include "rtsp-server.h"
 #include "uri-parse.h"
 #include "urlcodec.h"
-
+#include "fw/libhttp/inc/http-header-auth.h"
 #include "rtsp-server-st.h"
+#include "cfg.h"
 
 //#include "rtp-udp-transport.h"
 //#include "rtp-tcp-transport.h"
@@ -24,9 +25,83 @@ static int rtsp_uri_parse(const char* uri, char* path)
 	return 0;
 }
 
+static int getuser(gsf_user_t *user, int num)
+{
+  GSF_MSG_DEF(gsf_msg_t, msg, 4*1024);
+  int ret = GSF_MSG_SENDTO(GSF_ID_BSP_USER, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
+  gsf_user_t *userlist = (gsf_user_t*)__pmsg->data;
+  int userlist_num = __pmsg->size/sizeof(gsf_user_t);
+  printf("GET GSF_ID_BSP_USER To:%s, ret:%d, userlist num:%d\n"
+        , GSF_IPC_BSP, ret, __pmsg->size/sizeof(gsf_user_t));
+
+  if(ret < 0)
+    return ret;
+
+  if(user)
+    memcpy(user, userlist, ((userlist_num > num)?num:userlist_num)*sizeof(gsf_user_t));
+
+  return ret;
+}
+
+
+
+static int rtsp_auth(struct rtsp_session_t *sess, rtsp_server_t* rtsp, const char* uri)
+{  
+  if(!rtsps_parm.auth)
+    return 0;
+
+  static gsf_user_t userlist[8];
+  if(userlist[0].name[0] == '\0')
+  {
+    getuser(userlist, 8);
+  }
+
+  char* auth_hdr = rtsp_server_get_header(rtsp, "Authorization");
+  if(!auth_hdr)
+__401:
+  {
+    int n = 0;
+  	char header[1024] = { 0 };
+		n += snprintf(header + n, sizeof(header) - n, "WWW-Authenticate: Digest realm=\"8ce748e83087\", nonce=\"f54f0eb78282e0071eb3747eb278682b\", stale=\"FALSE\"\r\n");
+    rtsp_server_reply2(rtsp, 401, header, NULL, 0);
+    //printf("401:[%s]\n", header);
+    return -1;
+  }
+  
+  //only admin user for test;
+  
+  //printf("auth_hdr:[%s]\n", auth_hdr);
+  char *response = strstr(auth_hdr, "response=");
+  
+  struct http_header_www_authenticate_t authorization;
+  memset(&authorization, 0, sizeof(authorization));
+  authorization.scheme = HTTP_AUTHENTICATION_DIGEST;
+  
+  snprintf(authorization.uri, sizeof(authorization.uri), "%s", uri);
+  snprintf(authorization.username, sizeof(authorization.username), "%s", userlist[0].name);
+  http_header_www_authenticate(auth_hdr, &authorization);
+  
+  char authorization_out[256] = {0};
+  http_header_auth(&authorization, userlist[0].pwd, "DESCRIBE", NULL, 0, authorization_out, sizeof(authorization_out));
+  
+  //printf("response:[%s], authorization_out:[%s]\n", response, authorization_out);
+  if(!response || !strstr(authorization_out, response))
+  {
+    goto __401;
+  }
+  
+  
+  return 0;
+}
+
+
+
 static int rtsp_ondescribe(void* ptr, rtsp_server_t* rtsp, const char* uri)
 {
   struct rtsp_session_t *sess = (struct rtsp_session_t*)ptr;
+  
+  if(rtsp_auth(sess, rtsp, uri) != 0)
+    return 0;
   
 	static const char* pattern_live =
 		"v=0\n"

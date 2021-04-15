@@ -9,6 +9,7 @@
 //myself
 #include "msg_func.h"
 #include "rtsp-st.h"
+#include "cfg.h"
 
 
 static rtsp_ctl(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
@@ -36,7 +37,19 @@ static rtsp_ctl(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 
 static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  ;
+  if(req->set)
+  {
+    rtsps_parm = *((gsf_rtsps_t*)req->data);
+    json_parm_save(rtsps_parm_path, &rtsps_parm);
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else
+  {
+    *((gsf_rtsps_t*)rsp->data) = rtsps_parm;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_rtsps_t);
+  }
 }
 
 static void msg_func_open(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
