@@ -184,64 +184,98 @@ static int rtmp_client_send(void* param, const void* header, size_t len, const v
 }
 
 
+typedef struct {
+  socket_t socket;
+  rtmp_client_t* rtmp;
+  int _runing, _exit;
+}rtmp_push_t;
 
-int main(int argc, char *argv[])
+static rtmp_push_t *g_push;
+
+int rtmp_push_close(rtmp_push_t *p)
 {
-    if(argc < 2)
-    {
-      printf("pls input: %s rtmps_parm.json\n", argv[0]);
-      return -1;
-    }
-    
-    strncpy(rtmps_parm_path, argv[1], sizeof(rtmps_parm_path)-1);
-    
-    if(json_parm_load(rtmps_parm_path, &rtmps_parm) < 0)
-    {
-      json_parm_save(rtmps_parm_path, &rtmps_parm);
-      json_parm_load(rtmps_parm_path, &rtmps_parm);
-    }
-    info("rtmps_parm => auth:%d, port:%d\n", rtmps_parm.auth, rtmps_parm.port);
-    
-    GSF_LOG_CONN(0, 100);
-    void* rep = nm_rep_listen(GSF_IPC_RTMPS, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
+  printf("push stop ...\n");
+  if(p && p->rtmp)
+  {
+    rtmp_client_destroy(p->rtmp);
+    socket_close(p->socket);
+    free(p);
+    g_push = NULL;
+    //socket_cleanup();
+  }
+  return 0;
+}
 
-    // URL: rtmp://host/app/stream 
-    // e.g.: rtmp://live.alivecdn.com/live/hello
-    // rtmp_client_create("live", "hello", "rtmp://live.alivecdn.com/live", param, handler)
+
+rtmp_push_t* rtmp_push_open(char* url)
+{
+    //rtmp://push.zhuagewawa.com/record/w255?wsSecret=b06fe45a1640a18a2817cdfecfb8a563&wsABSTime=1649303438
+
+    char host[128] = {0};
+    char app[128] = {0};
+    char stream[128] = {0};
+    sscanf(url, "rtmp://%[^/]/%[^/]/%[^/]", host, app, stream);
     
-    //rtmp://push.zhuagewawa.com/record/w255?wsSecret=41c2490a6c9fdf950ea011617faba591&wsABSTime=1612497522
-    //rtmp://pull.zhuagewawa.com/record/w255
-    
-    char *host = "push.zhuagewawa.com";
-    char *app  = "record";
-    char *stream = "w255?wsSecret=41c2490a6c9fdf950ea011617faba591&wsABSTime=1612497522";
-    static char packet[1 * 1024 * 1024];
+    char packet[64*1024];
   	snprintf(packet, sizeof(packet), "rtmp://%s/%s", host, app);
     printf("push url:[%s/%s]\n", packet, stream);
+
+
+    if(host[0] == '\0' || app[0] == '\0' || stream[0] == '\0')
+      return NULL;
 
   	struct rtmp_client_handler_t handler;
   	memset(&handler, 0, sizeof(handler));
   	handler.send = rtmp_client_send;
     rtmp_client_t* rtmp = NULL;
     
-    #if 1
-  	socket_init();
-  	socket_t socket = socket_connect_host(host, 1935, 2000);
-  	socket_setnonblock(socket, 0);
-
-  	rtmp = rtmp_client_create(app, stream, packet/*tcurl*/, &socket, &handler);
-  	int r = rtmp_client_start(rtmp, 0);
-
-  	while (4 != rtmp_client_getstate(rtmp) && (r = socket_recv(socket, packet, sizeof(packet), 0)) > 0)
-  	{
-  		assert(0 == rtmp_client_input(rtmp, packet, r));
-  	}
-    #endif
+    rtmp_push_t* p = malloc(sizeof(rtmp_push_t));
     
+    static int _init = 0;
+    if(!_init)
+    {
+      _init = 1;
+      socket_init();
+    } 
+  	
+  	p->socket = socket_connect_host(host, 1935, 2000);
+  	socket_setnonblock(p->socket, 0);
+
+  	p->rtmp = rtmp_client_create(app, stream, packet/*tcurl*/, &p->socket, &handler);
+  	int r = rtmp_client_start(p->rtmp, 0);
+
+  	while (4 != rtmp_client_getstate(p->rtmp) && (r = socket_recv(p->socket, packet, sizeof(packet), 0)) > 0)
+  	{
+  		if(0 != rtmp_client_input(p->rtmp, packet, r))
+  		{
+  		  goto __err;
+  		}
+  	}
+  	return p;
+__err:
+    rtmp_push_close(p);
+    return NULL;
+}
+
+int rtmp_push_stop(rtmp_push_t *p)
+{
+  p = p?p:g_push;
+  if(!p)
+    return 0;
+    
+  p->_runing = 0;
+  while(!p->_exit)
+    usleep(100*1000);
+  return 0;
+}
+
+int rtmp_push_start(rtmp_push_t *p)
+{
+    p->_exit = !(p->_runing = 1);
     printf("push start ...\n");
     
     int ret = 0;
-    int channel = 0, sid = 1;
+    int channel = 0, sid = 0;
     
     sess_t _sess;
     sess_t *sess = &_sess;
@@ -259,7 +293,7 @@ int main(int argc, char *argv[])
                           , 2000);
       sess->video = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->video_shmid);
       sess->flv  = flv_muxer_create(on_flv_packet, (void*)sess);
-      sess->rtmp = rtmp;
+      sess->rtmp = p->rtmp;
       cfifo_newest(sess->video, 0);
     }
     
@@ -270,7 +304,7 @@ int main(int argc, char *argv[])
                       , GSF_IPC_CODEC
                       , 2000);
     }
-    while(1)
+    while(p->_runing)
     {
       gsf_frm_t *rec = (gsf_frm_t *)sess->data;
       int ret = cfifo_get(sess->video, cfifo_recgut, (unsigned char*)sess->data);
@@ -307,11 +341,48 @@ int main(int argc, char *argv[])
       }
       usleep(5*1000);
     }
+
+    if(sess->video) cfifo_free(sess->video);
+    if(sess->flv) flv_muxer_destroy(sess->flv);
+    if(sess->data) free(sess->data);
+    p->_exit = 1;
+    return 0;
+}
+
+
+int main(int argc, char *argv[])
+{
+    if(argc < 2)
+    {
+      printf("pls input: %s rtmps_parm.json\n", argv[0]);
+      return -1;
+    }
     
-    printf("push stop ...\n");
-    rtmp_client_destroy(rtmp);
-  	socket_close(socket);
-  	socket_cleanup();
+    strncpy(rtmps_parm_path, argv[1], sizeof(rtmps_parm_path)-1);
+    
+    if(json_parm_load(rtmps_parm_path, &rtmps_parm) < 0)
+    {
+      json_parm_save(rtmps_parm_path, &rtmps_parm);
+      json_parm_load(rtmps_parm_path, &rtmps_parm);
+    }
+    info("rtmps_parm => auth:%d, port:%d\n", rtmps_parm.auth, rtmps_parm.port);
+    
+    GSF_LOG_CONN(1, 100);
+    void* rep = nm_rep_listen(GSF_IPC_RTMPS, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
+
+    while(1)
+    {
+      //char *url = "rtmp://push.zhuagewawa.com/record/w255?wsSecret=b06fe45a1640a18a2817cdfecfb8a563&wsABSTime=1649303438";
+      g_push = rtmp_push_open(rtmps_parm.purl);
+      if(!g_push)
+      {
+        sleep(3);
+        continue;
+      }
+      rtmp_push_start(g_push);
+      rtmp_push_close(g_push);
+    }
+    
 
     GSF_LOG_DISCONN();
     return 0;

@@ -4,6 +4,7 @@ STRUCT(gsf_rtmps_t)
 {
   FIELD(int, port);
   FIELD(int, auth);
+  STRING(purl, 256); // only test push;
 };
 
 
