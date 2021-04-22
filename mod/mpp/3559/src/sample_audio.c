@@ -779,6 +779,31 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
     }
     else
     {
+      #if 0 //SENDAO
+        s32Ret = SAMPLE_COMM_AUDIO_StartAdec(AdChn, gs_enPayloadType);
+        if (s32Ret != HI_SUCCESS)
+        {
+            SAMPLE_DBG(s32Ret);
+            goto AIAENC_ERR3;
+        }
+       
+        s32AoChnCnt = stAioAttr.u32ChnCnt;
+        s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, gs_bAioReSample);
+        if (s32Ret != HI_SUCCESS)
+        {
+            SAMPLE_DBG(s32Ret);
+            goto AIAENC_ERR2;
+        }
+
+        s32Ret = SAMPLE_COMM_AUDIO_AoBindAdec(AoDev, AoChn, AdChn);
+        if (s32Ret != HI_SUCCESS)
+        {
+            SAMPLE_DBG(s32Ret);
+            goto AIAENC_ERR0;
+        } 
+             
+      #endif
+
         s32Ret = SAMPLE_COMM_AUDIO_CreatTrdAencAdecCb(AeChn, aenc->cb, aenc->uargs);
         if (s32Ret != HI_SUCCESS)
         {

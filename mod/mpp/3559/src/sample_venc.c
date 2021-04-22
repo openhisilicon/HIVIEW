@@ -373,6 +373,19 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
     return HI_SUCCESS;
 }
 
+
+typedef struct {
+  PIXEL_FORMAT_E enPixelFormat;
+}vpss_grp_attr_t;
+
+vpss_grp_attr_t vpss_grp_attr[VPSS_MAX_GRP_NUM];
+
+HI_S32 SAMPLE_VENC_VPSS_GrpAttr(VPSS_GRP VpssGrp, PIXEL_FORMAT_E enPixelFormat)
+{
+  vpss_grp_attr[VpssGrp].enPixelFormat = enPixelFormat;
+  return 0;
+}
+
 HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RANGE_E enDynamicRange,PIXEL_FORMAT_E enPixelFormat,SIZE_S stSize[],SAMPLE_SNS_TYPE_E enSnsType)
 {
     HI_S32 i;
@@ -398,7 +411,7 @@ HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RA
 
 
     stVpssGrpAttr.enDynamicRange = enDynamicRange;
-    stVpssGrpAttr.enPixelFormat  = enPixelFormat;
+    stVpssGrpAttr.enPixelFormat  = vpss_grp_attr[VpssGrp].enPixelFormat?:enPixelFormat;//maohw;
     stVpssGrpAttr.u32MaxW        = stSnsSize.u32Width;
     stVpssGrpAttr.u32MaxH        = stSnsSize.u32Height;
     stVpssGrpAttr.stFrameRate.s32SrcFrameRate = -1;

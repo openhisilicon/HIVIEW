@@ -27,7 +27,7 @@
 #include "hifb.h"
 #include "mpp.h"
 
-
+#include "mppex.h"
 
 extern HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, HI_U32 u32SupplementConfig);
 extern HI_S32 SAMPLE_VENC_CheckSensor(SAMPLE_SNS_TYPE_E   enSnsType,SIZE_S  stSize);
@@ -46,6 +46,9 @@ extern int sample_af_main(gsf_mpp_af_t *af);
 //from sample_ir_auto.c;
 extern HI_S32 ISP_IrSwitchToIr(VI_PIPE ViPipe);
 extern HI_S32 ISP_IrSwitchToNormal(VI_PIPE ViPipe);
+
+//from sample_audio.c;
+extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
 
 
 typedef struct {
@@ -112,7 +115,10 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {OMNIVISION_OV2775_2L_MIPI_2M_30FPS_12BIT_WDR2TO1,  "ov2775-2-1-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
     {PRIMESENSOR_PS5260_2L_MIPI_2M_30FPS_12BIT,         "ps5260-2-0-2-30", "libsns_ps5260_2l.so", "g_stSnsPs5260_2l_Obj"},
     {PRIMESENSOR_PS5260_2L_MIPI_2M_30FPS_12BIT_BUILTIN, "ps5260-2-3-2-30", "libsns_ps5260_2l.so", "g_stSnsPs5260_2l_Obj"},
-    
+    {MIPI_YUV_2M_60FPS_8BIT,                      "yuv422-0-0-2-60", NULL,                NULL},
+    {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
+    {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
+    {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
   };
 
 
@@ -139,6 +145,9 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
     return g_pstSnsObj[u32SnsId];
 }
 
+static void * dl = NULL;
+static int snscnt = 0;
+
 #include <signal.h>
 void SAMPLE_VENC_HandleSig2(HI_S32 signo)
 {
@@ -147,6 +156,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
 
     if (SIGINT == signo || SIGTERM == signo)
     {
+        mppex_hook_destroy();
         SAMPLE_COMM_VENC_StopGetStream();
         SAMPLE_COMM_All_ISP_Stop();
         SAMPLE_COMM_VO_HdmiStop();
@@ -155,16 +165,15 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
     exit(-1);
 }
 
-
-
-static void * dl = NULL;
-static int snscnt = 0;
 int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 {
+  int i = 0;
   char snsstr[64];
   sprintf(snsstr, "%s-%d-%d-%d-%d"
           , cfg->snsname, cfg->lane, cfg->wdr, cfg->res, cfg->fps);
 
+  mppex_hook_sns(cfg);
+  
   SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(snsstr);
   if(!sns)
   {
@@ -174,13 +183,13 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   snscnt = cfg->snscnt;
   char loadstr[256];
-  
-  if(strstr(cfg->snsname, "imx334")) // 24Mclk && i2c;
+  if(strstr(cfg->snsname, "bt1120"))
+    sprintf(loadstr, "%s/ko/load3559v200 -i -yuv0 1", path);
+  else if(strstr(cfg->snsname, "imx334")) // 24Mclk && i2c;
     sprintf(loadstr, "%s/ko/load3559v200 -i -sensor0 %s", path, "imx458");
   else
     sprintf(loadstr, "%s/ko/load3559v200 -i -sensor0 %s", path, cfg->snsname);
-  
-  int i = 0;
+
   for(i = 1; i < snscnt; i++)
   {
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
@@ -228,9 +237,12 @@ __err:
   return -1;
 }
 
+int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg);
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
+  mppex_hook_register();
+  	
   if(cfg && cfg->snscnt > 0)
     return gsf_mpp_cfg_sns(path, cfg);
   else
@@ -263,6 +275,8 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     stViConfig.astViInfo[i].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
     stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
   }
+
+  mppex_hook_vi(&stViConfig);
 
   s32Ret = SAMPLE_VENC_VI_Init(&stViConfig, vi->bLowDelay,vi->u32SupplementConfig);
   if(s32Ret != HI_SUCCESS)
@@ -303,6 +317,8 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   SAMPLE_VI_CONFIG_S stViConfig;
   memset(&stViConfig, 0, sizeof(stViConfig));
   SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
+ 
+  mppex_hook_vpss_bb(vpss);
 
   for(i = 0; i < VPSS_MAX_PHY_CHN_NUM; i++)
   {
@@ -351,6 +367,8 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
     }
   }
   
+  mppex_hook_vpss_ee(vpss);
+  
   return s32Ret;
   
 EXIT_VPSS_STOP:
@@ -376,7 +394,6 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
   return s32Ret;
 }
 
-
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
 {
   HI_S32 s32Ret;
@@ -388,6 +405,8 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
       SAMPLE_PRT("Venc Get GopAttr for %#x!\n", s32Ret);
       goto EXIT_VI_VPSS_UNBIND;
   }
+
+  SAMPLE_COMM_VENC_CreatAttr(venc->VencChn, venc->u32FrameRate, venc->u32Gop, venc->u32BitRate);
 
   s32Ret = SAMPLE_COMM_VENC_Start(venc->VencChn, 
                                 venc->enPayLoad, 
@@ -555,7 +574,7 @@ int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
   { //test ai->ao;
     static pthread_t aio_pid;
     extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
-    return pthread_create(&aio_pid, 0, SAMPLE_AUDIO_AiAo, NULL);
+    return pthread_create(&aio_pid, 0, (void*(*)(void*))SAMPLE_AUDIO_AiAo, NULL);
   }
   else
   {

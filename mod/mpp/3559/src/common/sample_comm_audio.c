@@ -881,7 +881,11 @@ HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAencAdecCb(AENC_CHN AeChn, int (*cb)(AENC_CHN A
   pstAenc = &gs_stSampleAenc[AeChn];
   pstAenc->cb = cb;
   pstAenc->uargs = uargs;
+  #if 0  //maohw SENDAO
+  return SAMPLE_COMM_AUDIO_CreatTrdAencAdec(AeChn, 0, NULL);
+  #else
   return SAMPLE_COMM_AUDIO_CreatTrdAencAdec(AeChn, -1, NULL);
+  #endif
 }
 
 
