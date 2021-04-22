@@ -149,7 +149,7 @@ static int flv_send_header(lws_session_t *sess)
   //printf("%s => sess:%p, wr:%u, len:%d\n", __func__, sess, sess->wr, len);
 
   sess->wsbuf_len[sess->wr%2] = len;
-  assert(sess->wr - sess->rd < 2);
+  //assert(sess->wr - sess->rd < 2);
   sess->wr++;
   mg_broadcast(mgr, on_stdin_read, &sess, sizeof(sess)); 
   
@@ -174,7 +174,7 @@ static int flv_send_tag(lws_session_t *sess, int type, const void* data, size_t 
   //printf("%s => sess:%p, wr:%u, len:%d\n", __func__, sess, sess->wr, len);
   
   sess->wsbuf_len[sess->wr%2] = len;
-  assert(sess->wr - sess->rd < 2);
+  //assert(sess->wr - sess->rd < 2);
   sess->wr++;
   mg_broadcast(mgr, on_stdin_read, &sess, sizeof(sess)); 
   

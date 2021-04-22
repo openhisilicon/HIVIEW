@@ -217,7 +217,7 @@ int zone_set(int zone)
   	if(end[-1] != '\n') fprintf(fp, "\n");
     fprintf(fp, "export TZ=%s\n", z);
     
-    fclose(fp);
+    fflush(fp);fdatasync(fileno(fp));fclose(fp);
   }
   tzset();
   

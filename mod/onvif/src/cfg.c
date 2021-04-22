@@ -36,7 +36,7 @@ int json_parm_save(char *filename, gsf_onvif_cfg_t *cfg)
   if(print)
   {
 	  fprintf(f, "%s", print);
-	  fclose(f);
+	  fflush(f);fdatasync(fileno(f));fclose(f);
 	  free(print);
   }
   cJSON_Delete(out);

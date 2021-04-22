@@ -100,7 +100,7 @@ int json_parm_save(char *filename, gsf_codec_ipc_t *cfg)
   if(print)
   {
 	  fprintf(f, "%s", print);
-	  fclose(f);
+	  fflush(f);fdatasync(fileno(f));fclose(f);
 	  free(print);
   }
   cJSON_Delete(out);
