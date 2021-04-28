@@ -98,12 +98,13 @@ void VpssCapture::VPSS_Chn_Dump_HandleSig(HI_S32 signo)
 		u32SignalFlag++;
 		printf("\033[0;31mprogram termination abnormally!\033[0;39m\n");
 		VPSS_Restore(VpssGrp, VpssChn);
-        if(stDst.au64PhyAddr[0] && stDst.au64VirAddr[0])
-        {
-		    printf("HI_MPI_SYS_MmzFree stDst.au64VirAddr: 0x%llx\n", stDst.au64VirAddr[0]);
-            HI_MPI_SYS_MmzFree(stDst.au64PhyAddr[0], (HI_VOID *)stDst.au64VirAddr[0]);	
-        }
-        u32SignalFlag--;
+    if(stDst.au64PhyAddr[0] && stDst.au64VirAddr[0])
+    {
+        printf("HI_MPI_SYS_MmzFree stDst.au64VirAddr: 0x%llx\n", stDst.au64VirAddr[0]);
+        HI_MPI_SYS_MmzFree(stDst.au64PhyAddr[0], (HI_VOID *)stDst.au64VirAddr[0]);
+        stDst.au64VirAddr[0] = 0;
+    }
+    u32SignalFlag--;
 	}
 
 	exit(-1);
@@ -152,7 +153,7 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 	stDst.u32Height = pVBuf->u32Height;
 	stDst.enType = IVE_IMAGE_TYPE_U8C3_PACKAGE;
 
-	if(img.cols != pVBuf->u32Width || img.rows != pVBuf->u32Height)
+	if(img.cols != pVBuf->u32Width || img.rows != pVBuf->u32Height || !stDst.au64VirAddr[0])
 	{
 		img.create(pVBuf->u32Height, pVBuf->u32Width, CV_8UC3);
 		ret = HI_MPI_SYS_MmzAlloc_Cached(&stDst.au64PhyAddr[0],
@@ -164,6 +165,7 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 			printf("MmzAlloc_Cached failed!\n");
 			return HI_FAILURE;
 		}
+		printf("MmzAlloc_Cached OK!\n");
 	}
 
 	stDst.au64PhyAddr[1] = stDst.au64PhyAddr[0] + stDst.au32Stride[0];
@@ -392,5 +394,6 @@ int VpssCapture::destroy()
 	stFrame.u32PoolId = VB_INVALID_POOLID;
 	VPSS_Restore(VpssGrp, VpssChn);
 	HI_MPI_SYS_MmzFree(stDst.au64PhyAddr[0], (HI_VOID *)stDst.au64VirAddr[0]);
+	stDst.au64VirAddr[0] = 0;
 	return 0;
 }

@@ -3826,7 +3826,7 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_1920x1080_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
     }
 	
-	mppex_GetPipeAttrBySns(enSnsType, pstPipeAttr);
+	  mppex_GetPipeAttrBySns(enSnsType, pstPipeAttr);
     return HI_SUCCESS;
 }
 

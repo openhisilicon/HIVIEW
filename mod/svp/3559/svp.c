@@ -97,8 +97,8 @@ int main(int argc, char *argv[])
     printf("init algorithm library...\n");
     //SAMPLE_IVE_Md();
     //extern int lpr_start(); lpr_start();
-    extern int yolo_start(char *home_path); yolo_start(home_path);
-    
+    extern int yolo_start(char *home_path); 
+    extern int yolo_stop();
     //init listen;
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_SVP
@@ -106,10 +106,23 @@ int main(int argc, char *argv[])
                     , NM_REP_OSIZE_MAX
                     , req_recv);
     reg2bsp();
-        
+
+    int yolo_alg = 0;
     while(1)
-    {                        
-      sleep(5);
+    {
+      if(yolo_alg != svp_cfg.yolo_alg)
+      {
+        if(yolo_alg == 0 && svp_cfg.yolo_alg > 0)
+        {
+          yolo_start(home_path);
+        }
+        else if(yolo_alg > 0 && svp_cfg.yolo_alg == 0)
+        {
+          yolo_stop();
+        }
+        yolo_alg = svp_cfg.yolo_alg;  
+      }
+      sleep(1);
     }
     
     //SAMPLE_IVE_Md_HandleSig();

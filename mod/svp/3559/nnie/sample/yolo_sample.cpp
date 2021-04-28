@@ -48,7 +48,7 @@ int yolo_detect(yolo_boxs_t *boxs)
     std::vector<BoxInfo> bboxs;
       
     int ret = yolov5.detect(image, bboxs);
-
+    
     boxs->w = image.cols;
     boxs->h = image.rows;
     boxs->size = bboxs.size();
@@ -69,7 +69,7 @@ int yolo_detect(yolo_boxs_t *boxs)
 }
 int yolo_deinit()
 {
-    vcap.destroy();
-    yolov5.destroy();
-    return 0;
+  yolov5.destroy();
+  vcap.destroy();
+  return 0;
 }
