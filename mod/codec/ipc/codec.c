@@ -641,14 +641,10 @@ int main(int argc, char *argv[])
     gsf_mpp_audio_start(&aenc);
     //gsf_mpp_audio_start(NULL);
     
-    
     // test vo;
-    #if 0
-    int mipi_800x1280 = 0;
-    #else
-    int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
-    #endif
-    
+    //int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
+    int mipi_800x1280 = codec_ipc.vo.intf;
+
     if(mipi_800x1280)
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);

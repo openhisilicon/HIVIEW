@@ -47,11 +47,17 @@ STRUCT(gsf_vi_t)
   FIELD(int, res);
 };
 
+STRUCT(gsf_vo_t)
+{
+  FIELD(int, intf);  // 0: HDMI, 1: MIPI
+  FIELD(int, sync); // 
+};
 
 STRUCT(gsf_codec_ipc_t)
 {
   //1
   FIELD(gsf_vi_t,    vi);
+  FIELD(gsf_vo_t,    vo);
   FIELD(gsf_aenc_t,  aenc);
   //2
   ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
