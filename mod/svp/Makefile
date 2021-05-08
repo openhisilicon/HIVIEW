@@ -16,7 +16,8 @@ INCS := -I$(HOME) -I$(GSF_CPU_ARCH) -Iinc -I$(GSF_CPU_ARCH)/common -I$(GSF_CPU_A
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/common \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc \
         -I$(HOME)/fw/comm/inc \
-        -I$(HOME)/fw/opencv/inc
+        -I$(HOME)/fw/opencv/inc \
+        -I$(HOME)/fw/sqlite/inc
         
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find $(GSF_CPU_ARCH) -type f -name "*.c" -o -name "*.cpp")
@@ -34,7 +35,7 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_
 else ifeq ($(GSF_CPU_ARCH), 3516d)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -llpr -lstdc++ -l_hicalcflicker -l_hiir_auto \
-        -lm -ldl -lyolov5 -lopencv_core -lopencv_imgcodecs -lopencv_imgproc
+        -lm -ldl -lyolov5 -lopencv_core -lopencv_imgcodecs -lopencv_imgproc -lsqlite3
 else ifeq ($(GSF_CPU_ARCH), 3519a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -lhive_RES -laacenc -laacdec -ldsp
