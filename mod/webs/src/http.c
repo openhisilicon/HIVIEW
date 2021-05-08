@@ -563,12 +563,32 @@ void handle_upload(struct mg_connection *nc, int ev, void *p) {
         return;
       }
       
-      mg_printf(nc,
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/plain\r\n"
-                "Connection: close\r\n\r\n"
-                "Written %ld of POST data to a temp file\n\n",
-                (long) ftell(data->fp));
+      int ret = 0;
+      if(strstr(mp->file_name, ".jpg"))
+      {
+        GSF_MSG_DEF(char, face_path, sizeof(gsf_msg_t)+256);
+        snprintf(face_path, 256-1, "/tmp/%s", mp->file_name);
+        ret = GSF_MSG_SENDTO(GSF_ID_SVP_FACE, 0, SET, 0
+                        , strlen(face_path)+1
+                        , GSF_IPC_SVP
+                        , 2000);
+        mg_printf(nc,
+          "HTTP/1.1 200 OK\r\n"
+          "Content-Type: text/plain\r\n"
+          "Connection: close\r\n\r\n"
+          "face file size:%ld ret:%d\n\n",
+          (long) ftell(data->fp), ret);
+      }
+      else
+      {
+        mg_printf(nc,
+          "HTTP/1.1 200 OK\r\n"
+          "Content-Type: text/plain\r\n"
+          "Connection: close\r\n\r\n"
+          "write file size:%ld to /tmp\n\n",
+          (long) ftell(data->fp));
+      }
+      
       nc->flags |= MG_F_SEND_AND_CLOSE;
       fclose(data->fp);
       free(data);
@@ -583,7 +603,6 @@ void handle_upload(struct mg_connection *nc, int ev, void *p) {
                         , GSF_IPC_BSP
                         , 2000);
       }
-      
       break;
     }
   }

@@ -110,8 +110,6 @@ void VpssCapture::VPSS_Chn_Dump_HandleSig(HI_S32 signo)
 	exit(-1);
 }
 
-
-
 int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 {
 	HI_S32 ret;
