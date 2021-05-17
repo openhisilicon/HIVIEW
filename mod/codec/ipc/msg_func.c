@@ -15,6 +15,7 @@
 
 extern int venc_start(int start);
 extern int vo_res_get(gsf_resolu_t *res);
+extern int vo_ly_get(gsf_layout_t *ly);
 
 static void msg_func_venc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
@@ -177,6 +178,26 @@ static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
   return;
 }
 
+
+static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    ;
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else
+  {
+    gsf_layout_t *ly = (gsf_layout_t *)rsp->data;
+    vo_ly_get(ly);
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_layout_t);
+  }
+}
+
+
+
 static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   rsp->err  = 0;
@@ -217,6 +238,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_VMASK]  = msg_func_vmask,
     [GSF_ID_CODEC_SNAP]   = msg_func_snap,
     [GSF_ID_CODEC_VORES]  = msg_func_vores,
+    [GSF_ID_CODEC_VOLY]   = msg_func_voly,
     [GSF_ID_CODEC_LENS]   = msg_func_lens,
  };
 

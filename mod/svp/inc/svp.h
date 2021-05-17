@@ -19,6 +19,8 @@ enum {
     GSF_ID_SVP_MD     = 2,  // ch, gsf_svp_md_t
     GSF_ID_SVP_LPR    = 3,  // ch, gsf_svp_lpr_t
     GSF_ID_SVP_YOLO   = 4,  // ch, gsf_svp_yolo_t
+    GSF_ID_SVP_CFACE  = 5,  // ch, gsf_svp_cface_t
+    GSF_ID_SVP_FACE   = 6,  // ch, /path/xxx.jpg;
     GSF_ID_SVP_END
 };
 
@@ -30,6 +32,7 @@ enum {
   GSF_EV_SVP_MD  = 1, // gsf_svp_mds_t;
   GSF_EV_SVP_LPR = 2, // gsf_svp_lprs_t;
   GSF_EV_SVP_YOLO= 3, // gsf_svp_yolos_t;
+  GSF_EV_SVP_CFACE=4, // gsf_svp_cfaces_t;
 };
 
 
@@ -98,6 +101,29 @@ typedef struct {
   int w, h;
   gsf_yolo_box_t box[64];
 }gsf_svp_yolos_t;
+
+
+
+typedef struct {
+  int thr;        //thr 
+  int rect[4];    //«¯”ÚŒª÷√
+}gsf_svp_cface_t;
+
+
+typedef struct {
+  int id;
+  int confidence;
+  int rect[4];
+}gsf_cface_box_t;
+
+typedef struct {
+  int pts;   // u64PTS/1000
+  int cnt;
+  int w, h;
+  gsf_cface_box_t box[64];
+}gsf_svp_cfaces_t;
+
+
 
 
 #ifdef __cplusplus

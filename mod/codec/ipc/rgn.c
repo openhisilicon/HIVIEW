@@ -171,23 +171,23 @@ int gsf_calc_fontsize(int nVencWidth, int nVencHeight, int u8FontSize, int *pu8F
 		else
 			u8FontWTmp = 16;
 	}
-     
+
 	u8FontHTmp = u8FontWTmp* 3 / 2; // 20141110
 
  	if (NULL != pu8FontW)
  		(*pu8FontW) = u8FontWTmp;
 
  	if (NULL != pu8FontH)
- 		(*pu8FontH) = u8FontHTmp;
+ 		(*pu8FontH) = u8FontHTmp; 		
  		
 	if (u8FontWTmp >= 48 && (FontSTmp >= 0))	
-		FontSTmp -= 6;
+		FontSTmp -= 2*6;
   if (u8FontWTmp >= 32 && (FontSTmp >= 0))	
-		FontSTmp -= 4;
+		FontSTmp -= 2*4;
   else if (u8FontWTmp >= 24 && (FontSTmp >= 0))	
-		FontSTmp -= 2;
+		FontSTmp -= 2*3;
 	else if (FontSTmp < 0 && u8FontWTmp < 24)
-    FontSTmp = 0;
+    FontSTmp -= 2*2;
 
  	if (NULL != pFontS)
  		(*pFontS) = FontSTmp;
@@ -287,7 +287,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
 {
   
   int i = 0;
-  unsigned int ARGB8888_RED = argb8888_1555(0x01FF0000);
+  unsigned int ARG1555_RED = argb8888_1555(0x01FF0000);
   
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
@@ -313,7 +313,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     
     rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//ARGB8888_RED;
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//ARG1555_RED;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = 2;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
@@ -448,7 +448,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
                   info->fontS,
                   rgn_obj[handle].osd_bmp + l * bitMap.u32Width * info->fontH*2,
           		    info->lines[l], "",
-          		    (osd->wh[0] && osd->wh[1])?ARGB8888_RED:0xffff, 0x0000, 0xffff, 0x0000);
+          		    (osd->wh[0] && osd->wh[1])?ARG1555_RED:0xffff, 0x0000, 0xffff, 0x0000);
       	}
       	// draw rect;
       	if((osd->wh[0] && osd->wh[1]))
@@ -468,7 +468,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
             = p[(boxH-2)*bitMap.u32Width + j]
             = p[(boxH-3)*bitMap.u32Width + j] 
             = p[(boxH-4)*bitMap.u32Width + j]
-            = ARGB8888_RED;
+            = ARG1555_RED;
           }
           for(j = 0; j < boxH; j++)
           {
@@ -480,7 +480,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
             = p[j*bitMap.u32Width + boxW-2]
             = p[j*bitMap.u32Width + boxW-3] 
             = p[j*bitMap.u32Width + boxW-4]
-            = ARGB8888_RED;
+            = ARG1555_RED;
           }
       	}
     }
@@ -546,12 +546,11 @@ int gsf_rgn_vmask_set(int ch, int idx, gsf_vmask_t *vmask)
 }
 
 
-
 int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
 {
   int i = 0, r = 0, b = 0;
-  unsigned int ARGB8888_RED = argb8888_1555(0x01FF0000);
-  
+  unsigned int ARG1555_RED = argb8888_1555(0x01FF0000);
+   
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
     if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
@@ -666,7 +665,12 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
     	bitMap.pData        = rgn_obj[handle].osd_bmp;
     	//memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
     #endif
-       
+
+    #if 0
+    struct timespec ts1, ts2;
+    clock_gettime(CLOCK_MONOTONIC, &ts1);
+    #endif
+
     for(r = 0; r < rgn_obj[handle].box_tmp.cnt; r++)
   	{
       HI_U16 *p = (HI_U16*)((char*)bitMap.pData + rgn_obj[handle].box_tmp.box[r].a);
@@ -689,7 +693,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
       if(rects->box[r].label[0])
       {
         gsf_parse_text(rects->box[r].label, info->lines, &info->lineN, &info->colN);
-        gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, 1/*fontsize*/, &info->fontW, &info->fontH, &info->fontS);
+        gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, 0/*fontsize*/, &info->fontW, &info->fontH, &info->fontS);
       }
       else
       {
@@ -723,6 +727,15 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
           int labelH = info->fontH * info->lineN + 1;
           if((boxX + labelW <= info->osdW) && (boxY + labelH <= info->osdH))
         	{
+        	  // add white background;
+          	HI_U16 *p = (HI_U16*)(osd_bmp);
+            int j = 0, k = 0;
+          	for(k = 0; k < labelH; k++)
+            for(j = 0; j < labelW; j++)
+            {
+              p[k*bitMap.u32Width + j] = 0xffff; //white
+            }
+            
           	int l = 0;
           	for (l = 0; l < info->lineN; l++)
           	{
@@ -731,7 +744,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
                       info->fontS,
                       osd_bmp + l * bitMap.u32Width * info->fontH*2,
               		    info->lines[l], "",
-              		    (boxW && boxW)?ARGB8888_RED:0xffff, 0x0000, 0xffff, 0x0000);
+              		    (boxW && boxW)?ARG1555_RED:0xffff, 0x0000, 0xffff, 0x0000);
           	}
           	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)osd_bmp - (char*)bitMap.pData);
           	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = labelW;
@@ -757,7 +770,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
               = p[(boxH-2)*bitMap.u32Width + j]
               = p[(boxH-3)*bitMap.u32Width + j] 
               = p[(boxH-4)*bitMap.u32Width + j]
-              = ARGB8888_RED;
+              = ARG1555_RED;
             }
             
             rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)p - (char*)bitMap.pData);
@@ -779,7 +792,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
               = p[j*bitMap.u32Width + boxW-2]
               = p[j*bitMap.u32Width + boxW-3] 
               = p[j*bitMap.u32Width + boxW-4]
-              = ARGB8888_RED;
+              = ARG1555_RED;
             }
             
             rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)p - (char*)bitMap.pData);
@@ -794,6 +807,13 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
         	}
       }
     }
+    
+  	#if 0
+    clock_gettime(CLOCK_MONOTONIC, &ts2);
+    int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+    printf("raw bitmap cost:%d ms\n", cost);
+  	#endif
+    
     
     {
     #if 0
@@ -819,3 +839,255 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
   return 0;
 }
 
+
+#define NK_INCLUDE_FIXED_TYPES
+#define NK_INCLUDE_STANDARD_IO
+#define NK_INCLUDE_STANDARD_VARARGS
+#define NK_INCLUDE_DEFAULT_ALLOCATOR
+#define NK_IMPLEMENTATION
+#define NK_XLIBSHM_IMPLEMENTATION
+#define NK_RAWFB_IMPLEMENTATION
+#define NK_INCLUDE_FONT_BAKING
+#define NK_INCLUDE_DEFAULT_FONT
+#define NK_INCLUDE_SOFTWARE_FONT
+#include "nuklear.h"
+#include "nuklear_rawfb.h"
+
+static int nk_win_id;
+
+int gsf_rgn_nk_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
+{
+  int i = 0, r = 0, b = 0;
+  unsigned int ARG1555_RED = argb8888_1555(0x01FF0000);
+  
+  for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
+  {
+    if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+      continue;
+    if(!((1<<i) & mask))
+      continue;
+    
+    int handle = GSF_RGN_OBJ_HANDLE(ch, OBJ_OSD, i, idx);
+    
+    memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
+    
+    rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(codec_ipc.venc[i].width, 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(codec_ipc.venc[i].height, 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
+    
+    rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
+    rgn_obj[handle].rgn.stChn.s32DevId = 0;
+    rgn_obj[handle].rgn.stChn.s32ChnId = ch*GSF_CODEC_VENC_NUM+i;
+    rgn_obj[handle].rgn.stChnAttr.bShow = HI_TRUE;
+    rgn_obj[handle].rgn.stChnAttr.enType = OVERLAY_RGN;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32X = 0;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.stPoint.s32Y = 0;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer   = idx;
+    
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha = 0;//80;
+    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha = 128;
+    
+    if(rgn_obj[handle].osd_info == NULL)
+    {
+      rgn_obj[handle].osd_info = (gsf_rgn_osd_t*)calloc(1, sizeof(gsf_rgn_osd_t));
+    }
+
+    gsf_rgn_osd_t *info = rgn_obj[handle].osd_info;
+
+    int _osdW = info->osdW;
+    int _osdH = info->osdH;
+
+
+    info->osdW = rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width;
+    info->osdH = rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height;    
+    
+    //printf("_osdW:%d, osdW:%d, _osdH:%d, osdH:%d\n", _osdW, info->osdW, _osdH, info->osdH);
+    
+    //check;
+    if(rgn_obj[handle].stat >= GSF_RGN_OBJ_ATTACH)
+    {
+      if(_osdW != info->osdW || _osdH != info->osdH)
+      {  
+         gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_DETACH, &rgn_obj[handle].rgn);
+         rgn_obj[handle].stat = GSF_RGN_OBJ_CREATE;
+      }
+    }
+
+    //create;
+    if(rgn_obj[handle].stat < GSF_RGN_OBJ_CREATE)
+    {
+       gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_CREATE, &rgn_obj[handle].rgn);
+       rgn_obj[handle].stat = GSF_RGN_OBJ_CREATE;
+    }
+    
+    //set attr; 
+    if(rgn_obj[handle].osd_bmp == NULL)
+    {
+      #ifdef __RGN_CANVAS
+      rgn_obj[handle].osd_bmp = (char*)1;
+      #else
+      rgn_obj[handle].osd_bmp = malloc(info->osdW*info->osdH*2);
+      memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+      #endif
+      gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+    }
+    else if(_osdW != info->osdW || _osdH != info->osdH)
+    {
+      #ifdef __RGN_CANVAS
+      rgn_obj[handle].osd_bmp = (char*)1;
+      #else
+      rgn_obj[handle].osd_bmp = realloc(rgn_obj[handle].osd_bmp, info->osdW*info->osdH*2);
+      memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+      #endif
+      gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETATTR, &rgn_obj[handle].rgn);
+    }
+   
+    //attach;
+    if(rgn_obj[handle].stat < GSF_RGN_OBJ_ATTACH)
+    {
+      //printf("GSF_MPP_RGN_ATTACH ch:%d, i:%d, idx:%d\n", ch, i, idx);
+      gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_ATTACH, &rgn_obj[handle].rgn);
+      rgn_obj[handle].stat = GSF_RGN_OBJ_ATTACH;
+    }
+   
+    BITMAP_S  bitMap;
+    
+    #ifdef __RGN_CANVAS
+      RGN_CANVAS_INFO_S stRgnCanvasInfo = {0};
+      if((gsf_mpp_rgn_canvas_get(handle, &stRgnCanvasInfo) < 0)
+        || (stRgnCanvasInfo.stSize.u32Width == 0)
+        || (stRgnCanvasInfo.stSize.u32Height == 0))
+      {
+        return -1;
+      }
+      bitMap.pData = (HI_VOID*)(HI_UL)stRgnCanvasInfo.u64VirtAddr;
+      bitMap.u32Width	    = stRgnCanvasInfo.u32Stride/2;
+      bitMap.u32Height	  = info->osdH;
+      bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
+      //memset(bitMap.pData, 0, stRgnCanvasInfo.stSize.u32Height*stRgnCanvasInfo.u32Stride);
+    #else
+      bitMap.u32Width	    = info->osdW;
+    	bitMap.u32Height	  = info->osdH;
+    	bitMap.enPixelFormat= PIXEL_FORMAT_ARGB_1555;
+    	bitMap.pData        = rgn_obj[handle].osd_bmp;
+    	//memset(rgn_obj[handle].osd_bmp, 0, info->osdW*info->osdH*2);
+    #endif
+       
+          
+    static struct rawfb_context *rawfb = NULL;
+    static unsigned char tex_scratch[512 * 512];
+
+    if(!rawfb)
+    {
+      rawfb = nk_rawfb_init(bitMap.pData, tex_scratch, bitMap.u32Width, bitMap.u32Height, bitMap.u32Width * 2, PIXEL_LAYOUT_XRGB_1555);
+    }
+      
+    if(rawfb)
+    {
+      #if 0
+      struct timespec ts1, ts2;  
+      clock_gettime(CLOCK_MONOTONIC, &ts1);
+      #endif
+      
+      //clear;
+      if(rgn_obj[handle].box_tmp.cnt)
+      {
+        rawfb->ctx.style.window.header.active = nk_style_item_color(nk_rgba(52,168,83,1));
+        rawfb->ctx.style.window.header.hover = nk_style_item_color(nk_rgba(52,168,83,1));
+        rawfb->ctx.style.window.header.normal = nk_style_item_color(nk_rgba(52,168,83,1));
+        rawfb->ctx.style.window.header.label_active = nk_rgba(255,0,0,1);
+        rawfb->ctx.style.window.header.label_hover  = nk_rgba(255,0,0,1);
+        rawfb->ctx.style.window.header.label_normal = nk_rgba(255,0,0,1);
+        rawfb->ctx.style.window.fixed_background = nk_style_item_color(nk_rgba(255,0,0,0));
+        rawfb->ctx.style.window.border_color = nk_rgba(255,0,0,1);
+        rawfb->ctx.style.window.border = 2.0f;
+        
+        for(r = 0; r < rgn_obj[handle].box_tmp.cnt; r++)
+      	{
+          int boxX = rgn_obj[handle].box_tmp.box[r].a & 0xffff;
+          int boxY = (rgn_obj[handle].box_tmp.box[r].a >> 16) & 0xffff;
+          int boxW = rgn_obj[handle].box_tmp.box[r].w;
+          int boxH = rgn_obj[handle].box_tmp.box[r].h;
+          
+          char name[16]; sprintf(name, "%08d", nk_win_id++);
+          if (nk_begin_titled(&rawfb->ctx, name, "", nk_rect(boxX, boxY, boxW, boxH),
+              NK_WINDOW_BORDER|NK_WINDOW_TITLE)) {
+            } nk_end(&rawfb->ctx);
+      	}
+        rgn_obj[handle].box_tmp.cnt = 0;
+      }
+      //draw;
+      rawfb->ctx.style.window.header.active = nk_style_item_color(nk_rgba(52,168,83,255));
+      rawfb->ctx.style.window.header.hover = nk_style_item_color(nk_rgba(52,168,83,255));
+      rawfb->ctx.style.window.header.normal = nk_style_item_color(nk_rgba(52,168,83,255));
+      rawfb->ctx.style.window.header.label_active = nk_rgba(255,0,0,255);
+      rawfb->ctx.style.window.header.label_hover  = nk_rgba(255,0,0,255);
+      rawfb->ctx.style.window.header.label_normal = nk_rgba(255,0,0,255);
+      rawfb->ctx.style.window.fixed_background = nk_style_item_color(nk_rgba(255,0,0,0));
+      rawfb->ctx.style.window.border_color = nk_rgba(255,0,0,255);
+      rawfb->ctx.style.window.border = 2.0f;
+      
+      for(r = 0; r < rects->size; r++)
+      {
+        int boxX = 0, boxY = 0, boxW = 0, boxH = 0;
+        char *label = rects->box[r].label;
+        
+        if(!rects->w || !rects->h)
+          break;
+
+        if(rects->box[r].rect[2] && rects->box[r].rect[3])
+        {
+          boxX = (unsigned int)((float)rects->box[r].rect[0]/(float)rects->w*info->osdW)&(-1);
+          boxY = (unsigned int)((float)rects->box[r].rect[1]/(float)rects->h*info->osdH)&(-1);
+          
+          boxW = (unsigned int)((float)rects->box[r].rect[2]/(float)rects->w*info->osdW)&(-1);
+          boxH = (unsigned int)((float)rects->box[r].rect[3]/(float)rects->h*info->osdH)&(-1); 
+          #if 1
+          rgn_obj[handle].box_tmp.box[r].a =  boxY << 16;
+          rgn_obj[handle].box_tmp.box[r].a |= boxX;
+          rgn_obj[handle].box_tmp.box[r].w = boxW;
+          rgn_obj[handle].box_tmp.box[r].h = boxH;
+          rgn_obj[handle].box_tmp.cnt++;
+          #endif
+          
+          char name[16]; sprintf(name, "%08d", nk_win_id++);
+          if (nk_begin_titled(&rawfb->ctx, name, label, nk_rect(boxX, boxY, boxW, boxH),
+              NK_WINDOW_BORDER|NK_WINDOW_TITLE)) {
+            } nk_end(&rawfb->ctx);
+        }
+      }
+      nk_rawfb_render(rawfb, nk_rgba(255,0,0,0), 0);
+      
+      #if 0
+      clock_gettime(CLOCK_MONOTONIC, &ts2);
+      int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+      printf("nk_rawfb_render cost:%d ms\n", cost);
+    	#endif
+    }
+  
+    {
+    #if 0
+    struct timespec ts1, ts2;  
+    clock_gettime(CLOCK_MONOTONIC, &ts1);
+    #endif
+
+    #ifdef __RGN_CANVAS
+    gsf_mpp_rgn_canvas_update(handle);
+    #else
+    gsf_mpp_rgn_bitmap(handle, &bitMap);
+    gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
+    #endif
+    
+  	#if 0
+    clock_gettime(CLOCK_MONOTONIC, &ts2);
+    int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+    printf("gsf_mpp_rgn_bitmap cost:%d ms\n", cost);
+  	#endif
+  	}
+  }
+  
+  return 0;
+}

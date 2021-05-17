@@ -14,7 +14,7 @@ GSF_LOG_GLOBAL_INIT("APP", 8*1024);
 
 extern int lvgl_stop(void);
 extern int lvgl_start(int w, int h);
-
+extern int lvgl_ctl(int cmd, void* args);
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -157,6 +157,30 @@ static int vores_get(gsf_resolu_t *res)
   return 0;
 }
 
+static int voly_get(gsf_layout_t *ly)
+{
+  while(1)
+  {
+    //register To;
+    GSF_MSG_DEF(gsf_layout_t, _ly, 8*1024);
+    int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VOLY, 0, GET, 0, 0, GSF_IPC_CODEC, 2000);
+    printf("GSF_ID_CODEC_VOLY To:%s, ret:%d, size:%d\n", GSF_IPC_CODEC, ret, __rsize);
+    static int cnt = 6;
+    if(ret == 0)
+    {
+      *ly = *_ly;
+      break;
+    }
+    if(cnt-- < 0)
+      return -1;
+    sleep(1);
+  }
+  return 0;
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
     if(argc < 2)
@@ -184,17 +208,20 @@ int main(int argc, char *argv[])
       return -1;
     }
     
-    //change lt = 2 for vertical screen;
-    lt = (res.h > res.w)?2:lt;
-
+    //get ly;
+    gsf_layout_t ly = {0};
+    voly_get(&ly);
+    lt = ly.layout;
+    lvgl_ctl(0, (void*)lt);
+    
     //kbd_mon("/dev/ttyAMA2");
     lvgl_start(res.w, res.h);
 
     #ifdef GSF_DEV_NVR
-    #warning "...... GSF_DEV_NVR defined ......"
+    #warning "...... DDDDDDDD GSF_DEV_NVR DDDDDDDD ......"
     live_mon();
     #else
-    #warning "...... GSF_DEV_NVR undefined ......"
+    #warning "...... UUUUUUUU GSF_DEV_NVR UUUUUUUU ......"
     #endif
 
     //init listen;

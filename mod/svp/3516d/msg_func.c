@@ -1,5 +1,8 @@
 ﻿//os
-
+#include <errno.h>
+#include <stdio.h>
+#include <libgen.h>
+ 
 //top
 #include "inc/gsf.h"
 
@@ -79,10 +82,42 @@ static void msg_func_lpr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 
+static void msg_func_face(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  int ret = 0;
+  rsp->size = 0;
+  rsp->err = 0;
+  
+  if(strlen(req->data))
+  {
+    extern int person_face_add(char* filename);
+    
+    char oldname[256] = {0};
+    char newname[256] = {0};
+    strncpy(oldname, req->data, sizeof(oldname)-1);
+    sprintf(newname, "/app/face/list/%s", basename(oldname));
+    
+    char cmd[256] = {0};
+    snprintf(cmd, sizeof(cmd), "mv %s %s", req->data, newname);
+    system(cmd);
+
+    printf("mv oldname[%s] => newname:[%s]\n", req->data, newname);
+    rsp->err = person_face_add(newname);
+    if(rsp->err)
+    {
+      //unlink(newname);
+    }
+  }
+}
+
+
+
+
 static msg_func_t *msg_func[GSF_ID_SVP_END] = {
     [GSF_ID_SVP_CFG]    = msg_func_cfg,
     [GSF_ID_SVP_MD]     = msg_func_md,
     [GSF_ID_SVP_LPR]    = msg_func_lpr,
+    [GSF_ID_SVP_FACE]   = msg_func_face,
  };
 
 

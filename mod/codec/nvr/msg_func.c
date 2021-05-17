@@ -36,9 +36,17 @@ static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
 
 static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  gsf_layout_t *ly = (gsf_layout_t *)req->data;
-  
-  live_ly(ly);
+  if(req->set)
+  {  
+    gsf_layout_t *ly = (gsf_layout_t *)req->data;
+    live_ly(ly);
+  }
+  else
+  {
+    ;
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
 }
 
 static void msg_func_vomv(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)

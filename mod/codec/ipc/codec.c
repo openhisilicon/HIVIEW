@@ -47,6 +47,16 @@ int vo_res_get(gsf_resolu_t *res)
   return 0;
 }
 
+static gsf_layout_t voly;
+#define vo_ly_set(ly) do{voly.layout = ly;}while(0)
+int vo_ly_get(gsf_layout_t *ly)
+{
+  *ly = voly;
+  return 0;
+}
+
+
+
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
     int ret = 0;
@@ -228,7 +238,11 @@ static int sub_recv(char *msg, int size, int err)
       rects.box[i].rect[3] = yolos->box[i].rect[3];
       gsf_gb2312_to_utf8(yolos->box[i].label, strlen(yolos->box[i].label), rects.box[i].label);
     }
+    // raw;
     gsf_rgn_rect_set(0, 0, &rects, 1);
+    
+    // nk; 
+    //gsf_rgn_nk_set(0, 0, &rects, 1);
     #endif
 
   }
@@ -654,7 +668,8 @@ int main(int argc, char *argv[])
       //---- 800x640 -----//
       //---- 800x640 -----//
       gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
-
+      vo_ly_set(VO_LAYOUT_2MUX);
+      
       gsf_mpp_vo_src_t src0 = {0, 0};
       gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
       gsf_mpp_vo_src_t src1 = {1, 0};
@@ -668,6 +683,7 @@ int main(int argc, char *argv[])
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
       gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      vo_ly_set(VO_LAYOUT_1MUX);
       gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
       
       gsf_mpp_vo_src_t src0 = {0, 0};

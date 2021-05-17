@@ -16,10 +16,9 @@
 #include "mod/svp/inc/svp.h"
 
 static pthread_t tid;
-static int lv_running = 0, lv_w = 1280, lv_h = 1024;
+static int lv_running = 0, lv_w = 1280, lv_h = 1024, lt = 1;
 static void* lvgl_main(void* p);
 static int msq = -1;
-
 
 int lvgl_stop(void)
 {
@@ -34,6 +33,13 @@ int lvgl_start(int w, int h)
   lv_running = 1;
   return pthread_create(&tid, NULL, lvgl_main, NULL);
 }
+
+int lvgl_ctl(int cmd, void* args)
+{
+  lt = (int)args;
+  return 0;
+}
+
 
 typedef struct msgbuf
 {
@@ -142,7 +148,8 @@ static void* lvgl_main(void* p)
     {
       obj[i] = lv_obj_create(win, NULL);
       label[i] = lv_label_create(obj[i], NULL);
-      lv_obj_set_style(label[i], &lv_style_plain_color);
+      //lv_obj_set_style(label[i], &lv_style_plain_color);
+      lv_obj_set_style(label[i], &style_label);
       lv_obj_set_style(obj[i], &style_tv_body_fg);
       lv_obj_set_size(obj[i], 0, 0);
     }
@@ -165,10 +172,25 @@ static void* lvgl_main(void* p)
         {
           gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*)mbuf->mtext;
           
-          float wr = hres;
-          wr/= yolos->w;
-          float hr = (vres > hres)?(vres/2):vres; //for vertical screen
-          hr/= yolos->h;
+          
+          float xr = 0, yr = 0, wr = 0, hr = 0;
+          
+          if(vres > hres) //for vertical screen
+          {
+            wr = hres; wr/= yolos->w;
+            hr = vres/2; hr/= yolos->h;
+          }
+          else if(lt == 2) //for 2ch
+          {
+            xr = 0; yr = vres/4;
+            wr = hres/2; wr/= yolos->w;
+            hr = vres/2; hr/= yolos->h;
+          }
+          else  // for 1ch;
+          {
+            wr = hres; wr/= yolos->w;
+            hr = vres; hr/= yolos->h;
+          }
           
           yolos->cnt = (yolos->cnt > 64)?64:yolos->cnt;
           
@@ -181,8 +203,8 @@ static void* lvgl_main(void* p)
           {
             lv_label_set_text(label[i], yolos->box[i].label);
             lv_obj_set_size(obj[i], yolos->box[i].rect[2] * wr, yolos->box[i].rect[3] * hr);
-            lv_obj_set_x(obj[i], yolos->box[i].rect[0] *wr);
-            lv_obj_set_y(obj[i], yolos->box[i].rect[1] *hr);
+            lv_obj_set_x(obj[i], xr + yolos->box[i].rect[0] *wr);
+            lv_obj_set_y(obj[i], yr + yolos->box[i].rect[1] *hr);
           }
           cnt = yolos->cnt;
         }
