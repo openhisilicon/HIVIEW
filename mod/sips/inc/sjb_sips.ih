@@ -1,0 +1,11 @@
+#pragma pack(push, 4)
+
+STRUCT(gsf_sips_t)
+{
+  FIELD(int, port);
+  FIELD(int, auth);
+  STRING(host, 128);
+};
+
+
+#pragma pack(pop)

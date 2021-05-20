@@ -10,8 +10,8 @@ typedef struct sdp_t sdp_t;
 enum { SDP_V_VERSION_0 = 0 };
 enum { SDP_C_NETWORK_UNKNOWN=0, SDP_C_NETWORK_IN };
 enum { SDP_C_ADDRESS_UNKNOWN=0, SDP_C_ADDRESS_IP4, SDP_C_ADDRESS_IP6 };
-enum { SDP_A_SENDRECV = 0, SDP_A_SENDONLY, SDP_A_RECVONLY, SDP_A_INACTIVE, };
-enum { SDP_M_FMT_UDP_AUDIO = 1001, SDP_M_FMT_UDP_VIDEO, SDP_M_FMT_UDP_TEXT, SDP_M_FMT_UDP_APPLICATION, SDP_M_FMT_UDP_MESSAGE };
+enum { SDP_A_INACTIVE = 0, SDP_A_SENDONLY = 0x01, SDP_A_RECVONLY = 0x02, SDP_A_SENDRECV = 0x03 /*default*/, };
+enum { SDP_M_MEDIA_UNKOWN = 0, SDP_M_MEDIA_AUDIO, SDP_M_MEDIA_VIDEO, SDP_M_MEDIA_TEXT, SDP_M_MEDIA_APPLICATION, SDP_M_MEDIA_MESSAGE };
 
 sdp_t* sdp_parse(const char* s);
 void sdp_destroy(sdp_t* sdp);
@@ -73,10 +73,34 @@ const char* sdp_encryption_get(sdp_t* sdp);
 
 int sdp_media_count(sdp_t* sdp);
 const char* sdp_media_type(sdp_t* sdp, int media);
-int sdp_media_port(sdp_t* sdp, int media, int *port, int* num);
+int sdp_media_port(sdp_t* sdp, int media, int port[], int num); // return port count
 const char* sdp_media_proto(sdp_t* sdp, int media);
 int sdp_media_formats(sdp_t* sdp, int media, int *formats, int count); // return format count
 
+/*
+RFC4566 4.1.  Media and Transport Information
+ In addition to media format and transport protocol, SDP conveys
+address and port details.  For an IP multicast session, these
+comprise:
+    The multicast group address for media
+    The transport port for media
+This address and port are the destination address and destination
+port of the multicast stream, whether being sent, received, or both.
+
+For unicast IP sessions, the following are conveyed:
+    The remote address for media
+    The remote transport port for media
+
+The semantics of this address and port depend on the media and
+transport protocol defined.  By default, this SHOULD be the remote
+address and remote port to which data is sent.
+ 
+RFC 4570 SDP Source Filters
+ c=IN IP4 224.2.1.1/127/3
+ a=source-filter: incl IN IP4 224.2.1.1 192.0.2.10
+ a=source-filter: incl IN IP4 224.2.1.3 192.0.2.42
+ */
+int sdp_media_get_connection(sdp_t* sdp, int media, const char** network, const char** addrtype, const char** address);
 int sdp_media_get_connection_address(sdp_t* sdp, int media, char* ip, int bytes);
 int sdp_media_get_connection_network(sdp_t* sdp, int media);
 int sdp_media_get_connection_addrtype(sdp_t* sdp, int media);
@@ -90,6 +114,7 @@ const char* sdp_media_bandwidth_get_type(sdp_t* sdp, int media, int idx); // CT/
 int sdp_media_bandwidth_get_value(sdp_t* sdp, int media, int idx); // kbps-kilobits per second
 
 int sdp_attribute_count(sdp_t* sdp);
+/// param[in] name attrbution name, NULL-for list all attributions
 int sdp_attribute_list(sdp_t* sdp, const char* name, void (*onattr)(void* param, const char* name, const char* value), void* param);
 int sdp_attribute_get(sdp_t* sdp, int idx, const char** name, const char** value);
 const char* sdp_attribute_find(sdp_t* sdp, const char* name);

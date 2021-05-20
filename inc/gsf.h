@@ -34,6 +34,7 @@ enum {
     GSF_MOD_ID_ONVIF = 5,
     GSF_MOD_ID_SVP   = 6,
     GSF_MOD_ID_APP   = 7,
+    GSF_MOD_ID_SIPS  = 8,
     //user custom mod;
     GSF_MOD_ID_END   = 15
 };

@@ -22,6 +22,7 @@ typedef void (*funcptr_t)(void);
 #endif
 
 #if defined(OS_MAC)
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <mach/mach_time.h>  
 #endif
@@ -120,12 +121,12 @@ static inline uint64_t system_time(void)
 	FILETIME ft;
 	GetSystemTimeAsFileTime(&ft);
 	t = (uint64_t)ft.dwHighDateTime << 32 | ft.dwLowDateTime;
-	return t / 10 - 11644473600000000; /* Jan 1, 1601 */
+	return t / 10000 - 11644473600000ULL; /* Jan 1, 1601 */
 #elif defined(OS_MAC)
 	uint64_t tick;
 	mach_timebase_info_data_t timebase;
 	tick = mach_absolute_time();
-	mach_timebase_info(timebase);
+	mach_timebase_info(&timebase);
 	return tick * timebase.numer / timebase.denom / 1000000;
 #else
 #if defined(CLOCK_REALTIME)
@@ -154,7 +155,7 @@ static inline uint64_t system_clock(void)
 	uint64_t tick;
 	mach_timebase_info_data_t timebase;
 	tick = mach_absolute_time();
-	mach_timebase_info(timebase);
+	mach_timebase_info(&timebase);
 	return tick * timebase.numer / timebase.denom / 1000000;
 #else
 #if defined(CLOCK_MONOTONIC)
