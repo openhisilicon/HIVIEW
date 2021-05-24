@@ -13,7 +13,7 @@ OSD_COMP_INFO s_OSDCompInfo[OSD_COLOR_FMT_BUTT] = {{0, 4, 4, 4},   /*RGB444*/
     {0, 8, 8, 8},   /*RGB888*/
     {8, 8, 8, 8}    /*ARGB8888*/
 };
-inline HI_U16 OSD_MAKECOLOR_U16(HI_U8 r, HI_U8 g, HI_U8 b, OSD_COMP_INFO compinfo)
+HI_U16 OSD_MAKECOLOR_U16(HI_U8 r, HI_U8 g, HI_U8 b, OSD_COMP_INFO compinfo)
 {
     HI_U8 r1, g1, b1;
     HI_U16 pixel = 0;
@@ -98,7 +98,7 @@ int LoadBMP(const char* filename, OSD_LOGO_T* pVideoLogo)
     Bpp = bmpInfo.bmiHeader.biBitCount / 8;
     if (Bpp < 2)
     {
-        /* only support 1555.8888  888 bitmap */
+        /* only support 1555 8888 888 bitmap */
         printf("bitmap format not supported!\n");
         return -1;
     }
@@ -286,7 +286,7 @@ int LoadBMPEx(const char* filename, OSD_LOGO_T* pVideoLogo, OSD_COLOR_FMT_E enFm
     {
         for (j = 0; j < w; j++)
         {
-            if (Bpp == 3) /*.....*/
+            if (Bpp == 3)
             {
                 switch (enFmt)
                 {
@@ -413,18 +413,24 @@ int LoadBMPCanvas(const char* filename, OSD_LOGO_T* pVideoLogo, OSD_COLOR_FMT_E 
     if (stride > pVideoLogo->stride)
     {
         printf("Bitmap's stride(%d) is bigger than canvas's stide(%d). Load bitmap error!\n", stride, pVideoLogo->stride);
+        free(pOrigBMPBuf);
+        fclose(pFile);
         return -1;
     }
 
     if (h > pVideoLogo->height)
     {
         printf("Bitmap's height(%d) is bigger than canvas's height(%d). Load bitmap error!\n", h, pVideoLogo->height);
+        free(pOrigBMPBuf);
+        fclose(pFile);
         return -1;
     }
 
     if (w > pVideoLogo->width)
     {
         printf("Bitmap's width(%d) is bigger than canvas's width(%d). Load bitmap error!\n", w, pVideoLogo->width);
+        free(pOrigBMPBuf);
+        fclose(pFile);
         return -1;
     }
 
@@ -515,7 +521,11 @@ char* GetExtName(char* filename)
 int LoadImage(const char* filename, OSD_LOGO_T* pVideoLogo)
 {
     char* ext = GetExtName((char*)filename);
-
+    if(HI_NULL == ext)
+    {
+        printf("GetExtName error!\n");
+        return -1;
+    }
     if (strcmp(ext, "bmp") == 0)
     {
         if (0 != LoadBMP(filename, pVideoLogo))
@@ -536,7 +546,13 @@ int LoadImage(const char* filename, OSD_LOGO_T* pVideoLogo)
 int LoadImageEx(const char* filename, OSD_LOGO_T* pVideoLogo, OSD_COLOR_FMT_E enFmt)
 {
     char* ext = GetExtName((char*)filename);
-
+    
+    if(HI_NULL == ext)
+    {
+        printf("LoadImageEx error!\n");
+        return -1;
+    }
+    
     if (strcmp(ext, "bmp") == 0)
     {
         if (0 != LoadBMPEx(filename, pVideoLogo, enFmt))
@@ -559,6 +575,12 @@ int LoadCanvasEx(const char* filename, OSD_LOGO_T* pVideoLogo, OSD_COLOR_FMT_E e
 {
     char* ext = GetExtName((char*)filename);
 
+    if(HI_NULL == ext)
+    {
+        printf("LoadCanvasEx error!\n");
+        return -1;
+    }
+    
     if (strcmp(ext, "bmp") == 0)
     {
         if (0 != LoadBMPCanvas(filename, pVideoLogo, enFmt))

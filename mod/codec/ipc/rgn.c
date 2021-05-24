@@ -703,11 +703,16 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
       if(rects->box[r].rect[2] && rects->box[r].rect[3])
       {
         
-        boxX = (unsigned int)((float)rects->box[r].rect[0]/(float)rects->w*info->osdW)&(-1);
-        boxY = (unsigned int)((float)rects->box[r].rect[1]/(float)rects->h*info->osdH)&(-1);
+        float wr = info->osdW;
+        wr /= rects->w;
+        float hr = info->osdH;
+        hr /= rects->h;
         
-        int _boxW = (unsigned int)((float)rects->box[r].rect[2]/(float)rects->w*info->osdW)&(-1);
-        int _boxH = (unsigned int)((float)rects->box[r].rect[3]/(float)rects->h*info->osdH)&(-1); 
+        boxX = (unsigned int)(rects->box[r].rect[0] * wr)&(-1);
+        boxY = (unsigned int)(rects->box[r].rect[1] * hr)&(-1);
+        
+        int _boxW = (unsigned int)(rects->box[r].rect[2] * wr)&(-1);
+        int _boxH = (unsigned int)(rects->box[r].rect[3] * hr)&(-1); 
        
         boxW = (_boxW > boxW)?ALIGN_UP(_boxW, 2):boxW;
         boxH = (_boxH > boxH)?ALIGN_UP(_boxH, 2):boxH;
@@ -850,6 +855,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_INCLUDE_SOFTWARE_FONT
+#include <math.h>
 #include "nuklear.h"
 #include "nuklear_rawfb.h"
 
@@ -1040,11 +1046,18 @@ int gsf_rgn_nk_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
 
         if(rects->box[r].rect[2] && rects->box[r].rect[3])
         {
-          boxX = (unsigned int)((float)rects->box[r].rect[0]/(float)rects->w*info->osdW)&(-1);
-          boxY = (unsigned int)((float)rects->box[r].rect[1]/(float)rects->h*info->osdH)&(-1);
           
-          boxW = (unsigned int)((float)rects->box[r].rect[2]/(float)rects->w*info->osdW)&(-1);
-          boxH = (unsigned int)((float)rects->box[r].rect[3]/(float)rects->h*info->osdH)&(-1); 
+          float wr = info->osdW;
+          wr /= rects->w;
+          float hr = info->osdH;
+          hr /= rects->h;
+          
+          boxX = (unsigned int)(rects->box[r].rect[0] * wr)&(-1);
+          boxY = (unsigned int)(rects->box[r].rect[1] * hr)&(-1);
+          
+          boxW = (unsigned int)(rects->box[r].rect[2] * wr)&(-1);
+          boxH = (unsigned int)(rects->box[r].rect[3] * hr)&(-1); 
+          
           #if 1
           rgn_obj[handle].box_tmp.box[r].a =  boxY << 16;
           rgn_obj[handle].box_tmp.box[r].a |= boxX;

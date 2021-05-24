@@ -1,255 +1,268 @@
-#ifndef __HI_MIPI__
-#define __HI_MIPI__
+/*
+ * Copyright (C) Hisilicon Technologies Co., Ltd. 2016-2019. All rights reserved.
+ * Description: api of mipi
+ * Author: Hisilicon multimedia software group
+ * Create: 2016-11-08
+ */
 
-#include "hi_type.h"
+#ifndef __HI_MIPI_H__
+#define __HI_MIPI_H__
 
-typedef unsigned int MIPI_PHY;
-typedef unsigned int COMBO_LINK;
+typedef unsigned int combo_dev_t;
+typedef unsigned int sns_rst_source_t;
+typedef unsigned int sns_clk_source_t;
 
-#define LVDS_MIN_WIDTH      32
-#define LVDS_MIN_HEIGHT     32
+#define MIPI_LANE_NUM                4
+#define LVDS_LANE_NUM                4
 
-#define COMBO_MAX_LINK_NUM  2   /* hi3516a has 2 links */
-#define COMBO_MAX_LANE_NUM  8
-#define LANE_NUM_PER_LINK   4   /* one link has 4 lanes */
+#define WDR_VC_NUM                   4
+#define SYNC_CODE_NUM                4
 
+#define MIPI_RX_MAX_DEV_NUM          2
+#define CMOS_MAX_DEV_NUM             1
 
-#define MIPI_LANE_NUM       COMBO_MAX_LANE_NUM   /* hi3516a support 1 link mipi only */
-#define LVDS_LANE_NUM       COMBO_MAX_LANE_NUM   /* hi3516a has 2 links, so has 8 lanes */
+#define SNS_MAX_CLK_SOURCE_NUM       2
+#define SNS_MAX_RST_SOURCE_NUM       2
+#define MAX_EXT_DATA_TYPE_NUM        3
 
-
-#define WDR_VC_NUM          4
-#define SYNC_CODE_NUM       4
-
-/* int mask */
-#define COMBO_LINK_INT_DEF          (0x00200000)
-#define COMBO_LINK_INT_MASK         ~(0x300000)
-//~(COMBO_LINK_INT_DEF)       /* 0: enable int */
-
-#define MIPI_INT1_INT_DEF           (0x1000fff0)
-//#define MIPI_INT1_MASK              ~(MIPI_INT1_INT_DEF)       /* 0: enable int */
-
-#define MIPI_INT2_INT_DEF           (0xf000)
-//#define MIPI_INT2_MASK              ~(MIPI_INT2_INT_DEF)       /* 0: enable int */
-
-#define MIPI_INT_MASK               0x0
-
-//#define HI_MIPI_REG_DEBUG
-//#define HI_MIPI_DEBUG
-#ifdef HI_MIPI_DEBUG
-
-#define HI_MSG(x...) \
-    do { \
-        printk("%s->%d: ", __FUNCTION__, __LINE__); \
-        printk(x); \
-        printk("\n"); \
-    } while (0)
-#else
-
-#define HI_MSG(args...) do { } while (0)
-#endif
-
-#define HI_ERR(x...) \
-    do { \
-        printk(KERN_ALERT "%s(%d): ", __FUNCTION__, __LINE__); \
-        printk(KERN_ALERT x); \
-        printk(KERN_ALERT "\n"); \
+#define HI_ERR(x...)                                     \
+    do {                                                 \
+        osal_printk("%s(%d): ", __FUNCTION__, __LINE__); \
+        osal_printk(x);                                  \
     } while (0)
 
+typedef enum {
+    LANE_DIVIDE_MODE_0 = 0,
+    LANE_DIVIDE_MODE_1 = 1,
+    LANE_DIVIDE_MODE_BUTT
+} lane_divide_mode_t;
 
-typedef enum
-{
-    MIPI_VC0_NO_MATCH  = 0x1 << 4,        /* VC0,frame's start and frame's end do not match  */
-    MIPI_VC1_NO_MATCH  = 0x1 << 5,        /* VC1,frame's start and frame's end do not match  */
-    MIPI_VC2_NO_MATCH  = 0x1 << 6,        /* VC2,frame's start and frame's end do not match  */
-    MIPI_VC3_NO_MATCH  = 0x1 << 7,        /* VC3,frame's start and frame's end do not match  */
+typedef enum {
+    WORK_MODE_LVDS = 0x0,
+    WORK_MODE_MIPI = 0x1,
+    WORK_MODE_CMOS = 0x2,
+    WORK_MODE_BT1120 = 0x3,
+    WORK_MODE_SLVS = 0x4,
+    WORK_MODE_BUTT
+} work_mode_t;
 
-    MIPI_VC0_ORDER_ERR = 0x1 << 8,        /* VC0'S frame order error*/
-    MIPI_VC1_ORDER_ERR = 0x1 << 9,        /* VC1'S frame order error*/
-    MIPI_VC2_ORDER_ERR = 0x1 << 10,       /* VC2'S frame order error*/
-    MIPI_VC3_ORDER_ERR = 0x1 << 11,       /* VC3'S frame order error*/
-
-    MIPI_VC0_FRAME_CRC = 0x1 << 12,        /* in the last frame,VC0'S data has a CRC ERROR at least  */
-    MIPI_VC1_FRAME_CRC = 0x1 << 13,        /* in the last frame,VC1'S data has a CRC ERROR at least  */
-    MIPI_VC2_FRAME_CRC = 0x1 << 14,        /* in the last frame,VC2'S data has a CRC ERROR at least  */
-    MIPI_VC3_FRAME_CRC = 0x1 << 15,        /* in the last frame,VC3'S data has a CRC ERROR at least  */
-    MIPI_HEADER_ERR    = 0x1 << 28,        /* Header has two error at least */
-} MIPI_INT_ERR;
-
-typedef enum
-{
-    MIPI_VC0_INVALID_DT = 0x1 << 12,        /* do not support VC0'S data type */
-    MIPI_VC1_INVALID_DT = 0x1 << 13,        /* do not support VC1'S data type */
-    MIPI_VC2_INVALID_DT = 0x1 << 14,        /* do not support VC2'S data type */
-    MIPI_VC3_INVALID_DT = 0x1 << 15,        /* do not support VC3'S data type */
-} MIPI_INT2_ERR;
-
-typedef enum
-{
-    MIPI_ESC_CLK  = 0x1 << 0,               /*MIPI mode,Link 0 clock lane escape interrupt state */
-    MIPI_ESC_D0   = 0x1 << 1,               /*data lane 0 escape interrupt state */
-    MIPI_ESC_D1   = 0x1 << 2,               /*data lane 1 escape interrupt state */
-    MIPI_ESC_D2   = 0x1 << 3,               /*data lane 2 escape interrupt state */
-    MIPI_ESC_D3   = 0x1 << 4,               /*data lane 3 escape interrupt state */
-
-    MIPI_TIMEOUT_CLK = 0x1 << 8,            /*clock lane FSM timeout interrupt state */
-    MIPI_TIMEOUT_D0  = 0x1 << 9,            /*data lane 0 FSM timeout interrupt state */
-    MIPI_TIMEOUT_D1  = 0x1 << 10,           /*data lane 1 FSM timeout interrupt state */
-    MIPI_TIMEOUT_D2  = 0x1 << 11,           /*data lane 2 FSM timeout interrupt state */
-    MIPI_TIMEOUT_D3  = 0x1 << 12,           /*data lane 3 FSM timeout interrupt state */
-
-    MIPI_VSYNC_ERR   = 0x1 << 21,           /*LVDS mode, Link0's lane frame vsync interrupt state */
-} LINK_INT_STAT;
-
-typedef enum
-{
-    LANE0_SYNC_ERR = 0x1,
-    LANE1_SYNC_ERR = 0x2,
-    LANE2_SYNC_ERR = 0x4,
-    LANE3_SYNC_ERR = 0x8,
-    LANE4_SYNC_ERR = 0x10,
-    LANE5_SYNC_ERR = 0x20,
-    LANE6_SYNC_ERR = 0x40,
-    LANE7_SYNC_ERR = 0x80,
-
-    PHY0_LINE_SYNC_ERR  = 0x100,
-    PHY0_FRAME_SYNC_ERR = 0x200,
-    PHY1_LINE_SYNC_ERR  = 0x400,
-    PHY1_FRAME_SYNC_ERR = 0x800,
-    LINK_SYNC_ERR       = 0x3F0000,  /* link's line/frame end signal interrupt state, if has the interrupt,reset link */
-} LVDS_SYNC_INTR_ERR;
-
-typedef enum
-{
-    OUTPUT_DATA_WIDTH_2BIT = 0,
-    OUTPUT_DATA_WIDTH_4BIT,
-    OUTPUT_DATA_WIDTH_8BIT,
-    OUTPUT_DATA_WIDTH_BUTT
-} output_data_width;
-
-typedef enum
-{
-    CLK_UP_EDGE = 0,
-    CLK_DOWN_EDGE,
-    CLK_EDGE_BUTT
-} clk_edge;
-
-typedef enum
-{
-    OUTPUT_NORM_MSB = 0,
-    OUTPUT_REVERSE_MSB,
-    OUTPUT_MSB_BUTT
-} output_msb;
-
-typedef enum
-{
-    INPUT_MODE_MIPI         = 0x0,              /* mipi */
-    INPUT_MODE_SUBLVDS      = 0x1,              /* SUB_LVDS */
-    INPUT_MODE_LVDS         = 0x2,              /* LVDS */
-    INPUT_MODE_HISPI        = 0x3,              /* HISPI */
-    INPUT_MODE_CMOS_18V     = 0x4,              /* CMOS 1.8V */
-    INPUT_MODE_CMOS_33V     = 0x5,              /* CMOS 3.3V */
-    INPUT_MODE_BT1120       = 0x6,              /* CMOS 3.3V */
-    INPUT_MODE_BYPASS       = 0x7,              /* MIPI Bypass */
+typedef enum {
+    INPUT_MODE_MIPI = 0x0, /* mipi */
+    INPUT_MODE_SUBLVDS = 0x1, /* SUB_LVDS */
+    INPUT_MODE_LVDS = 0x2, /* LVDS */
+    INPUT_MODE_HISPI = 0x3, /* HISPI */
+    INPUT_MODE_CMOS = 0x4, /* CMOS */
+    INPUT_MODE_BT601 = 0x5, /* BT601 */
+    INPUT_MODE_BT656 = 0x6, /* BT656 */
+    INPUT_MODE_BT1120 = 0x7, /* BT1120 */
+    INPUT_MODE_BYPASS = 0x8, /* MIPI Bypass */
 
     INPUT_MODE_BUTT
 } input_mode_t;
 
-typedef enum
-{
-    WORK_MODE_LVDS          = 0x0,
-    WORK_MODE_MIPI          = 0x1,
-    WORK_MODE_CMOS_18V      = 0x2,
-    WORK_MODE_CMOS_33V      = 0x4,
-    WORK_MODE_BT1120        = 0x4,
-    WORK_MODE_BUTT
-} work_mode_t;
+typedef enum {
+    MIPI_DATA_RATE_X1 = 0, /* output 1 pixel per clock */
+    MIPI_DATA_RATE_X2 = 1, /* output 2 pixel per clock */
 
-typedef struct
-{
+    MIPI_DATA_RATE_BUTT
+} mipi_data_rate_t;
+
+typedef struct {
+    int x;
+    int y;
+    unsigned int width;
+    unsigned int height;
+} img_rect_t;
+
+typedef struct {
     unsigned int width;
     unsigned int height;
 } img_size_t;
 
-typedef enum
-{
-    HI_WDR_MODE_NONE 	= 0x0,
-    HI_WDR_MODE_2F   	= 0x1,
-    HI_WDR_MODE_3F   	= 0x2,
-    HI_WDR_MODE_4F   	= 0x3,
-    HI_WDR_MODE_DOL_2F  = 0x4,
-    HI_WDR_MODE_DOL_3F  = 0x5,
-    HI_WDR_MODE_DOL_4F  = 0x6,
-    HI_WDR_MODE_BUTT
-} wdr_mode_e;
+typedef enum {
+    DATA_TYPE_RAW_8BIT = 0,
+    DATA_TYPE_RAW_10BIT,
+    DATA_TYPE_RAW_12BIT,
+    DATA_TYPE_RAW_14BIT,
+    DATA_TYPE_RAW_16BIT,
+    DATA_TYPE_YUV420_8BIT_NORMAL,
+    DATA_TYPE_YUV420_8BIT_LEGACY,
+    DATA_TYPE_YUV422_8BIT,
+    DATA_TYPE_YUV422_PACKED, /* yuv422 8bit transform user define 16bit raw */
+    DATA_TYPE_BUTT
+} data_type_t;
 
-typedef enum
-{
-    LVDS_ENDIAN_LITTLE  = 0x0,
-    LVDS_ENDIAN_BIG     = 0x1,
-    LVDS_ENDIAN_BUTT
-} lvds_bit_endian;
+typedef struct {
+    combo_dev_t devno;
+    unsigned int num;
+    unsigned int ext_data_bit_width[MAX_EXT_DATA_TYPE_NUM];
+    unsigned int ext_data_type[MAX_EXT_DATA_TYPE_NUM];
+} ext_data_type_t;
 
-typedef enum
-{
-    LVDS_SYNC_MODE_SOL = 0,         /* sensor SOL, EOL, SOF, EOF */
-    LVDS_SYNC_MODE_SAV,             /* SAV, EAV */
-    LVDS_SYNC_MODE_BUTT
-} lvds_sync_mode_e;
+/* MIPI D_PHY WDR MODE defines */
+typedef enum {
+    HI_MIPI_WDR_MODE_NONE = 0x0,
+    HI_MIPI_WDR_MODE_VC = 0x1, /* Virtual Channel */
+    HI_MIPI_WDR_MODE_DT = 0x2, /* Data Type */
+    HI_MIPI_WDR_MODE_DOL = 0x3, /* DOL Mode */
+    HI_MIPI_WDR_MODE_BUTT
+} mipi_wdr_mode_t;
 
-typedef enum
-{
-    RAW_DATA_8BIT = 0,
-    RAW_DATA_10BIT,
-    RAW_DATA_12BIT,
-    RAW_DATA_14BIT,
-    RAW_DATA_BUTT
-} raw_data_type_e;
+typedef struct {
+    data_type_t input_data_type; /* data type: 8/10/12/14/16 bit */
+    mipi_wdr_mode_t wdr_mode; /* MIPI WDR mode */
+    short lane_id[MIPI_LANE_NUM]; /* lane_id: -1 - disable */
 
-typedef struct
-{
-    img_size_t          img_size;                   /* oringnal sensor input image size */
-    wdr_mode_e          wdr_mode;                   /* WDR mode */
-    lvds_sync_mode_e    sync_mode;                  /* sync mode: SOL, SAV */
-    raw_data_type_e     raw_data_type;              /* raw data type: 8/10/12/14 bit */
-    lvds_bit_endian     data_endian;                /* data endian: little/big */
-    lvds_bit_endian     sync_code_endian;           /* sync code endian: little/big */
-    short               lane_id[LVDS_LANE_NUM];     /* lane_id: -1 - disable */
-
-    /* each vc has 4 params, sync_code[i]:
-       sync_mode is SYNC_MODE_SOL: SOF, EOF, SOL, EOL
-       sync_mode is SYNC_MODE_SAV: invalid sav, invalid eav, valid sav, valid eav */
-    unsigned short      sync_code[LVDS_LANE_NUM][WDR_VC_NUM][SYNC_CODE_NUM];
-} lvds_dev_attr_t;
-
-typedef struct
-{
-    raw_data_type_e       raw_data_type;            /* raw data type: 8/10/12/14 bit */
-    short                 lane_id[MIPI_LANE_NUM];   /* lane_id: -1 - disable */
+    union {
+        short data_type[WDR_VC_NUM]; /* used by the HI_MIPI_WDR_MODE_DT */
+    };
 } mipi_dev_attr_t;
 
-typedef struct
-{
-    input_mode_t          input_mode;               /* input mode: MIPI/LVDS/SUBLVDS/HISPI/DC */
+typedef enum {
+    HI_WDR_MODE_NONE = 0x0,
+    HI_WDR_MODE_2F = 0x1,
+    HI_WDR_MODE_3F = 0x2,
+    HI_WDR_MODE_4F = 0x3,
+    HI_WDR_MODE_DOL_2F = 0x4,
+    HI_WDR_MODE_DOL_3F = 0x5,
+    HI_WDR_MODE_DOL_4F = 0x6,
+    HI_WDR_MODE_BUTT
+} wdr_mode_t;
 
-    union
-    {
-        mipi_dev_attr_t     mipi_attr;              /* for MIPI configuration */
-        lvds_dev_attr_t     lvds_attr;              /* for LVDS/SUBLVDS/HISPI configuration */
+typedef enum {
+    LVDS_SYNC_MODE_SOF = 0, /* sensor SOL, EOL, SOF, EOF */
+    LVDS_SYNC_MODE_SAV, /* SAV, EAV */
+    LVDS_SYNC_MODE_BUTT
+} lvds_sync_mode_t;
+
+typedef enum {
+    LVDS_VSYNC_NORMAL = 0x00,
+    LVDS_VSYNC_SHARE = 0x01,
+    LVDS_VSYNC_HCONNECT = 0x02,
+    LVDS_VSYNC_BUTT
+} lvds_vsync_type_t;
+
+typedef struct {
+    lvds_vsync_type_t sync_type;
+
+    /* hconnect vsync blanking len, valid when the sync_type is LVDS_VSYNC_HCONNECT */
+    unsigned short hblank1;
+    unsigned short hblank2;
+} lvds_vsync_attr_t;
+
+typedef enum {
+    LVDS_FID_NONE = 0x00,
+    LVDS_FID_IN_SAV = 0x01, /* frame identification id in SAV 4th */
+    LVDS_FID_IN_DATA = 0x02, /* frame identification id in first data */
+    LVDS_FID_BUTT
+} lvds_fid_type_t;
+
+typedef struct {
+    lvds_fid_type_t fid_type;
+
+    /*
+     * Sony DOL has the Frame Information Line, in DOL H-Connection mode,
+     * should configure this flag as false to disable output the Frame Information Line
+     */
+    unsigned char output_fil;
+} lvds_fid_attr_t;
+
+typedef enum {
+    LVDS_ENDIAN_LITTLE = 0x0,
+    LVDS_ENDIAN_BIG = 0x1,
+    LVDS_ENDIAN_BUTT
+} lvds_bit_endian_t;
+
+typedef struct {
+    data_type_t input_data_type; /* data type: 8/10/12/14 bit */
+    wdr_mode_t wdr_mode; /* WDR mode */
+
+    lvds_sync_mode_t sync_mode; /* sync mode: SOF, SAV */
+    lvds_vsync_attr_t vsync_attr; /* normal, share, hconnect */
+    lvds_fid_attr_t fid_attr; /* frame identification code */
+
+    lvds_bit_endian_t data_endian; /* data endian: little/big */
+    lvds_bit_endian_t sync_code_endian; /* sync code endian: little/big */
+    short lane_id[LVDS_LANE_NUM]; /* lane_id: -1 - disable */
+
+    /*
+     * each vc has 4 params, sync_code[i]:
+     * sync_mode is SYNC_MODE_SOF: SOF, EOF, SOL, EOL
+     * sync_mode is SYNC_MODE_SAV: invalid sav, invalid eav, valid sav, valid eav
+     */
+    unsigned short sync_code[LVDS_LANE_NUM][WDR_VC_NUM][SYNC_CODE_NUM];
+} lvds_dev_attr_t;
+
+typedef struct {
+    combo_dev_t devno; /* device number */
+    input_mode_t input_mode; /* input mode: MIPI/LVDS/SUBLVDS/HISPI/DC */
+    mipi_data_rate_t data_rate;
+    img_rect_t img_rect; /* MIPI Rx device crop area (corresponding to the oringnal sensor input image size) */
+
+    union {
+        mipi_dev_attr_t mipi_attr;
+        lvds_dev_attr_t lvds_attr;
     };
 } combo_dev_attr_t;
 
+typedef enum {
+    PHY_CMV_GE1200MV = 0x00,
+    PHY_CMV_LT1200MV = 0x01,
+    PHY_CMV_BUTT
+} phy_cmv_mode_t;
 
-#define HI_MIPI_IOC_MAGIC   'm'
+typedef struct {
+    combo_dev_t devno;
+    phy_cmv_mode_t cmv_mode;
+} phy_cmv_t;
+
+#define HI_MIPI_IOC_MAGIC            'm'
 
 /* init data lane, input mode, data type */
-#define HI_MIPI_SET_DEV_ATTR		        _IOW(HI_MIPI_IOC_MAGIC, 0x01, combo_dev_attr_t)
+#define HI_MIPI_SET_DEV_ATTR         _IOW(HI_MIPI_IOC_MAGIC, 0x01, combo_dev_attr_t)
 
-/* output clk edge */
-#define HI_MIPI_SET_OUTPUT_CLK_EDGE         _IOW(HI_MIPI_IOC_MAGIC, 0x02, HI_BOOL)
+/* set phy common mode voltage mode */
+#define HI_MIPI_SET_PHY_CMVMODE      _IOW(HI_MIPI_IOC_MAGIC, 0x04, phy_cmv_t)
 
-/* output data msb */
-#define HI_MIPI_SET_OUTPUT_MSB              _IOW(HI_MIPI_IOC_MAGIC, 0x03, HI_BOOL)
+/* reset sensor */
+#define HI_MIPI_RESET_SENSOR         _IOW(HI_MIPI_IOC_MAGIC, 0x05, sns_rst_source_t)
 
-#endif
+/* unreset sensor */
+#define HI_MIPI_UNRESET_SENSOR       _IOW(HI_MIPI_IOC_MAGIC, 0x06, sns_rst_source_t)
 
+/* reset mipi */
+#define HI_MIPI_RESET_MIPI           _IOW(HI_MIPI_IOC_MAGIC, 0x07, combo_dev_t)
+
+/* unreset mipi */
+#define HI_MIPI_UNRESET_MIPI         _IOW(HI_MIPI_IOC_MAGIC, 0x08, combo_dev_t)
+
+/* reset slvs */
+#define HI_MIPI_RESET_SLVS           _IOW(HI_MIPI_IOC_MAGIC, 0x09, combo_dev_t)
+
+/* unreset slvs */
+#define HI_MIPI_UNRESET_SLVS         _IOW(HI_MIPI_IOC_MAGIC, 0x0a, combo_dev_t)
+
+/* set mipi hs_mode */
+#define HI_MIPI_SET_HS_MODE          _IOW(HI_MIPI_IOC_MAGIC, 0x0b, lane_divide_mode_t)
+
+/* enable mipi clock */
+#define HI_MIPI_ENABLE_MIPI_CLOCK    _IOW(HI_MIPI_IOC_MAGIC, 0x0c, combo_dev_t)
+
+/* disable mipi clock */
+#define HI_MIPI_DISABLE_MIPI_CLOCK   _IOW(HI_MIPI_IOC_MAGIC, 0x0d, combo_dev_t)
+
+/* enable slvs clock */
+#define HI_MIPI_ENABLE_SLVS_CLOCK    _IOW(HI_MIPI_IOC_MAGIC, 0x0e, combo_dev_t)
+
+/* disable slvs clock */
+#define HI_MIPI_DISABLE_SLVS_CLOCK   _IOW(HI_MIPI_IOC_MAGIC, 0x0f, combo_dev_t)
+
+/* enable sensor clock */
+#define HI_MIPI_ENABLE_SENSOR_CLOCK  _IOW(HI_MIPI_IOC_MAGIC, 0x10, sns_clk_source_t)
+
+/* disable sensor clock */
+#define HI_MIPI_DISABLE_SENSOR_CLOCK _IOW(HI_MIPI_IOC_MAGIC, 0x11, sns_clk_source_t)
+
+#define HI_MIPI_SET_EXT_DATA_TYPE    _IOW(HI_MIPI_IOC_MAGIC, 0x12, ext_data_type_t)
+
+#endif /* __HI_MIPI_RX_H__ */

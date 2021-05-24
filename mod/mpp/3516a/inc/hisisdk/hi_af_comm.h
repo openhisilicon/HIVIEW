@@ -1,19 +1,10 @@
-/******************************************************************************
+/*
+ * Copyright (c) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * Description: Function of hi_af_comm.h
+ * Author: ISP SW
+ * Create: 2012/06/28
+ */
 
-  Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : hi_af_comm.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 2012/12/20
-  Description   : 
-  History       :
-  1.Date        : 2012/12/20
-    Author      : n00168968
-    Modification: Created file
-
-******************************************************************************/
 #ifndef __HI_AF_COMM_H__
 #define __HI_AF_COMM_H__
 
@@ -21,7 +12,7 @@
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 

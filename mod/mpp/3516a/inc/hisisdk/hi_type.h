@@ -1,35 +1,20 @@
 /******************************************************************************
- Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
-******************************************************************************
-File Name     : hi_type.h
-Version       : Initial Draft
-Author        : Hisilicon multimedia software group
-Created       : 2005/4/23
-Last Modified :
-Description   : The common data type defination
-Function List :
-History       :
-1.Date        : 2008/06/28
-  Author      : c42025
-  Modification: modified definition for HI_S8
-
-2.Date        :   2008/10/31
-  Author      :   z44949
-  Modification:   Translate the chinese comment
-
-3.Date        :   2010/11/03
-  Author      :   z44949
-  Modification:   Remove some unnecessary typedef
-
-4.Date        :   2011/01/05
-  Author      :   p00123320
-  Modification:   Modify definition of HI_VOID, avoid C++ compiler warning.
-
-  
+ * Copyright (C) Hisilicon Technologies Co., Ltd. 2005-2019. All rights reserved.
+ * Description: Common data types of the system.
+ * Author: Hisilicon multimedia software group
+ * Create: 2005-4-23
 ******************************************************************************/
+
 #ifndef __HI_TYPE_H__
 #define __HI_TYPE_H__
 
+#ifdef __KERNEL__
+
+#include <linux/types.h>
+#else
+
+#include <stdint.h>
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -37,70 +22,43 @@ extern "C"{
 #endif
 #endif /* __cplusplus */
 
-/*----------------------------------------------*
- * The common data type, will be used in the whole project.*
- *----------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------*
+ * Defintion of basic data types. The data types are applicable to both the application layer and kernel codes. *
+ *--------------------------------------------------------------------------------------------------------------*/
+/*************************** Structure Definition ****************************/
+/** \addtogroup      Common_TYPE */
+/** @{ */  /** <!-- [Common_TYPE] */
 
+typedef unsigned char           HI_UCHAR;
 typedef unsigned char           HI_U8;
 typedef unsigned short          HI_U16;
 typedef unsigned int            HI_U32;
+typedef unsigned long           HI_UL;
+typedef HI_UL                   HI_ULONG;
+typedef uintptr_t               HI_UINTPTR_T;
 
+typedef char                    HI_CHAR;
 typedef signed char             HI_S8;
 typedef short                   HI_S16;
 typedef int                     HI_S32;
+typedef long                    HI_SL;
 
-/*----------------------------------------------*
- * The fixed-point data type, used to represent float data in hardware calculations.*
- *----------------------------------------------*/
-/*--u8bit---------------------------------------*/
-typedef unsigned char           HI_U0Q8;
-typedef unsigned char           HI_U1Q7;
-typedef unsigned char           HI_U5Q3;
-
-/*--u16bit---------------------------------------*/
-typedef unsigned short          HI_U0Q16;
-typedef unsigned short          HI_U4Q12;
-typedef unsigned short          HI_U6Q10;
-typedef unsigned short          HI_U8Q8;
-typedef unsigned short          HI_U12Q4;
-typedef unsigned short          HI_U14Q2;
-
-/*--s16bit---------------------------------------*/
-typedef short                   HI_S9Q7;
-typedef short                   HI_S14Q2;
-typedef short                   HI_S1Q15;
-
-/*--u32bit---------------------------------------*/
-typedef unsigned int            HI_U22Q10;
-typedef unsigned int            HI_U25Q7;
-
-/*--s32bit---------------------------------------*/
-typedef int                     HI_S25Q7;
-typedef int                     HI_S16Q16;
-
-/*----------------------------------------------*
- * The fixed-point data type combine with FLAG bits.*
- *----------------------------------------------*/
-
-/*8bits unsigned integer£¬4bits decimal fraction£¬4bits flag bits*/
-typedef unsigned short          HI_U8Q4F4;
-
-/*float*/
-typedef float               HI_FLOAT;
-/*double*/
+typedef float                   HI_FLOAT;
 typedef double                  HI_DOUBLE;
-
 
 #ifndef _M_IX86
     typedef unsigned long long  HI_U64;
     typedef long long           HI_S64;
 #else
-    typedef __int64             HI_U64;
+    typedef unsigned __int64    HI_U64;
     typedef __int64             HI_S64;
 #endif
 
-typedef char                    HI_CHAR;
-#define HI_VOID                 void
+typedef unsigned long           HI_SIZE_T;
+typedef unsigned long           HI_LENGTH_T;
+typedef unsigned long int       HI_PHYS_ADDR_T;
+
+typedef unsigned int            HI_HANDLE;
 
 /*----------------------------------------------*
  * const defination                             *
@@ -111,13 +69,53 @@ typedef enum {
 } HI_BOOL;
 
 #ifndef NULL
-    #define NULL    0L
+    #define NULL                0L
 #endif
 
-#define HI_NULL     0L
-#define HI_SUCCESS  0
-#define HI_FAILURE  (-1)
+#define HI_NULL                 0L
+#define HI_SUCCESS              0
+#define HI_FAILURE              (-1)
 
+#define HI_VOID                 void
+
+typedef unsigned char           hi_uchar;
+typedef unsigned char           hi_u8;
+typedef unsigned short          hi_u16;
+typedef unsigned int            hi_u32;
+typedef unsigned long           hi_ulong;
+
+typedef char                    hi_char;
+typedef signed char             hi_s8;
+typedef short                   hi_s16;
+typedef int                     hi_s32;
+typedef long                    hi_slong;
+
+typedef float                   hi_float;
+typedef double                  hi_double;
+
+typedef void                    hi_void;
+
+#ifndef _M_IX86
+    typedef unsigned long long  hi_u64;
+    typedef long long           hi_s64;
+#else
+    typedef unsigned __int64    hi_u64;
+    typedef __int64             hi_s64;
+#endif
+
+typedef unsigned long           hi_size_t;
+typedef unsigned long           hi_length_t;
+
+typedef hi_u32                  hi_handle;
+
+typedef HI_BOOL                 hi_bool;
+typedef HI_UINTPTR_T            hi_uintptr_t;
+typedef unsigned long int       hi_phys_addr_t;
+
+
+/** @} */  /** <!-- ==== Structure Definition end ==== */
+
+#define HI_UNUSED(x)            ((x) = (x))
 
 #ifdef __cplusplus
 #if __cplusplus

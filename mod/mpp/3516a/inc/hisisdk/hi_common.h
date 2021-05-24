@@ -1,36 +1,25 @@
-/******************************************************************************
-Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
-******************************************************************************
-File Name     : hi_common.h
-Version       : Initial Draft
-Author        : Hi3511 MPP Team
-Created       : 2006/11/09
-Last Modified :
-Description   : The common defination
-Function List :
-History       :
- 1.Date        : 2009/03/03
-   Author      : z44949
-   Modification: Created file
-2.Date        :   2009/07/01
-  Author      :   z44949
-  Modification:   Move MPP_VER_PRIX to hi_defines.h
-3.Date        :   2009/08/13
-  Author      :   y45339
-  Modification:   add some proc define
+/*
+ * Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2018. All rights reserved.
+ * Description:
+ * Author:
+ * Create: 2016-09-19
+ */
 
-4.Date        :   2010/11/03
-  Author      :   z44949
-  Modification:   Remove some unnecessary typedef
-
-******************************************************************************/
 #ifndef __HI_COMMON_H__
 #define __HI_COMMON_H__
 
+#include "autoconf.h"
+
 #include "hi_type.h"
-#include "hi_math.h"
 #include "hi_defines.h"
-#include "hi_comm_video.h"
+
+#ifndef __IGNORE_HWSEC__
+#if !defined(__KERNEL__) || defined(__LITEOS__)
+#include "securectype.h"
+#include "securec.h"
+#include <stdarg.h>
+#endif
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -39,74 +28,58 @@ extern "C" {
 #endif /* End of #ifdef __cplusplus */
 
 #ifndef VER_X
-    #define VER_X 1
+#define VER_X                  1
 #endif
 
 #ifndef VER_Y
-    #define VER_Y 0
+#define VER_Y                  0
 #endif
 
 #ifndef VER_Z
-    #define VER_Z 0
+#define VER_Z                  0
 #endif
 
 #ifndef VER_P
-    #define VER_P 0
+#define VER_P                  0
 #endif
 
 #ifndef VER_B
-    #define VER_B 0
+#define VER_B                  0
 #endif
 
 #ifdef HI_DEBUG
-    #define VER_D " Debug"
+#define VER_D                  " Debug"
 #else
-    #define VER_D " Release"
+#define VER_D                  " Release"
 #endif
 
-#define __MK_VERSION(x,y,z,p,b) #x"."#y"."#z"."#p" B0"#b
-#define MK_VERSION(x,y,z,p,b) __MK_VERSION(x,y,z,p,b)
-#define MPP_VERSION  CHIP_NAME MPP_VER_PRIX MK_VERSION(VER_X,VER_Y,VER_Z,VER_P,VER_B) VER_D
+#define ATTRIBUTE              __attribute__((aligned(ALIGN_NUM)))
 
-#define VERSION_NAME_MAXLEN 64
-typedef struct hiMPP_VERSION_S
-{
+#define COMPAT_POINTER(ptr, type) \
+    do { \
+        HI_UL ulAddr = (HI_UINTPTR_T)ptr; \
+        HI_U32 u32Addr = (HI_U32)ulAddr; \
+        ptr = (type)(HI_UINTPTR_T)u32Addr; \
+    } while (0)
+
+#define __MK_VERSION(x, y, z, p, b) #x "." #y "." #z "." #p " B0" #b
+#define MK_VERSION(x, y, z, p, b) __MK_VERSION(x, y, z, p, b)
+#define MPP_VERSION            CHIP_NAME MPP_VER_PRIX MK_VERSION(VER_X, VER_Y, VER_Z, VER_P, VER_B) VER_D
+
+#define VERSION_NAME_MAXLEN    64
+typedef struct hiMPP_VERSION_S {
     HI_CHAR aVersion[VERSION_NAME_MAXLEN];
 } MPP_VERSION_S;
-
-typedef struct hiCROP_INFO_S
-{
-    HI_BOOL bEnable;
-    RECT_S  stRect;
-} CROP_INFO_S;
-
-typedef enum hiROTATE_E
-{
-    ROTATE_NONE = 0,
-    ROTATE_90   = 1,
-    ROTATE_180  = 2,
-    ROTATE_270  = 3,
-    ROTATE_BUTT
-} ROTATE_E;
-
-typedef struct hiBORDER_S
-{
-    HI_U32 u32TopWidth;
-    HI_U32 u32BottomWidth;
-    HI_U32 u32LeftWidth;
-    HI_U32 u32RightWidth;
-    HI_U32 u32Color;
-} BORDER_S;
 
 typedef HI_S32 AI_CHN;
 typedef HI_S32 AO_CHN;
 typedef HI_S32 AENC_CHN;
 typedef HI_S32 ADEC_CHN;
 typedef HI_S32 AUDIO_DEV;
-typedef HI_S32 AVENC_CHN;
 typedef HI_S32 VI_DEV;
-typedef HI_S32 VI_WAY;
+typedef HI_S32 VI_PIPE;
 typedef HI_S32 VI_CHN;
+typedef HI_S32 VI_STITCH_GRP;
 typedef HI_S32 VO_DEV;
 typedef HI_S32 VO_LAYER;
 typedef HI_S32 VO_CHN;
@@ -114,46 +87,64 @@ typedef HI_S32 VO_WBC;
 typedef HI_S32 GRAPHIC_LAYER;
 typedef HI_S32 VENC_CHN;
 typedef HI_S32 VDEC_CHN;
-typedef HI_S32 VENC_GRP;
-typedef HI_S32 VO_GRP;
-typedef HI_S32 VDA_CHN;
 typedef HI_S32 IVE_HANDLE;
 typedef HI_S32 CLS_HANDLE;
 typedef HI_S32 FD_CHN;
 typedef HI_S32 MD_CHN;
 typedef HI_S32 ISP_DEV;
+typedef HI_S32 BLK_DEV;
 typedef HI_S32 SENSOR_ID;
+typedef HI_S32 MIPI_DEV;
+typedef HI_S32 SLAVE_DEV;
+typedef HI_S32 SVP_NNIE_HANDLE;
+typedef HI_S32 SVP_DSP_HANDLE;
+typedef HI_S32 SVP_ALG_CHN;
+typedef HI_S32 VPSS_GRP;
+typedef HI_S32 VPSS_GRP_PIPE;
+typedef HI_S32 VPSS_CHN;
+typedef HI_S32 AVS_GRP;
+typedef HI_S32 AVS_PIPE;
+typedef HI_S32 AVS_CHN;
+typedef HI_S32 MCF_GRP;
+typedef HI_S32 MCF_PIPE;
+typedef HI_S32 MCF_CHN;
 
+#define HI_INVALID_CHN         (-1)
+#define HI_INVALID_WAY         (-1)
+#define HI_INVALID_LAYER       (-1)
+#define HI_INVALID_DEV         (-1)
+#define HI_INVALID_HANDLE      (-1)
+#define HI_INVALID_VALUE       (-1)
+#define HI_INVALID_TYPE        (-1)
 
+#define CCM_MATRIX_SIZE        (9)
+#define CCM_MATRIX_NUM         (7)
 
-#define HI_INVALID_CHN (-1)
-#define HI_INVALID_WAY (-1)
-#define HI_INVALID_LAYER (-1)
-#define HI_INVALID_DEV (-1)
-#define HI_INVALID_HANDLE (-1)
-#define HI_INVALID_VALUE (-1)
-#define HI_INVALID_TYPE (-1)
+#define CLUT_R_NUM             (17)
+#define CLUT_B_NUM             (17)
+#define CLUT_G_NUM             (17)
+#define HI_ISP_CLUT_COEFACMCNT (4850)
+#define CUBIC_POINT_MAX        (5)
 
-typedef enum hiMOD_ID_E
-{
+typedef enum hiMOD_ID_E {
     HI_ID_CMPI    = 0,
     HI_ID_VB      = 1,
     HI_ID_SYS     = 2,
-    HI_ID_RGN	  = 3,
+    HI_ID_RGN      = 3,
     HI_ID_CHNL    = 4,
     HI_ID_VDEC    = 5,
-    HI_ID_GROUP   = 6,
+    HI_ID_AVS     = 6,
     HI_ID_VPSS    = 7,
     HI_ID_VENC    = 8,
-    HI_ID_VDA     = 9,
+    HI_ID_SVP     = 9,
     HI_ID_H264E   = 10,
     HI_ID_JPEGE   = 11,
     HI_ID_MPEG4E  = 12,
-    HI_ID_H264D   = 13,
+    HI_ID_H265E   = 13,
     HI_ID_JPEGD   = 14,
-    HI_ID_VOU     = 15,
-    HI_ID_VIU     = 16,
-    HI_ID_DSU     = 17,
+    HI_ID_VO      = 15,
+    HI_ID_VI      = 16,
+    HI_ID_DIS     = 17,
     HI_ID_VALG    = 18,
     HI_ID_RC      = 19,
     HI_ID_AIO     = 20,
@@ -161,115 +152,127 @@ typedef enum hiMOD_ID_E
     HI_ID_AO      = 22,
     HI_ID_AENC    = 23,
     HI_ID_ADEC    = 24,
-    HI_ID_AVENC   = 25,
+    HI_ID_VPU    = 25,
     HI_ID_PCIV    = 26,
     HI_ID_PCIVFMW = 27,
-    HI_ID_ISP	  = 28,
-    HI_ID_IVE	  = 29,
-
+    HI_ID_ISP      = 28,
+    HI_ID_IVE      = 29,
+    HI_ID_USER    = 30,
     HI_ID_DCCM    = 31,
     HI_ID_DCCS    = 32,
     HI_ID_PROC    = 33,
     HI_ID_LOG     = 34,
-    HI_ID_MST_LOG = 35,
-    HI_ID_VD      = 36,
-
-    HI_ID_VCMP    = 38,
+    HI_ID_VFMW    = 35,
+    HI_ID_H264D   = 36,
+    HI_ID_GDC     = 37,
+    HI_ID_PHOTO   = 38,
     HI_ID_FB      = 39,
     HI_ID_HDMI    = 40,
     HI_ID_VOIE    = 41,
     HI_ID_TDE     = 42,
-    HI_ID_USR     = 43,
-    HI_ID_VEDU    = 44,
+    HI_ID_HDR      = 43,
+    HI_ID_PRORES  = 44,
     HI_ID_VGS     = 45,
-    HI_ID_H265E   = 46,
-    HI_ID_FD	  = 47,
-    HI_ID_ODT	  = 48, //Object detection trace
-    HI_ID_VQA	  = 49, //Video quality  analysis
-    HI_ID_LPR 	  = 50, // License Plate Recognition
-	HI_ID_FISHEYE = 51,
-	
+    HI_ID_IOP     = 46,
+    HI_ID_FD      = 47,
+    HI_ID_ODT      = 48, //Object detection trace
+    HI_ID_VQA      = 49, //Video quality  analysis
+    HI_ID_LPR      = 50, //Object detection trace
+    HI_ID_SVP_NNIE     = 51,
+    HI_ID_SVP_DSP      = 52,
+    HI_ID_DPU_RECT     = 53,
+    HI_ID_DPU_MATCH    = 54,
+    HI_ID_MOTIONSENSOR = 55,
+    HI_ID_MOTIONFUSION = 56,
+    HI_ID_GYRODIS      = 57,
+    HI_ID_PM           = 58,
+    HI_ID_SVP_ALG      = 59,
+	HI_ID_IVP          = 60,
+	HI_ID_MCF          = 61,
+    HI_ID_QR           = 62,
+    HI_ID_FR           = 63,
+
     HI_ID_BUTT,
 } MOD_ID_E;
 
-typedef struct hiMPP_CHN_S
-{
+typedef struct hiMPP_CHN_S {
     MOD_ID_E    enModId;
     HI_S32      s32DevId;
     HI_S32      s32ChnId;
 } MPP_CHN_S;
 
+#define MPP_MOD_VI             "vi"
+#define MPP_MOD_VO             "vo"
+#define MPP_MOD_AVS            "avs"
+#define MPP_MOD_HDMI           "hdmi"
+#define MPP_MOD_VGS            "vgs"
+#define MPP_MOD_GDC            "gdc"
+#define MPP_MOD_DIS            "dis"
+#define MPP_MOD_GYRODIS        "gyrodis"
 
-typedef enum hiPROFILE_TYPE_E
-{
-    PROFILE_1080P_30 = 0,
-    PROFILE_3M_30,
-    PROFILE_1080P_60,
-    PROFILE_5M_30,
-    PROFILE_BUTT,
-} PROFILE_TYPE_E;
+#define MPP_MOD_CHNL           "chnl"
+#define MPP_MOD_VENC           "venc"
+#define MPP_MOD_VPSS           "vpss"
+#define MPP_MOD_RGN            "rgn"
+#define MPP_MOD_IVE            "ive"
+#define MPP_MOD_FD             "fd"
+#define MPP_MOD_MD             "md"
+#define MPP_MOD_IVP            "ivp"
+#define MPP_MOD_SVP            "svp"
+#define MPP_MOD_SVP_NNIE       "nnie"
+#define MPP_MOD_SVP_DSP        "dsp"
+#define MPP_MOD_SVP_ALG        "svp_alg"
+#define MPP_MOD_DPU_RECT       "rect"
+#define MPP_MOD_DPU_MATCH      "match"
 
-#define MPP_MOD_VIU       "vi"
-#define MPP_MOD_VOU       "vo"
-#define MPP_MOD_HDMI      "hdmi"
-#define MPP_MOD_DSU       "dsu"
-#define MPP_MOD_VGS       "vgs"
-#define MPP_MOD_FISHEYE   "fisheye"
+#define MPP_MOD_H264E          "h264e"
+#define MPP_MOD_H265E          "h265e"
+#define MPP_MOD_JPEGE          "jpege"
+#define MPP_MOD_MPEG4E         "mpeg4e"
+#define MPP_MOD_VEDU           "vedu"
+#define MPP_MOD_PRORES         "prores"
+#define MPP_MOD_IOP            "iop"
 
-#define MPP_MOD_CHNL      "chnl"
-#define MPP_MOD_VENC      "venc"
-#define MPP_MOD_GRP       "grp"
-#define MPP_MOD_VDA       "vda"
-#define MPP_MOD_VPSS      "vpss"
-#define MPP_MOD_RGN       "rgn"
-#define MPP_MOD_IVE       "ive"
-#define MPP_MOD_FD        "fd"
-#define MPP_MOD_MD		  "md"	
 
-#define MPP_MOD_H264E     "h264e"
-#define MPP_MOD_H265E     "h265e"
-#define MPP_MOD_JPEGE     "jpege"
-#define MPP_MOD_MPEG4E    "mpeg4e"
+#define MPP_MOD_VDEC           "vdec"
+#define MPP_MOD_H264D          "h264d"
+#define MPP_MOD_JPEGD          "jpegd"
 
-#define MPP_MOD_VDEC      "vdec"
-#define MPP_MOD_H264D     "h264d"
-#define MPP_MOD_JPEGD     "jpegd"
+#define MPP_MOD_AI             "ai"
+#define MPP_MOD_AO             "ao"
+#define MPP_MOD_AENC           "aenc"
+#define MPP_MOD_ADEC           "adec"
+#define MPP_MOD_AIO            "aio"
+#define MPP_MOD_ACODEC         "acodec"
 
-#define MPP_MOD_AI        "ai"
-#define MPP_MOD_AO        "ao"
-#define MPP_MOD_AENC      "aenc"
-#define MPP_MOD_ADEC      "adec"
-#define MPP_MOD_AIO       "aio"
-#define MPP_MOD_ACODEC	  "acodec"
+#define MPP_MOD_VB             "vb"
+#define MPP_MOD_SYS            "sys"
+#define MPP_MOD_CMPI           "cmpi"
 
-#define MPP_MOD_VB        "vb"
-#define MPP_MOD_SYS       "sys"
-#define MPP_MOD_CMPI      "cmpi"
+#define MPP_MOD_PCIV           "pciv"
+#define MPP_MOD_PCIVFMW        "pcivfmw"
 
-#define MPP_MOD_PCIV      "pciv"
-#define MPP_MOD_PCIVFMW   "pcivfmw"
+#define MPP_MOD_PROC           "proc"
+#define MPP_MOD_LOG            "logmpp"
 
-#define MPP_MOD_PROC      "proc"
-#define MPP_MOD_LOG       "logmpp"
-#define MPP_MOD_MST_LOG   "mstlog"
+#define MPP_MOD_DCCM           "dccm"
+#define MPP_MOD_DCCS           "dccs"
 
-#define MPP_MOD_DCCM      "dccm"
-#define MPP_MOD_DCCS      "dccs"
+#define MPP_MOD_FB             "fb"
 
-#define MPP_MOD_VCMP      "vcmp"
-#define MPP_MOD_FB        "fb"
+#define MPP_MOD_RC             "rc"
 
-#define MPP_MOD_RC        "rc"
+#define MPP_MOD_VOIE           "voie"
 
-#define MPP_MOD_VOIE      "voie"
-
-#define MPP_MOD_TDE       "tde"
-#define MPP_MOD_ISP       "isp"
-#define MPP_MOD_USR       "usr"
+#define MPP_MOD_TDE            "tde"
+#define MPP_MOD_ISP            "isp"
+#define MPP_MOD_USR            "usr"
+#define MPP_MOD_MCF            "mcf"
+#define MPP_MOD_PM             "pm"
+#define MPP_MOD_MFUSION        "motionfusion"
 
 /* We just coyp this value of payload type from RTP/RTSP definition */
-typedef enum
-{
+typedef enum {
     PT_PCMU          = 0,
     PT_1016          = 1,
     PT_G721          = 2,
@@ -311,7 +314,6 @@ typedef enum
     PT_HEAAC         = 39,
     PT_PCM_VOICE     = 40,
     PT_PCM_AUDIO     = 41,
-    PT_AACLC         = 42,
     PT_MP3           = 43,
     PT_ADPCMA        = 49,
     PT_AEC           = 50,
@@ -332,20 +334,24 @@ typedef enum
     PT_VC1           = 238,
     PT_JVC_ASF       = 255,
     PT_D_AVI         = 256,
-    PT_DIVX3		 = 257,
-    PT_AVS			 = 258,
-    PT_REAL8		 = 259,
-    PT_REAL9		 = 260,
-    PT_VP6			 = 261,
-    PT_VP6F			 = 262,
-    PT_VP6A			 = 263,
-    PT_SORENSON	 	 = 264,
+    PT_DIVX3         = 257,
+    PT_AVS           = 258,
+    PT_REAL8         = 259,
+    PT_REAL9         = 260,
+    PT_VP6           = 261,
+    PT_VP6F          = 262,
+    PT_VP6A          = 263,
+    PT_SORENSON      = 264,
     PT_H265          = 265,
-    PT_MAX           = 266,
+    PT_VP8           = 266,
+    PT_MVC           = 267,
+    PT_PNG           = 268,
     /* add by hisilicon */
     PT_AMR           = 1001,
     PT_MJPEG         = 1002,
     PT_AMRWB         = 1003,
+    PT_PRORES        = 1006,
+    PT_OPUS          = 1007,
     PT_BUTT
 } PAYLOAD_TYPE_E;
 
@@ -355,5 +361,5 @@ typedef enum
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#endif  /* _HI_COMMON_H_ */
+#endif /* _HI_COMMON_H_ */
 

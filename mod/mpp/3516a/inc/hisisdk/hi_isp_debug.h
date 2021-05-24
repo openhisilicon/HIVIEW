@@ -1,41 +1,41 @@
-/******************************************************************************
-
-  Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : hi_isp_debug.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 2010/08/30
-  Description   : 
-  History       :
-  1.Date        : 2010/08/30
-    Author      : x00100808
-    Modification: Created file
-
-******************************************************************************/
+/*
+ * Copyright (c) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * Description: Function of hi_isp_debug.h
+ * Author: ISP SW
+ * Create: 2012/06/28
+ */
 
 #ifndef __HI_ISP_DEBUG_H__
 #define __HI_ISP_DEBUG_H__
 
 #include "hi_debug.h"
 
-#if 0
-#define PRINT_DEBUG_INFO
-#endif
+#define isp_emerg_trace(fmt, ...) \
+    HI_EMERG_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
 
-#if 0
-#define PRINT_INFO_2FILE
-#endif
+#define isp_alert_trace(fmt, ...)  \
+    HI_ALERT_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
 
-#define ISP_TRACE(level, fmt...)\
-    do{ \
-            HI_TRACE(level,HI_ID_ISP,"[Func]:%s [Line]:%d [Info]:",__FUNCTION__, __LINE__);\
-            HI_TRACE(level,HI_ID_ISP,##fmt);\
-    }while(0)
+#define isp_crit_trace(fmt, ...) \
+    HI_CRIT_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define isp_err_trace(fmt, ...) \
+    HI_ERR_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define isp_warn_trace(fmt, ...) \
+    HI_WARN_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define isp_notice_trace(fmt, ...) \
+    HI_NOTICE_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define isp_info_trace(fmt, ...) \
+    HI_INFO_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define isp_debug_trace(fmt, ...) \
+    HI_DEBUG_TRACE(HI_ID_ISP, "[Func]:%s [Line]:%d [Info]:" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);
 
 /* To avoid divide-0 exception in code. */
-#define DIV_0_TO_1(a)   ( (0 == (a)) ? 1 : (a) )
+#define div_0_to_1(a)   (((a) == 0) ? 1 : (a))
+#define div_0_to_1_float(a) ((((a) < 1E-10) && ((a) > (-1E-10))) ? 1 : (a))
 
-#endif     /* __HI_ISP_DEBUG_H__ */            
-
+#endif     /* __HI_ISP_DEBUG_H__ */

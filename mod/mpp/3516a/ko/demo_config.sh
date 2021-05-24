@@ -1,94 +1,76 @@
-#!/bin/sh
+#!/bin/bash
+# Desciption:ir cut enable or disable
+# Copyright (C) Hisilicon Technologies Co., Ltd. 2012-2019. All rights reserved.
 
+set -e
 
-# (normal mode)
+#GPIO3_3 -> GPIO27 (3*8+3 = 27)
+#GPIO3_4 -> GPIO28 (3*8+4 = 28)
+
+#(normal mode)
 ir_cut_enable()
 {
-	# pin_mux
-	himm 0x200f01a0 0x0		# GPIO15_0
-	himm 0x200f01a4 0x0		# GPIO15_1
-	
+	# pin_mux export
+	echo "27" > /sys/class/gpio/export; 	# GPIO3_3
+	echo "28" > /sys/class/gpio/export;  	# GPIO3_4
+
 	# dir
-	himm 0x20260400	0x3
-	# data, GPIO15_0: 0, GPIO15_1: 1  (normal mode)
-	himm 0x2026000c 0x2
-	
-	# back to original 
+	echo "out" > /sys/class/gpio/gpio27/direction;
+	echo "out" > /sys/class/gpio/gpio28/direction;
+
+	# data, GPIO3_4: 0, GPIO3_3: 1  (normal mode)
+	echo "1" > /sys/class/gpio/gpio27/value;
+	echo "0" > /sys/class/gpio/gpio28/value;
+
+	#sleep 1s
 	sleep 1;
-	himm 0x2026000c 0x0
+
+	# back to original
+	echo "0" > /sys/class/gpio/gpio27/value;
+	echo "0" > /sys/class/gpio/gpio28/value;
+
+	# pin_mux unexport
+	echo "27" > /sys/class/gpio/unexport; 	# GPIO3_3
+	echo "28" > /sys/class/gpio/unexport;  	# GPIO3_4
 }
 
 # (ir mode)
 ir_cut_disable()
 {
-	# pin_mux
-	himm 0x200f01a0 0x0		# GPIO15_0
-	himm 0x200f01a4 0x0		# GPIO15_1
-	
+	# pin_mux export
+	echo "27" > /sys/class/gpio/export;     # GPIO3_3
+	echo "28" > /sys/class/gpio/export;  	# GPIO3_4
+
 	# dir
-	himm 0x20260400	0x3
-	# data, GPIO15_0: 1, GPIO15_1: 0  (ir mode)
-	himm 0x2026000c 0x1
-	
-	# back to original 
-	sleep 1
-    himm 0x2026000c 0x0
-}
+	echo "out" > /sys/class/gpio/gpio27/direction;
+	echo "out" > /sys/class/gpio/gpio28/direction;
 
+	# data, GPIO3_4: 1, GPIO3_3: 0  (ir mode)
+	echo "0" > /sys/class/gpio/gpio27/value;
+	echo "1" > /sys/class/gpio/gpio28/value;
 
-ir_light_on()
-{
-    # pin_mux
-    himm 0x200f00e0 0x0     # GPIO0_3
+	#sleep 1s
+	sleep 1;
 
-    # dir 
-    himm 0x20140400 0xa     
+	# back to original
+	echo "0" > /sys/class/gpio/gpio27/value;
+	echo "0" > /sys/class/gpio/gpio28/value;
 
-    # data
-    himm 0x20140020 0x0
-}
-
-ir_light_off()
-{
-    # pin_mux
-    himm 0x200f00e0 0x0     # GPIO0_3
-
-    # dir 
-    himm 0x20140400 0xa     
-
-    # data
-    himm 0x20140020 0x8
-}
-
-isp_ai_pin_mux()
-{
-    # PWM4
-    himm 0x200F00A4 0x2;
-}
-
-
-isp_ai_pwm_config()
-{
-    # 50MHz
-    himm 0x20030038 0x6;
+	# pin_mux unexport
+	echo "27" > /sys/class/gpio/unexport; 	# GPIO3_3
+	echo "28" > /sys/class/gpio/unexport;  	# GPIO3_4
 }
 
 if [ $# -eq 0 ]; then
-    echo "normal mode: ./demo_config 0";
-    echo "ir mode    : ./demo_config 1";
+    echo "ir mode : ./demo_config.sh 1";
 else
-    if [ $1 -eq 0 ]; then
-        echo "normal mode, ir light off"
+    if [ "$1" -eq "0" ]; then
+        echo "normal mode, ir_cut on"
         ir_cut_enable > /dev/null;
-        ir_light_off  > /dev/null;
     fi
 
-    if [ $1 -eq 1 ]; then
-        echo "ir mode, ir light on"
-        ir_cut_disable > /dev/null ;
-        ir_light_on    > /dev/null;
+    if [ "$1" -eq "1" ]; then
+        echo "ir mode, ir_cut off"
+        ir_cut_disable > /dev/null;
     fi
 fi
-
-isp_ai_pin_mux;
-isp_ai_pwm_config;

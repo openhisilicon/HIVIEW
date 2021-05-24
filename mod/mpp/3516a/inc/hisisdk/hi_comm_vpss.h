@@ -1,439 +1,699 @@
-/******************************************************************************
-
-  Copyright (C), 2001-2011, Hisilicon Tech. Co., Ltd.
-
- ******************************************************************************
-  File Name     : hi_comm_vpss.h
-  Version       : Initial Draft
-  Author        : Hisilicon multimedia software group
-  Created       : 
-  Last Modified :
-  Description   : common struct definition for vpss
-  Function List :
-  History       :
-  1.Date        : 20130508
-    Author      : l00183122
-    Modification: Create
-  
- 
-******************************************************************************/
+/*
+ * Copyright (C) Hisilicon Technologies Co., Ltd. 2016-2019. All rights reserved.
+ * Description: Vpss common interface
+ * Author: Hisilicon multimedia software group
+ * Create: 2016/09/27
+ */
 
 #ifndef __HI_COMM_VPSS_H__
 #define __HI_COMM_VPSS_H__
-
-
-#ifdef __cplusplus
-#if __cplusplus
-extern "C"{
-#endif
-#endif /* __cplusplus */
 
 #include "hi_type.h"
 #include "hi_common.h"
 #include "hi_errno.h"
 #include "hi_comm_video.h"
 
-#define HI_ERR_VPSS_NULL_PTR        HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NULL_PTR)
-#define HI_ERR_VPSS_NOTREADY        HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_SYS_NOTREADY)
-#define HI_ERR_VPSS_INVALID_DEVID   HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_INVALID_DEVID)
-#define HI_ERR_VPSS_INVALID_CHNID   HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_INVALID_CHNID)
-#define HI_ERR_VPSS_EXIST           HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_EXIST)
-#define HI_ERR_VPSS_UNEXIST         HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_UNEXIST)
-#define HI_ERR_VPSS_NOT_SUPPORT     HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOT_SUPPORT)
-#define HI_ERR_VPSS_NOT_PERM        HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOT_PERM)
-#define HI_ERR_VPSS_NOMEM           HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOMEM)
-#define HI_ERR_VPSS_NOBUF           HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOBUF)
-#define HI_ERR_VPSS_ILLEGAL_PARAM   HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_ILLEGAL_PARAM)
-#define HI_ERR_VPSS_BUSY            HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_BUSY)
-#define HI_ERR_VPSS_BUF_EMPTY       HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_BUF_EMPTY)
+#ifdef __cplusplus
+#if __cplusplus
+extern "C" {
+#endif
+#endif /* __cplusplus */
+
+#define VPSS_SHARPEN_GAIN_NUM        32
+#define VPSS_AUTO_ISO_STRENGTH_NUM   16
+#define VPSS_YUV_SHPLUMA_NUM         32
+#define VPSS_3DNR_MAX_AUTO_PARAM_NUM 16
+
+#define HI_ERR_VPSS_NULL_PTR         HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NULL_PTR)
+#define HI_ERR_VPSS_NOTREADY         HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_SYS_NOTREADY)
+#define HI_ERR_VPSS_INVALID_DEVID    HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_INVALID_DEVID)
+#define HI_ERR_VPSS_INVALID_CHNID    HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_INVALID_CHNID)
+#define HI_ERR_VPSS_EXIST            HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_EXIST)
+#define HI_ERR_VPSS_UNEXIST          HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_UNEXIST)
+#define HI_ERR_VPSS_NOT_SUPPORT      HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOT_SUPPORT)
+#define HI_ERR_VPSS_NOT_PERM         HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOT_PERM)
+#define HI_ERR_VPSS_NOMEM            HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOMEM)
+#define HI_ERR_VPSS_NOBUF            HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_NOBUF)
+#define HI_ERR_VPSS_SIZE_NOT_ENOUGH  HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_SIZE_NOT_ENOUGH)
+#define HI_ERR_VPSS_ILLEGAL_PARAM    HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_ILLEGAL_PARAM)
+#define HI_ERR_VPSS_BUSY             HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_BUSY)
+#define HI_ERR_VPSS_BUF_EMPTY        HI_DEF_ERR(HI_ID_VPSS, EN_ERR_LEVEL_ERROR, EN_ERR_BUF_EMPTY)
+
+#define VPSS_INVALID_FRMRATE         (-1)
+#define VPSS_CHN0                    0
+#define VPSS_CHN1                    1
+#define VPSS_CHN2                    2
+#define VPSS_CHN3                    3
+#define VPSS_INVALID_CHN             (-1)
+
+typedef enum hiVPSS_NR_TYPE_E {
+    VPSS_NR_TYPE_VIDEO         = 0,
+    VPSS_NR_TYPE_SNAP          = 1,
+    VPSS_NR_TYPE_VIDEO_SPATIAL = 2,
+    VPSS_NR_TYPE_VIDEO_ENHANCE = 3,
+    VPSS_NR_TYPE_BUTT
+} VPSS_NR_TYPE_E;
+
+typedef enum hiNR_MOTION_MODE_E {
+    NR_MOTION_MODE_NORMAL          = 0,        /* normal */
+    NR_MOTION_MODE_COMPENSATE      = 1,        /* motion compensate */
+    NR_MOTION_MODE_BUTT
+} NR_MOTION_MODE_E;
+
+typedef struct hiVPSS_NR_ATTR_S {
+    VPSS_NR_TYPE_E      enNrType;
+    COMPRESS_MODE_E     enCompressMode;   /* RW; Reference frame compress mode */
+    NR_MOTION_MODE_E    enNrMotionMode;   /* RW; NR motion compensate mode. */
+} VPSS_NR_ATTR_S;
+
+typedef struct hiVPSS_GRP_ATTR_S {
+    /* RW; Range: Hi3559AV100 = [64, 16384] | Hi3519AV100 = [64, 8192] | Hi3516CV500 = [64, 2304] |
+        Hi3516AV300 = [64, 3840] | Hi3516DV300 = [64, 2688] | Hi3556V200 = [64, 4608] | Hi3559V200 = [64, 4608] |
+        Hi3516EV200 = [64, 4096]; Width of source image. */
+    HI_U32                     u32MaxW;
+    /* RW; Range: Hi3559AV100 = [64, 16384] | Hi3519AV100 = [64, 8192] | Hi3516CV500 = [64, 2304] |
+        Hi3516AV300 = [64, 3840] | Hi3516DV300 = [64, 2688] | Hi3556V200 = [64, 4608] | Hi3559V200 = [64, 4608] |
+        Hi3516EV200 = [64, 4096]; Height of source image. */
+    HI_U32                     u32MaxH;
+    PIXEL_FORMAT_E             enPixelFormat;     /* RW; Pixel format of source image. */
+    DYNAMIC_RANGE_E            enDynamicRange;    /* RW; DynamicRange of source image. */
+    FRAME_RATE_CTRL_S          stFrameRate;       /* Grp frame rate contrl. */
+    HI_BOOL                    bNrEn;             /* RW;Range: [0, 1];  NR enable. */
+    VPSS_NR_ATTR_S             stNrAttr;          /* RW; NR attr. */
+} VPSS_GRP_ATTR_S;
+
+typedef enum hiVPSS_CHN_MODE_E {
+    VPSS_CHN_MODE_USER  = 0,       /* User mode. */
+    VPSS_CHN_MODE_AUTO  = 1        /* Auto mode. */
+
+} VPSS_CHN_MODE_E;
+
+typedef struct hiVPSS_CHN_ATTR_S {
+    VPSS_CHN_MODE_E     enChnMode;          /* RW; Vpss channel's work mode. */
+    /* RW; Range: Hi3559AV100 = [64, 16384] | Hi3519AV100 = [64, 8192] | Hi3516CV500 = [64, 8192] |
+        Hi3516AV300 = [64, 8192] | Hi3516DV300 = [64, 8192] | Hi3556V200 = [64, 8192] | Hi3559V200 = [64, 8192] |
+        Hi3516EV200 = [64, 4096]; Width of target image. */
+    HI_U32              u32Width;
+    /* RW; Range: Hi3559AV100 = [64, 16384] | Hi3519AV100 = [64, 8192] | Hi3516CV500 = [64, 8192] |
+        Hi3516AV300 = [64, 8192] | Hi3516DV300 = [64, 8192] | Hi3556V200 = [64, 8192] | Hi3559V200 = [64, 8192] |
+        Hi3516EV200 = [64, 4096]; Height of target image. */
+    HI_U32              u32Height;
+    VIDEO_FORMAT_E      enVideoFormat;      /* RW; Video format of target image. */
+    PIXEL_FORMAT_E      enPixelFormat;      /* RW; Pixel format of target image. */
+    DYNAMIC_RANGE_E     enDynamicRange;     /* RW; DynamicRange of target image. */
+    COMPRESS_MODE_E     enCompressMode;     /* RW; Compression mode of the output. */
+    FRAME_RATE_CTRL_S   stFrameRate;        /* Frame rate control info */
+    HI_BOOL             bMirror;            /* RW; Mirror enable. */
+    HI_BOOL             bFlip;              /* RW; Flip enable. */
+    HI_U32              u32Depth;           /* RW; Range: [0, 8]; User get list depth. */
+    ASPECT_RATIO_S      stAspectRatio;      /* Aspect Ratio info. */
+} VPSS_CHN_ATTR_S;
+
+typedef enum hiVPSS_CROP_COORDINATE_E {
+    VPSS_CROP_RATIO_COOR = 0,   /* Ratio coordinate. */
+    VPSS_CROP_ABS_COOR          /* Absolute coordinate. */
+} VPSS_CROP_COORDINATE_E;
+
+typedef struct hiVPSS_CROP_INFO_S {
+    HI_BOOL                 bEnable;            /* RW; Range: [0, 1];  CROP enable. */
+    VPSS_CROP_COORDINATE_E  enCropCoordinate;   /* RW;  Range: [0, 1]; Coordinate mode of the crop start point. */
+    RECT_S                  stCropRect;         /* CROP rectangular. */
+} VPSS_CROP_INFO_S;
+
+/* Only used for Hi3519AV100/Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct hiVPSS_LDC_ATTR_S {
+    HI_BOOL     bEnable;                        /* RW; Range: [0, 1]; Whether LDC is enbale */
+    LDC_ATTR_S  stAttr;
+} VPSS_LDC_ATTR_S;
+
+/* Only used for Hi3516EV200 */
+typedef struct hiVPSS_LDCV3_ATTR_S {
+    HI_BOOL     bEnable;                        /* RW;Whether LDC is enbale */
+    LDCV3_ATTR_S  stAttr;
+} VPSS_LDCV3_ATTR_S;
+
+typedef struct hiVPSS_ROTATION_EX_ATTR_S {
+    HI_BOOL       bEnable;                      /* Whether ROTATE_EX_S is enbale */
+    ROTATION_EX_S stRotationEx;                 /* Rotate Attribute */
+} VPSS_ROTATION_EX_ATTR_S;
+
+typedef struct hiVPSS_LOW_DELAY_INFO_S {
+    HI_BOOL bEnable;          /* RW; Low delay enable. */
+    HI_U32 u32LineCnt;        /* RW; Range: [16, 16384]; Low delay shoreline. */
+} VPSS_LOW_DELAY_INFO_S;
+
+typedef struct hiVPSS_EXT_CHN_ATTR_S {
+    /* RW; Range: [0, 3]; Channel bind to. */
+    VPSS_CHN           s32BindChn;
+    /* RW; Range: Hi3559AV100 = [64, 16384] | Hi3519AV100 = [64, 8192] | Hi3516CV500 = [64, 8192] |
+        Hi3516AV300 = [64, 8192] | Hi3516DV300 = [64, 8192] | Hi3556V200 = [64, 8192] | Hi3559V200 = [64, 8192] |
+        Hi3516EV200 = [64, 4096]; Width of target image. */
+    HI_U32             u32Width;
+    /* RW; Range: Hi3559AV100 = [64, 16384] | Hi3519AV100 = [64, 8192] | Hi3516CV500 = [64, 8192] |
+        Hi3516AV300 = [64, 8192] | Hi3516DV300 = [64, 8192] | Hi3556V200 = [64, 8192] | Hi3559V200 = [64, 8192] |
+        Hi3516EV200 = [64, 4096]; Height of target image. */
+    HI_U32             u32Height;
+    /* RW; Video format of target image. */
+    VIDEO_FORMAT_E     enVideoFormat;
+    /* RW; Pixel format of target image. */
+    PIXEL_FORMAT_E     enPixelFormat;
+    /* RW; Dynamic range. */
+    DYNAMIC_RANGE_E    enDynamicRange;
+    /* RW; Compression mode of the output. */
+    COMPRESS_MODE_E    enCompressMode;
+    /* RW; Range: [0, 8]; User get list depth. */
+    HI_U32             u32Depth;
+    /* Frame rate control info */
+    FRAME_RATE_CTRL_S  stFrameRate;
+} VPSS_EXT_CHN_ATTR_S;
+
+/* Only used for Hi3559AV100/Hi3519AV100 */
+typedef struct hiVPSS_GRP_SHARPEN_MANUAL_ATTR_S {
+    /* RW; Range: [0, 4095]; Undirectional sharpen strength for texture and detail enhancement */
+    HI_U16 au16TextureStr[VPSS_SHARPEN_GAIN_NUM];
+    /* RW; Range: [0, 4095]; Directional sharpen strength for edge enhancement */
+    HI_U16 au16EdgeStr[VPSS_SHARPEN_GAIN_NUM];
+    /* RW; Range: [0, 4095]; Texture frequency adjustment. Texture and detail will be finer when it increase */
+    HI_U16 u16TextureFreq;
+    /* RW; Range: [0, 4095]; Edge frequency adjustment. Edge will be narrower and thiner when it increase */
+    HI_U16 u16EdgeFreq;
+    /* RW; Range: [0, 127]; u8OvershootAmt */
+    HI_U8  u8OverShoot;
+    /* RW; Range: [0, 127]; u8UndershootAmt */
+    HI_U8  u8UnderShoot;
+    /* RW; Range: [0, 255]; overshoot and undershoot suppression strength,
+        the amplitude and width of shoot will be decrease when shootSupSt increase */
+    HI_U8  u8ShootSupStr;
+    /* RW; Range: [0, 255]; Different sharpen strength for detail and edge.
+        When it is bigger than 128, detail sharpen strength will be stronger than edge. */
+    HI_U8  u8DetailCtrl;
+    /* RW; Range: [0, 63]; Edge smooth strength. */
+    HI_U8  u8EdgeFiltStr;
+    /* RW; Range: [0, 255]; The threshold of DetailCtrl, it is used to distinguish detail and edge. */
+    HI_U8  u8DetailCtrlThr;
+} VPSS_GRP_SHARPEN_MANUAL_ATTR_S;
+
+/* Only used for Hi3559AV100/Hi3519AV100 */
+typedef struct hiVPSS_GRP_SHARPEN_AUTO_ATTR_S {
+    /* RW; Range: [0, 4095]; Undirectional sharpen strength for texture and detail enhancement */
+    HI_U16 au16TextureStr[VPSS_SHARPEN_GAIN_NUM][VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 4095]; Directional sharpen strength for edge enhancement */
+    HI_U16 au16EdgeStr[VPSS_SHARPEN_GAIN_NUM][VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 4095]; Texture frequency adjustment. Texture and detail will be finer when it increase */
+    HI_U16 au16TextureFreq[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 4095]; Edge frequency adjustment. Edge will be narrower and thiner when it increase */
+    HI_U16 au16EdgeFreq[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 127]; u8OvershootAmt */
+    HI_U8  au8OverShoot[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 127]; u8UndershootAmt */
+    HI_U8  au8UnderShoot[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 255]; overshoot and undershoot suppression strength,
+        the amplitude and width of shoot will be decrease when shootSupSt increase */
+    HI_U8  au8ShootSupStr[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 255]; Different sharpen strength for detail and edge.
+        When it is bigger than 128, detail sharpen strength will be stronger than edge. */
+    HI_U8  au8DetailCtrl[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 63]; Edge smooth strength. */
+    HI_U8  au8EdgeFiltStr[VPSS_AUTO_ISO_STRENGTH_NUM];
+    /* RW; Range: [0, 255]; The threshold of DetailCtrl, it is used to distinguish detail and edge. */
+    HI_U8  au8DetailCtrlThr[VPSS_AUTO_ISO_STRENGTH_NUM];
+} VPSS_GRP_SHARPEN_AUTO_ATTR_S;
+
+/* Only used for Hi3559AV100/Hi3519AV100 */
+typedef struct hiVPSS_GRP_SHARPEN_ATTR_S {
+    /* RW;  Range: [0, 1];Sharpen enable. */
+    HI_BOOL                         bEnable;
+    /* RW; Sharpen Operation mode. */
+    OPERATION_MODE_E                enOpType;
+    /* RW; Range: [0, 127]; sharpen weight based on loacal luma */
+    HI_U8                           au8LumaWgt[VPSS_YUV_SHPLUMA_NUM];
+    /* RW; Sharpen manual attribute */
+    VPSS_GRP_SHARPEN_MANUAL_ATTR_S  stSharpenManualAttr;
+    /* RW; Sharpen auto attribute */
+    VPSS_GRP_SHARPEN_AUTO_ATTR_S    stSharpenAutoAttr;
+} VPSS_GRP_SHARPEN_ATTR_S;
+
+/* Only used for Hi3519AV100 */
+typedef struct {
+    /* IES0~4 ; Range: [0, 255]; The gains of edge and texture enhancement. 0~3 for different frequency response. */
+    HI_U8  IES0, IES1, IES2, IES3;
+    /* IEDZ   ; Range: [0, 999]; The threshold to control the generated artifacts. */
+    HI_U16 IEDZ : 10, _rb_ : 6;
+} tV56aIEy;
+
+/* Only used for Hi3519AV100 */
+typedef struct {
+    /* SPN6; Range: [0,   4];  The selection of filters to be mixed for NO.6 filter. */
+    /* SFR ; Range: [0,  31];  The relative NR strength to the SFi and SFk filter. */
+    HI_U8  SPN6 : 3, SFR  : 5;
+    /* SBN6; Range: [0,   4];  The selection of filters to be mixed for NO.6 filter. */
+    /* PBR6; Range: [0,  16];  The mix ratio between SPN6 and SBN6. */
+    HI_U8  SBN6 : 3, PBR6 : 5;
+    /* SFS2, SFT2, SBR2; Range: [0, 255];  The NR strength parameters for NO.1 and NO.2 filters. */
+    HI_U8  SFS2, SFT2, SBR2;
+    /* SFS4, SFT4, SBR4; Range: [0, 255];  The NR strength parameters for NO.3 and NO.4 filters. */
+    HI_U8  SFS4, SFT4, SBR4;
+
+    /* STH1~3; Range: [0, 511]; The thresholds for protection of edges from blurring */
+    /* SFN0~3; Range: [0,   6]; Filter selection for different image areas based on STH1~3. */
+    /* NRyEn ; Range: [0,   1]; The NR switches */
+    HI_U16 STH1 : 9,  SFN1 : 3, SFN0  : 3, NRyEn : 1;
+    /* BWSF4 ; Range: [0,   1]; The NR window size for the NO.3 and NO.4 filters.  */
+    /* KMode ; Range: [0,   3]; a. Selection of SFi and SFk type filter. b.
+        The denoise mode based on image brightness. */
+    HI_U16 STH2 : 9,  SFN2 : 3, BWSF4 : 1, kMode : 3;
+    /* tEdge ; Range: [0,   3]; NR strength control mode for the image background */
+    /* Trith ; Range: [0,   1]; The switch to choose 3 STH threshold or 2 STH threshold */
+    HI_U16 STH3 : 9,  SFN3 : 3, tEdge : 2, TriTh : 1, _rb_  : 1;
+} tV56aSFy;
+
+/* Only used for Hi3519AV100 */
+typedef struct {
+    /* MADZ;   Range: [0, 999]; The blending ratio between MAI2 and MAI1 based on image statistics. */
+    /* MAI0~2; Range: [0,   3]; The three blending results between spatial and temporal filtering. */
+    HI_U16 MADZ : 10, MAI0 : 2, MAI1 : 2,  MAI2 : 2;
+    /* MADK;   Range: [0, 255]; The blending ratio between MAI2 and MAI1 based on brightness. (low limit). */
+    /* MABR;   Range: [0, 255]; The blending ratio between MAI2 and MAI1 based on brightness. (high limit). */
+    HI_U8  MADK,      MABR;
+    /* MATH;   Range: [0, 999]; The theshold for motion detection. */
+    /* MATE;   Range: [0,   8]; The motion index for smooth image area. */
+    /* MATW;   Range: [0,   3]; The motion index for prevention of motion ghost. */
+    HI_U16 MATH : 10, MATE : 4, MATW : 2;
+    /* MASW;   Range: [0,  15]; The motion index for low-frequency noises. */
+    /* MABW;   Range: [0,   4]; The window size for motion detection. */
+    /* MAXN;   Range: [0,   1]; Not for tunning. */
+    HI_U8  MASW :  4, MABW : 3, MAXN : 1, _rB_;
+} tV56aMDy;
+
+/* Only used for Hi3519AV100 */
+typedef struct {
+    /* TFS;    Range: [0,  15]; The NR strength for temporal filtering. */
+    /* TDZ;    Range: [0, 999]; Protection of the weak texture area from temporal filtering.  */
+    /* TDX;    Range: [0,   3]; Not for tuning. */
+    HI_U16 TFS : 4,  TDZ : 10, TDX : 2;
+    /* TFR[5]; Range: [0,  31]; The temoproal NR strength control for background (static) area. */
+    /* TSS;    Range: [0,  15]; The ratio for blending spatial NR with the temproal NR results. */
+    /* TSI;    Range: [0,   1]; The selection of blending filter for TSS. */
+    HI_U8  TFR[5],   TSS : 4,  TSI : 1, _rb_ : 2;
+    /* SDZ;    Range: [0, 999]; The threshold of NR control for result MAI1. */
+    /* STR;    Range: [0,  31]; The strength of NR control for result MAI1.  */
+    /* bRef;   Range: [0,   1]; The switch for temproal filtering.  */
+    HI_U16 SDZ : 10, STR : 5,  bRef : 1;
+} tV56aTFy;
+
+/* Only used for Hi3519AV100 */
+typedef struct {
+    /* SFC;    Range: [0, 255]; Spatial NR strength for the first level. */
+    /* TFC;    Range: [0,  63]; Temporal NR strength. */
+    HI_U8  SFC, _rb_ : 2, TFC : 6;
+    /* CSFS;   Range: [0, 999]; Spatial NR strength for the second level. */
+    /* CSFR;   Range: [0,  32]; Spatial NR strength control. */
+    HI_U16 CSFS : 10,    CSFR : 6;
+    /* CTFR;   Range: [0, 999]; Temporal NR strength control. */
+    /* CTFS;   Range: [0,  15]; Temporal NR filtering strength */
+    /* CIIR;   Range: [0,   1]; Spatial NR mode for the first level. */
+    HI_U16 CTFR : 11,    CTFS : 4,    CIIR : 1;
+    /* MODE;    Range: [0,  1]; The switch for new chroma denoise mode. */
+    HI_U8 MODE : 1, _rb1_ : 7;
+    /* PRESFC;    Range: [0,  32]; The strength for chroma pre spatial filter. */
+    HI_U8  PRESFC : 6, _rb2_ : 2;
+} tV56aNRc;
+
+/* Only used for Hi3519AV100 */
+typedef struct {
+    tV56aIEy IEy[2];
+    tV56aSFy SFy[4];
+    tV56aMDy MDy[2];
+    tV56aTFy TFy[2];
+    tV56aNRc NRc;
+
+    /* SBSk2[32], SDSk2[32]; Range [0, 8192];  Spatial NR strength based on brightness. */
+    HI_U16 SBSk2[32], SDSk2[32];
+    /* SBSk3[32], SDSk3[32]; Range [0, 8192];  Spatial NR strength based on brightness. */
+    HI_U16 SBSk3[32], SDSk3[32];
+} VPSS_NRX_V1_S;
+
+/* Only used for Hi3519AV100 */
+typedef struct hiVPSS_NRX_PARAM_MANUAL_V1_S {
+    VPSS_NRX_V1_S stNRXParam;
+} VPSS_NRX_PARAM_MANUAL_V1_S;
+
+/* Only used for Hi3519AV100 */
+typedef struct hiVPSS_NRX_PARAM_AUTO_V1_S {
+    HI_U32 u32ParamNum;
+    HI_U32 *pau32ISO;
+    VPSS_NRX_V1_S *pastNRXParam;
+} VPSS_NRX_PARAM_AUTO_V1_S;
+
+/* Only used for Hi3519AV100 */
+typedef struct hiVPSS_NRX_PARAM_V1_S {
+    OPERATION_MODE_E           enOptMode;           /* RW;Adaptive NR */
+    VPSS_NRX_PARAM_MANUAL_V1_S stNRXManual;         /* RW;NRX V1 param for manual video */
+    VPSS_NRX_PARAM_AUTO_V1_S   stNRXAuto;           /* RW;NRX V1 param for auto video */
+} VPSS_NRX_PARAM_V1_S;
+
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    /* IES0~4 ; Range: [0, 255]; The gains of edge and texture enhancement. 0~3 for different frequency response. */
+    HI_U8  IES0, IES1, IES2, IES3;
+    HI_U16 IEDZ : 10, _rb_ : 6;     /* IEDZ   ; Range: [0, 999]; The threshold to control the generated artifacts. */
+} tV500_VPSS_IEy;
+
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    /* SPN6; Range: [0,   5];  The selection of filters to be mixed for NO.6 filter. */
+    /* SFR ; Range: [0,  31];  The relative NR strength in the SFi and SFk filter. */
+    /* SBN6; Range: [0,   5];  The selection of filters to be mixed for NO.6 filter. */
+    /* PBR6; Range: [0,  16];  The mix ratio between SPN6 and SBN6. */
+    HI_U8  SPN6 : 3, SFR  : 5;
+    HI_U8  SBN6 : 3, PBR6 : 5;
+
+    /* JMODE;      Range: [0,   4]; The selection modes for the blending of spatial filters */
+    /* STR0, STR1; Range: [0,  16]; The blending ratio of different filters. (Used in serial filtering mode (SFM).) */
+    /* DeIdx;      Range: [3,   6]; The selection number of filters that textures and details will be added to. */
+    HI_U16 SRT0 : 5, SRT1 : 5, JMODE : 3,  DeIdx : 3;
+    /* DeRate;     Range: [0, 255]; The enhancement strength for the SFM (When DeRate > 0, the SFM will be activated) */
+    /* SFR6;       Range: [0,  31]; The relative NR strength for NO.6 filter. (Effective when JMODE = 4) */
+    HI_U8  DeRate, SFR6[3];
+
+    /* SFS1, SFT1, SBR1; Range: [0, 255];  The NR strength parameters for NO.1 filter. */
+    /* SFS2, SFT2, SBR2; Range: [0, 255];  The NR strength parameters for NO.2 filter. */
+    /* SFS4, SFT4, SBR4; Range: [0, 255];  The NR strength parameters for NO.3 and NO.4 filters. */
+    HI_U8  SFS1,  SFT1,  SBR1;
+    HI_U8  SFS2,  SFT2,  SBR2;
+    HI_U8  SFS4,  SFT4,  SBR4;
+
+    /* STH1~3; Range: [0, 511]; The thresholds for protection of edges from blurring */
+    /* NRyEn ; Range: [0,   1]; The NR switches */
+    /* SFN0~3; Range: [0,   6]; Filter selection for different image areas based on STH1~3. */
+    /* BWSF4 ; Range: [0,   1]; The NR window size for the NO.3 and NO.4 filters.  */
+    /* KMode ; Range: [0,   3]; The denoise mode based on image brightness. */
+    /* Trith ; Range: [0,   1]; The switch to choose 3 STH threshold or 2 STH threshold */
+    HI_U16 STH1 : 9, SFN1 : 3, SFN0  : 3, NRyEn : 1;
+    HI_U16 STH2 : 9, SFN2 : 3, BWSF4 : 1, kMode : 3;
+    HI_U16 STH3 : 9, SFN3 : 3, TriTh : 1, _rb0_ : 3;
+
+    /* SBSk[32], SDSk[32]; Range [0, 8191];  Spatial NR strength based on brightness. */
+    HI_U16 SBSk[32], SDSk[32];
+} tV500_VPSS_SFy;
+
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    /* MADZ0, MADZ1;     Range: [0, 511]; The blending ratio between MAI2 and MAI1 based on image statistics. */
+    /* MAI00~02,MAI10~12 Range: [0,   3]; The three blending results between spatial and temporal filtering. */
+    /* MABR0, MABR1;  Range: [0, 255]; The blending ratio between MAI2 and MAI1 based on brightness.  */
+    /* biPath;           Range: [0,   1]; The switch for single path or dual path. 0: single path; 1: dual path. */
+    HI_U16 MADZ0   : 9,  MAI00    : 2,  MAI01  : 2,  MAI02    : 2,  biPath  : 1;
+    HI_U16 MADZ1   : 9,  MAI10    : 2,  MAI11  : 2,  MAI12    : 2,  _rb0_ : 1;
+    HI_U8  MABR0, MABR1;
+
+    /* MATH0,MATH1;   Range: [0, 999]; The theshold for motion detection.
+        specially for Hi3556V200/Hi3559V200 Range: [0,  511] */
+    /* MATE0,MATE1;   Range: [0,   8]; The motion index for smooth image area. */
+    /* MATW;   Range: [0,   3]; The motion index for prevention of motion ghost. */
+    HI_U16 MATH0   : 10,  MATE0   : 4,  MATW   : 2;
+    HI_U16 MATH1   : 10,  MATE1   : 4,  _rb1_  : 2;
 
 
-typedef   HI_S32 VPSS_GRP;
-typedef   HI_S32 VPSS_CHN;
+    /* MASW;   Range: [0,  15]; The motion index for low-frequency noises. */
+    /* MABW0,MABW1;   Range: [0,   9]; The window size for motion detection. */
+    HI_U8  MASW    :  4,  _rb2_   : 4;
+    HI_U8  MABW0   :  4,  MABW1   : 4;
+} tV500_VPSS_MDy;
 
-#define VPSS_INVALID_FRMRATE  (-1UL)
-#define VPSS_CHN0               0     
-#define VPSS_CHN1               1
-#define VPSS_CHN2               2
-#define VPSS_CHN3               3
-#define VPSS_INVALID_CHN       -1 
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    /* TFS0,TFS1;        Range: [0,  15]; The NR strength for temporal filtering.
+        specially for Hi3556V200/Hi3559V200 Range: [0,  10] */
+    /* TDZ0,TDZ1;        Range: [0, 999]; Protection of the weak texture area from temporal filtering.  */
+    /* TDX0,TDX1;        Range: [0,   3]; Not for tuning. */
+    HI_U16 TFS0  :  4, TDZ0   : 10, TDX0    : 2;
+    HI_U16 TFS1  :  4, TDZ1   : 10, TDX1    : 2;
 
-/*Define de-interlace mode*/    
-typedef enum  hiVPSS_DIE_MODE_E
-{
-    VPSS_DIE_MODE_AUTO      = 0,
-    VPSS_DIE_MODE_NODIE     = 1,
-    VPSS_DIE_MODE_DIE       = 2,
-    VPSS_DIE_MODE_BUTT
-}VPSS_DIE_MODE_E;
+    /* SDZ0,SDZ1;        Range: [0, 999]; The threshold of NR control for result MAI1. */
+    /* STR0,STR1;        Range: [0,  31]; The strength of NR control for result MAI1.  */
+    /* DZMode0, DZMode1; Range: [0,   1]; The selection mode for TDZ0 and TDZ1, respectively.  */
+    HI_U16 SDZ0  : 10, STR0   : 5,  DZMode0 : 1;
+    HI_U16 SDZ1  : 10, STR1   : 5,  DZMode1 : 1;
 
-/*Define attributes of vpss channel*/
-typedef struct hiVPSS_CHN_ATTR_S
-{
-    HI_BOOL bSpEn;              /*Sharpen enable*/         
-    HI_BOOL bBorderEn;          /*Frame enable*/
-    HI_BOOL bMirror;            /*mirror enable*/
-    HI_BOOL bFlip;              /*flip   enable*/
-    HI_S32  s32SrcFrameRate;    /* source frame rate */
-    HI_S32  s32DstFrameRate;    /* dest  frame rate */   
-    BORDER_S  stBorder;     
-}VPSS_CHN_ATTR_S;
+    /* TFR0,TFR1;        Range: [0,  31]; The temoproal NR strength control for background (static) area. */
+    /* TSS0,TSS1;        Range: [0,  15]; The ratio for blending spatial NR with the temproal NR results. */
+    /* TSI0,TSI1;        Range: [0,   1]; The selection of blending filter for TSS. */
+    HI_U8  TFR0[6],    TSS0   : 4,  TSI0    : 4;
+    HI_U8  TFR1[6],    TSS1   : 4,  TSI1    : 4;
 
-typedef struct hiVPSS_GRP_PARAM_S
-{
-    HI_U32 u32Contrast;     /*strength of dymanic contrast improve*/
-    
-    HI_S32 s32GlobalStrength; /*strength of whole 3DNR*/
-    HI_S32 s32IeStrength;     /*strength of image enhance*/
-    HI_S32 s32YSFStrength;   /*strength of space filter*/
-    HI_S32 s32YTFStrength;   /*strength of time filter*/
-    HI_S32 s32CSFStrength;   /*strength of chroma filter*/
-    HI_S32 s32CTFStrength;   /*strength of chroma filter*/    
-    HI_S32 s32MotionLimen;   /*limen for motion*/    
-}VPSS_GRP_PARAM_S;
+    /* tEdge;            Range: [0,   3]; NR strength control mode for the updating background. */
+    /* RFI;              Range: [0,   4]; Reference mode. (used in when NR_MOTION_MODE_COMPENSATE are selected). */
+    /* bRef;             Range: [0,   1]; The Switch for temproal filtering. */
+    HI_U8  RFI   : 3,  tEdge  : 2,  bRef    : 1,  _rb_ : 2;
+} tV500_VPSS_TFy;
 
-typedef struct
-{
-    /* Strength of spatial-domain filtering for Chroma. */
-    HI_U8  Chroma_SF_Strength;              /* [0,255] */
-    /* Strength of time-domain filtering for Chroma. */
-    HI_U8  Chroma_TF_Strength;              /* [0, 32]:  */
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    /* advMATH;        Range: [0,   1]; The Switch for advanced motion dection.  */
+    /* RFUI;           Range: [0,   4]; The modes for updating reference for NRy leve 2,
+        (used in when NR_MOTION_MODE_COMPENSATE are selected). */
+    HI_U16 advMATH : 1, RFDZ  : 9,    _rb_ : 6;
+    /* RFDZ;           Rnage: [0, 511]; The threshold for RFI0 and RFI1 mode 3 and 4. */
+    /* RFSLP;          Rnage: [0,  31]; The Strength for RFI0 and RFI1 mode 3 and 4. */
+    HI_U8  RFUI    : 3, RFSLP : 5;
+} tV500_VPSS_RFs;
 
-    /* Whether IE is processed in post step, 0: the first step, 1: the last step */
-    HI_U16  IE_PostFlag;                    /* [0, 1] */
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    tV500_VPSS_IEy  IEy;
+    tV500_VPSS_SFy  SFy;
+    HI_U8 NRcEn : 1, _rb_ : 7;
+} tV500_VPSS_NRc;
 
-    /* Texture/Edge enhancement strength.
-    IES indicates the strength of texture/edge enhancement (IE) */
-    HI_U16  IE_Strength;                    /* [0, 63] */
-
-    /* Motion detection threshold. 
-    This parameter determines the sensitivity of the motion detection unit to 
-    the pixel luminance variance. 
-    A larger value indicates lower sensitivity to the pixel luminance variance.
-    To be specific, implements spatial-domain filtering on the pixel whose 
-    luminance variance exceeds the threshold and the filtering strength is determined 
-    by Luma_SF_Strength, 
-    and implements time-domain filtering on the pixel 
-    whose luminance variance is less than or equal to the threshold and the filtering 
-    strength is determined by Luma_TF_Strength. */
-    HI_U16  Luma_MotionThresh;              /* [0,511] */
-
-    /* Strength of spatial-domain filtering for moving area Luma. */
-    HI_U8   Luma_SF_MoveArea;               /* [0,255] */
-    /* Strength of spatial-domain filtering for Still Area Luma */
-    HI_U8   Luma_SF_StillArea;              /* [0, 64] */ 
-    /* Strength of time-domain filtering for Luma. */
-    HI_U8   Luma_TF_Strength;               /* [0,15] */
-    /* Strength of Desand */
-    HI_U8   DeSand_Strength;                /* [0, 8], default 0 */
-} VPSS_GRP_PARAM_V2_S;
-
-typedef VPSS_GRP_PARAM_V2_S tVppNRsEx;
-
-
-typedef struct hiVPSS_NR_PARAM_V1_S
-{
-  HI_S32  s32YPKStr;		/* [ 0 .. 63 ] */
-
-  HI_S32  s32YSFStr;		/* [ 0 .. 200 ] */ 
-  HI_S32  s32YTFStr;		/* [ 0 .. 128 ] */
-
-  HI_S32  s32TFStrMax		/* [ 0 .. 15 ] */;
-
-  HI_S32  s32YSmthStr;		/* [ 0 .. 200 ] */
-  HI_S32  s32YSmthRat;		/* [ 0 .. 32  ] */
-
-  HI_S32  s32YSFStrDlt;		/* [ -128 .. 127 ] */ 
-  HI_S32  s32YTFStrDlt;		/* [  -64 .. 63  ] */
-  HI_S32  s32YTFStrDl;		/* [    0 .. 31  ] */
-
-  HI_S32  s32YSFBriRat;		/* [ 0 .. 64 ] */
-
-  HI_S32  s32CSFStr;		/* [ 0 ..  80 ] */
-  HI_S32  s32CTFstr;		/* [ 0 ..  32 ] */
-
-} VPSS_NR_PARAM_V1_S;
-
-
-typedef union hiVPSS_NR_PARAM_U
-{    
-    VPSS_NR_PARAM_V1_S stNRParam_V1;
-}VPSS_NR_PARAM_U;
-
-typedef struct hiVPSS_GRP_VPPNRS_S
-{
-  int  tss,      sfc, tfc;
-  int  sfs, tfs, mdz, ies;
-
-}VPSS_GRP_VPPNRS_S;
-
-typedef struct hiVPSS_GRP_VPPNRZ_S
-{
-    int  SFS,  SFS1, SPS1,SPT1,  TFP1,TFR1,SBF1,  MDDZ, MAAT,  SFC;
-    int  TFS,  SFS2, SPS2,SPT2,  TFP2,TFR2,SBF2,  MATH, MATW,  TFC;
-
-}VPSS_GRP_VPPNRZ_S;
-
-typedef struct hiVPSS_GRP_VPPNRX_S
-{
-  int  StStrength, StProSpati, StProTempo, StBaseFreq;
-  int  TFS,   TFP, TFQ, TFR,     SHP,      MDDZ, MATH;
-   
-}VPSS_GRP_VPPNRX_S;
-
-typedef struct hiVPSS_GRP_LEVEL2_PARAM_S
-{    
-    VPSS_GRP_VPPNRS_S *pNrS;
-    VPSS_GRP_VPPNRZ_S *pNrZ;
-    VPSS_GRP_VPPNRX_S *pNrX;
-}VPSS_GRP_LEVEL2_PARAM_S;
-
-typedef struct hiVPSS_GRP_VPPNRXCORE_S
-{
-    HI_U8  SBS ;
-    HI_U8  SDS , _reserved_b_ : 6;
-    HI_U8  SBF:2;
-    
-    HI_U8  MiBaTFP;    
-    HI_U8  MiDaTFP;
-
-    HI_U8  HiBaTFP;
-    HI_U8  HiDaTFP, _reserved_B_[3];
-
-    HI_U16  MDDZ : 7;
-    HI_U16  TFP   : 6, _reserved_b0_ : 1;
-    HI_U16  MaTFP : 2;
-
-    HI_U16  TFR : 5;
-    HI_U16  TFS : 4;
-    
-    HI_U16  SHP : 7;
-    HI_U16  MaTFR : 5;
-    
-    HI_U16  MaTFS : 4;
-    HI_U16  MaSHP : 7;
-} VPSS_GRP_VPPNRXCORE_S;  
-
-typedef struct hiVPSS_GRP_VPPNRXEX_S
-{
-    HI_U32 ISO;
-
-    VPSS_GRP_VPPNRXCORE_S stUnit[3];
-    
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    /* SFC;    Range: [0, 255]; Spatial NR strength. */
     HI_U8  SFC;
-    HI_U8  PostSBS;
-    HI_U8  PostSDS;
-    HI_U8  PostSHP;
-    
-    HI_U8  PostROW : 5, _reserved_b1_ : 3;    
-    HI_U8  PostSFS : 4,  _reserved_b2_ : 1;
-    HI_U8   MATW : 3;    
-    HI_U16  MATH : 9;
-    HI_U16  MABW : 1;
-    HI_U16  TFC  : 6;
-}VPSS_GRP_VPPNRXEX_S;
+    /* TFC;    Range: [0,  63]; Temporal NR strength relative to Spatial NR. */
+    /* CTFS;   Range: [0,  15]; Absolute temporal NR strength. */
+    HI_U16 CTFS : 4, TFC : 6, _rb_ : 6;
+    /* MODE;    Range: [0,  1]; The switch for new chroma denoise mode. */
+    HI_U8 MODE : 1, _rb1_ : 7;
+    /* PRESFC;    Range: [0,  32]; The strength for chroma pre spatial filter. */
+    HI_U8  PRESFC : 6, _rb2_ : 2;
 
-///////////////////////////////////////////////////////////
-/* NR B interface */
-typedef struct
-{
-    int  ISO;
+} tV500_VPSS_pNRc;
 
-    HI_U8   SFC, TFC, _reserved_B_[3];
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct {
+    tV500_VPSS_IEy  IEy[3];
+    tV500_VPSS_SFy  SFy[3];
+    tV500_VPSS_MDy  MDy[2];
+    tV500_VPSS_RFs  RFs;
+    tV500_VPSS_TFy  TFy[2];
+    tV500_VPSS_pNRc pNRc;
+    tV500_VPSS_NRc  NRc;
+} VPSS_NRX_V2_S;
 
-    HI_U8   SHPi, SBSi,SBTi, SDSi,SDTi, MDZi;
-    HI_U8   SHPj, SBSj,SBTj, SDSj,SDTj, MDZj;
-    HI_U8   SHPk, SBSk,SBTk, SDSk,SDTk;
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct hiVPSS_NRX_PARAM_MANUAL_V2_S {
+    VPSS_NRX_V2_S stNRXParam;
+} VPSS_NRX_PARAM_MANUAL_V2_S;
 
-    HI_U16  SBFi : 2, SBFj : 2, SBFk : 2, MATH : 10;
-    HI_U16  TFSi : 4, TFSj : 4, TFSk : 4, PSFS : 4;
-    HI_U16  TFRi : 5, TFRj : 5, TFRk : 5, Post : 1;
-} VPSS_GRP_VPPNRBCORE_S;
-typedef VPSS_GRP_VPPNRBCORE_S tVppNRbCore;
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct hiVPSS_NRX_PARAM_AUTO_V2_S {
+    HI_U32 u32ParamNum;
+    HI_U32 *pau32ISO;
+    VPSS_NRX_V2_S *pastNRXParam;
+} VPSS_NRX_PARAM_AUTO_V2_S;
 
-typedef struct
-{
-    VPSS_GRP_VPPNRBCORE_S  iNRb;
+/* Only used for Hi3516CV500/Hi3516AV300/Hi3516DV300/Hi3556V200/Hi3559V200 */
+typedef struct hiVPSS_NRX_PARAM_V2_S {
+    OPERATION_MODE_E           enOptMode;           /* RW;Adaptive NR */
+    VPSS_NRX_PARAM_MANUAL_V2_S stNRXManual;         /* RW;NRX V2 param for manual video */
+    VPSS_NRX_PARAM_AUTO_V2_S   stNRXAuto;           /* RW;NRX V2 param for auto video */
+} VPSS_NRX_PARAM_V2_S;
 
-    HI_U8   MDAF : 3, PostROW : 5;
-    HI_U8   MATW : 2, ExTfThr : 5;
-    HI_U8   MABW : 1, TextThr;
-    HI_U8   MTFS;
+/* Only used for Hi3516EV200 */
+typedef struct {
+    /* IES0~4 ; Range: [0, 255]; The gains of edge and texture enhancement. 0~3 for different frequency response. */
+    HI_U8  IES0, IES1, IES2, IES3;
+    /* IEDZ   ; Range: [0, 999]; The threshold to control the generated artifacts. */
+    HI_U16  IEDZ : 10, IEEn : 1, _rb_ : 5;
+} tV200_VPSS_IEy;
 
-} VPSS_GRP_VPPNRBEX_S;
-typedef VPSS_GRP_VPPNRBEX_S tVppNRbEx;
+/* Only used for Hi3516EV200 */
+typedef struct {
+    HI_U8  SPN6 : 3, SFR  : 5;                                      /* SPN6, SBN6:  [0, 5]; */
 
+    HI_U8  SBN6 : 3, PBR6 : 5;                                    /* SFR: [0,31];  PBR6: [0,15]; */
 
+    /* JMODE;      Range: [0,   4]; The selection modes for the blending of spatial filters */
+    /* STR0, STR1; Range: [0,  16]; The blending ratio of different filters. (Used in serial filtering mode (SFM).) */
+    /* DeIdx;      Range: [3,   6]; The selection number of filters that textures and details will be added to. */
+    HI_U16  SRT0 : 5, SRT1 : 5, JMODE : 3, DeIdx : 3;
 
-typedef struct 
-{
-  HI_U8  SBS,  ISH : 7, EN   : 1;
-  HI_U8  SDS,  IDZ : 7, STYP : 1;
-  HI_U8  SBT,  IEB; 
-  HI_U8  SDT,  ITX;
+    /* DeRate;     Range: [0, 255]; The enhancement strength for the SFM (When DeRate > 0, the SFM will be activated) */
+    /* SFR6[4];    Range: [0,  31]; The relative NR strength for NO.6 filter. (Effective when JMODE = 4) */
+    /* SBR6[2];    Range: [0,  15]; The control of overshoot and undershoot. */
+    HI_U8  SFR6[4], SBR6[2], DeRate;
 
-  HI_U8  MSBF, SBF;
-  HI_U8  MSTH, STH;
-  HI_U8  MSDZ, SDZ;
-  HI_U8  MSHT, SHT;
-  
-  HI_U8  MSHP, SHP;
-  HI_U8  MTFR, TFR;
-  
-  HI_U8  MATH, TFS; 
-  HI_U8  MODZ, MATE; 
-  
-} tV19zNRbCore;
+    /* SFS1, SFT1, SBR1; Range: [0, 255];  The NR strength parameters for NO.1 filter. */
+    HI_U8  SFS1,  SFT1,  SBR1;
+    /* SFS2, SFT2, SBR2; Range: [0, 255];  The NR strength parameters for NO.2 filter. */
+    HI_U8  SFS2,  SFT2,  SBR2;
+    /* SFS4, SFT4, SBR4; Range: [0, 255];  The NR strength parameters for NO.3 and NO.4 filters. */
+    HI_U8  SFS4,  SFT4,  SBR4;
 
-typedef tV19zNRbCore VPSS_GRP_VPPNRB19CORE_S;
-typedef struct 
-{
-  VPSS_GRP_VPPNRB19CORE_S  Unit[4]; 
-  
-  HI_U8  PBW  : 1,  ClassicEn : 1;
-  HI_U8  PSF  : 1, _reserved_ : 1;
-  HI_U8  PROW : 4,  MOMD : 6, SFyEx : 2;
-  HI_U8  MamiMax;
-  
-  HI_U8  PSBS, PSDS, RefMode;
-  HI_U8  TFC,  SFC;
-  	
-} tV19zNRb;
+    /* STH1, STH2, STHd1, STHd2; Range: [0, 511]; The thresholds for protection of edges from blurring */
+    /* NRyEn;      Range: [0,   1]; The NR switches */
+    /* SFN0~2;     Range: [0,   6]; Filter selection for different image areas based on STH1~3. */
+    /* KMode ;     Range: [0,   3]; The denoise mode based on image brightness. */
+    /* SBSk[32], SDSk[32]; Range [0, 8191];  Spatial NR strength based on brightness. */
+    HI_U16  STH1 : 9,  SFN1 : 3, SFN0  : 3, NRyEn   : 1;
+    HI_U16  STHd1 : 9, _rb0_ : 7;
+    HI_U16  STH2 : 9,  SFN2 : 3, kMode : 3, _rb1_   : 1;
+    HI_U16  STHd2 : 9, _rb2_ : 7;
+    HI_U16  SBSk[32], SDSk[32];
+} tV200_VPSS_SFy;
 
-typedef tV19zNRb VPSS_GRP_VPPNRB_S;
+/* Only used for Hi3516EV200 */
+typedef struct {
+    /* TFS0,TFS1;          Range: [0,  15]; The NR strength for temporal filtering. */
+    /* TDZ0,TDZ1;          Range: [0, 999]; Protection of the weak texture area from temporal filtering.  */
+    /* TDX0,TDX1;          Range: [0,   3]; Not for tuning. */
+    HI_U16  TFS0 : 4,   TDZ0 : 10,  TDX0    : 2;
+    HI_U16  TFS1 : 4,   TDZ1 : 10,  TDX1    : 2;
 
-///////////////////////////////////////////////////////////
+    /* SDZ0,SDZ1;          Range: [0, 999]; The threshold of NR control for result MAI1. */
+    /* STR0,STR1;          Range: [0,  31]; The strength of NR control for result MAI1.  */
+    /* DZMode0, DZMode1;   Range: [0,   1]; The selection mode for TDZ0 and TDZ1, respectively.  */
+    HI_U16  SDZ0 : 10,  STR0 : 5,   DZMode0 : 1;
+    HI_U16  SDZ1 : 10,  STR1 : 5,   DZMode1 : 1;
 
-/*Define coordinate mode*/
-typedef enum hiVPSS_CROP_COORDINATE_E   
-{
-    VPSS_CROP_RATIO_COOR = 0,   /*Ratio coordinate*/
-    VPSS_CROP_ABS_COOR          /*Absolute coordinate*/
-}VPSS_CROP_COORDINATE_E;
+    /* TFR0,TFR1;          Range: [0,  31]; The temoproal NR strength control for background (static) area. */
+    /* TSS0,TSS1;          Range: [0,  15]; The ratio for blending spatial NR with the temproal NR results. */
+    /* TSI0,TSI1;          Range: [0,   1]; The selection of blending filter for TSS. */
+    HI_U8  TSS0 : 4,   TSI0 : 4,  TFR0[6];
+    HI_U8  TSS1 : 4,   TSI1 : 4,  TFR1[6];
 
-/*Define attributes of CLIP function*/
-typedef struct hiVPSS_CROP_INFO_S
-{
-    HI_BOOL bEnable;        /*CROP enable*/
-    VPSS_CROP_COORDINATE_E  enCropCoordinate;   /*Coordinate mode of the crop start point*/
-    RECT_S  stCropRect;     /*CROP rectangular*/
-}VPSS_CROP_INFO_S;
+    /* TED;  Range: [0,   3]; NR strength control mode for the updating background. */
+    /* bRef;   Range: [0,   1]; The Switch for temproal filtering.  */
+    /* TFRS;   Range: [0,  15]; Spatial filtering strength for static area. */
+    HI_U8  TFRS : 4,   TED  : 2,   bRef    : 1,  _rb_ : 1;
+} tV200_VPSS_TFy;
 
-typedef struct hiVPSS_LDC_ATTR_S
-{
-    HI_BOOL bEnable;                    /* Whether LDC is enbale */
-    LDC_ATTR_S stAttr;                  /* LDC Attribute */
-}VPSS_LDC_ATTR_S;
+/* Only used for Hi3516EV200 */
+typedef struct {
+    /* PATH0 */
+    /* MADZ0, MADZ1;     Range: [0, 511]; The blending ratio between MAI2 and MAI1 based on image statistics. */
+    /* MAI00~02,MAI10~12 Range: [0,   3]; The three blending results between spatial and temporal filtering. */
+    HI_U16  MADZ0   : 9,   MAI00 : 2,  MAI01  : 2, MAI02 : 2, _rb0_ : 1;
+    HI_U16  MADZ1   : 9,   MAI10 : 2,  MAI11  : 2, MAI12 : 2, _rb1_ : 1;
+    /* MABR0, MABR1;     Range: [0, 255]; The blending ratio between MAI2 and MAI1 based on brightness.  */
+    HI_U8  MABR0, MABR1;
 
-/*Define attributes of vpss GROUP*/
-typedef struct hiVPSS_GRP_ATTR_S
-{
-    /*statistic attributes*/
-    HI_U32  u32MaxW;  /*MAX width of the group*/                    
-    HI_U32  u32MaxH;  /*MAX height of the group*/
-    PIXEL_FORMAT_E enPixFmt; /*Pixel format*/
-    
-    HI_BOOL bIeEn;    /*Image enhance enable*/
-    HI_BOOL bDciEn;   /*Dynamic contrast Improve enable*/
-    HI_BOOL bNrEn;    /*Noise reduce enable*/
-    HI_BOOL bHistEn;  /*Hist enable*/
-    VPSS_DIE_MODE_E enDieMode; /*De-interlace enable*/
-}VPSS_GRP_ATTR_S;
+    /* MATH0,MATH1, MATHd0, MATHd1;     Range: [0, 999]; The theshold for motion detection. */
+    /* MATE0,MATE1;   Range: [0,   8]; The motion index for smooth image area. */
+    /* MATW;          Range: [0,   3]; The motion index for prevention of motion ghost. */
+    /* MASW;          Range: [0,  15]; The motion index for low-frequency noises. */
+    /* MABW0,MABW1;   Range: [0,   9]; The window size for motion detection. */
+    HI_U16  MATH0   : 10,  MATE0 : 4,  MATW   : 2;
+    HI_U16  MATHd0  : 10,  _rb2_ : 6;
+    HI_U16  MATH1   : 10,  _rb3_ : 6;
+    HI_U16  MATHd1  : 10,  _rb4_ : 6;
+    HI_U8  MASW    :  4,  MATE1 : 4;
+    HI_U8  MABW0   :  4,  MABW1 : 4;
 
-/*Define vpss channel's work mode*/
-typedef enum hiVPSS_CHN_MODE_E   
-{
-    VPSS_CHN_MODE_AUTO = 0, /*Auto mode*/
-    VPSS_CHN_MODE_USER  =1 /*User mode*/
-}VPSS_CHN_MODE_E;
+    /* AdvMATH:  Range: [0, 1]; The switch to active the advanced mode. */
+    /* AdvTH:    Range: [0, 999]; The threshold to control the effects of the AdvMATH. */
+    HI_U16  AdvMATH : 1,   AdvTH : 12, _rb5_  : 3;
+} tV200_VPSS_MDy;
 
-/*Define attributes of vpss channel's work mode*/
-typedef struct hiVPSS_CHN_MODE_S
-{
-    VPSS_CHN_MODE_E  enChnMode;   /*Vpss channel's work mode*/
-    HI_U32 u32Width;              /*Width of target image*/
-    HI_U32 u32Height;             /*Height of target image*/
-    HI_BOOL bDouble;              /*Field-frame transfer£¬only valid for VPSS_PRE0_CHN*/
-    PIXEL_FORMAT_E  enPixelFormat;/*Pixel format of target image*/
-    COMPRESS_MODE_E enCompressMode;   /*Compression mode of the output*/
+/* Only used for Hi3516EV200 */
+typedef struct {
+    /* SFC;    Range: [0, 255]; Spatial NR strength. */
+    /* TFC;    Range: [0,  32]; Temporal NR strength relative to Spatial NR. */
+    HI_U8  SFC, TFC : 6, _rb0_ : 2;
+    /* TRC;    Range: [0, 255]; Control of color bleeding in */
+    /* TPC;    Range: [0,  32]; Type of temporal NR. */
+    HI_U8  TRC, TPC : 6, _rb1_ : 2;
+    /* MODE;    Range: [0,  1]; The switch for new chroma denoise mode. */
+    HI_U8 MODE : 1, _rb2_ : 7;
+    /* PRESFC;    Range: [0,  32]; The strength for chroma pre spatial filter. */
+    HI_U8  PRESFC : 6, _rb3_ : 2;
+} tV200_VPSS_NRc;
 
-}VPSS_CHN_MODE_S;
+/* Only used for Hi3516EV200 */
+typedef struct {
+    tV200_VPSS_IEy  IEy[5];
+    tV200_VPSS_SFy  SFy[5];
+    tV200_VPSS_MDy  MDy[2];
+    tV200_VPSS_TFy  TFy[3];
+    tV200_VPSS_NRc  NRc;
+} VPSS_NRX_V3_S;
 
-typedef struct hiVPSS_FRAME_TIMEOUT_S
-{
-    VIDEO_FRAME_INFO_S stVideoFrame;
-    HI_S32 s32MilliSec;
-}VPSS_FRAME_TIMEOUT_S;
+/* Only used for Hi3516EV200 */
+typedef struct hiVPSS_NRX_PARAM_MANUAL_V3_S {
+    VPSS_NRX_V3_S stNRXParam;
+} VPSS_NRX_PARAM_MANUAL_V3_S;
 
-typedef struct hiVPSS_GET_GRP_FRAME_S
-{
-    HI_U32 u32FrameIndex;   /*reserved*/
-    VIDEO_FRAME_INFO_S *pstVideoFrame;
-}VPSS_GET_GRP_FRAME_S;
+/* Only used for Hi3516EV200 */
+typedef struct hiVPSS_NRX_PARAM_AUTO_V3_S {
+    HI_U32 u32ParamNum;
+    HI_U32 *pau32ISO;
+    VPSS_NRX_V3_S *pastNRXParam;
+} VPSS_NRX_PARAM_AUTO_V3_S;
 
-/*Define detailed params for channel image process*/
-typedef struct hiVPSS_CHN_PARAM_S
-{
-    HI_U32 u32SpStrength;
-} VPSS_CHN_PARAM_S;
+/* Only used for Hi3516EV200 */
+typedef struct hiVPSS_NRX_PARAM_V3_S {
+    OPERATION_MODE_E           enOptMode;           /* RW;Adaptive NR */
+    VPSS_NRX_PARAM_MANUAL_V3_S stNRXManual;         /* RW;NRX V3 param for manual video */
+    VPSS_NRX_PARAM_AUTO_V3_S   stNRXAuto;           /* RW;NRX V3 param for auto video */
+} VPSS_NRX_PARAM_V3_S;
 
-/*Define vpss frame control info*/
-typedef struct hiVPSS_FRAME_RATE_S
-{
-    HI_S32  s32SrcFrmRate;        /* Input frame rate of a  group*/
-    HI_S32  s32DstFrmRate;        /* Output frame rate of a channel group */
-} VPSS_FRAME_RATE_S;
+/* Not support for Hi3559AV100 */
+typedef enum hiVPSS_NR_VER_E {
+    VPSS_NR_V1 = 1,
+    VPSS_NR_V2 = 2,
+    VPSS_NR_V3 = 3,
+    VPSS_NR_V4 = 4,
+    VPSS_NR_BUTT
+} VPSS_NR_VER_E;
 
-/*Define attributes of vpss extend channel*/
-typedef struct hiVPSS_EXT_CHN_ATTR_S
-{
-    VPSS_CHN        s32BindChn;             /*channel bind to*/
-    HI_U32          u32Width;               /*Width of target image*/
-    HI_U32          u32Height;              /*Height of target image*/
-    HI_S32          s32SrcFrameRate;        /*Frame rate of source*/
-    HI_S32          s32DstFrameRate;        /*Frame rate of extend chn input&output*/
-    PIXEL_FORMAT_E  enPixelFormat;          /*Pixel format of target image*/    
-    COMPRESS_MODE_E enCompressMode;   /*Compression mode of the output*/
-}VPSS_EXT_CHN_ATTR_S;
+/* Not support for Hi3559AV100 */
+typedef struct hiVPSS_GRP_NRX_PARAM_S {
+    VPSS_NR_VER_E enNRVer;
+    union {
+        VPSS_NRX_PARAM_V1_S stNRXParam_V1;   /* interface X V1 for Hi3519AV100 */
+        VPSS_NRX_PARAM_V2_S stNRXParam_V2;   /* interface X V2 for Hi3516CV500 */
+        VPSS_NRX_PARAM_V3_S stNRXParam_V3;   /* interface X V3 for Hi3516EV200 */
+    };
 
-typedef struct hiVPSS_REGION_INFO_S
-{
-    RECT_S *pstRegion;    /*region attribute*/
-    HI_U32 u32RegionNum;       /*count of the region*/
-}VPSS_REGION_INFO_S;
+} VPSS_GRP_NRX_PARAM_S;
 
-typedef struct hiVPSS_GET_REGION_LUMA_S
-{
-    VPSS_REGION_INFO_S stRegionInfo;  /*Information of the region*/
-    HI_U32* pu32LumaData;             /*Luma data of the region*/
-    HI_S32 s32MilliSec;               /*time parameter.less than 0 means waiting until get the luma data,
-                                             equal to 0 means get the luma data no matter whether it can or not,
-                                             more than 0 means waiting how long the time parameter it is*/
-}VPSS_GET_REGION_LUMA_S;
-
-
-typedef enum hiVPSS_COVER_TYPE_E
-{
-    VPSS_AREA_RECT = 0,
-    VPSS_AREA_QUAD_RANGLE,
-    VPSS_AREA_BUTT
-} VPSS_COVER_TYPE_E;
-
-typedef enum hiVPSS_REF_SEL_MODE_E   
-{
-    VPSS_REF_FROM_RFR  = 0, /*reference frame from the rfr frame */
-    VPSS_REF_FROM_CHN0 = 1, /*reference frame from the CHN0   */
-    VPSS_REF_CLASSIC_MODE = 2, /* c00321909 ¾­µäÄ£Ê½*/
-    VPSS_REF_FROM_BUTT  
-    
-}VPSS_REF_SEL_MODE_E;
-
-typedef struct hiVPSS_LOW_DELAY_INFO_S
-{
+typedef struct hiVPSS_CHN_BUF_WRAP_S {
     HI_BOOL bEnable;
-    HI_U32 u32LineCnt;
+    HI_U32  u32BufLine;             /* RW; Range: [128, H]; Chn buffer allocated by line. */
+    HI_U32  u32WrapBufferSize; /* RW; Whether to allocate buffer according to compression. */
+} VPSS_CHN_BUF_WRAP_S;
 
-}VPSS_LOW_DELAY_INFO_S;
+typedef enum hiVPSS_SPLIT_PRIORITY_E {
+    VPSS_SPLIT_PRIORITY_MEMORY = 0,
+    VPSS_SPLIT_PRIORITY_POWER = 1,
+    VPSS_SPLIT_PRIORITY_BUTT
+} VPSS_SPLIT_PRIORITY_E;
+
+typedef struct hiVPSS_PARAM_MOD_S {
+    HI_BOOL bOneBufForLowDelay;
+    HI_U32  u32VpssSplitNodeNum;
+    HI_BOOL bHdrSupport;
+    HI_BOOL bNrQuickStart;
+    VPSS_SPLIT_PRIORITY_E enSplitPriority;
+    HI_BOOL bRotationInputSupport;
+} VPSS_MOD_PARAM_S;
+
+typedef enum hiVPSS_CHN_PROC_MODE_E {
+    VPSS_CHN_PROC_MODE_VIDEO = 0,
+    VPSS_CHN_PROC_MODE_SNAP = 1,
+    VPSS_CHN_PROC_MODE_BUTT
+} VPSS_CHN_PROC_MODE_E;
 
 #ifdef __cplusplus
 #if __cplusplus
