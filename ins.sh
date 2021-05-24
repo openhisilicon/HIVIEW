@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 ins3516d()
 {
 
@@ -31,6 +32,43 @@ mkdir -p $INST/upg;
 cp $PROJ/tools/install.sh $INST/upg/ -arfv;
 cd $INST; tar Jcf ./upg/app.xz ko lib bin cfg www model; cd -;
 cd $INST/upg; $PROJ/tools/minizip -o -p 123 cam16d.upg app.xz install.sh;cp -vf ./cam16d.upg /mnt/hgfs/works/; cd -;
+######################
+echo "ok."
+######################
+}
+
+
+ins3516a()
+{
+
+INST=/nfs/16a
+echo "ins3516a to [$INST]"
+
+mkdir -p $INST/lib $INST/bin $INST/cfg $INST/ko $INST/model;
+
+cp lib/3516a/*.so*  $INST/lib -arfv;
+cp bin/3516a/*.exe $INST/bin -arfv;
+arm-himix200-linux-strip $INST/lib/*;
+arm-himix200-linux-strip $INST/bin/*;
+
+cp mod/mpp/3516a/ko/* $INST/ko/ -arfv;
+
+cp mod/svp/3516a/model/*.wk $INST/model/ -arfv;
+
+cp mod/mpp/3516a/lib/hisisdk/*.so $INST/lib -arfv;
+arm-himix200-linux-strip $INST/lib/*;
+
+cp mod/mpp/3516a/src/scene_auto/param/*.ini $INST/cfg -arfv;
+
+mkdir -p $INST/www;
+cp mod/webs/www/* $INST/www -arfv;
+
+#### packet .upg #####
+echo "wait minizip ..."
+mkdir -p $INST/upg;
+cp $PROJ/tools/install.sh $INST/upg/ -arfv;
+cd $INST; tar Jcf ./upg/app.xz ko lib bin cfg www model; cd -;
+cd $INST/upg; $PROJ/tools/minizip -o -p 123 cam16a.upg app.xz install.sh;cp -vf ./cam16a.upg /mnt/hgfs/works/; cd -;
 ######################
 echo "ok."
 ######################
@@ -115,6 +153,9 @@ case $1 in
     16d)
         ins3516d
         ;;
+    16a)
+        ins3516a
+        ;;
     19)
         ins3519
         ;;
@@ -122,7 +163,7 @@ case $1 in
         ins3559v200
         ;;
     *)
-        echo "usage: $0 {16d|19|59}"
+        echo "usage: $0 {16d|16a|19|59}"
         exit 1
         ;;
 esac
