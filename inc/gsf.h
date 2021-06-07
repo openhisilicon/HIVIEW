@@ -99,9 +99,9 @@ typedef struct {
 typedef struct {
   unsigned char encode; // GSF_ENC_ADPCM - GSF_ENC_AAC
   unsigned char chn;    // ChannelNum
-  unsigned char bps;    // BitsPerSample(k)
+  unsigned char bps;    // BitsPerSample
   unsigned char res;    // res;
-  unsigned short sp;    // SamplesPerSec
+  unsigned short sp;    // SamplesPerSec(k)
   unsigned short res1;  // res;
   unsigned int  res2[6];// res;
 }gsf_frm_audio_t;

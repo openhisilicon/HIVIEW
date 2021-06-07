@@ -115,7 +115,9 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* ะดสำ
           {
             if(_hdl->atrack == -1)
             {
-              _hdl->atrack = fmp4_writer_add_audio(_hdl->w, (info->enc==GSF_ENC_G711A)?MOV_OBJECT_G711a:MOV_OBJECT_G711u, info->a.chs, info->a.ss, info->a.sp, NULL, 0);
+              _hdl->atrack = fmp4_writer_add_audio(_hdl->w
+                                  , (info->enc==GSF_ENC_G711A)?MOV_OBJECT_G711a:MOV_OBJECT_G711u
+                                  , info->a.chs, info->a.bps, info->a.sp, NULL, 0);
             }
             
             if(_hdl->atrack != -1)
@@ -123,7 +125,7 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* ะดสำ
               ret = fmp4_writer_write(_hdl->w, _hdl->atrack, buf, size, info->ms, info->ms, 0);
             }
           }
-          else if(GSF_ENC_AAC)
+          else if(info->enc==GSF_ENC_AAC)
           {
             int rate = 1;
           	struct mpeg4_aac_t aac;
@@ -134,7 +136,8 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* ะดสำ
         		{
         			int extra_data_size = mpeg4_aac_audio_specific_config_save(&aac, extra_data, sizeof(extra_data));
         			rate = mpeg4_aac_audio_frequency_to((enum mpeg4_aac_frequency)aac.sampling_frequency_index);
-        			_hdl->atrack = fmp4_writer_add_audio(_hdl->w, MOV_OBJECT_AAC, aac.channel_configuration, 16, rate, extra_data, extra_data_size);
+        			_hdl->atrack = fmp4_writer_add_audio(_hdl->w, MOV_OBJECT_AAC
+                                  , aac.channel_configuration, 16, rate, extra_data, extra_data_size);
         		}
             if(-1 != _hdl->atrack)
             {
@@ -205,7 +208,7 @@ static void mov_audio_info(void* param, uint32_t track, uint8_t object, int chan
   }
   
   _hdl->a.sp  = sample_rate;
-  _hdl->a.ss  = bit_per_sample;
+  _hdl->a.bps = bit_per_sample;
   _hdl->a.chs = channel_count;
 }
 

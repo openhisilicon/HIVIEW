@@ -42,9 +42,9 @@ typedef struct rec_v_info_s
 
 typedef struct rec_a_info_s
 {
-    int sp; //采样率
-    int ss; //帧长度
-    int chs;//通道数
+    int sp;  //采样率
+    int bps; //bit_per_sample
+    int chs; //通道数
 }rec_a_info_t;
 
 typedef struct rec_rw_info_s

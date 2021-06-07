@@ -66,7 +66,7 @@ gsf_codec_ipc_t codec_ipc = {
     }
   },
   .aenc = {
-    0,
+    .en = 0, .type = GSF_ENC_AAC, .sprate = 48, .vol = 50,
   },
   .osd = {
     [0] = {},

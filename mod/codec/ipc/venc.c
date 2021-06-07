@@ -227,8 +227,8 @@ unsigned int cfifo_recput_au(unsigned char *p1, unsigned int n1, unsigned char *
   
   rec.audio.encode = GSF_ENC_AAC;
   rec.audio.chn = 2;
-  rec.audio.sp  = 1024;
-  rec.audio.bps = 48; // 48k;
+  rec.audio.sp  = 48; //k;
+  rec.audio.bps = 16;
   rec.size = 0;
   
   rec.size = pstStream->u32Len;

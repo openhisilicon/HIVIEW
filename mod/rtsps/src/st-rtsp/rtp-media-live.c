@@ -118,13 +118,15 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
     memcpy(p+l, p2, len-l);
 
     gsf_frm_t *rec = (gsf_frm_t *)u;
+    
+    #if 0
   	struct timespec _ts;  
     clock_gettime(CLOCK_MONOTONIC, &_ts);
     int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
+    
     if(cost > 30*2)
       printf("u:%p, get rec ok [delay:%d ms].\n", u, cost);
-      
-    assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
+    #endif
 
     return len;
 }
@@ -133,120 +135,124 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 
 static void *live_send_task(void *arg)
 {
-  int i = 0, ret = 0;
+  int i = 0, j = 0, ret = 0;
   unsigned char* ptr = malloc(512*1024);
   uint32_t timestamp = 0;
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
   
+  struct pollfd fds[MEDIA_TRACK_BUTT] = {0};
+  st_netfd_t m_evfd[MEDIA_TRACK_BUTT] = {NULL};
+ 
   if(m->track[MEDIA_TRACK_VIDEO].m_reader)
   {
-    #if 1
     cfifo_newest(m->track[MEDIA_TRACK_VIDEO].m_reader, 0);
     GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t));
     GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, m->ch, SET, m->st
                     , 0
                     , GSF_IPC_CODEC
                     , 2000);
-    #else
-    cfifo_newest(m->track[MEDIA_TRACK_VIDEO].m_reader, 1);
-    #endif
+                    
+    fds[j].fd = m->track[MEDIA_TRACK_VIDEO].m_evfd;
+    fds[j].events = POLLIN|POLLET;
+    m_evfd[MEDIA_TRACK_VIDEO] = st_netfd_open(fds[j].fd);
+    j++;
   }
-  
-  st_netfd_t m_evfd = NULL;
-  
-  if(m->track[MEDIA_TRACK_VIDEO].m_evfd > 0)
+  if(m->track[MEDIA_TRACK_AUDIO].m_reader)
   {
-    m_evfd = st_netfd_open(m->track[MEDIA_TRACK_VIDEO].m_evfd);
+    cfifo_newest(m->track[MEDIA_TRACK_AUDIO].m_reader, 0);
+    fds[j].fd = m->track[MEDIA_TRACK_AUDIO].m_evfd;
+    fds[j].events = POLLIN|POLLET;
+    m_evfd[MEDIA_TRACK_AUDIO] = st_netfd_open(fds[j].fd);
+    j++;
   }
+  
+  int fdcnt = j;
   
   while(m->loop)
   {
     //get stream;
-    if(m->track[MEDIA_TRACK_VIDEO].m_transport)
-    {
-      if(i%60 == 0)
-      {
-        char rr[1024] = {0};
-        int r = m->track[MEDIA_TRACK_VIDEO].m_transport->recv(m->track[MEDIA_TRACK_VIDEO].m_transport, 1, rr, sizeof(rr));
-      }
-      
-      struct timeval tv1, tv2;
-      
-      // wait data;
-      if(m_evfd)
-      {
-        //gettimeofday(&tv1, NULL);
-        int ret = st_netfd_poll(m_evfd, POLLIN|POLLET, 1000*1000);
-        //gettimeofday(&tv2, NULL);
-        //if(++m->track[MEDIA_TRACK_VIDEO].pollcnt%30 == 0)
-        //  printf("pid:%d, m:%p => st_netfd_poll ret:%d, cost:%d\n", getpid(), m, ret, (tv2.tv_sec*1000+tv2.tv_usec/1000)-(tv1.tv_sec*1000+tv1.tv_usec/1000));
-      }
-      // get data;
-      do{	
-        //gettimeofday(&tv1, NULL);
-      
-        gsf_frm_t *rec = (gsf_frm_t*)ptr;
-        int ret = cfifo_get(m->track[MEDIA_TRACK_VIDEO].m_reader, cfifo_recgut, (unsigned char*)ptr);
-        if(ret <= 0)
-          break;
-        if(m->track[MEDIA_TRACK_VIDEO].m_rtp_clock == 0)
-        {
-          if(rec->flag & GSF_FRM_FLAG_IDR)
-            m->track[MEDIA_TRACK_VIDEO].m_rtp_clock = rec->pts;
-          else
-            continue;
-        }
-        //gettimeofday(&tv2, NULL);
-        //u_int32_t cost = (tv2.tv_sec*1000+tv2.tv_usec/1000)-(tv1.tv_sec*1000+tv1.tv_usec/1000);
-        //if( cost > 30)
-        //  printf("%u => warning run cfifo_get cost:%d\n", ptr, cost);
-        
-        m->track[MEDIA_TRACK_VIDEO].sendcnt = 0;
-        timestamp = rec->pts - m->track[MEDIA_TRACK_VIDEO].m_rtp_clock;
-        //printf("send MEDIA_TRACK_VIDEO idr:%d, timestamp:%u, size:%d\n", rec->flag & GSF_FRM_FLAG_IDR, timestamp, rec->size);
-        rtp_payload_encode_input(m->track[MEDIA_TRACK_VIDEO].m_rtppacker, rec->data, rec->size, timestamp * 90 /*kHz*/);
-        
-        // SendRTP() used st_writev();
-        // SendRTCP(&m->track[MEDIA_TRACK_VIDEO]);
-      }while(1);
-    }
     
-    //get stream;
-    if(m->track[MEDIA_TRACK_AUDIO].m_transport)
+    fds[MEDIA_TRACK_VIDEO].revents = 0;
+    fds[MEDIA_TRACK_AUDIO].revents = 0;
+    fds[MEDIA_TRACK_META].revents  = 0;
+    
+    struct timeval tv1, tv2;
+    
+    if (st_poll(fds, fdcnt, 1000*1000) <= 0)
     {
-      if(i%60 == 0)
-      {
-        char rr[1024] = {0};
-        int r = m->track[MEDIA_TRACK_AUDIO].m_transport->recv(m->track[MEDIA_TRACK_AUDIO].m_transport, 1, rr, sizeof(rr));
-      }
-      // get data;
-      // send data;  
-      //printf("send MEDIA_TRACK_AUDIO.\n");
+      printf("%s => st_poll err.\n", __func__);
+      continue;
     }
 
-    //get stream;
-    if(m->track[MEDIA_TRACK_META].m_transport)
+    for(j = 0; j < MEDIA_TRACK_BUTT; j++)
     {
-      if(i%60 == 0)
+      if ((fds[j].revents & POLLIN)
+          && m->track[j].m_transport)
       {
-        char rr[1024] = {0};
-        int r = m->track[MEDIA_TRACK_META].m_transport->recv(m->track[MEDIA_TRACK_META].m_transport, 1, rr, sizeof(rr));
+        if(i%60 == 0)
+        {
+          char rr[1024] = {0};
+          int r = m->track[j].m_transport->recv(m->track[j].m_transport, 1, rr, sizeof(rr));
+        }
+        
+        // get data;
+        do{
+          
+          //gettimeofday(&tv1, NULL);
+          gsf_frm_t *rec = (gsf_frm_t*)ptr;
+          int ret = cfifo_get(m->track[j].m_reader, cfifo_recgut, (unsigned char*)ptr);
+          if(ret <= 0)
+            break;
+
+          int sp = (rec->type == GSF_FRM_VIDEO)?90:
+                    (rec->type == GSF_FRM_AUDIO)?rec->audio.sp:
+                    1;
+                    
+          //sync video;
+          if(rec->type != GSF_FRM_VIDEO)
+          {
+            if(m->track[MEDIA_TRACK_VIDEO].m_rtp_clock == 0)
+              continue;  
+          }
+          
+          if(m->track[j].m_rtp_clock == 0)
+          {
+            if(rec->flag & GSF_FRM_FLAG_IDR)
+              m->track[j].m_rtp_clock = rec->pts;
+            else
+              continue;
+          }
+          //gettimeofday(&tv2, NULL);
+          
+          m->track[j].sendcnt = 0;
+          timestamp = rec->pts - m->track[j].m_rtp_clock;
+          
+          if(rec->type != GSF_FRM_VIDEO)
+          printf("track %d ts:%u ms, size:%d, [%02X %02X %02X %02X]\n", j, timestamp, rec->size
+                , rec->data[0], rec->data[1], rec->data[2], rec->data[3]);
+          
+          rtp_payload_encode_input(m->track[j].m_rtppacker, rec->data, rec->size, timestamp * sp /*kHz*/);
+          // SendRTP() used st_writev();
+          // SendRTCP(&m->track[j]);
+        }while(1);
       }
-      
-      // get data;
-      // send data;  
-      printf("send MEDIA_TRACK_META.\n");
     }
     
     i++;
-    //st_usleep(5*1000);
   }
+  
+  
+  
   free(ptr);
   m->exited = 1;
-  if(m_evfd)
+  
+  for(j = 0; j < MEDIA_TRACK_BUTT; j++)
   {
-    st_netfd_poll(m_evfd, POLLIN, 1);
-    st_netfd_close(m_evfd);
+    if(m_evfd[j])
+    {
+      st_netfd_poll(m_evfd[j], POLLIN, 1);
+      st_netfd_close(m_evfd[j]);
+    }
   }
   printf("%s => exit m:%p .\n", __func__, m);
   st_thread_exit(NULL);
@@ -292,14 +298,15 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   struct rtp_media_live_t *m = (struct rtp_media_live_t*)_m;
   
   static const char* pattern_video =
-    "m=video 0 RTP/AVP %d\n"
-    "a=rtpmap:%d %s/90000\n"
-    "a=range:npt=now-\n"
-    "a=recvonly\n"
-    "a=control:video\n"
+    "m=video 0 RTP/AVP %d\r\n"
+    "a=rtpmap:%d %s/90000\r\n"
+    "a=range:npt=now-\r\n"
+    "a=recvonly\r\n"
+    "a=control:video\r\n"
     "a=fmtp:%d profile-level-id=%02X%02X%02X;"
-    "packetization-mode=1;"
-    "sprop-parameter-sets=";
+    //"packetization-mode=1;"
+    //"sprop-parameter-sets="
+    ;
 
 
   GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
@@ -320,6 +327,9 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
     RTPPacket,
   };
   
+  struct rtp_event_t event;
+	event.on_rtcp = NULL;
+  
   extern uint32_t rtp_ssrc(void);
   uint32_t ssrc = rtp_ssrc();
   
@@ -330,8 +340,6 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
     m->track[MEDIA_TRACK_VIDEO].m_rtppacker = 
         rtp_payload_encode_create(RTP_PAYLOAD_H264, "H264", (uint16_t)ssrc, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
 
-	struct rtp_event_t event;
-	event.on_rtcp = NULL;
 	m->track[MEDIA_TRACK_VIDEO].m_rtp = rtp_create(&event, NULL, ssrc, ssrc, 90000, 4*1024, 1);
 	
 	if(gsf_sdp->venc.type == GSF_ENC_H265)
@@ -342,14 +350,47 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   m->track[MEDIA_TRACK_VIDEO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
   m->track[MEDIA_TRACK_VIDEO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_VIDEO].m_reader);
   
-  printf("%s => get SDP ok. ch:%d, st:%d, video_shmid:%d, m_reader:%p, m_evfd:%d\n" 
+  printf("%s => get SDP ok. ch:%d, st:%d, video[shmid:%d, reader:%p, evfd:%d]\n" 
         , __func__
-        , m->ch, m->st, gsf_sdp->video_shmid
+        , m->ch, m->st
+        , gsf_sdp->video_shmid
         , m->track[MEDIA_TRACK_VIDEO].m_reader
         , m->track[MEDIA_TRACK_VIDEO].m_evfd);
         
   if(m->track[MEDIA_TRACK_VIDEO].m_reader == NULL 
     || m->track[MEDIA_TRACK_VIDEO].m_evfd < 0)
+  {
+    return 0;
+  }
+
+  uint32_t ssrc2 = rtp_ssrc();
+  
+  if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+    m->track[MEDIA_TRACK_AUDIO].m_rtppacker = 
+        rtp_payload_encode_create(RTP_PAYLOAD_MP4A, "mpeg4-generic", (uint16_t)ssrc2, ssrc2, &s_rtpfunc, &m->track[MEDIA_TRACK_AUDIO]);
+  else
+    m->track[MEDIA_TRACK_AUDIO].m_rtppacker = 
+        rtp_payload_encode_create(RTP_PAYLOAD_PCMU, "pcmu", (uint16_t)ssrc2, ssrc2, &s_rtpfunc, &m->track[MEDIA_TRACK_AUDIO]);
+
+	m->track[MEDIA_TRACK_AUDIO].m_rtp = rtp_create(&event, NULL, ssrc2, ssrc2, 48000, 4*1024, 1);
+	
+	if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+	  rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.aac");
+	else
+	  rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.pcmu");
+  
+  m->track[MEDIA_TRACK_AUDIO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->audio_shmid);
+  m->track[MEDIA_TRACK_AUDIO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_AUDIO].m_reader);
+  
+  printf("%s => get SDP ok. ch:%d, st:%d, audio[shmid:%d, reader:%p, evfd:%d]\n" 
+        , __func__
+        , m->ch, m->st
+        , gsf_sdp->audio_shmid
+        , m->track[MEDIA_TRACK_AUDIO].m_reader
+        , m->track[MEDIA_TRACK_AUDIO].m_evfd);
+        
+  if(m->track[MEDIA_TRACK_AUDIO].m_reader == NULL 
+    || m->track[MEDIA_TRACK_AUDIO].m_evfd < 0)
   {
     return 0;
   }
@@ -364,19 +405,30 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
 
   //media += parameters;
   //media += '\n';
-  strcat(media, "\n");
+  strcat(media, "\r\n");
   strcat(sdp, media);
   
   
 	static const char* pattern_audio =
-  	"m=audio 0 RTP/AVP %d\n"
-  	"a=rtpmap:%d PCMU/%d/%d\n"
-    "a=range:npt=now-\n"
-    "a=recvonly\n"
-  	"a=control:audio\n";
-  	
-  snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, 8000, 1);
+  	"m=audio 0 RTP/AVP %d\r\n"
+  	"a=rtpmap:%d %s/%d/%d\r\n"
+    "a=range:npt=now-\r\n"
+    "a=recvonly\r\n"
+  	"a=control:audio\r\n";
+  
+  if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+    snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_MP4A, RTP_PAYLOAD_MP4A, "mpeg4-generic",48000, 2);
+  else 	
+    snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, "PCMU", 8000, 2);
+
   strcat(sdp, media);
+  
+  if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+  {
+    char fmtp[256];
+    sprintf(fmtp, "a=fmtp:%d streamType=5;profile-level-id=1;mode=AAC-hbr;sizelength=13;indexlength=3;indexdeltalength=3\r\n", RTP_PAYLOAD_MP4A);
+    strcat(sdp, fmtp);
+  }
 
   return 0;
 }

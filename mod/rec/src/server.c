@@ -247,7 +247,7 @@ static int ser_file_writer(int ch, gsf_frm_t *frm)
   if(!frm || !frm->size)
     return -1;
   
-  idr = (frm->flag & GSF_FRM_FLAG_IDR);
+  idr = ((frm->type == GSF_FRM_VIDEO) && (frm->flag & GSF_FRM_FLAG_IDR));
   
 __open:
   if(*fd == NULL)
@@ -302,14 +302,14 @@ __open:
     winfo.v.w  = frm->video.width;
     winfo.v.h  = frm->video.height;
     winfo.v.fps= 30;
-  }
+  } 
   else
   {
     winfo.type = GSF_FRM_AUDIO_1;
     winfo.enc  = frm->audio.encode;
-    winfo.a.sp = 8000;
-    winfo.a.ss = 160;
-    winfo.a.chs= 1;
+    winfo.a.sp = frm->audio.sp;
+    winfo.a.bps = frm->audio.bps;
+    winfo.a.chs= frm->audio.chn;
   }
   
   fd_av_write(*fd, frm->data, frm->size, &winfo);
@@ -351,6 +351,8 @@ static void* ser_thread(void *param)
   gsf_frm_t *frm = (gsf_frm_t *)buf;
   
   void* cfifo[GSF_REC_CH_NUM] = {NULL};
+  void* cfifo_au[GSF_REC_CH_NUM] = {NULL};
+  
   int ep = cfifo_ep_alloc(1);
   
   while(ser.stat == SER_STAT_INIT)
@@ -364,11 +366,17 @@ static void* ser_thread(void *param)
       {
         if(cfifo[i])
         {
-          // stop rec;
-            void* ch = cfifo_get_u(cfifo[i]);
+            // stop rec;
             cfifo_ep_ctl(ep, CFIFO_EP_DEL, cfifo[i]);
             cfifo_free(cfifo[i]);
             cfifo[i] = NULL;
+            
+            if(cfifo_au[i])
+            {
+              cfifo_ep_ctl(ep, CFIFO_EP_DEL, cfifo_au[i]);
+              cfifo_free(cfifo_au[i]);
+              cfifo_au[i] = NULL;
+            }
         }
       }
       else
@@ -395,8 +403,17 @@ static void* ser_thread(void *param)
             continue;
           }
           cfifo_set_u(cfifo[i], (void*)i);
-          cfifo_newest(cfifo[i], 1);
+          unsigned int video_utc = cfifo_newest(cfifo[i], 1);
           cfifo_ep_ctl(ep, CFIFO_EP_ADD, cfifo[i]);
+          
+          cfifo_au[i] = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->audio_shmid);
+          if(cfifo_au[i])
+          {
+            cfifo_set_u(cfifo_au[i], (void*)i);
+            unsigned int audio_utc = cfifo_oldest(cfifo_au[i], video_utc);
+            printf("ch:%d, sync video_utc:%u, audio_utc:%u\n", i, video_utc, audio_utc);
+            cfifo_ep_ctl(ep, CFIFO_EP_ADD, cfifo_au[i]);
+          }
         }
       }
     }
@@ -435,6 +452,13 @@ static void* ser_thread(void *param)
       cfifo_ep_ctl(ep, CFIFO_EP_DEL, cfifo[i]);
       cfifo_free(cfifo[i]);
       cfifo[i] = NULL;
+      
+      if(cfifo_au[i])
+      {
+        cfifo_ep_ctl(ep, CFIFO_EP_DEL, cfifo_au[i]);
+        cfifo_free(cfifo_au[i]);
+        cfifo_au[i] = NULL;
+      }
     }
   }
   
@@ -449,9 +473,9 @@ int ser_init(void)
   if(ser.pid)
     return -1;
     
-  disk_init(); 
+  disk_init();
   INIT_LIST_HEAD(&ser.disks);
-  pthread_mutex_init(&ser.lock, NULL); 
+  pthread_mutex_init(&ser.lock, NULL);
     
   return pthread_create(&ser.pid, NULL, ser_thread, NULL);
 }
