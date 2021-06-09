@@ -407,7 +407,7 @@ HI_S32 SAMPLE_INNER_CODEC_CfgAudio(AUDIO_SAMPLE_RATE_E enSample)
         printf("%s: select acodec input_mode failed\n", __FUNCTION__);
         ret = HI_FAILURE;
     }
-    if (0) /* should be 1 when micin */
+    if (1) /* should be 1 when micin */
     {
         /******************************************************************************************
         The input volume range is [-87, +86]. Both the analog gain and digital gain are adjusted.
@@ -419,7 +419,7 @@ HI_S32 SAMPLE_INNER_CODEC_CfgAudio(AUDIO_SAMPLE_RATE_E enSample)
         Within this range, the noises are lowest because only the analog gain is adjusted,
         and the voice quality can be guaranteed.
         *******************************************************************************************/
-        iAcodecInputVol = 30;
+        iAcodecInputVol = 30/4; //maohw
         if (ioctl(fdAcodec, ACODEC_SET_INPUT_VOL, &iAcodecInputVol))
         {
             printf("%s: set acodec micin volume failed\n", __FUNCTION__);
@@ -879,11 +879,7 @@ HI_S32 SAMPLE_COMM_AUDIO_CreatTrdAencAdecCb(AENC_CHN AeChn, int (*cb)(AENC_CHN A
   pstAenc = &gs_stSampleAenc[AeChn];
   pstAenc->cb = cb;
   pstAenc->uargs = uargs;
-  #if 0  //maohw SENDAO
-  return SAMPLE_COMM_AUDIO_CreatTrdAencAdec(AeChn, 0, NULL);
-  #else
   return SAMPLE_COMM_AUDIO_CreatTrdAencAdec(AeChn, -1, NULL);
-  #endif
 }
 
 

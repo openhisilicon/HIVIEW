@@ -10,8 +10,8 @@
  *  v MIPI_YUV_8M_30FPS_8BIT
  *  v MIPI_YUVPKG_2M_60FPS_8BIT
  *  v BT1120_YUV_2M_60FPS_8BIT
- *  x BT656_YUV_0M_60FPS_8BIT
- *  x BT601_YUV_0M_60FPS_8BIT
+ *  v BT656_YUV_0M_60FPS_8BIT
+ *  v BT601_YUV_0M_60FPS_8BIT
  */
 
 #include "mpp.h"
@@ -29,6 +29,8 @@ int mppex_hook_sns(gsf_mpp_cfg_t *cfg);
 int mppex_hook_vi(SAMPLE_VI_CONFIG_S *pstViConfig);
 int mppex_hook_vpss_bb(gsf_mpp_vpss_t *vpss);
 int mppex_hook_vpss_ee(gsf_mpp_vpss_t *vpss);
+int mppex_hook_venc(gsf_mpp_venc_t *venc);
+int mppex_hook_vo(VO_INTF_SYNC_E sync);
 int mppex_hook_destroy();
 
 #endif //__mppex_h__

@@ -25,10 +25,10 @@
     static PAYLOAD_TYPE_E gs_enPayloadType = PT_MP3;
 #endif
 
-static HI_BOOL gs_bAioReSample  = HI_FALSE;
+HI_BOOL gs_bAioReSample  = HI_FALSE;
 static HI_BOOL gs_bUserGetMode  = HI_FALSE;
 static HI_BOOL gs_bAoVolumeCtrl = HI_FALSE;
-static AUDIO_SAMPLE_RATE_E enInSampleRate  = AUDIO_SAMPLE_RATE_BUTT;
+AUDIO_SAMPLE_RATE_E enInSampleRate  = AUDIO_SAMPLE_RATE_BUTT;
 static AUDIO_SAMPLE_RATE_E enOutSampleRate = AUDIO_SAMPLE_RATE_BUTT;
 /* 0: close, 1: record*/
 static HI_U32 u32AiVqeType = 1;
@@ -604,7 +604,7 @@ ADECAO_ERR3:
 HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
 {
     HI_S32 i, j, s32Ret;
-    AI_CHN      AiChn;
+    AI_CHN      AiChn = 0;
     AO_CHN      AoChn = 0;
     ADEC_CHN    AdChn = 0;
     HI_S32      s32AiChnCnt;
@@ -646,15 +646,65 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
     enInSampleRate  = AUDIO_SAMPLE_RATE_BUTT;
     enOutSampleRate = AUDIO_SAMPLE_RATE_BUTT;
 
+
+    // for RECORDVQE;
+    AI_RECORDVQE_CONFIG_S stAiVqeRecordAttr;
+    HI_VOID     *pAiVqeAttr = NULL;
+    
+    if (1 == u32AiVqeType)
+    {
+        memset(&stAiVqeRecordAttr, 0, sizeof(AI_RECORDVQE_CONFIG_S));
+        stAiVqeRecordAttr.s32WorkSampleRate    = AUDIO_SAMPLE_RATE_48000;
+        stAiVqeRecordAttr.s32FrameSample       = AACLC_SAMPLES_PER_FRAME;
+        stAiVqeRecordAttr.enWorkstate          = VQE_WORKSTATE_COMMON; //VQE_WORKSTATE_MUSIC;//
+        stAiVqeRecordAttr.s32InChNum           = 2;
+        stAiVqeRecordAttr.s32OutChNum          = 2;
+        stAiVqeRecordAttr.enRecordType         = VQE_RECORD_NORMAL;
+        
+        stAiVqeRecordAttr.stHpfCfg.bUsrMode    = HI_TRUE;
+        stAiVqeRecordAttr.stHpfCfg.enHpfFreq   = AUDIO_HPF_FREQ_80;
+        stAiVqeRecordAttr.stDrcCfg.bUsrMode    = HI_FALSE;
+        stAiVqeRecordAttr.stRnrCfg.bUsrMode    = HI_FALSE;
+        stAiVqeRecordAttr.stHdrCfg.bUsrMode    = HI_FALSE;
+        
+        
+        stAiVqeRecordAttr.stAgcCfg.bUsrMode          = HI_TRUE; /* mode 0: auto, mode 1: manual. */
+        stAiVqeRecordAttr.stAgcCfg.s8TargetLevel     = -2;      /* target voltage level, range: [-40, -1]dB */
+        stAiVqeRecordAttr.stAgcCfg.s8NoiseFloor      = -40;     /* noise floor, range: TalkVqe/AoVqe[-65, -20]dB, RecordVqe[-50, -20]dB */
+        stAiVqeRecordAttr.stAgcCfg.s8MaxGain         = 8;      /* max gain, range: [0, 30]dB */
+        stAiVqeRecordAttr.stAgcCfg.s8AdjustSpeed     = 2;      /* adjustable speed, range: [0, 10]dB/s */
+        stAiVqeRecordAttr.stAgcCfg.s8ImproveSNR      = 0;       /* switch for improving SNR, range: [0:close, 1:upper limit 3dB, 2:upper limit 6dB] */
+        stAiVqeRecordAttr.stAgcCfg.s8UseHighPassFilt = 0;    /* switch for using high pass filt, range: [0:close, 1:80Hz, 2:120Hz, 3:150:Hz, 4:300Hz: 5:500Hz] */
+        stAiVqeRecordAttr.stAgcCfg.s8OutputMode      = 0;    /* output mode, mute when lower than noise floor, range: [0:close, 1:open] */
+        stAiVqeRecordAttr.stAgcCfg.s16NoiseSupSwitch = 0;    /* switch for noise suppression, range: [0:close, 1:open] */
+       
+
+        //stAiVqeRecordAttr.u32OpenMask = AI_RECORDVQE_MASK_DRC | AI_RECORDVQE_MASK_HDR | AI_RECORDVQE_MASK_HPF | AI_RECORDVQE_MASK_RNR;
+        stAiVqeRecordAttr.u32OpenMask = AI_RECORDVQE_MASK_AGC | AI_RECORDVQE_MASK_HPF;
+        pAiVqeAttr = (HI_VOID *)&stAiVqeRecordAttr;
+    }
+    else
+    {
+        pAiVqeAttr = HI_NULL;
+    }
+
     /********************************************
       step 1: start Ai
     ********************************************/
     s32AiChnCnt = stAioAttr.u32ChnCnt;
-    s32Ret = SAMPLE_COMM_AUDIO_StartAi(AiDev, s32AiChnCnt, &stAioAttr, enOutSampleRate, gs_bAioReSample, NULL, 0);
+    s32Ret = SAMPLE_COMM_AUDIO_StartAi(AiDev, s32AiChnCnt, &stAioAttr, enOutSampleRate, gs_bAioReSample, pAiVqeAttr, u32AiVqeType);
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
         goto AIAENC_ERR6;
+    }
+
+    if (1 == u32AiVqeType)
+    {
+      // Hi3559AV100ES/Hi3559AV100/Hi3519AV100/Hi3516CV500/Hi3516EV200 不支持此接口
+      // 建议用户使用内置Audio Codec和AO的音量调节功能。
+      HI_S32 s32VolumeDb = 6; //[-20,10]
+      HI_MPI_AI_SetVqeVolume(AiDev, AiChn, s32VolumeDb);
     }
 
     /********************************************
@@ -759,31 +809,6 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
     }
     else
     {
-      #if 0 //SENDAO
-        s32Ret = SAMPLE_COMM_AUDIO_StartAdec(AdChn, gs_enPayloadType);
-        if (s32Ret != HI_SUCCESS)
-        {
-            SAMPLE_DBG(s32Ret);
-            goto AIAENC_ERR3;
-        }
-       
-        s32AoChnCnt = stAioAttr.u32ChnCnt;
-        s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, gs_bAioReSample);
-        if (s32Ret != HI_SUCCESS)
-        {
-            SAMPLE_DBG(s32Ret);
-            goto AIAENC_ERR2;
-        }
-
-        s32Ret = SAMPLE_COMM_AUDIO_AoBindAdec(AoDev, AoChn, AdChn);
-        if (s32Ret != HI_SUCCESS)
-        {
-            SAMPLE_DBG(s32Ret);
-            goto AIAENC_ERR0;
-        } 
-             
-      #endif
-
         s32Ret = SAMPLE_COMM_AUDIO_CreatTrdAencAdecCb(AeChn, aenc->cb, aenc->uargs);
         if (s32Ret != HI_SUCCESS)
         {
@@ -792,7 +817,6 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
         }
         
         printf(" SAMPLE_COMM_AUDIO_CreatTrdAencAdecCb AeChn:%d, ok \n", AeChn);
-        
         return s32Ret;
     }
 
@@ -953,7 +977,7 @@ AIAENC_ERR4:
     }
 
 AIAENC_ERR5:
-    s32Ret |= SAMPLE_COMM_AUDIO_StopAi(AiDev, s32AiChnCnt, gs_bAioReSample, HI_FALSE);
+    s32Ret |= SAMPLE_COMM_AUDIO_StopAi(AiDev, s32AiChnCnt, gs_bAioReSample, u32AiVqeType==1);
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
@@ -1444,8 +1468,8 @@ HI_S32 SAMPLE_AUDIO_AiVqeProcessAo(HI_VOID)
         stAiVqeRecordAttr.s32FrameSample       = SAMPLE_AUDIO_PTNUMPERFRM;
         stAiVqeRecordAttr.enWorkstate          = VQE_WORKSTATE_COMMON;
         stAiVqeRecordAttr.s32InChNum           = 2;
-        stAiVqeRecordAttr.s32OutChNum           = 2;
-        stAiVqeRecordAttr.enRecordType           = VQE_RECORD_NORMAL;
+        stAiVqeRecordAttr.s32OutChNum          = 2;
+        stAiVqeRecordAttr.enRecordType         = VQE_RECORD_NORMAL;
         stAiVqeRecordAttr.stDrcCfg.bUsrMode    = HI_FALSE;
         stAiVqeRecordAttr.stRnrCfg.bUsrMode    = HI_FALSE;
         stAiVqeRecordAttr.stHdrCfg.bUsrMode    = HI_FALSE;
@@ -1627,6 +1651,7 @@ HI_S32 SAMPLE_AUDIO_AiHdmiAo(HI_VOID)
         return HI_FAILURE;
     }
 
+    return 0;
     printf("\nplease press twice ENTER to exit this sample\n");
     getchar();
     getchar();

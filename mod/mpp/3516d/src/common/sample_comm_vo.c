@@ -615,16 +615,40 @@ HI_S32 SAMPLE_COMM_VO_StartChn(VO_LAYER VoLayer, SAMPLE_VO_MODE_E enMode)
             stChnAttr.stRect.u32Width   = ALIGN_DOWN(u32Width / u32Square, 2);
             stChnAttr.stRect.u32Height  = ALIGN_DOWN(u32Height / u32Square, 2);
             stChnAttr.u32Priority       = 0;
-            stChnAttr.bDeflicker        = HI_FALSE;
+            stChnAttr.bDeflicker        = HI_FALSE; 
         }
         else if(enMode == VO_MODE_2MUX) //maohw
         {
+          VO_DEV VoDev = VoLayer;
+          VO_PUB_ATTR_S stPubAttr;
+          HI_MPI_VO_GetPubAttr(VoDev, &stPubAttr);
+          if(stPubAttr.enIntfType & VO_INTF_MIPI)
+          {
             stChnAttr.stRect.s32X       = ALIGN_DOWN(0, 2);
             stChnAttr.stRect.s32Y       = ALIGN_DOWN((u32Height / u32Square) * (i % u32Square), 2);
             stChnAttr.stRect.u32Width   = ALIGN_DOWN(u32Width / 1, 2);
             stChnAttr.stRect.u32Height  = ALIGN_DOWN(u32Height / u32Square, 2);
             stChnAttr.u32Priority       = 0;
             stChnAttr.bDeflicker        = HI_FALSE;
+          }
+          else
+          {
+            stChnAttr.stRect.s32X       = ALIGN_DOWN((u32Width / u32Square) * (i % u32Square), 2);
+            stChnAttr.stRect.s32Y       = ALIGN_DOWN(u32Height / 4, 2);
+            stChnAttr.stRect.u32Width   = ALIGN_DOWN(u32Width / u32Square, 2);
+            stChnAttr.stRect.u32Height  = ALIGN_DOWN(u32Height / u32Square, 2);
+            stChnAttr.u32Priority       = 0;
+            stChnAttr.bDeflicker        = HI_FALSE; 
+            
+            if(0)//if(i == 0)
+            {
+              stChnAttr.stRect.s32X       = 0;
+              stChnAttr.stRect.s32Y       = 0;
+              stChnAttr.stRect.u32Width   = ALIGN_DOWN(u32Width, 2);
+              stChnAttr.stRect.u32Height  = ALIGN_DOWN(u32Height, 2);
+            }
+          }
+          
         }
         else if(enMode == VO_MODE_2X4)
         {
@@ -830,6 +854,19 @@ HI_S32 SAMPLE_COMM_VO_HdmiStart(VO_INTF_SYNC_E enIntfSync)
 
     stAttr.b3DEnable             = HI_FALSE;
     stAttr.enDefaultMode         = HI_HDMI_FORCE_HDMI;
+    
+    // for audio;
+    stAttr.bEnableAudio = HI_TRUE;        /**< if enable audio */
+    stAttr.enSoundIntf = HI_HDMI_SND_INTERFACE_I2S; /**< source of HDMI audio, HI_HDMI_SND_INTERFACE_I2S suggested.the parameter must be consistent with the input of AO*/
+    stAttr.enSampleRate = AUDIO_SAMPLE_RATE_48000;        /**< sampling rate of PCM audio,the parameter must be consistent with the input of AO */
+    stAttr.u8DownSampleParm = HI_FALSE;    /**< parameter of downsampling  rate of PCM audio, default :0 */
+
+    stAttr.enBitDepth = 8 * (AUDIO_BIT_WIDTH_16+1);   /**< bitwidth of audio,default :16,the parameter must be consistent with the config of AO */
+    stAttr.u8I2SCtlVbit = 0;        /**< reserved, should be 0, I2S control (0x7A:0x1D) */
+
+    stAttr.bEnableAviInfoFrame = HI_TRUE; /**< if enable  AVI InfoFrame*/
+    stAttr.bEnableAudInfoFrame = HI_TRUE;; /**< if enable AUDIO InfoFrame*/
+    
 
     CHECK_RET(HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr), "HI_MPI_HDMI_SetAttr");
     CHECK_RET(HI_MPI_HDMI_Start(enHdmiId), "HI_MPI_HDMI_Start");
@@ -887,6 +924,20 @@ HI_S32 SAMPLE_COMM_VO_HdmiStartByDyRg(VO_INTF_SYNC_E enIntfSync, DYNAMIC_RANGE_E
 
     stAttr.b3DEnable             = HI_FALSE;
     stAttr.enDefaultMode         = HI_HDMI_FORCE_HDMI;
+    
+    
+    // for audio;
+    stAttr.bEnableAudio = HI_TRUE;        /**< if enable audio */
+    stAttr.enSoundIntf = HI_HDMI_SND_INTERFACE_I2S; /**< source of HDMI audio, HI_HDMI_SND_INTERFACE_I2S suggested.the parameter must be consistent with the input of AO*/
+    stAttr.enSampleRate = AUDIO_SAMPLE_RATE_48000;        /**< sampling rate of PCM audio,the parameter must be consistent with the input of AO */
+    stAttr.u8DownSampleParm = HI_FALSE;    /**< parameter of downsampling  rate of PCM audio, default :0 */
+
+    stAttr.enBitDepth = 8 * (AUDIO_BIT_WIDTH_16+1);   /**< bitwidth of audio,default :16,the parameter must be consistent with the config of AO */
+    stAttr.u8I2SCtlVbit = 0;        /**< reserved, should be 0, I2S control (0x7A:0x1D) */
+
+    stAttr.bEnableAviInfoFrame = HI_TRUE; /**< if enable  AVI InfoFrame*/
+    stAttr.bEnableAudInfoFrame = HI_TRUE;; /**< if enable AUDIO InfoFrame*/
+    
 
     CHECK_RET(HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr), "HI_MPI_HDMI_SetAttr");
     CHECK_RET(HI_MPI_HDMI_Start(enHdmiId), "HI_MPI_HDMI_Start");

@@ -145,6 +145,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
     {
         mppex_hook_destroy();
         SAMPLE_COMM_VENC_StopGetStream();
+        SAMPLE_COMM_AUDIO_DestoryAllTrd();
         SAMPLE_COMM_All_ISP_Stop();
         SAMPLE_COMM_VO_HdmiStop();
         SAMPLE_COMM_SYS_Exit();
@@ -179,10 +180,21 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   {
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
   }
+  
+  if(cfg->second && cfg->snscnt == 1 && !strstr(cfg->snsname, "bt1120"))
+  {
+    sprintf(loadstr, "%s -yuv0 2", loadstr);
+  }
+  
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
   SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = sns->type;
+  
+  if(cfg->second && cfg->snscnt == 1)
+  {
+    SENSOR1_TYPE = BT656_YUV_0M_60FPS_8BIT;
+  }
   
   if(dl)
   {
@@ -406,17 +418,22 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
       goto EXIT_VI_VPSS_UNBIND;
   }
 
-  s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(venc->VpssGrp, venc->VpssChn,venc->VencChn);
-  if (HI_SUCCESS != s32Ret)
+  if(venc->VpssGrp >= 0)
   {
-      SAMPLE_PRT("Venc Get GopAttr failed for %#x!\n", s32Ret);
-      goto EXIT_VENC_STOP;
+    s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(venc->VpssGrp, venc->VpssChn,venc->VencChn);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("Venc Get GopAttr failed for %#x!\n", s32Ret);
+        goto EXIT_VENC_STOP;
+    }
   }
 
+  mppex_hook_venc(venc);
   return s32Ret;
 
 EXIT_VENC_UnBind:
-    SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
+    if(venc->VpssGrp >= 0)
+      SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
 EXIT_VENC_STOP:
     SAMPLE_COMM_VENC_Stop(venc->VencChn);
 EXIT_VI_VPSS_UNBIND:
@@ -427,8 +444,8 @@ EXIT_VI_VPSS_UNBIND:
 int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
 {
   HI_S32 s32Ret;
-  
-  SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
+  if(venc->VpssGrp >= 0)
+    SAMPLE_COMM_VPSS_UnBind_VENC(venc->VpssGrp,venc->VpssChn,venc->VencChn);
   SAMPLE_COMM_VENC_Stop(venc->VencChn);
   return s32Ret;
 }
@@ -820,7 +837,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.enVoIntfType          = type;
     stVoConfig.enIntfSync            = sync;
     stVoConfig.enPicSize             = enDispPicSize; // unused;
-    stVoConfig.u32BgColor            = COLOR_RGB_BLUE;
+    stVoConfig.u32BgColor            = COLOR_RGB_BLACK;//COLOR_RGB_BLUE;
     stVoConfig.u32DisBufLen          = 3;
     stVoConfig.enDstDynamicRange     = DYNAMIC_RANGE_SDR8;
     stVoConfig.enVoMode              = VO_MODE_1MUX;
@@ -846,6 +863,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     printf("vodev:%d, intf:%d, sync:%d, u32Width:%d, u32Height:%d\n"
             , vodev, vo_mng[vodev].intf, vo_mng[vodev].sync, stDispSize.u32Width, stDispSize.u32Height);         
             
+    mppex_hook_vo(sync);
     return s32Ret;
 }
 
@@ -1171,14 +1189,65 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 
 int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 {
+  
   //audio dec bind vo;
+  
   return 0;
 }
+
+#include "audio_aac_adp.h"
+//from sample_audio.c;
+extern HI_BOOL gs_bAioReSample;
+extern AUDIO_SAMPLE_RATE_E enInSampleRate;
 
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
 {
   //ao bind ai;
+  HI_S32      s32Ret;
+  AI_CHN      AiChn = aich;
+  AO_CHN      AoChn = ch;
+  HI_S32      s32AoChnCnt;
+
+  AIO_ATTR_S stAioAttr;
+  
+  AUDIO_DEV   AiDev = aidev;//SAMPLE_AUDIO_INNER_AI_DEV;
+  AUDIO_DEV   AoDev = aodev;//SAMPLE_AUDIO_INNER_AO_DEV; SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
+  
+  stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
+  stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
+  stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
+  stAioAttr.enSoundmode    = AUDIO_SOUND_MODE_STEREO;
+  stAioAttr.u32EXFlag      = 0;
+  stAioAttr.u32FrmNum      = 30;
+  stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
+  stAioAttr.u32ChnCnt      = 2;
+  stAioAttr.u32ClkSel      = 0;
+  stAioAttr.enI2sType      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?AIO_I2STYPE_INNERCODEC:AIO_I2STYPE_INNERHDMI;
+
+  s32AoChnCnt = stAioAttr.u32ChnCnt;
+  s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, gs_bAioReSample);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("SAMPLE_COMM_AUDIO_StartAo err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
+    return s32Ret;
+  }
+  
+  s32Ret = SAMPLE_COMM_AUDIO_AoBindAi(AiDev, AiChn, AoDev, AoChn);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("SAMPLE_COMM_AUDIO_AoBindAi err:%d, AoDev:%d, AiDev:%d\n", s32Ret, AoDev, AiDev);
+    goto __err;
+  }
+
   return 0;
+  
+__err:
+  s32Ret = SAMPLE_COMM_AUDIO_StopAo(AoDev, s32AoChnCnt, gs_bAioReSample);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("SAMPLE_COMM_AUDIO_StopAo err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
+  }
+  return -1;
 }
 
 
@@ -1274,6 +1343,51 @@ int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect)
 
   return s32Ret;
 }
+
+
+int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    VO_CHN_ATTR_S stChnAttr;
+  
+    s32Ret = HI_MPI_VO_GetChnAttr(volayer, ch, &stChnAttr);
+    if (s32Ret != HI_SUCCESS)
+    {
+      printf("%s(%d):failed with %#x!\n", \
+             __FUNCTION__, __LINE__,  s32Ret);
+      return HI_FAILURE;
+    }
+    
+    int l = stChnAttr.stRect.s32X;
+    int t = stChnAttr.stRect.s32Y;
+    int r = stChnAttr.stRect.s32X + stChnAttr.stRect.u32Width;
+    int b = stChnAttr.stRect.s32Y + stChnAttr.stRect.u32Height;
+    
+    
+    rect->s32X = (l+rect->s32X < r)?l+rect->s32X:l;
+    rect->s32Y = (t+rect->s32Y < b)?t+rect->s32Y:t;
+    rect->u32Width = (rect->s32X+rect->u32Width < r)?rect->u32Width:r-rect->s32X;
+    rect->u32Height= (rect->s32Y+rect->u32Height < b)?rect->u32Height:b-rect->s32Y;
+    
+    stChnAttr.stRect.s32X       = rect->s32X;
+    stChnAttr.stRect.s32Y       = rect->s32Y;
+    stChnAttr.stRect.u32Width   = rect->u32Width;
+    stChnAttr.stRect.u32Height  = rect->u32Height;
+    stChnAttr.u32Priority       = 0;
+    stChnAttr.bDeflicker        = HI_FALSE;
+
+    s32Ret = HI_MPI_VO_SetChnAttr(volayer, ch, &stChnAttr);
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("%s(%d):failed with %#x!\n", \
+               __FUNCTION__, __LINE__,  s32Ret);
+        return HI_FAILURE;
+    }
+    
+    return s32Ret;
+}
+
+
 
 
 static struct fb_bitfield s_r16 = {10, 5, 0};

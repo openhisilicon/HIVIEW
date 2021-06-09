@@ -26,7 +26,7 @@ LIBS +=
 DEP_OBJS := OBJS
 DEP_LIBS += libmppex.a
 
-$(TARG): $(OBJS)
+$(TARG): $(OBJS) $(TARG_EX)
 	$(RM) lib/$(DEP_OBJS) -rf
 	$(foreach a, $(DEP_LIBS), cd lib; $(AR) -t $(a) | sed 's/^/lib\//' >> $(DEP_OBJS); $(AR) x $(a); cd ..;)
 	${CC} ${LDFLAGS} -o $@ ${OBJS} `cat lib/$(DEP_OBJS)` ${LIBS}

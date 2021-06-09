@@ -133,7 +133,7 @@ typedef struct {
   int AeChn;
   PAYLOAD_TYPE_E enPayLoad;
   int adtype; // 0:INNER, 1:I2S, 2:PCM;
-  int stereo, sp, bps;//channels, sampleRate, bitRate;
+  int stereo, sp, br;//channels, sampleRate, bitRate;
   void *uargs;
   int (*cb)(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 }gsf_mpp_aenc_t;
@@ -265,6 +265,8 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 //设置通道源图像裁剪区域(用于局部放大)
 int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
+//设置VO通道显示区域(rect返回调整后的位置)
+int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
 
 //private for mpp;
 extern int SENSOR_TYPE;
@@ -276,6 +278,5 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
 
 
 #define HI_ACODEC_TYPE_INNER //for audio;
-
 
 #endif
