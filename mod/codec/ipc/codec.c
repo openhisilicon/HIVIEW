@@ -399,8 +399,7 @@ int venc_start(int start)
     venc.srcModId   = HI_ID_VO;
     venc.VpssGrp    = -1;
     venc.VpssChn    = -1;
-    #endif
-
+    
     if(p_cfg->second && i == 1)
     {
       if(j == 0)
@@ -408,6 +407,7 @@ int venc_start(int start)
       else
         venc.enSize = PIC_WIDTH(352, 288);
     }
+    #endif
 
     if(!start)
     {
