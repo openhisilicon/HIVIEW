@@ -28,6 +28,7 @@ FW_DIRS :=  fw/nm       \
 			fw/libhttp  \
 			fw/librtp   \
 			fw/librtsp  \
+			fw/librtmp  \
 			fw/libsip   \
 			fw/libflv   \
 			fw/h26xbits \

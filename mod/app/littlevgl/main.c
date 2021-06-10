@@ -43,8 +43,8 @@ int lvgl_ctl(int cmd, void* args)
 
 typedef struct msgbuf
 {
-    __syscall_slong_t mtype;    /* type of received/sent message */
-    char mtext[0];      /* text of the message */
+    long mtype;    /* type of received/sent message */
+    char mtext[0]; /* text of the message */
 }msgbuf;
 
 static int sub_recv(char *msg, int size, int err)
