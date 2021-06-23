@@ -23,6 +23,9 @@ enum {
   SER_STAT_INIT = 1,
 };
 
+#define FRAME_MAX_SIZE (800*1024)
+
+
 typedef struct {
   struct list_head list;
   gsf_disk_t disk;
@@ -347,7 +350,7 @@ static void* ser_thread(void *param)
   ser.stat = SER_STAT_INIT;
   printf("%s => init ok.\n", __func__);
   
-  char *buf = malloc(512*1024);
+  char *buf = malloc(FRAME_MAX_SIZE);
   gsf_frm_t *frm = (gsf_frm_t *)buf;
   
   void* cfifo[GSF_REC_CH_NUM] = {NULL};

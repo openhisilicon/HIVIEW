@@ -4,7 +4,7 @@
 
 #include "venc.h"
 
-#define FRAME_MAX_SIZE (500*1024)
+#define FRAME_MAX_SIZE (800*1024)
 
 static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
 venc_mgr_t venc_mgr[GSF_CODEC_NVR_CHN*GSF_CODEC_VENC_NUM];
@@ -212,13 +212,13 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
     venc_mgr[i*GSF_CODEC_VENC_NUM+j].vst = i*GSF_CODEC_VENC_NUM+j;
     
     #ifdef GSF_CPU_3516e
-    int size = (j == 0)? 1*1024*1024:
-               (j == 1)? 0.5*1024*1024:
-               (j == 2)? 0.3*1024*1024: 0;
+    int size = (j == 0)? 2*FRAME_MAX_SIZE:
+               (j == 1)? 1*FRAME_MAX_SIZE:
+               (j == 2)? 0.5*FRAME_MAX_SIZE: 0;
     #else
-    int size = (j == 0)? 2*1024*1024:
-               (j == 1)? 1*1024*1024:
-               (j == 2)? 0.5*1024*1024: 0;
+    int size = (j == 0)? 3*FRAME_MAX_SIZE:
+               (j == 1)? 2*FRAME_MAX_SIZE:
+               (j == 2)? 1*FRAME_MAX_SIZE: 0;
     #endif
     if(size > 0)
     {

@@ -16,6 +16,7 @@
 
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 #define AVS_2CH_3516d 0  //  1: 2 sensor => vo => 1 venc;  0: 2 sensor => 2 venc;
+#define SECOND_CHANNEL 0 // second channel;
 
 #ifndef PIC_VGA
 #define PIC_VGA PIC_CIF
@@ -27,7 +28,8 @@
             (w >= 2592 && h >= 1536)?PIC_2592x1536:\
             (w >= 1920)?PIC_1080P:\
             (w >= 1280)?PIC_720P: \
-            (w >= 720)?PIC_D1_PAL: \
+            (w >= 720 && h >= 576)?PIC_D1_PAL: \
+            (w >= 720 && h >= 480)?PIC_D1_NTSC: \
             PIC_VGA
             
 #define PT_VENC(t) \
@@ -36,6 +38,17 @@
             (t == GSF_ENC_JPEG)? PT_JPEG:\
             (t == GSF_ENC_MJPEG)? PT_MJPEG:\
             PT_H264
+
+#define PIC_WH(e,w,h) \
+            if(e == PIC_3840x2160){ w = 3840; h = 2160;}\
+            else if (e == PIC_3840x2160){ w = 3840; h = 2160;}\
+            else if (e == PIC_2592x1944){ w = 2592; h = 1944;}\
+            else if (e == PIC_2592x1536){ w = 2592; h = 1536;}\
+            else if (e == PIC_1080P){ w = 1920; h = 1080;}\
+            else if (e == PIC_720P){ w = 1280; h = 720;}\
+            else if (e == PIC_D1_PAL){ w = 720; h = 576;}\
+            else if (e == PIC_D1_NTSC){ w = 720; h = 480;}\
+            else { w = 352; h = 288;}
 
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
@@ -242,30 +255,31 @@ static int sub_recv(char *msg, int size, int err)
     for(i = 0; i < yolos->cnt; i++)
     {
       //person filter;
-      //if(!strstr(yolos->box[i].label, "person"))
-      //  continue;
+      #if 0
+      if(!strstr(yolos->box[i].label, "person"))
+        continue;
+      #endif
         
       rects.box[j].rect[0] = xr + yolos->box[i].rect[0]/wr;
       rects.box[j].rect[1] = yr + yolos->box[i].rect[1]/hr;
       rects.box[j].rect[2] = yolos->box[i].rect[2]/wr;
       rects.box[j].rect[3] = yolos->box[i].rect[3]/hr;
       gsf_gb2312_to_utf8(yolos->box[i].label, strlen(yolos->box[i].label), rects.box[j].label);
-    }
+      
+      j++;
+    } rects.size = j;
     
-    #if 1
-    // raw;
-    gsf_rgn_rect_set(0, 0, &rects, 1);
-    // test nk; 
-    //gsf_rgn_nk_set(0, 0, &rects, 1);
-    #else
+    // osd to sub-stream if main-stream > 1080P;
+    gsf_rgn_rect_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
+    //gsf_rgn_nk_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
+    
+    #if 0
     // test second osd;
     codec_ipc.venc[0].width = 720;
     codec_ipc.venc[0].height = 576;
     gsf_rgn_rect_set(1, 0, &rects, 1);
     #endif
-    
-    
-    
+
     
     #endif
 
@@ -297,7 +311,9 @@ static int sub_recv(char *msg, int size, int err)
     clock_gettime(CLOCK_MONOTONIC, &ts1);
     #endif
     
-    gsf_rgn_rect_set(0, 0, &rects, 1);
+    // osd to sub-stream if main-stream > 1080P;
+    gsf_rgn_rect_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
+    //gsf_rgn_nk_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
     
   	#if 0
     clock_gettime(CLOCK_MONOTONIC, &ts2);
@@ -399,25 +415,33 @@ int venc_start(int start)
     venc.srcModId   = HI_ID_VO;
     venc.VpssGrp    = -1;
     venc.VpssChn    = -1;
-    
+    #endif
+
+    //only 3516D supported 
+    #if defined(GSF_CPU_3516d)
     if(p_cfg->second && i == 1)
     {
-      if(j == 0)
+      if(j == 0 || j == 2)
         venc.enSize = PIC_WIDTH(720, 576);
       else
         venc.enSize = PIC_WIDTH(352, 288);
     }
     #endif
 
+    int w = 0, h = 0;
+    PIC_WH(venc.enSize, w, h);
+      
     if(!start)
     {
       ret = gsf_mpp_venc_stop(&venc);
-      printf("stop >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, codec_ipc.venc[j].width, ret);
+      printf("stop >>> ch:%d, st:%d, [%dx%d], ret:%d\n"
+            , i, j, w, h, ret);
     }
     else
     {
       ret = gsf_mpp_venc_start(&venc);
-      printf("start >>> ch:%d, st:%d, width:%d, ret:%d\n", i, j, codec_ipc.venc[j].width, ret);
+      printf("start >>> ch:%d, st:%d, [%dx%d], ret:%d\n"
+            , i, j, w, h, ret);
     }
     
     if(!start)
@@ -514,7 +538,7 @@ int mpp_start(gsf_bsp_def_t *def)
         strcpy(cfg.type, def->board.type);
         
         //second channel;
-        cfg.second = 0;
+        cfg.second = (cfg.snscnt > 1)?0:SECOND_CHANNEL;
 
         #if(AVS_2CH_3516d == 1)
         {
@@ -522,18 +546,18 @@ int mpp_start(gsf_bsp_def_t *def)
           if(strstr(cfg.snsname, "imx327") 
             || strstr(cfg.snsname, "imx290"))
           {
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+            cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
             VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
             
-			VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
+			      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
             if(cfg.second)
-				VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+				      VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
           }
           else if(strstr(cfg.snsname, "imx335"))
           {
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+            cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
             VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
@@ -576,7 +600,7 @@ int mpp_start(gsf_bsp_def_t *def)
                 cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
                 rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
                 venc_ini.ch_num = 1; venc_ini.st_num = 2;
-                VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_PAL);
+                VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
               }
           }
           else if(strstr(cfg.snsname, "imx335"))
@@ -603,7 +627,7 @@ int mpp_start(gsf_bsp_def_t *def)
               cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
               rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
               venc_ini.ch_num = 1; venc_ini.st_num = 2;
-              VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_PAL);
+              VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
             }
           }
           else
@@ -611,17 +635,17 @@ int mpp_start(gsf_bsp_def_t *def)
             cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_PAL);
+            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
           }
         }
         else
         {
           // imx327-2-0-2-30
           cfg.lane = 2; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
-          rgn_ini.ch_num = 2; rgn_ini.st_num = 1;
-          venc_ini.ch_num = 2; venc_ini.st_num = 1;
-          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-          VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
+          rgn_ini.ch_num = 2; rgn_ini.st_num = 2;
+          venc_ini.ch_num = 2; venc_ini.st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+          VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
         }
       }
       #elif defined(GSF_CPU_3516e)
@@ -648,7 +672,7 @@ int mpp_start(gsf_bsp_def_t *def)
         cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
         rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
         venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_PAL);
+        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
         break;
         #endif
         
@@ -657,7 +681,7 @@ int mpp_start(gsf_bsp_def_t *def)
         cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
         rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
         venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
         break;
         #endif
         
@@ -666,7 +690,8 @@ int mpp_start(gsf_bsp_def_t *def)
         cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
         rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
         venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_720P);
+        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+        break;
         #endif
       }
       #else
@@ -838,40 +863,44 @@ int main(int argc, char *argv[])
     {
       int sync = codec_ipc.vo.sync?VO_OUTPUT_3840x2160_30:VO_OUTPUT_1080P60;
       //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0); // 10
+      
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
       
+      int ly = (p_cfg->second || p_cfg->snscnt > 1)?VO_LAYOUT_2MUX:VO_LAYOUT_1MUX;
+      
       #if(AVS_2CH_3516d == 1)
-      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
-      vo_ly_set(VO_LAYOUT_2MUX);
-      #else
-      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
-      vo_ly_set(VO_LAYOUT_1MUX);
+      ly = VO_LAYOUT_2MUX;
       #endif
       
-      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+      gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
+      vo_ly_set(ly);
+      
+      gsf_mpp_fb_start(VOFB_GUI, sync, 0);
       
       gsf_mpp_vo_src_t src0 = {0, 0};
       gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
       
-      #if(AVS_2CH_3516d == 1)
-      if(p_cfg->second)
-	  {
-      	RECT_S rect = {20, 0, 720, 576};
-      	gsf_mpp_vo_aspect(VOLAYER_HD0, 1, &rect);
+      if(ly == VO_LAYOUT_2MUX)
+      {
+        if(p_cfg->second)
+    	  {
+          RECT_S rect = {20, 0, 720, 576};
+          gsf_mpp_vo_aspect(VOLAYER_HD0, 1, &rect);
+        }
+        gsf_mpp_vo_src_t src1 = {1, 0};
+        gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src1);
       }
-      gsf_mpp_vo_src_t src1 = {1, 0};
-      gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src1);
-      #endif
       
-      vo_res_set(1920, 1080);
+      if(sync == VO_OUTPUT_1080P60)
+        vo_res_set(1920, 1080);
+      else
+        vo_res_set(3840, 2160);
     }
-    
+
     gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
     gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
-    
+  
     #endif
-
-
 
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC

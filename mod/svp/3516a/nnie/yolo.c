@@ -95,7 +95,7 @@ static void* yolo_task(void* p)
   while (HI_FALSE == s_bStopSignal)
   {
       usleep(33/3*1000);
-      
+
       yolo_boxs_t boxs = {0};
       int ret = yolo_detect(&boxs);
       if(ret == 0)

@@ -6,6 +6,7 @@
 
 #include "h26xbits.h"
 
+#define FRAME_MAX_SIZE (800*1024)
 
 static pthread_t rtsp_st_pid;
 static void* st_rtsp_ctl_listen(char *ip, unsigned short port);
@@ -123,7 +124,7 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 
 		if(!ctx->video_frm)
 		{
-		  ctx->video_frm = (gsf_frm_t*)malloc(sizeof(gsf_frm_t)+384*1024);
+		  ctx->video_frm = (gsf_frm_t*)malloc(sizeof(gsf_frm_t)+FRAME_MAX_SIZE);
 		  memset(ctx->video_frm, 0, sizeof(gsf_frm_t));
 		  ctx->packet_cnt = 0;
 		}
@@ -137,7 +138,7 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
           , &ctx->video_frm->video.height);
 		}
 
-    if(ctx->video_frm->size + 4 + bytes <= 384*1024)
+    if(ctx->video_frm->size + 4 + bytes <= FRAME_MAX_SIZE)
     {
       ctx->video_frm->data[ctx->video_frm->size+0] = 00;
       ctx->video_frm->data[ctx->video_frm->size+1] = 00;
@@ -384,7 +385,7 @@ static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
   ctx = calloc(1, sizeof(*ctx));
   ctx->refcnt++;
   ctx->audio_shmid = -1;
-  ctx->video_fifo = cfifo_alloc(1*1024*1024,
+  ctx->video_fifo = cfifo_alloc(2*FRAME_MAX_SIZE,
                   cfifo_recsize, 
                   cfifo_rectag, 
                   cfifo_recrel, 

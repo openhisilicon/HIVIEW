@@ -696,7 +696,6 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
         printf("HI_MPI_VENC_StartRecvFrame err 0x%x\n",ret);
         return HI_FAILURE;
       }
-      
       break;
     default:
       break;

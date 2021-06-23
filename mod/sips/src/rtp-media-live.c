@@ -19,6 +19,7 @@ enum {
 };
 
 #define MAX_UDP_PACKET (1450-16)
+#define FRAME_MAX_SIZE (800*1024)
 
 struct media_track_t
 {
@@ -134,7 +135,7 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 static void *live_send_task(void *arg)
 {
   int i = 0, ret = 0;
-  unsigned char* ptr = malloc(512*1024);
+  unsigned char* ptr = malloc(FRAME_MAX_SIZE);
   uint32_t timestamp = 0;
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
   

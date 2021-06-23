@@ -70,6 +70,8 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
     return len;
 }
 
+#define MAX_FRAME_SIZE (800*1024)
+
 static pthread_t gpid;
 static char destip[64];
 static unsigned short destport;
@@ -81,7 +83,7 @@ void* udp_send_task(void *parm)
   struct cfifo_ex* video_fifo = NULL;
   struct cfifo_ex* audio_fifo = NULL;
   int ep = cfifo_ep_alloc(1);
-  unsigned char buf[sizeof(gsf_frm_t)+500*1024];
+  unsigned char buf[sizeof(gsf_frm_t)+MAX_FRAME_SIZE];
   
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   int send_size = 1300;

@@ -63,6 +63,7 @@ HI_VOID SAMPLE_IVE_HandleSig2(HI_S32 s32Signo)
   //SAMPLE_IVE_Md_HandleSig();
   //extern int lpr_stop(); lpr_stop();
   extern int yolo_stop(); yolo_stop();
+  extern int person_stop(); person_stop();
   
   exit(-1);
 }
@@ -99,6 +100,12 @@ int main(int argc, char *argv[])
     //extern int lpr_start(); lpr_start();
     extern int yolo_start(char *home_path); 
     extern int yolo_stop();
+    //for test yolo_start(home_path);
+    
+    extern int person_start(char *home_path);
+    extern int person_stop();
+    //for test person_start(home_path);
+        
     //init listen;
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_SVP

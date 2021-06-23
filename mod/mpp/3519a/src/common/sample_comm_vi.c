@@ -32,6 +32,80 @@ extern "C" {
 
 SAMPLE_VI_DUMP_THREAD_INFO_S g_stViDumpRawThreadInfo;
 
+
+//maohw
+// {4, 6, -1, -1, -1, -1, -1, -1}
+combo_dev_attr_t MIPI_2lane_CHN1_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR =
+{
+    .devno = 1,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 1920, 1080},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {4, 6, -1, -1, -1, -1, -1, -1}
+        }
+    }
+};
+
+//{5, 7, -1, -1, -1, -1, -1, -1}
+combo_dev_attr_t MIPI_2lane_CHN2_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR =
+{
+    .devno = 2,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 1920, 1080},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {5, 7, -1, -1, -1, -1, -1, -1}
+        }
+    }
+};
+//{8, 10, -1, -1, -1, -1, -1, -1}
+combo_dev_attr_t MIPI_2lane_CHN3_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR =
+{
+    .devno = 3,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 1920, 1080},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {8, 10, -1, -1, -1, -1, -1, -1}
+        }
+    }
+};
+
+//{9, 11, -1, -1, -1, -1, -1, -1}
+combo_dev_attr_t MIPI_2lane_CHN4_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR =
+{
+    .devno = 4,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 1920, 1080},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {9, 11, -1, -1, -1, -1, -1, -1}
+        }
+    }
+};
+
+
 combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR =
 {
     .devno = 0,
@@ -1233,6 +1307,24 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
             {
                 hi_memcpy(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             }
+			//maohw
+            if (1 == MipiDev)
+            {
+                hi_memcpy(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_2lane_CHN1_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            }
+			else if (2 == MipiDev)
+            {
+                hi_memcpy(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_2lane_CHN2_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            }
+            else if (3 == MipiDev)
+            {
+                hi_memcpy(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_2lane_CHN3_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            }
+            else if (4 == MipiDev)
+            {
+                hi_memcpy(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_2lane_CHN4_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            }
+			//
             else
             {
                 SAMPLE_PRT("unsupported mipi dev :%d for SnsType :%d\n", MipiDev, enSnsType);
@@ -1361,7 +1453,12 @@ HI_S32 SAMPLE_COMM_VI_StartMIPI(SAMPLE_VI_CONFIG_S* pstViConfig)
         return HI_FAILURE;
     }
 
-    if (pstViConfig->s32WorkingViNum >= 2)
+    if (pstViConfig->s32MipiHsMode) //maohw
+    {
+      SAMPLE_PRT("%s => s32MipiHsMode:%d\n", __func__, pstViConfig->s32MipiHsMode);
+      SAMPLE_COMM_VI_SetMipiHsMode(pstViConfig->s32MipiHsMode);
+    }
+    else if (pstViConfig->s32WorkingViNum >= 2)
     {
         s32Ret = SAMPLE_COMM_VI_SetMipiHsMode(LANE_DIVIDE_MODE_5);
     }

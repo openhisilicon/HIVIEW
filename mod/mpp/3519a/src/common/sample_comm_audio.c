@@ -396,7 +396,8 @@ HI_S32 SAMPLE_INNER_CODEC_CfgAudio(AUDIO_SAMPLE_RATE_E enSample)
         ret = HI_FAILURE;
     }
 
-    input_mode = ACODEC_MIXER_IN0;
+    //input_mode = ACODEC_MIXER_IN0; //maohw
+    input_mode = ACODEC_MIXER_IN1;
     if (ioctl(fdAcodec, ACODEC_SET_MIXER_MIC, &input_mode))
     {
         printf("%s: select acodec input_mode failed\n", __FUNCTION__);

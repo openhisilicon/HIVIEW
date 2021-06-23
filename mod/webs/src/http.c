@@ -29,7 +29,7 @@ extern unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 #define FLV_TYPE_VDIEO 9
 #define FLV_TYPE_SCRIPT 18
 
-#define MAX_FRAME_SIZE (500*1024)
+#define MAX_FRAME_SIZE (800*1024)
 typedef struct {
   struct cfifo_ex* video;
   struct cfifo_ex* audio;

@@ -138,6 +138,25 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   memset(&stViConfig, 0, sizeof(stViConfig));
   SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
   
+  // MIPI-DEV:
+  // Mode DEV0  DEV1   DEV2   DEV3    DEV4    DEV5  DEV6  DEV7
+  // 1    L0~L7  N     N      L8~L11  N       N     N     N
+  // 5    L0~L3 L4~L7  N      L8 L10  L9 L11  N     N     N
+  // 6    L0~L3 L4 L6  L5 L7  L8 L10  L9 L11  N     N     N
+  
+  //stViConfig.s32MipiHsMode = LANE_DIVIDE_MODE_6;
+  #if 0
+  int i = 0;
+  for(i = 0; i < snscnt; i++)
+  {
+    stViConfig.astViInfo[i].stDevInfo.ViDev     = i;//ViDev  0, 1, 2, 3;
+    stViConfig.astViInfo[i].stPipeInfo.aPipe[0] = i;//ViPipe 0, 1, 2, 3;
+    stViConfig.astViInfo[i].stChnInfo.ViChn     = 0;//ViChn  0, 0, 0, 0;
+    stViConfig.astViInfo[i].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
+    stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+  }
+  #endif
+  
   stViConfig.s32WorkingViNum       = 1;
   stViConfig.astViInfo[0].stDevInfo.ViDev     = ViDev;
   stViConfig.astViInfo[0].stPipeInfo.aPipe[0] = ViPipe;

@@ -27,6 +27,9 @@ static void* live_task(void *parm);
             (t == GSF_ENC_MJPEG)? PT_MJPEG:\
             PT_H264
 
+
+#define FRAME_MAX_SIZE (800*1024)
+
 static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
     unsigned int size = sizeof(gsf_frm_t);
@@ -121,7 +124,7 @@ static void* live_task(void *parm)
 {
   int i = 0, ret = 0;
   int ep = cfifo_ep_alloc(1);
-  gsf_frm_t *frm = (gsf_frm_t*)malloc(512*1024);
+  gsf_frm_t *frm = (gsf_frm_t*)malloc(FRAME_MAX_SIZE);
   
   while(1)
   {

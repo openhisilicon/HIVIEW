@@ -283,6 +283,7 @@ typedef struct hiSAMPLE_VI_CONFIG_S
     SAMPLE_VI_INFO_S    astViInfo[VI_MAX_DEV_NUM];
     HI_S32              as32WorkingViId[VI_MAX_DEV_NUM];
     HI_S32              s32WorkingViNum;
+    HI_S32              s32MipiHsMode;
 } SAMPLE_VI_CONFIG_S;
 
 typedef struct hiSAMPLE_VI_FRAME_CONFIG_S
