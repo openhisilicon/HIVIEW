@@ -106,6 +106,12 @@ int main(int argc, char *argv[])
     extern int person_stop();
     //for test person_start(home_path);
         
+        
+    extern int zbar_start();
+    extern int zbar_stop();
+    //zbar_start();
+        
+        
     //init listen;
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_SVP
