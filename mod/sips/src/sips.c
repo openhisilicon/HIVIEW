@@ -7,7 +7,7 @@
 
 #include "cfg.h"
 #include "msg_func.h"
-
+#include "sip_st.h"
 
 GSF_LOG_GLOBAL_INIT("SIPS", 8*1024);
 

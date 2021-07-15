@@ -19,8 +19,22 @@
 #include "rtp-socket.h"
 #include "fw/comm/inc/uthash.h"
 
+#include "time64.h"
+#include "fw/comm/inc/netcfg.h"
+
+struct sip_uac_transport_address_t
+{
+	st_netfd_t udp;
+	st_netfd_t tcp;
+	socklen_t addrlen;
+	struct sockaddr_storage addr;
+  char local[64];
+};
+
+
 struct sip_uas_app_t
 {
+  st_netfd_t tcp;
 	st_netfd_t udp;
 	socklen_t addrlen;
 	struct sockaddr_storage addr;
@@ -28,6 +42,19 @@ struct sip_uas_app_t
 	http_parser_t* request;
 	http_parser_t* response;
 	struct sip_agent_t* sip;
+	
+	int register_runing;
+	int registed;
+  int expired, keepalive;
+  char usr[64];
+  char pwd[64];
+  char host[64];
+  char from[64];
+  struct sip_uac_transport_address_t transport; // for register
+	struct http_header_www_authenticate_t auth;
+	int nonce_count;
+	char callid[64];
+	int cseq;
 };
 
 struct sip_media_t
@@ -40,6 +67,111 @@ struct sip_media_t
 	unsigned short port[2];
 };
 static struct sip_media_t *mtabs;
+
+
+static int sip_uac_transport_via(void* transport, const char* destination, char protocol[16], char local[128], char dns[128])
+{
+	int r;
+	char ip[65];
+	u_short port;
+	struct uri_t* uri;
+
+	struct sip_uac_transport_address_t *t = (struct sip_uac_transport_address_t *)transport;
+
+	// rfc3263 4.1 Selecting a Transport Protocol
+	// 1. If the URI specifies a transport protocol in the transport parameter,
+	//    that transport protocol SHOULD be used. Otherwise, if no transport 
+	//    protocol is specified, but the TARGET(maddr) is a numeric IP address, 
+	//    the client SHOULD use UDP for a SIP URI, and TCP for a SIPS URI.
+	// 2. if no transport protocol is specified, and the TARGET is not numeric, 
+	//    but an explicit port is provided, the client SHOULD use UDP for a SIP URI, 
+	//    and TCP for a SIPS URI
+	// 3. Otherwise, if no transport protocol or port is specified, and the target 
+	//    is not a numeric IP address, the client SHOULD perform a NAPTR query for 
+	//    the domain in the URI.
+
+	// The client SHOULD try the first record. If an attempt should fail, based on 
+	// the definition of failure in Section 4.3, the next SHOULD be tried, and if 
+	// that should fail, the next SHOULD be tried, and so on.
+
+	t->addrlen = sizeof(t->addr);
+	memset(&t->addr, 0, sizeof(t->addr));
+	strcpy(protocol, NULL == t->tcp ? "UDP" : "TCP");
+
+	uri = uri_parse(destination, strlen(destination));
+	if (!uri)
+		return -1; // invalid uri
+
+	// rfc3263 4-Client Usage (p5)
+	// once a SIP server has successfully been contacted (success is defined below), 
+	// all retransmissions of the SIP request and the ACK for non-2xx SIP responses 
+	// to INVITE MUST be sent to the same host.
+	// Furthermore, a CANCEL for a particular SIP request MUST be sent to the same 
+	// SIP server that the SIP request was delivered to.
+
+	// TODO: sips port
+	r = socket_addr_from(&t->addr, &t->addrlen, uri->host, uri->port ? uri->port : SIP_PORT);
+	if (0 == r)
+	{
+		socket_addr_to((struct sockaddr*)&t->addr, t->addrlen, ip, &port);
+		socket_getname(NULL == t->tcp ? st_netfd_fileno(t->udp) : st_netfd_fileno(t->tcp), local, &port);
+		sprintf(local, "%s", t->local);
+		
+		//maohw r = ip_route_get(ip, local);
+		if (0 == r)
+		{
+			dns[0] = 0;
+			struct sockaddr_storage ss;
+			socklen_t len = sizeof(ss);
+			if (0 == socket_addr_from(&ss, &len, local, port))
+				socket_addr_name((struct sockaddr*)&ss, len, dns, 128);
+
+			//if (SIP_PORT != port)
+				snprintf(local + strlen(local), 128 - strlen(local), ":%hu", port);
+
+			//if (NULL == strchr(dns, '.'))
+				snprintf(dns, 128, "%s", local); // don't have valid dns
+		}
+    
+	}
+	uri_free(uri);
+	return r;
+}
+
+static int sip_uac_transport_send(void* transport, const void* data, size_t bytes)
+{
+	struct sip_uac_transport_address_t *t = (struct sip_uac_transport_address_t *)transport;
+
+	//char p1[1024];
+	//char p2[1024];
+	((char*)data)[bytes] = 0;
+	printf("%s=[\n%s]\n", __func__, (const char*)data);
+	int r = st_sendto(NULL == t->tcp ? t->udp : t->tcp, data, bytes, (struct sockaddr*)&t->addr, t->addrlen, ST_UTIME_NO_TIMEOUT);
+	return r == bytes ? 0 : -1;
+}
+
+
+static int sip_uac_onmessage(void* param, const struct sip_message_t* reply, struct sip_uac_transaction_t* t, int code)
+{
+  printf("%s => code:%d\n", __func__, code);
+	return 0;
+}
+
+static int sip_uac_sendmessage(struct sip_uas_app_t *app, const char *msg)
+{
+	struct sip_uac_transaction_t  *t = sip_uac_message(app->sip, app->from, app->host, sip_uac_onmessage, app);
+	
+  sip_uac_add_header(t, "Content-Type", "Application/MANSCDP+xml");
+	
+  struct sip_transport_t transport = {
+			sip_uac_transport_via,
+			sip_uac_transport_send,
+	};
+	
+	assert(0 == sip_uac_send(t, msg, strlen(msg), &transport, &app->transport));
+
+	return sip_uac_transaction_release(t);
+}
 
 
 static int sip_uas_transport_send(void* param, const struct cstring_t* protocol, const struct cstring_t* url, const struct cstring_t* received, int rport, const void* data, int bytes)
@@ -198,6 +330,69 @@ static int sip_uas_onregister(void* param, const struct sip_message_t* req, stru
 	return sip_uas_reply(t, 200, NULL, 0);
 }
 
+
+static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struct sip_uas_transaction_t* t, void* session, const void* payload, int bytes)
+{
+  struct sip_uas_app_t *app = (struct sip_uas_app_t *)param;
+  printf("%s => payload[\n%s]\n", __func__, req, t, payload);
+	sip_uas_reply(t, 200, NULL, 0);
+	
+	
+	if(!payload || !strlen(payload))
+    return 0;
+    
+  if(strstr(payload, "<CmdType>DeviceInfo</CmdType>"))
+  {
+  	const char* msg = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
+  						"<Response>"
+              "<CmdType>DeviceInfo</CmdType>"
+              "<SN>17430</SN>"
+              "<DeviceID>34020000001110000001</DeviceID>"
+              "<Result>OK</Result>"
+              "<DeviceName>GB28181Device</DeviceName>"
+              "<Manufacturer>Manufacturer</Manufacturer>"
+              "<Model>Model</Model>"
+              "<Firmware>Firmware</Firmware>"
+              "</Response>";
+
+  	sip_uac_sendmessage(app, msg);
+  }
+  else if(strstr(payload, "<CmdType>Catalog</CmdType>"))
+  {
+    const char* msg = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
+            "<Response>"
+            "<CmdType>Catalog</CmdType>"
+            "<SN>2</SN>"
+            "<DeviceID>34020000001110000001</DeviceID>"
+            "<SumNum>2</SumNum>"
+            "<DeviceList Num=\"1\">"
+            "<Item>"
+            "<DeviceID>34020000001310000001</DeviceID>"
+            "<Name>IPC</Name>"
+            "<Manufacturer>Manufacturer</Manufacturer>"
+            "<Model>Model</Model>"
+            "<Owner>Owner</Owner>"
+            "<CivilCode>34020000</CivilCode>"
+            "<Block>Block</Block>"
+            "<Address>Address</Address>"
+            "<Parental>0</Parental>"
+            "<ParentID>34020000001110000001</ParentID>"
+            "<RegisterWay>1</RegisterWay>"
+            "<EndTime>2021-07-15T09:47:40.782</EndTime>"
+            "<Secrecy>0</Secrecy>"
+            "<Status>ON</Status>"
+            "</Item>"
+            "</DeviceList>"
+            "</Response>";
+  
+    sip_uac_sendmessage(app, msg);
+  }
+ 
+  return 0;
+}
+
+
+
 static void sip_uas_loop(struct sip_uas_app_t *app)
 {
 	uint8_t buffer[2*1024];
@@ -269,6 +464,137 @@ st_netfd_t socket_listen_udp(unsigned short port)
 }
 
 
+static void sip_uac_keepalive_do(struct sip_uas_app_t *app)
+{
+	const char* msg = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
+						"<Notify>"
+						"<CmdType>Keepalive</CmdType>"
+						"<SN>1</SN>"
+						"<DeviceID>34020000001110000001</DeviceID>"
+						"<Status>OK</Status>"
+						"</Notify>";
+
+	sip_uac_sendmessage(app, msg);
+}
+
+
+
+static void sip_uac_register_do(struct sip_uas_app_t *app);
+static int sip_uac_onregister(void* param, const struct sip_message_t* reply, struct sip_uac_transaction_t* t, int code)
+{
+	struct sip_uas_app_t *app = (struct sip_uas_app_t *)param;
+
+	const struct cstring_t* h;
+	if (0 == app->callid[0] && reply)
+	{
+		h = sip_message_get_header_by_name(reply, "Call-ID");
+		if (h)
+		{
+			snprintf(app->callid, sizeof(app->callid), "%.*s", (int)h->n, h->p);
+			h = sip_message_get_header_by_name(reply, "CSeq");
+			app->cseq = atoi(h->p);
+		}
+	}
+
+	if (200 <= code && code < 300)
+	{
+		printf("Register OK\n");
+		app->registed = 1;
+	}
+	else if (401 == code)
+	{
+		printf("Unauthorized\n");
+		memset(&app->auth, 0, sizeof(app->auth));
+		h = sip_message_get_header_by_name(reply, "WWW-Authenticate");
+		assert(0 == http_header_www_authenticate(h->p, &app->auth));
+		app->nonce_count = 0;
+		switch (app->auth.scheme)
+		{
+		case HTTP_AUTHENTICATION_DIGEST:
+			sip_uac_register_do(app);
+			break;
+
+		case HTTP_AUTHENTICATION_BASIC:
+			assert(0);
+			break;
+
+		default:
+			assert(0);
+		}
+	}
+	else
+	{
+	}
+	return 0;
+}
+
+static void sip_uac_register_do(struct sip_uas_app_t *app)
+{
+	char buffer[256];
+	//t = sip_uac_register(uac, "Bob <sip:bob@biloxi.com>", "sip:registrar.biloxi.com", 7200, sip_uac_message_onregister, app);
+	struct sip_uac_transaction_t *t = sip_uac_register(app->sip, app->from, app->host, app->expired, sip_uac_onregister, app);
+  
+  app->registed = 0;
+  
+	if (app->callid[0])
+	{
+		// All registrations from a UAC SHOULD use the same Call-ID
+		sip_uac_add_header(t, "Call-ID", app->callid);
+
+		snprintf(buffer, sizeof(buffer), "%u REGISTER", ++app->cseq);
+		sip_uac_add_header(t, "CSeq", buffer);
+	}
+
+	if (HTTP_AUTHENTICATION_DIGEST == app->auth.scheme)
+	{
+		// https://blog.csdn.net/yunlianglinfeng/article/details/81109380
+		// http://www.voidcn.com/article/p-oqqbqgvd-bgn.html
+		++app->auth.nc;
+		snprintf(app->auth.uri, sizeof(app->auth.uri), "%s", app->host);
+		snprintf(app->auth.username, sizeof(app->auth.username), "%s", app->usr);
+		http_header_auth(&app->auth, app->pwd, "REGISTER", NULL, 0, buffer, sizeof(buffer));
+		sip_uac_add_header(t, "Authorization", buffer);
+	}
+
+	struct sip_transport_t transport = {
+			sip_uac_transport_via,
+			sip_uac_transport_send,
+	};
+	assert(0 == sip_uac_send(t, NULL, 0, &transport, &app->transport));
+	
+	sip_uac_transaction_release(t);
+}
+
+static void *register_task(void *arg)
+{
+  uint64_t regclock = 0, aliveclock = 0;
+  struct sip_uas_app_t *app = (struct sip_uas_app_t*)arg;
+  
+  while(app->register_runing)
+  {
+    uint64_t now = time64_now();
+		
+		
+		if (regclock + app->expired * 1000 < now)
+		{
+			regclock = now;
+			sip_uac_register_do(app);
+		}
+		
+    if (app->registed && aliveclock + app->keepalive * 1000 < now)
+		{
+			aliveclock = now;
+			sip_uac_keepalive_do(app);
+		}
+		
+    st_sleep(1);
+  }
+  
+  printf("%s => exit app:%p .\n", __func__, app);
+  st_thread_exit(NULL);
+  return NULL;
+}
+
 void sip_uas_app(void)
 {
 	sip_timer_init();
@@ -280,14 +606,33 @@ void sip_uas_app(void)
 	handler.onbye = sip_uas_onbye;
 	handler.oncancel = sip_uas_oncancel;
 	handler.send = sip_uas_transport_send;
+  handler.onmessage = sip_uas_onmessage;
 
 	struct sip_uas_app_t app;
-	
+	memset(&app, 0, sizeof(app));
 	app.sip = sip_agent_create(&handler, &app);
 	app.request = http_parser_create(HTTP_PARSER_CLIENT);
 	app.response = http_parser_create(HTTP_PARSER_SERVER);
 
+  app.tcp = NULL;
 	app.udp = socket_listen_udp(SIP_PORT);
+	
+	app.register_runing = 1;
+  app.transport.udp = app.udp;
+	app.transport.tcp = app.tcp;
+	sprintf(app.transport.local, "192.168.0.2");
+	netcfg_get_ip_addr("eth0",  app.transport.local);
+	
+	app.expired = 3600;
+	app.keepalive = 60;
+	sprintf(app.usr, "34020000001110000001");
+	sprintf(app.pwd, "12345678");
+	sprintf(app.host, "sip:34020000002000000001@192.168.0.166:5060");
+	//sprintf(app.from, "sip:34020000001110000001@192.168.0.2:5060");
+	sprintf(app.from, "sip:34020000001110000001@3402000000");
+	
+	
+	st_thread_t tid = st_thread_create(register_task, &app, 0, 0);
 	
 	sip_uas_loop(&app);
 	
