@@ -80,14 +80,14 @@ static void* once_run(void* parm)
   while(1)
   {
     char str[128];
-    sprintf(str, "dmesg | grep \"%s\" ", "crng init done");
+    sprintf(str, "dmesg | grep \"%s\"", "random.*done");
     FILE* fd = popen(str, "r");
     if(fd)
     {
       if (fgets(str, sizeof(str), fd))
       {
         printf("%s => %s\n", __func__, str);
-        if(strstr(str, "crng init done"))
+        if(strstr(str, "init done"))
         {
           system("zerotier-one -d");
           sadp_init();
