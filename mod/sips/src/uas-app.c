@@ -218,16 +218,15 @@ static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, stru
 		   }
 		}
 		
-		
     // reply;
 	  const char* pattern_live = "v=0\r\n"
-    "o=HTRS 3780 2519 IN IP4 %s\r\n"
+    "o=34020000001110000001 0 0 IN IP4 %s\r\n"
     "s=Talk\r\n"
     "c=IN IP4 %s\r\n"
     "t=0 0\r\n"
     ;
-    
-    char *name = "thomas";
+
+    char *name = "34020000001110000001";
     char *host = strstr(req->to.uri.host.p, "@");
     host = (host)?host+1:"0.0.0.0";
     
@@ -235,7 +234,7 @@ static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, stru
     snprintf(sdp, sizeof(sdp), pattern_live, host, host);
     
     //m->port[0-1];
-    m->media->get_sdp(m->media, sdp);
+    m->media->get_sdp(m->media, sdp, strstr(data, "PS/9000")?1:0);
     
     char contact[128];
     sprintf(contact, "sip:%s@%s", name, host);
@@ -384,8 +383,35 @@ static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struc
             "</Item>"
             "</DeviceList>"
             "</Response>";
-  
     sip_uac_sendmessage(app, msg);
+    
+    
+    const char* msg2 = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
+          "<Response>"
+          "<CmdType>Catalog</CmdType>"
+          "<SN>2</SN>"
+          "<DeviceID>34020000001110000001</DeviceID>"
+          "<SumNum>2</SumNum>"
+          "<DeviceList Num=\"1\">"
+          "<Item>"
+          "<DeviceID>34020000001340000001</DeviceID>"
+          "<Name>Alarm</Name>"
+          "<Manufacturer>Manufacturer</Manufacturer>"
+          "<Model>Model</Model>"
+          "<Owner>Owner</Owner>"
+          "<CivilCode>34020000</CivilCode>"
+          "<Block>Block</Block>"
+          "<Address>Address</Address>"
+          "<Parental>0</Parental>"
+          "<ParentID>34020000001110000001</ParentID>"
+          "<RegisterWay>1</RegisterWay>"
+          "<EndTime>2021-07-15T09:47:40.782</EndTime>"
+          "<Secrecy>0</Secrecy>"
+          "<Status>ON</Status>"
+          "</Item>"
+          "</DeviceList>"
+          "</Response>";
+    sip_uac_sendmessage(app, msg2);
   }
  
   return 0;
@@ -407,7 +433,7 @@ static void sip_uas_loop(struct sip_uas_app_t *app)
     if(r <= 4 )
       continue;
         
-		//printf("st_recvfrom => r:%d, \n[%s]\n", r, buffer);
+		printf("st_recvfrom => r:%d, \n[%s]\n", r, buffer);
 		parser = 0 == strncasecmp("SIP", (char*)buffer, 3) ? app->request: app->response;
 
     size_t n = r;

@@ -14,13 +14,14 @@ INCS := -I$(HOME) -Isrc -Iinc \
         -I$(HOME)/fw/librtp/inc \
         -I$(HOME)/fw/librtsp/inc \
         -I$(HOME)/fw/h26xbits/inc \
-        -I$(HOME)/fw/libsip/inc 
+        -I$(HOME)/fw/libsip/inc \
+        -I$(HOME)/fw/libmpeg/inc
         
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lh26xbits -lsip -lrtsp -lrtp -lhttp -lst -lcfifo -lrt -lnm -lcjson -lcomm -lm -lpthread
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lh26xbits -lsip -lrtsp -lrtp -lmpeg -lhttp -lst -lcfifo -lrt -lnm -lcjson -lcomm -lm -lpthread
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
