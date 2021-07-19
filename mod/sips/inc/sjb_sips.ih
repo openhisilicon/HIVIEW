@@ -4,7 +4,12 @@ STRUCT(gsf_sips_t)
 {
   FIELD(int, port);
   FIELD(int, auth);
-  STRING(host, 128);
+  
+  STRING(host, 128);    // "sip:34020000002000000001@192.168.0.166:5060"
+  STRING(device, 64);   // "34020000001110000001" 
+  STRING(password, 64); // "12345678"
+  FIELD(int, expired);  // 3600
+  FIELD(int, keepalive);// 60
 };
 
 

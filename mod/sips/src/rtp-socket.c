@@ -366,7 +366,7 @@ static unsigned short s_port_num = 30000;
 static char s_multicast_ip[SOCKET_ADDRLEN];
 static unsigned int s_multicast_num = 250;
 
-int rtp_socket_create(const char* ip, st_netfd_t rtp[2], unsigned short port[2])
+int rtp_socket_create(const char* ip, int type, st_netfd_t rtp[2], unsigned short port[2])
 {
 	unsigned short i;
 	int sock[2];
@@ -383,11 +383,11 @@ int rtp_socket_create(const char* ip, st_netfd_t rtp[2], unsigned short port[2])
 		i = rand() % 30000;
 		i = i/2*2 + s_base_port;
 
-		sock[0] = socket_bind(ip, i, SOCK_DGRAM, 0);
+		sock[0] = socket_bind(ip, i, type, 0);
 		if(sock[0] < 0)
 			continue;
 
-		sock[1] = socket_bind(ip, i + 1, SOCK_DGRAM, 0);
+		sock[1] = socket_bind(ip, i + 1, type, 0);
 		if(sock[1] < 0)
 		{
 			close(sock[0]);

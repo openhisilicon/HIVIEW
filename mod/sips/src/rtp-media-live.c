@@ -144,9 +144,18 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 static void *live_send_task(void *arg)
 {
   int i = 0, ret = 0;
+  st_netfd_t m_evfd = NULL;
   unsigned char* ptr = malloc(FRAME_MAX_SIZE);
-
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
+  
+  
+  if(m->track[MEDIA_TRACK_VIDEO].m_transport)
+  {
+    int r = m->track[MEDIA_TRACK_VIDEO].m_transport->conn(m->track[MEDIA_TRACK_VIDEO].m_transport);
+    printf("MEDIA_TRACK_VIDEO conn r:%d\n", r);
+    if(r < 0)
+      goto __exit;
+  }
   
   if(m->track[MEDIA_TRACK_VIDEO].m_reader)
   {
@@ -163,8 +172,6 @@ static void *live_send_task(void *arg)
     
     m->track[MEDIA_TRACK_VIDEO].timestamp = 0;
   }
-  
-  st_netfd_t m_evfd = NULL;
   
   if(m->track[MEDIA_TRACK_VIDEO].m_evfd > 0)
   {
@@ -263,6 +270,8 @@ static void *live_send_task(void *arg)
     i++;
     //st_usleep(5*1000);
   }
+  
+__exit:
   free(ptr);
   m->exited = 1;
   if(m_evfd)

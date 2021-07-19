@@ -22,6 +22,11 @@
 #include "time64.h"
 #include "fw/comm/inc/netcfg.h"
 
+//for json cfg;
+#include "mod/sips/inc/sjb_sips.h"
+extern gsf_sips_t sips_parm;
+
+
 struct sip_uac_transport_address_t
 {
 	st_netfd_t udp;
@@ -186,7 +191,7 @@ static int sip_uas_transport_send(void* param, const struct cstring_t* protocol,
 
 static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, struct sip_uas_transaction_t* t, struct sip_dialog_t* dialog, const void* data, int bytes)
 {
-  printf("%s => bytes:%d\n[%s]\n", __func__, bytes, data);
+  printf("%s => t:%p, bytes:%d\n[%s]\n", __func__, t, bytes, data);
   
 	char reply[1024];
 	const struct cstring_t* h = sip_message_get_header_by_name(req, "Content-Type");
@@ -214,7 +219,10 @@ static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, stru
 		   {
 	    		m->port[0] = m->medias[i].port[0];
 	        m->port[1] = m->medias[i].nport > 1 ? m->medias[i].port[1] : (m->medias[i].port[0] + 1);
-		      int ret = m->media->add_transport(m->media, "video", rtp_udp_transport_new(m->medias[i].address, m->port));  
+	          
+	        int ret = m->media->add_transport(m->media, "video"
+	                  , strstr(m->medias[i].proto, "TCP")?rtp_tcp_transport_new(m->medias[i].address, m->port):
+	                          rtp_udp_transport_new(m->medias[i].address, m->port));
 		   }
 		}
 		
@@ -292,7 +300,7 @@ static int sip_uas_onack(void* param, const struct sip_message_t* req, struct si
 static int sip_uas_onbye(void* param, const struct sip_message_t* req, struct sip_uas_transaction_t* t, void* session)
 {
   struct sip_media_t* m = (struct sip_media_t*)session;
-  printf("%s => m:%p\n", __func__, m);
+  printf("%s => t:%p, m:%p\n", __func__, t, m);
   
   // check m is alive;
   if(m)
@@ -649,14 +657,12 @@ void sip_uas_app(void)
 	sprintf(app.transport.local, "192.168.0.2");
 	netcfg_get_ip_addr("eth0",  app.transport.local);
 	
-	app.expired = 3600;
-	app.keepalive = 60;
-	sprintf(app.usr, "34020000001110000001");
-	sprintf(app.pwd, "12345678");
-	sprintf(app.host, "sip:34020000002000000001@192.168.0.166:5060");
-	//sprintf(app.from, "sip:34020000001110000001@192.168.0.2:5060");
-	sprintf(app.from, "sip:34020000001110000001@3402000000");
-	
+	sprintf(app.usr, "%s", sips_parm.device);
+	sprintf(app.pwd, "%s", sips_parm.password);
+	sprintf(app.host,"%s", sips_parm.host);
+	sprintf(app.from, "sip:%s@3402000000", sips_parm.device);
+	app.expired = sips_parm.expired;
+	app.keepalive = sips_parm.keepalive;
 	
 	st_thread_t tid = st_thread_create(register_task, &app, 0, 0);
 	

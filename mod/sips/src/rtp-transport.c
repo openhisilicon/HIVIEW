@@ -4,10 +4,10 @@
 struct rtp_tcp_transport_t 
 {
 	struct rtp_transport_t base;
-	uint8_t m_rtp;
-	uint8_t m_rtcp;
-	void* m_rtsp;
-	uint8_t m_packet[4 + (1 << 16)];
+	st_netfd_t m_socket[2];
+	char dst[64];
+	unsigned short port[2];
+	uint8_t m_packet[2 + (1 << 16)];
 	int (*send)(void* rtsp, const void* data, size_t bytes);
 };
 
@@ -25,37 +25,71 @@ static int rtp_tcp_transport_send(struct rtp_transport_t* t, int rtcp, const voi
 	if (bytes >= (1 << 16))
 		return E2BIG;
 
-	transport->m_packet[0] = '$';
-	transport->m_packet[1] = rtcp ? transport->m_rtcp : transport->m_rtp;
-	transport->m_packet[2] = (bytes >> 8) & 0xFF;
-	transport->m_packet[3] = bytes & 0xff;
-	memcpy(transport->m_packet + 4, data, bytes);
-	int r = transport->send(transport->m_rtsp, transport->m_packet, bytes + 4);
-	return 0 == r ? bytes : r;
+	transport->m_packet[0] = (bytes >> 8) & 0xFF;
+	transport->m_packet[1] = bytes & 0xff;
+	memcpy(transport->m_packet + 2, data, bytes);
+	return st_write(transport->m_socket[0], transport->m_packet, bytes + 2, ST_UTIME_NO_TIMEOUT);
 }
+
+
+static int rtp_tcp_transport_conn(struct rtp_transport_t* t)
+{
+  struct rtp_tcp_transport_t* transport = (struct rtp_tcp_transport_t*)t;
+  
+  struct sockaddr_in rmt_addr;
+  rmt_addr.sin_family = AF_INET;
+  rmt_addr.sin_port = htons(transport->port[0]);
+  rmt_addr.sin_addr.s_addr = inet_addr(transport->dst);
+  
+  if(st_connect(transport->m_socket[0], (struct sockaddr*)&rmt_addr, sizeof(rmt_addr), ST_UTIME_NO_TIMEOUT) < 0)
+  {
+    printf("st_connect dst[%s:%d] err.\n", transport->dst, transport->port[0]);
+    return -1;
+  }
+  
+  return 0;
+}
+
+
 
 static void rtp_tcp_transport_free(struct rtp_transport_t* t)
 {
   struct rtp_tcp_transport_t* transport = (struct rtp_tcp_transport_t*)t;
+
   if(transport)
-    free(transport);
+  {
+    int i;
+  	for (i = 0; i < 2; i++)
+  	{
+  		if (transport->m_socket[i])
+  			st_netfd_close(transport->m_socket[i]);
+  		transport->m_socket[i] = NULL;
+  	}
+  	free(transport);
+  }
 }
 
 struct rtp_transport_t*
-    rtp_tcp_transport_new2(void* rtsp, uint8_t rtp, uint8_t rtcp,
-                           int (*send)(void* rtsp, const void* data, size_t bytes))
+    rtp_tcp_transport_new(const char* dst, unsigned short port[2])
 {
   struct rtp_tcp_transport_t* transport = calloc(1, sizeof(struct rtp_tcp_transport_t));
   
   transport->base.istcp= 1;
   transport->base.send = rtp_tcp_transport_send;
   transport->base.recv = rtp_tcp_transport_recv;
+  transport->base.conn = rtp_tcp_transport_conn;
   transport->base.free = rtp_tcp_transport_free;
-  transport->m_rtsp = rtsp;
-  transport->m_rtp  = rtp;
-  transport->m_rtcp = rtcp;
-  transport->send = send;
   
+  strncpy(transport->dst, dst, sizeof(transport->dst)-1);
+  transport->port[0] = port[0];
+  transport->port[1] = port[1];
+  
+	if(rtp_socket_create(NULL, SOCK_STREAM, transport->m_socket, port) < 0)
+	{
+	  free(transport);
+	  return NULL;
+	}
+	
   return (struct rtp_transport_t*)transport;
 }
 
@@ -80,6 +114,12 @@ static int rtp_udp_transport_recv(struct rtp_transport_t* t, int rtcp, const voi
     }
     return 0;
 }
+
+static int rtp_udp_transport_conn(struct rtp_transport_t* t)
+{
+  return 0;
+}
+
 
 static int rtp_udp_transport_send(struct rtp_transport_t* t, int rtcp, const void* data, size_t bytes)
 {
@@ -124,6 +164,7 @@ struct rtp_transport_t*
   
   transport->base.send = rtp_udp_transport_send;
   transport->base.recv = rtp_udp_transport_recv;
+  transport->base.conn = rtp_udp_transport_conn;
   transport->base.free = rtp_udp_transport_free;
   
 	int r1 = socket_addr_from(&transport->m_addr[0], &transport->m_addrlen[0], ip, port[0]);
@@ -141,7 +182,7 @@ struct rtp_transport_t*
 	  return (struct rtp_transport_t*)transport;
 	}
 	
-	if(rtp_socket_create(NULL, transport->m_socket, port) < 0)
+	if(rtp_socket_create(NULL, SOCK_DGRAM, transport->m_socket, port) < 0)
 	{
 	  free(transport);
 	  return NULL;

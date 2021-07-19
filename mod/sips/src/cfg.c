@@ -7,6 +7,11 @@ char sips_parm_path[128] = {0};
 gsf_sips_t sips_parm = {
   .auth = 0,
   .port = 5060,
+  .host = "sip:34020000002000000001@192.168.0.166:5060",
+  .device = "34020000001110000001",
+  .password = "12345678",
+  .expired = 3600,
+  .keepalive = 60,
 };
 
 int json_parm_load(char *filename, gsf_sips_t *cfg)
