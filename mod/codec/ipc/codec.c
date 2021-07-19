@@ -14,9 +14,11 @@
 #include "venc.h"
 #include "lens.h"
 
+#define XYKJ 0
+
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 #define AVS_2CH_3516d 0  //  1: 2 sensor => vo => 1 venc;  0: 2 sensor => 2 venc;
-#define SECOND_CHANNEL 0 // second channel;
+#define SECOND_CHANNEL XYKJ // second channel;
 
 #ifndef PIC_VGA
 #define PIC_VGA PIC_CIF
@@ -70,7 +72,8 @@ int vo_ly_get(gsf_layout_t *ly)
   return 0;
 }
 
-
+static gsf_venc_ini_t *p_venc_ini = NULL;
+static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -242,9 +245,11 @@ static int sub_recv(char *msg, int size, int err)
     gsf_rgn_rects_t rects = {0};
 
     #if(AVS_2CH_3516d == 1)
-    float xr = 0, yr = yolos->h/4.0, wr = 2.0, hr = 2.0;
+    float xr = 0 + pmsg->ch*(yolos->w/2.0), yr = yolos->h/4.0, wr = 2.0, hr = 2.0;
+    int chn = 0;
     #else
     float xr = 0, yr = 0, wr = 1, hr = 1;
+    int chn = pmsg->ch;
     #endif
 
     rects.size = yolos->cnt;
@@ -255,7 +260,7 @@ static int sub_recv(char *msg, int size, int err)
     for(i = 0; i < yolos->cnt; i++)
     {
       //person filter;
-      #if 0
+      #if XYKJ
       if(!strstr(yolos->box[i].label, "person"))
         continue;
       #endif
@@ -269,17 +274,26 @@ static int sub_recv(char *msg, int size, int err)
       j++;
     } rects.size = j;
     
-    // osd to sub-stream if main-stream > 1080P;
-    gsf_rgn_rect_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
-    //gsf_rgn_nk_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
     
-    #if 0
-    // test second osd;
-    codec_ipc.venc[0].width = 720;
-    codec_ipc.venc[0].height = 576;
-    gsf_rgn_rect_set(1, 0, &rects, 1);
-    #endif
+    int width  = codec_ipc.venc[0].width;
+    int height = codec_ipc.venc[0].height;
+    if(chn && p_cfg->second)
+    {
+      //second osd;
+      codec_ipc.venc[0].width = 720;
+      codec_ipc.venc[0].height = 576;
+    }
+    
+    // osd to sub-stream if main-stream > 1080P;
+    gsf_rgn_rect_set(chn, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
+    //gsf_rgn_nk_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
 
+    if(chn && p_cfg->second)
+    {
+      //second osd;
+      codec_ipc.venc[0].width = width;
+      codec_ipc.venc[0].height = height;
+    }
     
     #endif
 
@@ -364,9 +378,6 @@ static int getdef(gsf_bsp_def_t *def)
     
   return ret;
 }
-
-static gsf_venc_ini_t *p_venc_ini = NULL;
-static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 int venc_start(int start)
 {

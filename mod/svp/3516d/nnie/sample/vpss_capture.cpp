@@ -190,26 +190,6 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 	return 0;
 }
 
-
-
-IVE_DST_IMAGE_S VpssCapture::stDst;
-VPSS_GRP VpssCapture::VpssGrp = 0;
-VPSS_CHN VpssCapture::VpssChn = 0;
-HI_U32 VpssCapture::u32OrigDepth = 0;
-
-HI_S32 VpssCapture::s32MilliSec = -1;
-HI_U32 VpssCapture::u32VpssDepthFlag = 0;
-HI_U32 VpssCapture::u32SignalFlag = 0;
-VIDEO_FRAME_INFO_S VpssCapture::stFrame;
-HI_U32  VpssCapture::u32BlkSize = 0;
-VGS_HANDLE VpssCapture::hHandle = -1;
-DUMP_MEMBUF_S VpssCapture::stMem = {0};
-VB_POOL VpssCapture::hPool  = VB_INVALID_POOLID;
-HI_U32 VpssCapture::u32Size = 0;
-HI_CHAR* VpssCapture::pUserPageAddr[2] = {HI_NULL, HI_NULL};
-unsigned int VpssCapture::frame_id = 0;
-
-
 int VpssCapture::init(int VpssGrp, int VpssChn)
 {
 	HI_CHAR szPixFrm[10];
@@ -308,48 +288,8 @@ int VpssCapture::init(int VpssGrp, int VpssChn)
 	
 	this->VpssGrp = VpssGrp;
 	this->VpssChn = VpssChn;
-	return 0;
-}
-
-int VpssCapture::get_rgbframe(cv::Mat &frame, VIDEO_FRAME_S *pVBuf)
-{
-	if (HI_MPI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stFrame, s32MilliSec) != HI_SUCCESS)
-	{
-		printf("Get frame fail \n");
-		usleep(1000);
-		return -1;
-	}
-
-	bool bSendToVgs = ((COMPRESS_MODE_NONE != stFrame.stVFrame.enCompressMode) || (VIDEO_FORMAT_LINEAR != stFrame.stVFrame.enVideoFormat));
-
-	if (bSendToVgs){
-		return -1;
-	}
-
-	if (DYNAMIC_RANGE_SDR8 == stFrame.stVFrame.enDynamicRange)
-	{
-		int ret = YUV2Mat(&stFrame.stVFrame, frame);	
-	//	*pVBuf = stFrame.stVFrame;
-		//static int i = 0;
-		//std::string imgpath = "rgb-" + std::to_string(i) + ".jpg";
-		//cv::imwrite(imgpath, frame);
-		//i++;
-		//memcpy(pVBuf, &stFrame.stVFrame, sizeof(stFrame.stVFrame));
-		if(ret < 0) return -1;
-	}
-	//printf("Get frame %d!!\n", frame_id);
-	/* release frame after using */
-	HI_S32 s32Ret = HI_MPI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stFrame);
-
-	if (HI_SUCCESS != s32Ret)
-	{
-		printf("Release frame error ,now exit !!!\n");
-		VPSS_Restore(VpssGrp, VpssChn);
-		return -1;
-	}
-	frame_id ++;
-
-	return 0;
+	
+	return HI_MPI_VPSS_GetChnFd(VpssGrp,VpssChn);
 }
 
 int VpssCapture::get_frame(cv::Mat &frame)
@@ -372,9 +312,12 @@ int VpssCapture::get_frame(cv::Mat &frame)
 		int ret = YUV2Mat(&stFrame.stVFrame, frame);	
 		if(ret < 0) return -1;
 	}
-	//printf("Get frame %d!!\n", frame_id);
-	/* release frame after using */
-	HI_S32 s32Ret = HI_MPI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stFrame);
+	
+	HI_S32 s32Ret = 0;
+	if(!frame_lock)
+	{
+	  HI_MPI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stFrame);
+  }
 
 	if (HI_SUCCESS != s32Ret)
 	{
@@ -382,10 +325,29 @@ int VpssCapture::get_frame(cv::Mat &frame)
 		VPSS_Restore(VpssGrp, VpssChn);
 		return -1;
 	}
-	frame_id ++;
-
+	frame_id++;
 	return 0;
 }
+
+int VpssCapture::get_frame_lock(cv::Mat &frame, VIDEO_FRAME_INFO_S **pstFrame)
+{
+  frame_lock = 1;
+  int ret = get_frame(frame);
+  *pstFrame = &stFrame;
+  return ret;
+}
+
+int VpssCapture::get_frame_unlock(VIDEO_FRAME_INFO_S *pstFrame)
+{
+  if(frame_lock)
+  {
+    frame_lock = 0;
+    //printf("HI_MPI_VPSS_ReleaseChnFrame pstFrame:%p\n", pstFrame);
+    HI_MPI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, pstFrame);
+  }
+  return 0;
+}
+
 
 int VpssCapture::destroy()
 {

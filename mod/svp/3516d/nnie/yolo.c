@@ -11,6 +11,9 @@
 #include "sample_comm_ive.h"
 #include "ivs_md.h"
 #include "svp.h"
+
+#define XYKJ 0
+
 extern void* svp_pub;
 
 static pthread_t s_hMdThread = 0;
@@ -20,10 +23,21 @@ static void* yolo_task(void* p);
 
 int yolo_start(char *home_path)
 {
-  int VpssGrp = 0;
-  int VpssChn = 1;
+  
+  #if XYKJ
+  //for chn: ---------------- ch0 ch1 ch2 ch3---//
+  int VpssGrp[YOLO_CHN_MAX] = {0, 1, -1, -1};
+  int VpssChn[YOLO_CHN_MAX] = {1, 0, -1, -1};
+  #else 
+  //for chn: ---------------- ch0 ch1 ch2 ch3---//
+  int VpssGrp[YOLO_CHN_MAX] = {0, -1, -1, -1};
+  int VpssChn[YOLO_CHN_MAX] = {1, -1, -1, -1};
+  #endif
+  
   char ModelPath[256];
   sprintf(ModelPath, "%s/model/yolov5-voc.wk", home_path);
+  //sprintf(ModelPath, "%s/model/yolov5-qrcode.wk", home_path);
+  
   printf("ModelPath:[%s]\n", ModelPath);
   if(yolo_init(VpssGrp, VpssChn,  ModelPath) < 0)
   {
@@ -45,9 +59,9 @@ int yolo_stop()
 }
 
 
-static pub_send(yolo_boxs_t *boxs)
+static int pub_send(yolo_boxs_t *boxs)
 {
-  int i;
+  int i = 0;
   char buf[sizeof(gsf_msg_t) + sizeof(gsf_svp_yolos_t)];
   gsf_msg_t *msg = (gsf_msg_t*)buf;
   
@@ -57,6 +71,7 @@ static pub_send(yolo_boxs_t *boxs)
   msg->sid = 0;
   msg->err = 0;
   msg->size = sizeof(gsf_svp_yolos_t);
+  msg->ch = boxs->chn;
   
   gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*)msg->data;
   
@@ -66,18 +81,20 @@ static pub_send(yolo_boxs_t *boxs)
   
   yolos->cnt = boxs->size;
   yolos->cnt = (yolos->cnt > sizeof(yolos->box)/sizeof(yolos->box[0]))?sizeof(yolos->box)/sizeof(yolos->box[0]):yolos->cnt;
-    
+
   for(i=0;i<yolos->cnt;i++)
 	{
 	  yolos->box[i].score   = boxs->box[i].score;
-		yolos->box[i].rect[0] = (boxs->box[i].x > 0.0)?boxs->box[i].x:0;
-		yolos->box[i].rect[1] = (boxs->box[i].y > 0.0)?boxs->box[i].y:0;
-		yolos->box[i].rect[2] = (boxs->box[i].w < yolos->w)?boxs->box[i].w:yolos->w;
-		yolos->box[i].rect[3] = (boxs->box[i].h < yolos->h)?boxs->box[i].h:yolos->h;
+		yolos->box[i].rect[0] = boxs->box[i].x;
+		yolos->box[i].rect[1] = boxs->box[i].y;
+		yolos->box[i].rect[2] = boxs->box[i].w;
+		yolos->box[i].rect[3] = boxs->box[i].h;
 		strncpy(yolos->box[i].label, boxs->box[i].label, sizeof(yolos->box[i].label)-1);
-	#if 0
-	  printf("i: %d w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
-	        , i, yolos->w, yolos->h
+		yolos->box[i].label[sizeof(yolos->box[i].label)-1] = '\0';//warn: strncpy without eof;
+		
+  #if 0
+	  printf("chn:%d, i: %d w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
+	        , msg->ch, i, yolos->w, yolos->h
 	        , yolos->box[i].rect[0]
 	        , yolos->box[i].rect[1]
 	        , yolos->box[i].rect[2]
@@ -96,14 +113,16 @@ static void* yolo_task(void* p)
   {
       usleep(33/3*1000);
       
-      yolo_boxs_t boxs = {0};
-      int ret = yolo_detect(&boxs);
-      if(ret == 0)
-        pub_send(&boxs);
+      yolo_boxs_t boxs[YOLO_CHN_MAX] = {0};
+      int ret = yolo_detect(boxs);
+
+      for(int i = 0; i < ret; i++)
+        pub_send(&boxs[i]);
   }
   
-  yolo_boxs_t boxs = {0};
-  pub_send(&boxs);
+  yolo_boxs_t boxs[YOLO_CHN_MAX] = {0};
+  for(int i = 0; i < YOLO_CHN_MAX; i++)
+    pub_send(&boxs[i]);
   yolo_deinit();
   return NULL;
 }
