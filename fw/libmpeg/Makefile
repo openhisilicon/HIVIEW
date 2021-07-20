@@ -7,7 +7,7 @@ CFLAGS := $(shell echo ${GSF_CFLAGS})
 LDFLAGS := -shared -g $(shell echo ${GSF_LDFLAGS})
 
 #library;
-TARG := lib/limpeg.so
+TARG := lib/libmpeg.so
 
 #test;
 #LDFLAGS := -g 

@@ -285,6 +285,7 @@ static int sub_recv(char *msg, int size, int err)
     }
     
     // osd to sub-stream if main-stream > 1080P;
+    //printf("chn:%d, rects.size:%d\n", chn, rects.size);
     gsf_rgn_rect_set(chn, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
     //gsf_rgn_nk_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
 

@@ -54,7 +54,7 @@ static int sub_recv(char *msg, int size, int err)
   {
     int len = pmsg->size;
     msgbuf *mbuf = (msgbuf*)(pmsg->data - sizeof(msgbuf));
-    mbuf->mtype = 1;
+    mbuf->mtype = 1 + pmsg->ch;
     msgsnd(msq, mbuf, len, IPC_NOWAIT);
   }
   return 0;
@@ -171,18 +171,19 @@ static void* lvgl_main(void* p)
         if((ret = msgrcv(msq, _buf, sizeof(_buf), 0, IPC_NOWAIT)) > 0)
         {
           gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*)mbuf->mtext;
-          
+          int chn = mbuf->mtype - 1;
           
           float xr = 0, yr = 0, wr = 0, hr = 0;
           
           if(vres > hres) //for vertical screen
           {
+            xr = 0; yr = chn*(vres/2);
             wr = hres; wr/= yolos->w;
             hr = vres/2; hr/= yolos->h;
           }
           else if(lt == 2) //for 2ch
           {
-            xr = 0; yr = vres/4;
+            xr = 0 + chn*(hres/2); yr = vres/4;
             wr = hres/2; wr/= yolos->w;
             hr = vres/2; hr/= yolos->h;
           }

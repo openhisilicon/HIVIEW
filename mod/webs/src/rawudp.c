@@ -103,7 +103,7 @@ void* udp_send_task(void *parm)
   if(ret == 0)
   {
     video_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->video_shmid);
-    audio_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->audio_shmid);
+    //audio_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->audio_shmid);
     
 	cfifo_ep_ctl(ep, CFIFO_EP_ADD, video_fifo);
 	unsigned int video_utc = cfifo_newest(video_fifo, 1);
@@ -151,7 +151,7 @@ void* udp_send_task(void *parm)
           printf("rec->type:%d, seq:%d, utc:%u, size:%d\n"
                 , rec->type, rec->seq, rec->utc, rec->size);
 
-          if(0)
+          if(1)
           {
         		char *pbuf = rec->data;
         		int  left = rec->size;
