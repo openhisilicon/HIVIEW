@@ -19,32 +19,50 @@ static int qrcode = 0;
 
 int yolo_init(int VpssGrp[YOLO_CHN_MAX], int VpssChn[YOLO_CHN_MAX], char *ModelPath)
 {
-    int i = 10, j = 0;
-    int ret = 0;
+    int i = 0, cnt = 10;
+    int ret = -1;
     
-    do{
-      
-      for(int i = 0; i < YOLO_CHN_MAX; i++)
+    while(1)
+    {
+      for(i = 0; i < YOLO_CHN_MAX; i++)
       {
-        if(VpssGrp[i] != -1 && VpssChn[i] != -1)
+        if(VpssGrp[i] == -1 || VpssChn[i] == -1)
+          break;
+          
+        if(vcap[i].fd <= 0)
         {
           vcap[i].fd = vcap[i].vcap.init(VpssGrp[i], VpssChn[i]);
-          ret |= (vcap[i].fd > 0)?0:-1;
-          printf("vcap[%d].init ret:%d\n", i, ret);
-          vcap_cnt++;
+          if(vcap[i].fd > 0)
+          {
+            vcap_cnt++;
+            printf("vcap[%d].init ok fd:%d\n", i, vcap[i].fd);
+          }
+          else
+          {
+            printf("vcap[%d].init err fd:%d\n", i, vcap[i].fd);
+          }
         }
       }
-      
-      if(ret == 0)
-      {
-        ret = yolov5.init(ModelPath);
-        qrcode = strstr(ModelPath, "qrcode")?1:0;
-        printf("yolov5.init ret:%d\n", ret);
+      // all is ok;
+      if(vcap_cnt == i)
         break;
-      }
+      // timeout; 
+      if(--cnt <= 0)
+        break;
+      // retry once;
+      if(vcap_cnt > 0)
+        cnt = 1;
+
       sleep(1);
-    }while(i-- > 0);
+    }
     
+    printf("init all:%d, vcap_cnt:%d\n", i, vcap_cnt);
+    if(vcap_cnt > 0)
+    {
+      ret = yolov5.init(ModelPath);
+      qrcode = strstr(ModelPath, "qrcode")?1:0;
+      printf("yolov5.init ret:%d\n", ret);
+    }
     return ret;
 }
 
