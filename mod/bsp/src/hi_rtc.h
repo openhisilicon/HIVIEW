@@ -11,13 +11,13 @@
 #define __HI_RTC__
 
 typedef struct {
-        unsigned int  year;
-        unsigned int  month;
-        unsigned int  date;
-        unsigned int  hour;
-        unsigned int  minute;
-        unsigned int  second;
-        unsigned int  weekday;
+  unsigned int  year;
+  unsigned int  month;
+  unsigned int  date;
+  unsigned int  hour;
+  unsigned int  minute;
+  unsigned int  second;
+  unsigned int  weekday;
 } rtc_time_t;
 
 typedef	struct {

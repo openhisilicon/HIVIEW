@@ -657,12 +657,12 @@ void sip_uas_app(void)
 	sprintf(app.transport.local, "192.168.0.2");
 	netcfg_get_ip_addr("eth0",  app.transport.local);
 	
-	sprintf(app.usr, "%s", sips_parm.device);
-	sprintf(app.pwd, "%s", sips_parm.password);
-	sprintf(app.host,"%s", sips_parm.host);
-	sprintf(app.from, "sip:%s@3402000000", sips_parm.device);
-	app.expired = sips_parm.expired;
-	app.keepalive = sips_parm.keepalive;
+	sprintf(app.usr, "%s", strlen(sips_parm.device)?sips_parm.device:"34020000001110000001");
+	sprintf(app.pwd, "%s", strlen(sips_parm.password)?sips_parm.password:"12345678");
+	sprintf(app.host,"%s", strlen(sips_parm.host)?sips_parm.host:"sip:34020000002000000001@192.168.0.166:5060");
+	app.expired = sips_parm.expired?sips_parm.expired:3600;
+	app.keepalive = sips_parm.keepalive?sips_parm.keepalive:60;
+  sprintf(app.from, "sip:%s@3402000000", app.usr);
 	
 	st_thread_t tid = st_thread_create(register_task, &app, 0, 0);
 	

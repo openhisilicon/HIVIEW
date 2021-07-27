@@ -8,9 +8,9 @@
 
 <div id="req-id" style="width: 400px; height: 200px;"></div>
 <div id="res-id" style="position:relative;left:500px;top:-200px;width:400px;height:200px"></div>
-<button id="sync-id" class="w2ui-btn" style="position:relative;left:50px;top:-180px;">SYNC DATE</button>
-<button id="get-id" class="w2ui-btn" style="position:relative;left:200px;top:-180px;">GET</button>
-<button id="set-id" class="w2ui-btn" style="position:relative;left:340px;top:-180px;">SET</button>
+<label  id="note" style="position:relative;left:10px;top:-180px;">Note: Effect after restart</label>
+<button id="get-id" class="w2ui-btn" style="position:relative;left:150px;top:-180px;">GET</button>
+<button id="set-id" class="w2ui-btn" style="position:relative;left:250px;top:-180px;">SET</button>
 <div id="rsp-id" style="position:relative;left:0px;top:-160px;width:900px;height:400px"></div>
 
 <!--CODE-->
@@ -27,7 +27,7 @@ $(function () {
     const req_edit = new JSONEditor(req_ele, options)
     // set json
     const req_init = {
-        "id": "GSF_ID_BSP_TIME",
+        "id": "GSF_ID_SIPS_CFG",
         "args":"G0C0S0",
         "data":{}
     }
@@ -63,11 +63,6 @@ $(function () {
         contentType: 'application/json', // req body type;
         dataType: "json", // rsp body type;
         success: function (data) {
-          
-          
-          // gsftodate;
-          data["data"]["year"] += 1900;
-          
           rsp_edit.set(data);
         },
         error: function () {
@@ -83,10 +78,6 @@ $(function () {
       const req = req_edit.get();
       const rsp = rsp_edit.get();
       var args = req.args;
-      
-      //datetogsf;
-      rsp["data"]["year"] -= 1900;
-      
       
       $.ajax({
         async: true,
@@ -105,46 +96,6 @@ $(function () {
     
     
     });
-
-
-    $("#sync-id").click(function(){
-
-      var myDate = new Date();
-      
-      const req = {
-          "id": "GSF_ID_BSP_TIME",
-          "args":"G1C0S0",
-          "data":{ "year": myDate.getYear(),
-              "month": myDate.getMonth(),
-              "day": myDate.getDate(),
-              "wday": myDate.getDay(),
-              "hour": myDate.getHours(),
-              "minute": myDate.getMinutes(),
-              "second": myDate.getSeconds(),
-              "isdst": 0,
-              "zone": myDate.getTimezoneOffset()
-              }
-      }
-      
-      $.ajax({
-        async: true,
-        type: "post",
-        url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
-        data: JSON.stringify(req.data),
-        contentType: 'application/json', // req body type;
-        dataType: "json", // rsp body type;
-        success: function (data) {
-           res_edit.set(data);
-        },
-        error: function () {
-          //TODO;
-        }
-      });
-    
-    
-    });
-
-
 
 });
 </script>

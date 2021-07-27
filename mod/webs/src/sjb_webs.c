@@ -9,7 +9,7 @@
 #include "mod/rtmps/inc/sjb_rtmps.h"
 #include "mod/onvif/inc/sjb_onvif.h"
 #include "mod/svp/inc/sjb_svp.h"
-
+#include "mod/sips/inc/sjb_sips.h"
 // add ...
 
 // source
@@ -24,7 +24,7 @@
 #include "mod/rtmps/inc/sjb_rtmps.ih"
 #include "mod/onvif/inc/sjb_onvif.ih"
 #include "mod/svp/inc/sjb_svp.ih"
-
+#include "mod/sips/inc/sjb_sips.ih"
 // add ...
 
 

@@ -5,17 +5,19 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <time.h>
- 
+#include <linux/rtc.h>
+
 #include "rtc.h"
 #include "cfg.h"
 #include "hi_rtc.h"
 
-#define DEV_NAME "/dev/hi_rtc"
+#define HI_DEV_NAME "/dev/hi_rtc"
+#define DEV_NAME "/dev/rtc0"
 
+int hirtc_fd = -1;
 int rtc_fd = -1;
 
-
-gsf_time_t* rtc2gsf(rtc_time_t *rtc, gsf_time_t *gsf)
+gsf_time_t* hirtc2gsf(rtc_time_t *rtc, gsf_time_t *gsf)
 {
 	if (rtc != NULL && gsf != NULL)
 	{
@@ -31,7 +33,7 @@ gsf_time_t* rtc2gsf(rtc_time_t *rtc, gsf_time_t *gsf)
 }
 
 
-rtc_time_t*	gsf2rtc(gsf_time_t *gsf, rtc_time_t *rtc)
+rtc_time_t*	gsf2hirtc(gsf_time_t *gsf, rtc_time_t *rtc)
 {
 	if (gsf != NULL && rtc != NULL)
 	{
@@ -46,6 +48,42 @@ rtc_time_t*	gsf2rtc(gsf_time_t *gsf, rtc_time_t *rtc)
 	return rtc;
 }
 
+gsf_time_t* rtc2gsf(struct rtc_time *rtc, gsf_time_t *gsf)
+{
+	if (rtc != NULL && gsf != NULL)
+	{
+		gsf->year  = rtc->tm_year - 1900;
+		gsf->month = rtc->tm_mon  % 13;
+		gsf->day   = rtc->tm_mday % 32;
+		gsf->hour  = rtc->tm_hour % 24;
+		gsf->minute= rtc->tm_min % 60;
+		gsf->second= rtc->tm_sec % 60;
+    gsf->wday  = rtc->tm_wday % 7;
+    gsf->isdst = rtc->tm_isdst;
+    //tm_yday;
+	}
+	return gsf;
+}
+
+struct rtc_time*	gsf2rtc(gsf_time_t *gsf, struct rtc_time *rtc)
+{
+	if (gsf != NULL && rtc != NULL)
+	{
+		rtc->tm_year  = gsf->year + 1900;
+		rtc->tm_mon   = gsf->month % 13;
+		rtc->tm_mday  = gsf->day % 32;
+		rtc->tm_hour  = gsf->hour % 24;			
+		rtc->tm_min   = gsf->minute % 60;		
+		rtc->tm_sec   = gsf->second % 60;
+		rtc->tm_wday  = gsf->wday % 8;
+		rtc->tm_isdst = gsf->isdst;
+    rtc->tm_yday  = 0;
+	}
+	return rtc;
+}
+
+
+
 
 struct tm*	gsf2tm(gsf_time_t *gsf, struct tm* tm)
 {
@@ -58,6 +96,11 @@ struct tm*	gsf2tm(gsf_time_t *gsf, struct tm* tm)
 		tm->tm_min  = gsf->minute;
 		tm->tm_sec  = gsf->second;
 		tm->tm_wday = gsf->wday;
+		tm->tm_isdst = gsf->isdst;
+		//tm_yday;
+		printf("[%d-%d-%d %d:%d:%d]\n"
+		    , tm->tm_year, tm->tm_mon, tm->tm_mday
+		    , tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 	return tm;
 }
@@ -74,23 +117,50 @@ gsf_time_t*	tm2gsf(struct tm* tm, gsf_time_t* gsf)
 		gsf->minute = tm->tm_min;
  		gsf->second = tm->tm_sec;
 		gsf->wday   = tm->tm_wday;
+		gsf->isdst  = tm->tm_isdst;
+		//tm_yday;
+		printf("[%d-%d-%d %d:%d:%d]\n"
+		    , tm->tm_year, tm->tm_mon, tm->tm_mday
+		    , tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 	return gsf;
 }
 
 int rtc_init(void)
 {
-  rtc_fd = open(DEV_NAME, O_RDWR);
-  if (rtc_fd < 0) 
+  //rtc_fd = open(DEV_NAME, O_RDWR); // hwclock: can't open '/dev/rtc0': Device or resource busy
+  hirtc_fd = open(HI_DEV_NAME, O_RDWR);
+  
+  if (hirtc_fd < 0 && rtc_fd < 0) 
   {
-    printf("open %s failed\n", DEV_NAME);
+    printf("open [%s && %s] failed\n", HI_DEV_NAME, DEV_NAME);
     return -1;
   }
-  if(rtc_fd > 0)
+  
+  if(hirtc_fd > 0)
   {
     rtc_time_t rtc;
     gsf_time_t gsf;
-    int ret = ioctl(rtc_fd, HI_RTC_RD_TIME, &rtc);
+    int ret = ioctl(hirtc_fd, HI_RTC_RD_TIME, &rtc);
+    if(ret < 0)
+      return ret;
+    
+    struct timeval 	tv;
+	  struct timezone tz;
+    gettimeofday(&tv, &tz);
+  
+    struct tm tm;
+    hirtc2gsf(&rtc, &gsf);
+    gsf2tm(&gsf, &tm);
+		tv.tv_sec  = mktime(&tm);
+		tv.tv_usec = 0;
+		settimeofday(&tv, &tz);
+  }
+  else if(rtc_fd > 0)
+  {
+    struct rtc_time rtc;
+    gsf_time_t gsf;
+    int ret = ioctl(rtc_fd, RTC_RD_TIME, &rtc);
     if(ret < 0)
       return ret;
     
@@ -104,6 +174,10 @@ int rtc_init(void)
 		tv.tv_sec  = mktime(&tm);
 		tv.tv_usec = 0;
 		settimeofday(&tv, &tz);
+  }
+  else
+  {
+    system("hwclock -s");
   }
   return 0;
 }
@@ -133,9 +207,27 @@ int rtc_get(gsf_time_t *gsf)
 
 int rtc_set(gsf_time_t *gsf)
 {
-  if(rtc_fd > 0)
+  if(hirtc_fd > 0)
   {
     rtc_time_t rtc;
+    gsf2hirtc(gsf, &rtc);
+    
+    struct timeval 	tv;
+	  struct timezone tz;
+    gettimeofday(&tv, &tz);
+  
+    struct tm tm;
+    gsf2tm(gsf, &tm);
+		tv.tv_sec  = mktime(&tm);
+		tv.tv_usec = 0;
+		settimeofday(&tv, &tz);
+    
+    int ret = ioctl(hirtc_fd, HI_RTC_SET_TIME, &rtc);
+    return ret;
+  }
+  else if(rtc_fd > 0)
+  {
+    struct rtc_time rtc;
     gsf2rtc(gsf, &rtc);
     
     struct timeval 	tv;
@@ -148,8 +240,22 @@ int rtc_set(gsf_time_t *gsf)
 		tv.tv_usec = 0;
 		settimeofday(&tv, &tz);
     
-    int ret = ioctl(rtc_fd, HI_RTC_SET_TIME, &rtc);
+    int ret = ioctl(rtc_fd, RTC_SET_TIME, &rtc);
     return ret;
+  }
+  else
+  {
+    struct timeval 	tv;
+	  struct timezone tz;
+    gettimeofday(&tv, &tz);
+  
+    struct tm tm;
+    gsf2tm(gsf, &tm);
+		tv.tv_sec  = mktime(&tm);
+		tv.tv_usec = 0;
+		settimeofday(&tv, &tz);
+		
+		return system("hwclock -w");
   }
   return -1;
 }

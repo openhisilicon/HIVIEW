@@ -10,6 +10,7 @@
 #include "mod/onvif/inc/onvif.h"
 #include "mod/svp/inc/svp.h"
 #include "mod/webs/inc/webs.h"
+#include "mod/sips/inc/sips.h"
 
 int mod_call(char *str, char *args, char *in, char *out, int osize);
 
