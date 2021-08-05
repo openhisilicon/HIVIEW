@@ -86,6 +86,12 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = { /* name-lane-wdr-res
     {SONY_IMX277_SLVS_8M_60FPS_12BIT,        "imx277-0-0-8-60", "libsns_imx277_slvs.so", "stSnsImx277SlvsObj"},
     {SONY_IMX277_SLVS_12M_30FPS_12BIT,       "imx277-0-0-12-30", "libsns_imx277_slvs.so", "stSnsImx277SlvsObj"},
     {SONY_IMX277_SLVS_2M_240FPS_12BIT,       "imx277-0-0-2-240", "libsns_imx277_slvs.so", "stSnsImx277SlvsObj"},
+    {SONY_IMX477_MIPI_12M_30FPS_12BIT,      "imx477-0-0-12-30", "libsns_imx477.so", "stSnsImx477Obj"},
+    {SONY_IMX477_MIPI_9M_50FPS_10BIT,       "imx477-0-0-9-50", "libsns_imx477.so", "stSnsImx477Obj"},
+    {SONY_IMX477_MIPI_9M_60FPS_10BIT,       "imx477-0-0-9-60", "libsns_imx477.so", "stSnsImx477Obj"},
+    {SONY_IMX477_MIPI_8M_60FPS_12BIT,       "imx477-0-0-8-60", "libsns_imx477.so", "stSnsImx477Obj"},
+    {SONY_IMX477_MIPI_8M_30FPS_12BIT,       "imx477-0-0-8-30", "libsns_imx477.so", "stSnsImx477Obj"},
+    {COMSIS_SHARP8K_SLVDS_8K_30FPS_12BIT,   "sharp8k-0-0-16-30", "libsns_sharp8k.so", "stSnsSharp8kObj"},
   };
 
 static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
