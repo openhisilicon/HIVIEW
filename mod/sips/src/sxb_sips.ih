@@ -1,0 +1,48 @@
+#pragma pack(push, 4)
+
+STRUCT(DeviceInfo)
+{
+  STRING(CmdType, 64);
+  FIELD(int, SN);
+  STRING(DeviceID, 64);
+  
+  STRING(Result, 128);
+  STRING(DeviceName, 128);
+  STRING(Manufacturer, 128);
+  STRING(Model, 128);
+  STRING(Firmware, 128);
+};
+
+
+
+STRUCT(Device)
+{
+  STRING(DeviceID, 64);
+  STRING(Name, 64);
+  STRING(Manufacturer, 64);
+  STRING(Model, 64);
+  STRING(Owner, 64);
+  STRING(CivilCode, 64);
+  STRING(Block, 64);
+  STRING(Address, 64);
+  STRING(Parental, 64);
+  STRING(ParentID, 64);
+  FIELD(int, RegisterWay);
+  STRING(EndTime, 64);
+  FIELD(int, Secrecy);
+  STRING(Status, 64);
+};
+
+
+STRUCT(Catalog)
+{
+  STRING(CmdType, 64);
+  FIELD(int, SN);
+  STRING(DeviceID, 64);
+  
+  FIELD(int, SumNum);
+  ARRAY(Device, DeviceList, 16);
+};
+
+
+#pragma pack(pop)

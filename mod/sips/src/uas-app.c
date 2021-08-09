@@ -26,6 +26,9 @@
 #include "mod/sips/inc/sjb_sips.h"
 extern gsf_sips_t sips_parm;
 
+//for xml binding;
+#include "sxb_sips.h"
+
 
 struct sip_uac_transport_address_t
 {
@@ -344,87 +347,71 @@ static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struc
   printf("%s => payload[\n%s]\n", __func__, req, t, payload);
 	sip_uas_reply(t, 200, NULL, 0);
 	
-	
 	if(!payload || !strlen(payload))
     return 0;
     
+  char buf[64*1024];
+  int len = sizeof(buf);
+  
   if(strstr(payload, "<CmdType>DeviceInfo</CmdType>"))
   {
-  	const char* msg = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
-  						"<Response>"
-              "<CmdType>DeviceInfo</CmdType>"
-              "<SN>17430</SN>"
-              "<DeviceID>34020000001110000001</DeviceID>"
-              "<Result>OK</Result>"
-              "<DeviceName>GB28181Device</DeviceName>"
-              "<Manufacturer>Manufacturer</Manufacturer>"
-              "<Model>Model</Model>"
-              "<Firmware>Firmware</Firmware>"
-              "</Response>";
+    mxml_node_t* xml = mxmlNewXML("1.0");
+    mxml_node_t* root = mxmlNewElement(xml, "Response");
 
-  	sip_uac_sendmessage(app, msg);
+    DeviceInfo info = {
+      .CmdType = "DeviceInfo",
+      .SN = 17430,
+      .DeviceID = "34020000001110000001",
+      .Result = "OK",
+      .DeviceName = "GB28181Device",
+      .Manufacturer = "HIVIEW-TECH.CN",
+      .Model = "Model",
+      .Firmware = "Firmware",
+    };
+    sxb_bind_DeviceInfo(root, 0, &info, 0, 0);
+    mxmlSaveString(xml, buf, len, whitespace_cb);
+  	mxmlDelete(xml);
+    sip_uac_sendmessage(app, buf);
   }
   else if(strstr(payload, "<CmdType>Catalog</CmdType>"))
   {
-    const char* msg = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
-            "<Response>"
-            "<CmdType>Catalog</CmdType>"
-            "<SN>2</SN>"
-            "<DeviceID>34020000001110000001</DeviceID>"
-            "<SumNum>2</SumNum>"
-            "<DeviceList Num=\"1\">"
-            "<Item>"
-            "<DeviceID>34020000001310000001</DeviceID>"
-            "<Name>IPC</Name>"
-            "<Manufacturer>Manufacturer</Manufacturer>"
-            "<Model>Model</Model>"
-            "<Owner>Owner</Owner>"
-            "<CivilCode>34020000</CivilCode>"
-            "<Block>Block</Block>"
-            "<Address>Address</Address>"
-            "<Parental>0</Parental>"
-            "<ParentID>34020000001110000001</ParentID>"
-            "<RegisterWay>1</RegisterWay>"
-            "<EndTime>2021-07-15T09:47:40.782</EndTime>"
-            "<Secrecy>0</Secrecy>"
-            "<Status>ON</Status>"
-            "</Item>"
-            "</DeviceList>"
-            "</Response>";
-    sip_uac_sendmessage(app, msg);
+    mxml_node_t* xml = mxmlNewXML("1.0");
+    mxml_node_t* root = mxmlNewElement(xml, "Response");
     
-    
-    const char* msg2 = "<?xml version=\"1.0\" encoding=\"GB2312\"?>"
-          "<Response>"
-          "<CmdType>Catalog</CmdType>"
-          "<SN>2</SN>"
-          "<DeviceID>34020000001110000001</DeviceID>"
-          "<SumNum>2</SumNum>"
-          "<DeviceList Num=\"1\">"
-          "<Item>"
-          "<DeviceID>34020000001340000001</DeviceID>"
-          "<Name>Alarm</Name>"
-          "<Manufacturer>Manufacturer</Manufacturer>"
-          "<Model>Model</Model>"
-          "<Owner>Owner</Owner>"
-          "<CivilCode>34020000</CivilCode>"
-          "<Block>Block</Block>"
-          "<Address>Address</Address>"
-          "<Parental>0</Parental>"
-          "<ParentID>34020000001110000001</ParentID>"
-          "<RegisterWay>1</RegisterWay>"
-          "<EndTime>2021-07-15T09:47:40.782</EndTime>"
-          "<Secrecy>0</Secrecy>"
-          "<Status>ON</Status>"
-          "</Item>"
-          "</DeviceList>"
-          "</Response>";
-    sip_uac_sendmessage(app, msg2);
+    Catalog catalog;
+    memset(&catalog, 0, sizeof(catalog));
+    strncpy(catalog.CmdType, "Catalog", sizeof(catalog.CmdType)-1);
+    catalog.SN = 2;
+    strncpy(catalog.DeviceID, "34020000001110000001", sizeof(catalog.DeviceID)-1);
+    catalog.SumNum = 2;
+    ELE_NUM_SET(catalog.DeviceList) = 2;
+    for(int i = 0; i < 2; i++)
+    {
+      strncpy(catalog.DeviceList[i].DeviceID, i==0?"34020000001310000001":"34020000001340000001", sizeof(catalog.DeviceList[i].DeviceID)-1);
+      strncpy(catalog.DeviceList[i].Name, i==0?"IPC":"Alarm", sizeof(catalog.DeviceList[i].Name)-1);
+      strncpy(catalog.DeviceList[i].Manufacturer, "HIVIEW-TECH.CN", sizeof(catalog.DeviceList[i].Manufacturer)-1);
+      strncpy(catalog.DeviceList[i].Model, "Model", sizeof(catalog.DeviceList[i].Model)-1);
+      strncpy(catalog.DeviceList[i].Owner, "Owner", sizeof(catalog.DeviceList[i].Owner)-1);
+      strncpy(catalog.DeviceList[i].CivilCode, "34020000", sizeof(catalog.DeviceList[i].CivilCode)-1);
+      strncpy(catalog.DeviceList[i].Block, "Block", sizeof(catalog.DeviceList[i].Block)-1);
+      strncpy(catalog.DeviceList[i].Address, "Address", sizeof(catalog.DeviceList[i].Address)-1);
+      
+      strncpy(catalog.DeviceList[i].Parental, "0", sizeof(catalog.DeviceList[i].Parental)-1);
+      strncpy(catalog.DeviceList[i].ParentID, "34020000001110000001", sizeof(catalog.DeviceList[i].ParentID)-1);
+      strncpy(catalog.DeviceList[i].EndTime, "2021-07-15T09:47:40.782", sizeof(catalog.DeviceList[i].EndTime)-1);
+      strncpy(catalog.DeviceList[i].Status, "ON", sizeof(catalog.DeviceList[i].Status)-1);
+      
+      catalog.DeviceList[i].Secrecy = 0;
+      catalog.DeviceList[i].RegisterWay = 1;
+    }
+    sxb_bind_Catalog(root, 0, &catalog, 0, 0);
+    mxmlSaveString(xml, buf, len, whitespace_cb);
+  	mxmlDelete(xml);
+    sip_uac_sendmessage(app, buf);
   }
  
   return 0;
 }
-
 
 
 static void sip_uas_loop(struct sip_uas_app_t *app)
@@ -664,7 +651,10 @@ void sip_uas_app(void)
 	app.keepalive = sips_parm.keepalive?sips_parm.keepalive:60;
   sprintf(app.from, "sip:%s@3402000000", app.usr);
 	
-	st_thread_t tid = st_thread_create(register_task, &app, 0, 0);
+	if(sips_parm.enable)
+	{
+	  st_thread_t tid = st_thread_create(register_task, &app, 0, 0);
+	}
 	
 	sip_uas_loop(&app);
 	

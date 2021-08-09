@@ -21,7 +21,7 @@ INCS := -I$(HOME) -Isrc -Iinc \
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lh26xbits -lsip -lrtsp -lrtp -lmpeg -lhttp -lst -lcfifo -lrt -lnm -lcjson -lcomm -lm -lpthread
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lh26xbits -lsip -lrtsp -lrtp -lmpeg -lhttp -lst -lcfifo -lrt -lnm -lmxml -lcjson -lcomm -lm -lpthread
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
@@ -32,6 +32,7 @@ $(TARG): SJB $(OBJS)
 
 SJB:
 	touch src/sjb_sips.c;touch src/cfg.c
+	touch src/sxb_sips.c;touch src/uas-app.c
   
 .Phony: clean
 clean:

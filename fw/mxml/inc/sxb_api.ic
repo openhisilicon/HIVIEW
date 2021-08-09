@@ -269,6 +269,7 @@ static int sxb_bind_array(mxml_node_t* xml, int m, char *str, int size, int* sub
   else {\
       mxml_node_t* node = mxmlNewElement(xml, #HOLDER); \
       *n = (*n >= 0 && *n <= SIZE)?*n:SIZE; \
+      char nstr[32]; sprintf(nstr, "%d", *n); mxmlElementSetAttr(node, "Num", nstr);  \
   		printd(">>>>>> @@@ %s [%d] @@@\n", #HOLDER, *n);\
       sxb_bind_array( node, m, (char*)((str+i)-> HOLDER), *n, SUB, (sxb_bind_T*)sxb_bind_##TYPE, TSIZE);\
       }\

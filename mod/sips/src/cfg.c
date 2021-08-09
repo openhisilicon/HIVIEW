@@ -12,6 +12,7 @@ gsf_sips_t sips_parm = {
   .password = "12345678",
   .expired = 3600,
   .keepalive = 60,
+  .enable = 0,
 };
 
 int json_parm_load(char *filename, gsf_sips_t *cfg)
