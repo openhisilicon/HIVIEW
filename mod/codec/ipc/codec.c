@@ -23,6 +23,11 @@
 #ifndef PIC_VGA
 #define PIC_VGA PIC_CIF
 #endif
+#ifndef PIC_7680x4320
+#define PIC_7680x4320 PIC_3840x2160
+#endif
+
+
 
 #define PIC_WIDTH(w, h) \
             (w >= 7680)?PIC_7680x4320:\

@@ -385,7 +385,8 @@ static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struc
     strncpy(catalog.DeviceID, "34020000001110000001", sizeof(catalog.DeviceID)-1);
     catalog.SumNum = 2;
     ELE_NUM_SET(catalog.DeviceList) = 2;
-    for(int i = 0; i < 2; i++)
+    int i = 0;
+    for(i = 0; i < 2; i++)
     {
       strncpy(catalog.DeviceList[i].DeviceID, i==0?"34020000001310000001":"34020000001340000001", sizeof(catalog.DeviceList[i].DeviceID)-1);
       strncpy(catalog.DeviceList[i].Name, i==0?"IPC":"Alarm", sizeof(catalog.DeviceList[i].Name)-1);
