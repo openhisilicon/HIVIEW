@@ -6,6 +6,7 @@
 #include "fw/comm/inc/proc.h"
 #include "mod/bsp/inc/bsp.h"
 #include "mod/svp/inc/svp.h"
+#include "mod/rtsps/inc/rtsps.h"
 #include "codec.h"
 #include "cfg.h"
 #include "msg_func.h"
@@ -27,6 +28,19 @@
 #define PIC_7680x4320 PIC_3840x2160
 #endif
 
+
+extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
+extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
+extern unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2);
+static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+{
+    unsigned int len = cfifo_recsize(p1, n1, p2);
+    unsigned int l = CFIFO_MIN(len, n1);
+    char *p = (char*)u;
+    memcpy(p, p1, l);
+    memcpy(p+l, p2, len-l);
+    return len;
+}
 
 
 #define PIC_WIDTH(w, h) \
@@ -784,6 +798,10 @@ int main(int argc, char *argv[])
     mpp_start(&bsp_def);
 
     venc_start(1);
+
+    // test hybrid;
+    int hybrid = 0;
+    gsf_shmid_t shmid = {-1, -1};
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
 	
@@ -796,7 +814,7 @@ int main(int argc, char *argv[])
     };
     gsf_mpp_audio_start(&aenc);
     //gsf_mpp_audio_start(NULL);
-    
+
     // test vo;
     //int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
     int mipi_800x1280 = codec_ipc.vo.intf;
@@ -820,6 +838,36 @@ int main(int argc, char *argv[])
       //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 0, ROTATION_90);
       //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 1, ROTATION_90);
       vo_res_set(800, 1280);
+    }
+    else if(hybrid)
+    {
+      int sync = codec_ipc.vo.sync?VO_OUTPUT_3840x2160_30:VO_OUTPUT_1080P60;
+      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
+      int ly = VO_LAYOUT_2MUX;
+      
+      gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
+      vo_ly_set(ly);
+      
+      gsf_mpp_fb_start(VOFB_GUI, sync, 0);
+      gsf_mpp_vo_src_t src0 = {0, 0};
+      gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+      
+      GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
+      rtsp_url->transp = 0;
+      strcpy(rtsp_url->url, "rtsp://admin:12345@192.168.0.166:8554/channel0");
+      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
+                            , sizeof(gsf_rtsp_url_t)
+                            , GSF_IPC_RTSPS, 3000);
+      if(ret == 0 && __pmsg->err == 0)
+      {
+        shmid = *((gsf_shmid_t*)__pmsg->data);
+        printf("video_shmid:%d\n", shmid.video_shmid);
+      }
+      
+      if(sync == VO_OUTPUT_1080P60)
+        vo_res_set(1920, 1080);
+      else
+        vo_res_set(3840, 2160);
     }
     else
     {
@@ -869,7 +917,7 @@ int main(int argc, char *argv[])
     gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
     gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
   
-    #endif
+    #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
 
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC
@@ -880,9 +928,48 @@ int main(int argc, char *argv[])
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
     
+    struct cfifo_ex* fifo = NULL;
+    gsf_frm_t *frm = NULL;
+    if(shmid.video_shmid >= 0)
+    {
+      fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
+      frm = (gsf_frm_t*)malloc(800*1024);
+      cfifo_newest(fifo, 1);
+      printf("fifo:%p, frm:%p\n", fifo, frm);
+    }
+    
     while(1)
     {
-      sleep(1);
+      //sleep(1);
+      if(!fifo || !frm)
+      {
+        //printf("err: fifo || frm\n");
+        sleep(1);
+        continue;
+      }
+      // gsf_mpp_vo_vsend
+      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+      do{
+        int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
+        if(ret <= 0)
+        {
+          //printf("err: cfifo_get ret:%d\n", ret);
+          usleep(10*1000);
+          break;
+        }
+
+        int ch = 1; // vo_channel;
+        char *data = frm->data;
+        gsf_mpp_frm_attr_t attr;
+        attr.size   = frm->size;          // data size;
+        attr.ftype  = frm->flag;          // frame type;
+        attr.etype  = PT_VENC(frm->video.encode);// PAYLOAD_TYPE_E;
+        attr.width  = frm->video.width;   // width;
+        attr.height = frm->video.height;  // height;
+        attr.pts    = frm->pts*1000; // pts ms*1000;
+        ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, data, &attr);
+      }while(1);
+      #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     }
       
     GSF_LOG_DISCONN();
