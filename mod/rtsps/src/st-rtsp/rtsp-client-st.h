@@ -32,7 +32,7 @@ struct st_rtsp_client_handler_t
 void* rtsp_client_connect(const char* url, int protol, struct st_rtsp_client_handler_t *_handler);
 
 int rtsp_client_close(void* st);
-
+int rtsp_client_keepalive(void* st, int media);
 
 #if defined(__cplusplus)
 }

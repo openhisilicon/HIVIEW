@@ -108,7 +108,8 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 {
   const uint8_t start_code[] = { 0, 0, 0, 1 };
   struct rtsp_conn_ctx_t *ctx = (struct rtsp_conn_ctx_t *)param; 
-
+  rtsp_client_keepalive(ctx->c, 0);
+  
   if(flags)
   {
     printf("%s => encoding:%s, time:%08u, flags:%08d, drop.\n", ctx->name, encoding, time, flags);
@@ -117,7 +118,7 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 	struct timespec _ts;  
   clock_gettime(CLOCK_MONOTONIC, &_ts);
   ctx->last_time = _ts.tv_sec;
-    
+
 	if (0 == strcmp("H264", encoding))
 	{
 		uint8_t type = *(uint8_t*)packet & 0x1f;
