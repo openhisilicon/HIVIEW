@@ -88,14 +88,14 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
   return 0;
 }
 
-int gsf_lens_af_start(int ch)
+int gsf_lens_af_start(int ch, char *ttyAMA)
 {
   gsf_mpp_af_t af = {
       .uargs = (void*)ch,
       .cb = af_cb,
   };
   
-  af_uart_open("/dev/ttyAMA2");
+  af_uart_open(ttyAMA);
   if(ch < 0)
   	return 0;
   return gsf_mpp_af_start(&af);
@@ -139,8 +139,10 @@ int gsf_lens_cal(int ch)
 
 static int af_uart_open(char *ttyAMA)
 {
-  //UART2 MUX
-  system("himm 0x114F0058 3; himm 0x114F005c 3;");
+  if(strstr(ttyAMA, "ttyAMA4"))
+    system("himm 0x111F0000 2;himm 0x111F0004 2;"); //UART4 MUX
+  else if(strstr(ttyAMA, "ttyAMA2"))
+    system("himm 0x114F0058 3; himm 0x114F005c 3;"); //UART2 MUX
    
   if(!ttyAMA || strlen(ttyAMA) < 1)
     return -1;
@@ -196,7 +198,7 @@ static void* serial_task(void *parm)
 
 #else // !((GSF_CPU_3516d) || (GSF_CPU_3559))
 
-int gsf_lens_af_start(int ch) { return -1;}
+int gsf_lens_af_start(int ch, char *ttyAMA) { return -1;}
 int gsf_lens_stop(int ch)     { return -1;}
 int gsf_lens_zoom(int ch,  int dir, int speed) { return -1;}
 int gsf_lens_focus(int ch, int dir, int speed) { return -1;}

@@ -11,7 +11,7 @@ typedef struct {
 
 int gsf_lens_init(gsf_lens_ini_t *ini);
 
-int gsf_lens_af_start(int ch);
+int gsf_lens_af_start(int ch, char *ttyAMA);
 
 int gsf_lens_ircut(int ch, int dayNight);
 int gsf_lens_zoom(int ch,  int dir, int speed);

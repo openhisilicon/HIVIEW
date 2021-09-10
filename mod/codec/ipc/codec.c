@@ -745,9 +745,9 @@ int mpp_start(gsf_bsp_def_t *def)
     
     //start af;
 	#if LPR2UART
-	gsf_lens_af_start(-1);
+	gsf_lens_af_start(-1, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
 	#else
-	gsf_lens_af_start(0);
+	gsf_lens_af_start(0, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
 	#endif
     
     // vpss start;
