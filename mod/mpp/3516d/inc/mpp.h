@@ -65,6 +65,14 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 
 
+enum {
+  GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(ch);
+  GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(ch);
+};
+
+int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
+
+
 //venc;
 typedef struct {
   
@@ -124,8 +132,15 @@ enum {
 };
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
 
+typedef struct {
+  int filp;
+  int a;
+}gsf_mpp_img_attr;
+
+
 enum {
-  GSF_MPP_ISP_CTL_IR = 0, // 0: Day, 1: Night
+  GSF_MPP_ISP_CTL_IR  = 0, // 0: Day, 1: Night
+  GSF_MPP_ISP_CTL_IMG = 1,    // gsf_mpp_img_attr;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 

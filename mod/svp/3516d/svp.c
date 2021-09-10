@@ -61,7 +61,7 @@ HI_VOID SAMPLE_IVE_HandleSig2(HI_S32 s32Signo)
   signal(SIGTERM,SIG_IGN);
   
   //SAMPLE_IVE_Md_HandleSig();
-  //extern int lpr_stop(); lpr_stop();
+  extern int lpr_stop(); lpr_stop();
   extern int yolo_stop(); yolo_stop();
   extern int person_stop(); person_stop();
   
@@ -121,6 +121,7 @@ int main(int argc, char *argv[])
     reg2bsp();
 
     int yolo_alg = 0;
+    int lpr_alg  = 0;
     while(1)
     {
       if(yolo_alg != svp_cfg.yolo_alg)
@@ -135,6 +136,22 @@ int main(int argc, char *argv[])
         }
         yolo_alg = svp_cfg.yolo_alg;  
       }
+      
+      if(lpr_alg != svp_cfg.lpr_alg)
+      {
+        if(lpr_alg == 0 && svp_cfg.lpr_alg > 0)
+        {
+          lpr_start();
+        }
+        else if(lpr_alg > 0 && svp_cfg.lpr_alg == 0)
+        {
+          lpr_stop();
+        }
+        lpr_alg = svp_cfg.lpr_alg;  
+      }
+      
+      
+      
       sleep(1);
     }
     

@@ -21,14 +21,21 @@ static void* lpr_task(void* p);
 
 int lpr_start()
 {
-  pHand = liblpr_Init(1920, 1080, "/tmp");
+  if(!pHand)
+    pHand = liblpr_Init(1920, 1080, "/tmp");
+  s_bStopSignal = HI_FALSE;
   return pthread_create(&s_hMdThread, NULL, lpr_task, NULL);
 }
 
 int lpr_stop()
 {
-  s_bStopSignal = HI_TRUE;
-  return pthread_join(s_hMdThread, NULL);
+  if(s_hMdThread)
+  {
+    s_bStopSignal = HI_TRUE;
+    pthread_join(s_hMdThread, NULL);
+    s_hMdThread = 0;
+  }
+  return 0;
 }
 
 static void* lpr_task(void* p)
@@ -39,6 +46,8 @@ static void* lpr_task(void* p)
   HI_S32 as32VpssChn[] = {VPSS_CHN0, VPSS_CHN1};
   HI_S32 s32MilliSec = 1000;
   HI_U32 u32Size = 0;
+  
+  printf("start.\n");
   
   while (HI_FALSE == s_bStopSignal)
   {
@@ -70,10 +79,10 @@ static void* lpr_task(void* p)
       HI_CHAR* pVirAddr = (HI_CHAR*) HI_MPI_SYS_Mmap(stExtFrmInfo.stVFrame.u64PhyAddr[0], u32Size); 
 
       LPR_RECT rcRange;
-    	rcRange.m_iLeft= 0 + 200;
-    	rcRange.m_iTop= 0 + 200;
-    	rcRange.m_iRight = stExtFrmInfo.stVFrame.u32Width - 200;	
-    	rcRange.m_iBottom = stExtFrmInfo.stVFrame.u32Height - 200;
+    	rcRange.m_iLeft= 0 + 100;
+    	rcRange.m_iTop= 0 + 100;
+    	rcRange.m_iRight = stExtFrmInfo.stVFrame.u32Width - 100;	
+    	rcRange.m_iBottom = stExtFrmInfo.stVFrame.u32Height - 100;
 
       LPR_Result LPRResult[3];
   	  int PlateNum = 3;
@@ -91,14 +100,13 @@ static void* lpr_task(void* p)
       printf("s32Ret:%d, PlateNum:%d, cost:%d ms\n"
             , s32Ret, PlateNum
             , (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
-
-      if(s32Ret > 0)
+      if(1)
       {
         
         char buf[sizeof(gsf_msg_t) + sizeof(gsf_svp_lprs_t)];
         gsf_msg_t *msg = (gsf_msg_t*)buf;
         
-        memset(msg, 0, sizeof(*msg));
+        memset(msg, 0, sizeof(buf));
         msg->id = GSF_EV_SVP_LPR;
         msg->ts = time(NULL)*1000;
         msg->sid = 0;
@@ -110,25 +118,43 @@ static void* lpr_task(void* p)
         lprs->pts = stExtFrmInfo.stVFrame.u64PTS/1000;
         lprs->w = stExtFrmInfo.stVFrame.u32Width;
         lprs->h = stExtFrmInfo.stVFrame.u32Height;
-        lprs->cnt = PlateNum;
+        lprs->cnt = 4;//PlateNum;
         
         for(i=0;i<PlateNum;i++)
   			{
-  				strcpy(lprs->result[i].number, LPRResult[i].m_cPlatenum);
+  				if(LPRResult[i].m_fPlaterealty < 65.0 
+  				  || LPRResult[i].m_fLetterrealty[0] < 55.0
+  				  || LPRResult[i].m_fLetterrealty[1] < 55.0
+  				  || LPRResult[i].m_fLetterrealty[2] < 55.0
+  				  || LPRResult[i].m_fLetterrealty[3] < 55.0
+  				  || LPRResult[i].m_fLetterrealty[4] < 55.0
+  				  || LPRResult[i].m_fLetterrealty[5] < 55.0
+  				  || LPRResult[i].m_fLetterrealty[6] < 55.0
+  				  || (LPRResult[i].m_fLetterrealty[7] > 0.0 && LPRResult[i].m_fLetterrealty[7] < 70.0)
+  				  )
+  				  {
+              error("ERR i: %d str[%s][%0.f,%0.f,%0.f,%0.f,%0.f,%0.f,%0.f,%0.f]\n"
+    			        , i
+    			        , LPRResult[i].m_cPlatenum
+    			        , LPRResult[i].m_fLetterrealty[0], LPRResult[i].m_fLetterrealty[1], LPRResult[i].m_fLetterrealty[2], LPRResult[i].m_fLetterrealty[3]
+    			        , LPRResult[i].m_fLetterrealty[4], LPRResult[i].m_fLetterrealty[5], LPRResult[i].m_fLetterrealty[6], LPRResult[i].m_fLetterrealty[7]);
+  				    continue;  
+  				  }
+  				  
   				
-  				lprs->result[i].rect[0] = LPRResult[i].m_fPlaterect.m_iLeft;
+          info("OK i: %d str[%s][%0.f,%0.f,%0.f,%0.f,%0.f,%0.f,%0.f,%0.f]\n"
+  		        , i
+  		        , LPRResult[i].m_cPlatenum
+  		        , LPRResult[i].m_fLetterrealty[0], LPRResult[i].m_fLetterrealty[1], LPRResult[i].m_fLetterrealty[2], LPRResult[i].m_fLetterrealty[3]
+  		        , LPRResult[i].m_fLetterrealty[4], LPRResult[i].m_fLetterrealty[5], LPRResult[i].m_fLetterrealty[6], LPRResult[i].m_fLetterrealty[7]);
+  		    
+          lprs->result[i].rect[0] = LPRResult[i].m_fPlaterect.m_iLeft;
   				lprs->result[i].rect[1] = LPRResult[i].m_fPlaterect.m_iTop;
   				lprs->result[i].rect[2] = LPRResult[i].m_fPlaterect.m_iRight - LPRResult[i].m_fPlaterect.m_iLeft;
   				lprs->result[i].rect[3] = LPRResult[i].m_fPlaterect.m_iBottom - LPRResult[i].m_fPlaterect.m_iTop;
-  			
-  			  printf("i: %d rect[%d,%d,%d,%d], str[%s]\n"
-  			        , i
-  			        , lprs->result[i].rect[0]
-  			        , lprs->result[i].rect[1]
-  			        , lprs->result[i].rect[2]
-  			        , lprs->result[i].rect[3]
-  			        , lprs->result[i].number);
-  			}
+          //sprintf(lprs->result[i].number, "%s:%.0f", LPRResult[i].m_cPlatenum, LPRResult[i].m_fPlaterealty);
+          sprintf(lprs->result[i].number, "%s", LPRResult[i].m_cPlatenum);
+        }
         nm_pub_send(svp_pub, (char*)msg, sizeof(*msg)+msg->size);
       }
 

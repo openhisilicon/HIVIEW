@@ -15,11 +15,12 @@
 #include "venc.h"
 #include "lens.h"
 
-#define XYKJ 0
-
+#define HYBRID_TEST 0
+#define BT656EN  0
+#define LPR2UART 0
 #define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
 #define AVS_2CH_3516d 0  //  1: 2 sensor => vo => 1 venc;  0: 2 sensor => 2 venc;
-#define SECOND_CHANNEL XYKJ // second channel;
+#define SECOND_CHANNEL BT656EN // second channel;
 
 #ifndef PIC_VGA
 #define PIC_VGA PIC_CIF
@@ -27,21 +28,6 @@
 #ifndef PIC_7680x4320
 #define PIC_7680x4320 PIC_3840x2160
 #endif
-
-
-extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2);
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-    unsigned int len = cfifo_recsize(p1, n1, p2);
-    unsigned int l = CFIFO_MIN(len, n1);
-    char *p = (char*)u;
-    memcpy(p, p1, l);
-    memcpy(p+l, p2, len-l);
-    return len;
-}
-
 
 #define PIC_WIDTH(w, h) \
             (w >= 7680)?PIC_7680x4320:\
@@ -77,21 +63,26 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
 
+extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
+extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
+extern unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2);
+static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+{
+  unsigned int len = cfifo_recsize(p1, n1, p2);
+  unsigned int l = CFIFO_MIN(len, n1);
+  char *p = (char*)u;
+  memcpy(p, p1, l);
+  memcpy(p+l, p2, len-l);
+  return len;
+}
+
 static gsf_resolu_t vores;
 #define vo_res_set(_w, _h) do{vores.w = _w; vores.h = _h;}while(0)
-int vo_res_get(gsf_resolu_t *res)
-{
-  *res = vores;
-  return 0;
-}
+int vo_res_get(gsf_resolu_t *res) { *res = vores; return 0;}
 
 static gsf_layout_t voly;
 #define vo_ly_set(ly) do{voly.layout = ly;}while(0)
-int vo_ly_get(gsf_layout_t *ly)
-{
-  *ly = voly;
-  return 0;
-}
+int vo_ly_get(gsf_layout_t *ly) { *ly = voly; return 0;}
 
 static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
@@ -157,8 +148,8 @@ static int sub_recv(char *msg, int size, int err)
       osd.type = 0;
       osd.fontsize = 1;
 
-      osd.point[0] = 0;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
-      osd.point[1] = 800+i*100;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
+      osd.point[0] = 16+i*300;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
+      osd.point[1] = 16;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
       osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*1920)&(-1);
       osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*1080)&(-1);
       
@@ -166,9 +157,30 @@ static int sub_recv(char *msg, int size, int err)
       gsf_gb2312_to_utf8(lprs->result[i].number, strlen(lprs->result[i].number), utf8str);
       sprintf(osd.text, "%s", utf8str);
       
-      printf("GSF_EV_SVP_LPR idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
-            , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);
-            
+      //printf("GSF_EV_SVP_LPR idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
+      //      , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);
+      #if LPR2UART
+      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+      if(lprs->result[i].number[0])
+      {
+        //0xAA size [data0 data1 ... sum];
+        int l = 0;
+        unsigned char buf[16];
+        unsigned char sum = 0;
+        buf[0] = 0xAA;
+        buf[1] = strlen(lprs->result[i].number);
+        for(l = 0; l < buf[1]; l++)
+        {
+          buf[2+l] = lprs->result[i].number[l];
+          sum += buf[2+l];
+        }
+        buf[2+l] = sum;
+        buf[1] += 1;
+        extern int af_uart_write(char *buf, int size);
+        af_uart_write(buf, 2+buf[1]);
+      }
+      #endif
+	  #endif
       gsf_rgn_osd_set(0, i, &osd);
     }
   }
@@ -195,7 +207,7 @@ static int sub_recv(char *msg, int size, int err)
     for(i = 0; i < yolos->cnt; i++)
     {
       //person filter;
-      #if XYKJ
+      #if BT656EN
       if(!strstr(yolos->box[i].label, "person"))
         continue;
       #endif
@@ -536,11 +548,17 @@ int mpp_start(gsf_bsp_def_t *def)
             || strstr(cfg.snsname, "imx290"))
           {
           	// imx327-0-0-2-30
+          	#if 1
             cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
             VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-            
+            #else
+            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 120;
+            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+            venc_ini.ch_num = 1; venc_ini.st_num = 2;
+            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+            #endif
             if(cfg.second)
             {
               rgn_ini.ch_num = venc_ini.ch_num = 2;
@@ -642,23 +660,24 @@ int mpp_start(gsf_bsp_def_t *def)
         break;
         #endif
         
-        #if 1
-        // imx415-0-0-8-30
-        cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
-        break;
-        #endif
-        
-        #if 0
-        // imx335-0-0-4-30
-        cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
-        break;
-        #endif
+        if(strstr(cfg.snsname, "imx335"))
+        {
+          // imx335-0-0-4-30
+          cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
+          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+          venc_ini.ch_num = 1; venc_ini.st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+          break;
+        }
+        else
+        {
+          // imx415-0-0-8-30
+          cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
+          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+          venc_ini.ch_num = 1; venc_ini.st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+          break;
+        }
       }
       
       #elif defined(GSF_CPU_3531d)
@@ -725,7 +744,11 @@ int mpp_start(gsf_bsp_def_t *def)
     gsf_mpp_vi_start(&vi);
     
     //start af;
-    gsf_lens_af_start(0);
+	#if LPR2UART
+	gsf_lens_af_start(-1);
+	#else
+	gsf_lens_af_start(0);
+	#endif
     
     // vpss start;
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
@@ -765,46 +788,13 @@ int mpp_start(gsf_bsp_def_t *def)
     return 0;
 }
 
-int main(int argc, char *argv[])
+int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
-    gsf_bsp_def_t bsp_def;
-    if(argc < 2)
-    {
-      printf("pls input: %s codec_parm.json\n", argv[0]);
-      return -1;
-    }
-    
-    strncpy(codec_parm_path, argv[1], sizeof(codec_parm_path)-1);
-    
-    if(json_parm_load(codec_parm_path, &codec_ipc) < 0)
-    {
-      json_parm_save(codec_parm_path, &codec_ipc);
-      json_parm_load(codec_parm_path, &codec_ipc);
-    }
-    
-    info("parm.venc[0].type:%d, width:%d\n"
-          , codec_ipc.venc[0].type
-          , codec_ipc.venc[0].width);
-
-    // register to bsp && get bsp_def;
-    if(reg2bsp() < 0)
-      return -1;
-
-    if(getdef(&bsp_def) < 0)
-      return -1;
-
-    GSF_LOG_CONN(1, 100);
-
-    mpp_start(&bsp_def);
-
-    venc_start(1);
-
     // test hybrid;
-    int hybrid = 0;
+    int hybrid = HYBRID_TEST;
     gsf_shmid_t shmid = {-1, -1};
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-	
     //aenc;
     gsf_mpp_aenc_t aenc = {
       .AeChn = 0,
@@ -818,7 +808,6 @@ int main(int argc, char *argv[])
     // test vo;
     //int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
     int mipi_800x1280 = codec_ipc.vo.intf;
-
     if(mipi_800x1280)
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
@@ -863,6 +852,15 @@ int main(int argc, char *argv[])
         shmid = *((gsf_shmid_t*)__pmsg->data);
         printf("video_shmid:%d\n", shmid.video_shmid);
       }
+
+      if(shmid.video_shmid >= 0)
+      {
+        *fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
+        *frm = (gsf_frm_t*)malloc(800*1024);
+        cfifo_newest(*fifo, 1);
+        cfifo_set_u(*fifo, (void*)1);
+        printf("fifo:%p, frm:%p\n", *fifo, *frm);
+      }  
       
       if(sync == VO_OUTPUT_1080P60)
         vo_res_set(1920, 1080);
@@ -918,6 +916,78 @@ int main(int argc, char *argv[])
     gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
   
     #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+    
+    return 0;
+}
+
+int vo_sendfrm(struct cfifo_ex* fifo, gsf_frm_t* frm)
+{
+  if(!fifo || !frm)
+    return -1;
+  
+  // gsf_mpp_vo_vsend
+  #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+  do{
+    int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
+    if(ret <= 0)
+    {
+      //printf("err: cfifo_get ret:%d\n", ret);
+      usleep(10*1000);
+      break;
+    }
+    int ch = (int)(cfifo_get_u(fifo));
+    char *data = frm->data;
+    gsf_mpp_frm_attr_t attr;
+    attr.size   = frm->size;          // data size;
+    attr.ftype  = frm->flag;          // frame type;
+    attr.etype  = PT_VENC(frm->video.encode);// PAYLOAD_TYPE_E;
+    attr.width  = frm->video.width;   // width;
+    attr.height = frm->video.height;  // height;
+    attr.pts    = frm->pts*1000; // pts ms*1000;
+    ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, data, &attr);
+  }while(1);
+  #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+  
+  return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    gsf_bsp_def_t bsp_def;
+    if(argc < 2)
+    {
+      printf("pls input: %s codec_parm.json\n", argv[0]);
+      return -1;
+    }
+    
+    strncpy(codec_parm_path, argv[1], sizeof(codec_parm_path)-1);
+    
+    if(json_parm_load(codec_parm_path, &codec_ipc) < 0)
+    {
+      json_parm_save(codec_parm_path, &codec_ipc);
+      json_parm_load(codec_parm_path, &codec_ipc);
+    }
+    
+    info("parm.venc[0].type:%d, width:%d\n"
+          , codec_ipc.venc[0].type
+          , codec_ipc.venc[0].width);
+
+    // register to bsp && get bsp_def;
+    if(reg2bsp() < 0)
+      return -1;
+
+    if(getdef(&bsp_def) < 0)
+      return -1;
+
+    GSF_LOG_CONN(1, 100);
+
+    mpp_start(&bsp_def);
+
+    venc_start(1);
+
+    struct cfifo_ex* fifo = NULL;
+    gsf_frm_t *frm = NULL;
+    vo_start(&fifo, &frm);
 
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC
@@ -927,51 +997,15 @@ int main(int argc, char *argv[])
     
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
-    
-    struct cfifo_ex* fifo = NULL;
-    gsf_frm_t *frm = NULL;
-    if(shmid.video_shmid >= 0)
-    {
-      fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
-      frm = (gsf_frm_t*)malloc(800*1024);
-      cfifo_newest(fifo, 1);
-      printf("fifo:%p, frm:%p\n", fifo, frm);
-    }
-    
+
     while(1)
     {
-      //sleep(1);
-      if(!fifo || !frm)
+      if(vo_sendfrm(fifo, frm) < 0)
       {
-        //printf("err: fifo || frm\n");
         sleep(1);
-        continue;
       }
-      // gsf_mpp_vo_vsend
-      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-      do{
-        int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
-        if(ret <= 0)
-        {
-          //printf("err: cfifo_get ret:%d\n", ret);
-          usleep(10*1000);
-          break;
-        }
-
-        int ch = 1; // vo_channel;
-        char *data = frm->data;
-        gsf_mpp_frm_attr_t attr;
-        attr.size   = frm->size;          // data size;
-        attr.ftype  = frm->flag;          // frame type;
-        attr.etype  = PT_VENC(frm->video.encode);// PAYLOAD_TYPE_E;
-        attr.width  = frm->video.width;   // width;
-        attr.height = frm->video.height;  // height;
-        attr.pts    = frm->pts*1000; // pts ms*1000;
-        ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, data, &attr);
-      }while(1);
-      #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     }
-      
+
     GSF_LOG_DISCONN();
     return 0;
 }

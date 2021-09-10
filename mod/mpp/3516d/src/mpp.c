@@ -238,6 +238,9 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg);
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
+  //extern HI_S32 cipher_check(void);
+  //cipher_check();
+  
   mppex_hook_register();
   	
   if(cfg && cfg->snscnt > 0)
@@ -390,6 +393,25 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
   //SAMPLE_COMM_VI_StopVi(&stViConfig);
   return s32Ret;
 }
+
+
+int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
+{
+  int ret = -1;
+  switch(id)
+  {
+    case GSF_MPP_VPSS_CTL_PAUSE:
+      ret = HI_MPI_VPSS_StopGrp(VpssGrp);
+      printf("HI_MPI_VPSS_StopGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_RESUM:
+      ret = HI_MPI_VPSS_StartGrp(VpssGrp);
+      printf("HI_MPI_VPSS_StartGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+  }
+  return ret;
+}
+
 
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
 {
@@ -554,6 +576,10 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
     case GSF_MPP_ISP_CTL_IR:
       ret = ((int)args)?ISP_IrSwitchToIr(ViPipe):ISP_IrSwitchToNormal(ViPipe);
       break;
+    case GSF_MPP_ISP_CTL_IMG:
+      {
+        ;
+      }
     default:
       break;
   }
@@ -724,48 +750,9 @@ static int layer2vdev[VO_MAX_LAYER_NUM] = {
   [VOLAYER_HD0] = VODEV_HD0,
 };
 
-
-int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
+static int SAMPLE_VDEC_INIT(HI_U32 u32VdecChnNum)
 {
-    char loadstr[64];
-    sprintf(loadstr, "%s/ko/load3516dv300 -i", path);
-    printf("%s => loadstr: %s\n", __func__, loadstr);
-    system(loadstr);
-    
-    signal(SIGINT, SAMPLE_VDEC_HandleSig);
-    signal(SIGTERM, SAMPLE_VDEC_HandleSig);
-    
-    
     HI_S32 i, s32Ret = HI_SUCCESS;
-    HI_U32 u32VdecChnNum = 4;
-
-    /************************************************
-    step1:  init SYS, init common VB(for VPSS and VO)
-    *************************************************/
-    SIZE_S stDispSize;
-    PIC_SIZE_E enDispPicSize = PIC_1080P;
-    s32Ret =  SAMPLE_COMM_SYS_GetPicSize(enDispPicSize, &stDispSize);
-    if(s32Ret != HI_SUCCESS)
-    {
-        SAMPLE_PRT("sys get pic size fail for %#x!\n", s32Ret);
-        goto END1;
-    }
-
-	  stDispSize.u32Height = (stDispSize.u32Height == 1080)?1088:stDispSize.u32Height;
-
-    VB_CONFIG_S stVbConfig;
-    memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
-    stVbConfig.u32MaxPoolCnt             = 128;
-    stVbConfig.astCommPool[0].u32BlkCnt  = 10*u32VdecChnNum;
-    stVbConfig.astCommPool[0].u64BlkSize = COMMON_GetPicBufferSize(stDispSize.u32Width, stDispSize.u32Height,
-                                                PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_SEG, 0);
-    s32Ret = SAMPLE_COMM_SYS_Init(&stVbConfig);
-    if(s32Ret != HI_SUCCESS)
-    {
-        SAMPLE_PRT("init sys fail for %#x!\n", s32Ret);
-        goto END1;
-    }
-
     /************************************************
     step2:  init module VB or user VB(for VDEC)
     *************************************************/
@@ -789,22 +776,61 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
         goto END2;
     }
   
-  
     VDEC_MOD_PARAM_S stModParam;
   
     CHECK_RET(HI_MPI_VDEC_GetModParam(&stModParam), "HI_MPI_VDEC_GetModParam");
     stModParam.enVdecVBSource = g_enVdecVBSource;
-    CHECK_RET(HI_MPI_VDEC_SetModParam(&stModParam), "HI_MPI_VDEC_GetModParam");
-  
-    for(i = 0; i < VO_MAX_DEV_NUM; i++)
-    {
-      pthread_mutex_init(&vo_mng[i].lock, NULL);
-      //pthread_mutex_destroy(&mutex);
-    }
+    CHECK_RET(HI_MPI_VDEC_SetModParam(&stModParam), "HI_MPI_VDEC_GetModParam");  
     return 0;
-  
+    
 END2:
     SAMPLE_COMM_VDEC_ExitVBPool();
+    return s32Ret;
+}
+
+int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
+{
+    char loadstr[64];
+    sprintf(loadstr, "%s/ko/load3516dv300 -i", path);
+    printf("%s => loadstr: %s\n", __func__, loadstr);
+    system(loadstr);
+    
+    signal(SIGINT, SAMPLE_VDEC_HandleSig);
+    signal(SIGTERM, SAMPLE_VDEC_HandleSig);
+    
+    
+    HI_S32 i, s32Ret = HI_SUCCESS;
+
+    /************************************************
+    step1:  init SYS, init common VB(for VPSS and VO)
+    *************************************************/
+    SIZE_S stDispSize;
+    PIC_SIZE_E enDispPicSize = PIC_1080P;
+    s32Ret =  SAMPLE_COMM_SYS_GetPicSize(enDispPicSize, &stDispSize);
+    if(s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("sys get pic size fail for %#x!\n", s32Ret);
+        goto END1;
+    }
+
+	  stDispSize.u32Height = (stDispSize.u32Height == 1080)?1088:stDispSize.u32Height;
+
+    VB_CONFIG_S stVbConfig;
+    memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
+    stVbConfig.u32MaxPoolCnt             = 128;
+    stVbConfig.astCommPool[0].u32BlkCnt  = 10*4;
+    stVbConfig.astCommPool[0].u64BlkSize = COMMON_GetPicBufferSize(stDispSize.u32Width, stDispSize.u32Height,
+                                                PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_SEG, 0);
+    s32Ret = SAMPLE_COMM_SYS_Init(&stVbConfig);
+    if(s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("init sys fail for %#x!\n", s32Ret);
+        goto END1;
+    }
+
+    //move to gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
+    return 0;
+  
 END1:
     SAMPLE_COMM_SYS_Exit();
   return s32Ret;
@@ -817,7 +843,7 @@ END1:
 //启动视频输出设备;
 int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wbc)
 {
-    HI_S32 i, s32Ret = HI_SUCCESS;
+    HI_S32 i, j, s32Ret = HI_SUCCESS;
     SIZE_S stDispSize;
     PIC_SIZE_E enDispPicSize = PIC_1080P;
     SAMPLE_VO_CONFIG_S stVoConfig;
@@ -862,7 +888,21 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     vo_mng[vodev].sync = stVoConfig.enIntfSync;
     printf("vodev:%d, intf:%d, sync:%d, u32Width:%d, u32Height:%d\n"
             , vodev, vo_mng[vodev].intf, vo_mng[vodev].sync, stDispSize.u32Width, stDispSize.u32Height);         
-            
+
+    for(i = 0; i < VO_MAX_DEV_NUM; i++)
+    {
+      pthread_mutex_init(&vo_mng[i].lock, NULL);
+      //pthread_mutex_destroy(&mutex);
+      for(j = 0; j < VOLAYER_BUTT; j++)
+      {
+        int k = 0;
+        for(k = 0; k < VO_MAX_CHN_NUM; k++)
+          vo_mng[i].layer[j].chs[k].src_grp = vo_mng[i].layer[j].chs[k].src_chn = -1;
+      }
+    }
+
+    SAMPLE_VDEC_INIT(4);
+
     mppex_hook_vo(sync);
     return s32Ret;
 }
@@ -884,9 +924,7 @@ int gsf_mpp_vo_stop(int vodev)
     return 0;
 }
 
-
-
-//创建图像层显示通道;
+//创建视频层显示通道;
 int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 {
   int i = 0;
@@ -905,12 +943,19 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
   for(i = 0; i < vdev->layer[volayer].cnt; i++)
   {
     // unbind vo && vpss && vdec;
-    SAMPLE_COMM_VPSS_UnBind_VO(vdev->layer[volayer].chs[i].src_grp, vdev->layer[volayer].chs[i].src_chn, volayer, i);
-    if(vdev->layer[volayer].chs[i].src_type >= VO_SRC_VDVP)
+    
+    int vpss_grp = vdev->layer[volayer].chs[i].src_grp;
+    int vpss_chn = vdev->layer[volayer].chs[i].src_chn;
+    
+    if(vpss_grp != -1)
     {
-      SAMPLE_COMM_VDEC_UnBind_VPSS(i, i);
-      HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
-      SAMPLE_COMM_VPSS_Stop(i, chen);
+      SAMPLE_COMM_VPSS_UnBind_VO(vpss_grp, vpss_chn, volayer, i);
+      if(vdev->layer[volayer].chs[i].src_type >= VO_SRC_VDVP)
+      {
+        SAMPLE_COMM_VDEC_UnBind_VPSS(i, vpss_grp);
+        HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
+        SAMPLE_COMM_VPSS_Stop(vpss_grp, chen);
+      }
     }
     // only set width = height = 0, tell gsf_mpp_vo_vsend to recreate vdec&vpss;
     vdev->layer[volayer].chs[i].width = vdev->layer[volayer].chs[i].height = 0;
@@ -930,8 +975,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
   
   pthread_mutex_unlock(&vdev->lock);
   
- 
-  if(0)
+  if(0) //test RGN for VO;
   {
       HI_S32             s32Ret;
       HI_S32             HandleNum;
@@ -1005,27 +1049,32 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     vdev->layer[volayer].chs[ch].height = attr->height;
     vdev->layer[volayer].chs[ch].etype  = attr->etype;
     vdev->layer[volayer].chs[ch].src_type = VO_SRC_VDVP;
-    vdev->layer[volayer].chs[ch].src_grp = ch;
-    vdev->layer[volayer].chs[ch].src_chn = VPSS_CHN0;
+    
+    int vpss_grp = vdev->layer[volayer].chs[ch].src_grp;
+    int vpss_chn = vdev->layer[volayer].chs[ch].src_chn;
+    
     // VOLAYER_HD0: [0 - VPSS_MAX_GRP_NUM/2]
     // VOLAYER_PIP: [VPSS_MAX_GRP_NUM/2 - VPSS_MAX_GRP_NUM];
-
-    // unbind vo && vpss && vdec;
-    SAMPLE_COMM_VPSS_UnBind_VO(ch, VPSS_CHN0, volayer, ch);
-    SAMPLE_COMM_VDEC_UnBind_VPSS(ch, ch);
+    vdev->layer[volayer].chs[ch].src_grp = VPSS_MAX_GRP_NUM/2 + ch;
+    vdev->layer[volayer].chs[ch].src_chn = VPSS_CHN0;
     
-    // stop  vpss;
-    #if 0
-    s32Ret = HI_MPI_VPSS_StopGrp(ch);
-    s32Ret = HI_MPI_VPSS_DisableChn(ch, VPSS_CHN0);
-    s32Ret = HI_MPI_VPSS_DestroyGrp(ch);
-    #else
-    HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
-    s32Ret = SAMPLE_COMM_VPSS_Stop(ch, chen);
-    #endif
-    // stop  vdec;
-    HI_MPI_VDEC_StopRecvStream(ch);
-    HI_MPI_VDEC_DestroyChn(ch);
+    // unbind vo && vpss && vdec;
+    if(vpss_grp != -1)
+    {
+      SAMPLE_COMM_VPSS_UnBind_VO(vpss_grp, VPSS_CHN0, volayer, ch);
+      SAMPLE_COMM_VDEC_UnBind_VPSS(ch, vpss_grp);
+      
+      // stop  vpss;
+      HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
+      s32Ret = SAMPLE_COMM_VPSS_Stop(vpss_grp, chen);
+
+      // stop  vdec;
+      HI_MPI_VDEC_StopRecvStream(ch);
+      HI_MPI_VDEC_DestroyChn(ch);
+    }
+    // reset vpss_grp,vpss_chn;
+    vpss_grp = vdev->layer[volayer].chs[ch].src_grp;
+    vpss_chn = vdev->layer[volayer].chs[ch].src_chn;
     
     // start vdec;
     if(1)
@@ -1126,9 +1175,9 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       stChnAttr.stAspectRatio.enMode        = ASPECT_RATIO_NONE;
       stChnAttr.enVideoFormat               = VIDEO_FORMAT_LINEAR;
       
-      s32Ret = HI_MPI_VPSS_SetChnAttr(ch, VPSS_CHN0, &stChnAttr);
-      s32Ret = HI_MPI_VPSS_EnableChn(ch, VPSS_CHN0);
-      s32Ret = HI_MPI_VPSS_StartGrp(ch);
+      s32Ret = HI_MPI_VPSS_SetChnAttr(vpss_grp, vpss_chn, &stChnAttr);
+      s32Ret = HI_MPI_VPSS_EnableChn(vpss_grp, vpss_chn);
+      s32Ret = HI_MPI_VPSS_StartGrp(vpss_grp);
     }
     else
     {
@@ -1164,11 +1213,11 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       }
       
       HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
-      s32Ret = SAMPLE_COMM_VPSS_Start(ch, chen, &stGrpAttr, stChnAttr);
+      s32Ret = SAMPLE_COMM_VPSS_Start(vpss_grp, chen, &stGrpAttr, stChnAttr);
     }
     // bind  vdec && vpss && vo;
-    s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, ch);
-    s32Ret = SAMPLE_COMM_VPSS_Bind_VO(ch, VPSS_CHN0, volayer, ch);
+    s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, vpss_grp);
+    s32Ret = SAMPLE_COMM_VPSS_Bind_VO(vpss_grp, vpss_chn, volayer, ch);
   }
   
   pthread_mutex_unlock(&vdev->lock);
@@ -1189,9 +1238,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 
 int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 {
-  
   //audio dec bind vo;
-  
   return 0;
 }
 
@@ -1287,16 +1334,22 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
   pthread_mutex_lock(&vdev->lock);
 
   // unbind vo && vpss && vdec;
-  SAMPLE_COMM_VPSS_UnBind_VO(vdev->layer[volayer].chs[ch].src_grp, vdev->layer[volayer].chs[ch].src_chn, volayer, ch);
-  if(vdev->layer[volayer].chs[ch].src_type >= VO_SRC_VDVP)
+  int vpss_grp = vdev->layer[volayer].chs[ch].src_grp;
+  int vpss_chn = vdev->layer[volayer].chs[ch].src_chn;
+  
+  if(vpss_grp != -1)
   {
-    // stop vpss;
-    SAMPLE_COMM_VDEC_UnBind_VPSS(ch, ch);
-    HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
-    SAMPLE_COMM_VPSS_Stop(ch, chen);
-    //stop vdec;
-    HI_MPI_VDEC_StopRecvStream(ch);
-    HI_MPI_VDEC_DestroyChn(ch);
+    SAMPLE_COMM_VPSS_UnBind_VO(vpss_grp, vpss_chn, volayer, ch);
+    if(vdev->layer[volayer].chs[ch].src_type >= VO_SRC_VDVP)
+    {
+      // stop vpss;
+      SAMPLE_COMM_VDEC_UnBind_VPSS(ch, vpss_grp);
+      HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
+      SAMPLE_COMM_VPSS_Stop(vpss_grp, chen);
+      //stop vdec;
+      HI_MPI_VDEC_StopRecvStream(ch);
+      HI_MPI_VDEC_DestroyChn(ch);
+    }
   }
   // only set width = height = 0, tell gsf_mpp_vo_vsend to recreate vdec&vpss;
   vdev->layer[volayer].chs[ch].width = vdev->layer[volayer].chs[ch].height = 0;

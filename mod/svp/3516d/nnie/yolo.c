@@ -56,6 +56,7 @@ int yolo_stop()
     pthread_join(s_hMdThread, NULL);
     s_hMdThread = 0;
   }
+  return 0;
 }
 
 

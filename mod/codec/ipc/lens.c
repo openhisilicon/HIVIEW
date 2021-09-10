@@ -48,7 +48,7 @@ int gsf_lens_ircut(int ch, int dayNight)
 
 #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
 
-static int af_uart_write(char *buf, int size)
+int af_uart_write(char *buf, int size)
 {
   int ret = 0;
 
@@ -59,8 +59,9 @@ static int af_uart_write(char *buf, int size)
     
     ret = write(serial_fd, buf, size);
     #if DEBUG
-    printf("ret:%d, ms:%u, buf[%02X %02X %02X %02X %02X %02X %02X %02X]\n", 
-        ret, (ts1.tv_sec*1000 + ts1.tv_nsec/1000000), buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+    printf("ret:%d, ms:%u, buf[%02X %02X %02X %02X %02X %02X %02X %02X]\n"
+        , ret, (ts1.tv_sec*1000 + ts1.tv_nsec/1000000)
+        , buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
     #endif
 	}
 	return ret;
@@ -95,6 +96,8 @@ int gsf_lens_af_start(int ch)
   };
   
   af_uart_open("/dev/ttyAMA2");
+  if(ch < 0)
+  	return 0;
   return gsf_mpp_af_start(&af);
 }
 
@@ -141,7 +144,7 @@ static int af_uart_open(char *ttyAMA)
    
   if(!ttyAMA || strlen(ttyAMA) < 1)
     return -1;
-    
+  //O_NDELAY blocking read;
   serial_fd = open(ttyAMA, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
   if (serial_fd < 0)
   {
@@ -167,8 +170,11 @@ static void* serial_task(void *parm)
     ret = read(serial_fd, buf, 4);
     if(buf[0] != 0xef || buf[1] != 0x01 || buf[2] != 0x00)
     {
+      #if DEBUG
       printf("err read ret:%d, buf[%02X %02X %02X %02X]\n"
           , ret, buf[0], buf[1], buf[2], buf[3]);
+      #endif
+      usleep(10);
       continue;
     }
     
