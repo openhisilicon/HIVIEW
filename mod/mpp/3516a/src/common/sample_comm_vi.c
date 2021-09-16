@@ -3094,6 +3094,7 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
             break;
 
         case SONY_IMX290_MIPI_2M_30FPS_12BIT:
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX290_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             break;
 
@@ -3682,6 +3683,7 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_DEV_ATTR_S
             
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case SONY_IMX290_MIPI_2M_30FPS_12BIT_WDR2TO1:
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
             memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX290_2M_BASE, sizeof(VI_DEV_ATTR_S));
             pstViDevAttr->au32ComponentMask[0] = 0xFFC00000;
             break;
@@ -3845,6 +3847,7 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
 
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case SONY_IMX290_MIPI_2M_30FPS_12BIT_WDR2TO1:
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_1920x1080_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             pstPipeAttr->enPixFmt = PIXEL_FORMAT_RGB_BAYER_10BPP;
             pstPipeAttr->enBitWidth = DATA_BITWIDTH_10;
@@ -3991,6 +3994,7 @@ HI_S32 SAMPLE_COMM_VI_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S
 
         case SONY_IMX390_MIPI_2M_30FPS_12BIT:
         case SONY_IMX290_MIPI_2M_30FPS_12BIT:
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
         case SONY_IMX290_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT:
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT_WDR2TO1:
@@ -5645,7 +5649,9 @@ HI_S32 SAMPLE_COMM_VI_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu3
         case OMNIVISION_OV9284_MIPI_1M_60FPS_10BIT:
             *pu32FrameRate = 60;
             break;
-
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
+            *pu32FrameRate = 120;
+            break;
         default:
             *pu32FrameRate = 30;
             break;

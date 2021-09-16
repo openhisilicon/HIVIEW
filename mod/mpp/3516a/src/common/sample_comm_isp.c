@@ -521,6 +521,10 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX290_2M_30FPS, sizeof(ISP_PUB_ATTR_S));
             break;
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
+            memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX290_2M_30FPS, sizeof(ISP_PUB_ATTR_S));
+            pstPubAttr->f32FrameRate = 120;
+            break;
         case SONY_IMX290_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT_WDR2TO1:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX290_MIPI_2M_30FPS_WDR2TO1_LINE, sizeof(ISP_PUB_ATTR_S));
@@ -708,6 +712,7 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
             return &stSnsImx390Obj;
         case SONY_IMX290_MIPI_2M_30FPS_12BIT:
         case SONY_IMX290_MIPI_2M_30FPS_12BIT_WDR2TO1:
+        case SONY_IMX290_MIPI_2M_120FPS_12BIT:
             return &stSnsImx290Obj;
             
         case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT:
