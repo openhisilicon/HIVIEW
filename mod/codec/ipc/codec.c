@@ -15,11 +15,11 @@
 #include "venc.h"
 #include "lens.h"
 
-#define HYBRID_TEST 0
-#define BT656EN  0
-#define LPR2UART 0
-#define AVS_4CH_3559a 0  //  1: 4 sensor => avs => 1 venc; 0: 4 sensor => 4 venc; 
-#define AVS_2CH_3516d 0  //  1: 2 sensor => vo => 1 venc;  0: 2 sensor => 2 venc;
+#define HYBRIDEN 0       // 1: 1 sensor + 1 rtsp => vo;
+#define BT656EN  0       // 1: 1 sensor + bt656;
+#define LPR2UART 0       // 1: GSF_EV_SVP_LPR => uart;
+#define AVS_4CH_3559a 0  // 1: 4 vi => avs => 1 venc; 0: 4 vi => 4 venc;
+#define AVS_2CH_3516d 0  // 1: 2 vi => vo => 1 venc;  0: 2 vi => 2 venc;
 #define SECOND_CHANNEL BT656EN // second channel;
 
 #ifndef PIC_VGA
@@ -815,7 +815,7 @@ int mpp_start(gsf_bsp_def_t *def)
 int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
     // test hybrid;
-    int hybrid = HYBRID_TEST;
+    int hybrid = HYBRIDEN;
     gsf_shmid_t shmid = {-1, -1};
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
