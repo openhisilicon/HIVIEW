@@ -29,7 +29,8 @@ int mppex_hook_sns(gsf_mpp_cfg_t *cfg);
 int mppex_hook_vi(SAMPLE_VI_CONFIG_S *pstViConfig);
 int mppex_hook_vpss_bb(gsf_mpp_vpss_t *vpss);
 int mppex_hook_vpss_ee(gsf_mpp_vpss_t *vpss);
-int mppex_hook_venc(gsf_mpp_venc_t *venc);
+int mppex_hook_venc_bb(gsf_mpp_venc_t *venc);
+int mppex_hook_venc_ee(gsf_mpp_venc_t *venc);
 int mppex_hook_vo(VO_INTF_SYNC_E sync);
 int mppex_hook_destroy();
 

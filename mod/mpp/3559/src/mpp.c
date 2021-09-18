@@ -430,6 +430,8 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
   HI_S32 s32Ret;
   VENC_GOP_ATTR_S stGopAttr;
   
+  mppex_hook_venc_bb(venc);
+  
   s32Ret = SAMPLE_COMM_VENC_GetGopAttr(venc->enGopMode,&stGopAttr);
   if (HI_SUCCESS != s32Ret)
   {
@@ -462,7 +464,7 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
     }
   }
 
-  mppex_hook_venc(venc);
+  mppex_hook_venc_ee(venc);
   return s32Ret;
 
 EXIT_VENC_UnBind:

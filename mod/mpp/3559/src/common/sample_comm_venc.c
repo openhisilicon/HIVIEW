@@ -1429,12 +1429,19 @@ HI_S32 SAMPLE_COMM_VENC_SnapProcessCB(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)
   HI_S32 ret = 0;
   pthread_mutex_lock(&SnapMutex);
   SnapCB = cb;
-  SnapU = u;
+  SnapU  = u;
   ret = SAMPLE_COMM_VENC_SnapProcess(VencChn, SnapCnt, 0, 0);
+  SnapCB = NULL;
   pthread_mutex_unlock(&SnapMutex);
   
   return ret;
 }
+
+HI_S32 SAMPLE_COMM_VENC_SnapRunning(VENC_CHN VencChn)
+{
+  return (int)SnapCB;
+}
+
 
 
 HI_S32 SAMPLE_COMM_VENC_SnapProcess(VENC_CHN VencChn, HI_U32 SnapCnt, HI_BOOL bSaveJpg, HI_BOOL bSaveThm)

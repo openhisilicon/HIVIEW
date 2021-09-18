@@ -156,7 +156,6 @@ typedef struct {
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc);
 int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc);
 
-
 enum {
   GSF_MPP_RGN_CREATE      = 0, // HI_MPI_RGN_Create
   GSF_MPP_RGN_DESTROY     = 1, // HI_MPI_RGN_Destroy
