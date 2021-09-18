@@ -11,13 +11,6 @@
 ### 3. https://github.com/openhisilicon/PRODUCT
 ## Features:
 <img src=/res/fw.jpg width=88% />
-<img src=/res/webs.jpg width=88% />
-<img src=/res/rtspserv1.jpg width=88% />
-<img src=/res/nvr.jpg width=88% />
-<img src=/res/svp.jpg width=88% />
-<img src=/res/multi-sns.jpg width=88% />
-<img src=/res/mipi-dsi.jpg width=88% />
-
 ### Thanks for your support
 
 #### Paypal:
