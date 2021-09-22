@@ -18,10 +18,11 @@ static int _dayNight = 0;
 int gsf_lens_init(gsf_lens_ini_t *ini)
 {
   _ini = *ini;
+  
   return 0;
 }
 
-int gsf_lens_ircut(int ch, int dayNight)
+static int ir_cb(int ViPipe, int dayNight, void* uargs)
 {
   if(strstr(_ini.sns, "imx334"))
   {
@@ -37,6 +38,13 @@ int gsf_lens_ircut(int ch, int dayNight)
     else
       system("echo 1 > /sys/class/gpio/gpio27/value;echo 0 > /sys/class/gpio/gpio28/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio27/value;");
   }
+  return 0;
+}
+
+
+int gsf_lens_ircut(int ch, int dayNight)
+{
+  ir_cb(ch, dayNight, NULL);
   
   #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
   gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IR, (void*)dayNight);
@@ -90,6 +98,10 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
 
 int gsf_lens_af_start(int ch, char *ttyAMA)
 {
+  //test auto ircut;
+  gsf_mpp_ir_t ir = {.cb = ir_cb};
+  gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IR, &ir);
+  
   gsf_mpp_af_t af = {
       .uargs = (void*)ch,
       .cb = af_cb,
@@ -98,6 +110,7 @@ int gsf_lens_af_start(int ch, char *ttyAMA)
   af_uart_open(ttyAMA);
   if(ch < 0)
   	return 0;
+
   return gsf_mpp_af_start(&af);
 }
 
