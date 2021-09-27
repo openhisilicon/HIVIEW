@@ -7,6 +7,7 @@ STRUCT(gsf_board_t)
   STRING(type,    32);
   FIELD(int,      snscnt);
   ARRAY2(string,  sensor, 8, 32);
+  FIELD(int,      second);
   FIELD(uint64,   caps);
 };
 

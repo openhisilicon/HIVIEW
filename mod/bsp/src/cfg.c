@@ -18,6 +18,7 @@ gsf_bsp_def_t bsp_def = {
     .snscnt = 1,
     .sensor = {"imx327", "", },
 #endif
+    .second = 0,
     .caps   = 0xFFFFFFFF,
     },
   .base = {

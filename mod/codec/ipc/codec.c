@@ -16,11 +16,10 @@
 #include "lens.h"
 
 #define HYBRIDEN 0       // 1: 1 sensor + 1 rtsp => vo;
-#define BT656EN  0       // 1: 1 sensor + bt656;
+#define PERSON_FILTER 0  // 1: only show person;
 #define LPR2UART 0       // 1: GSF_EV_SVP_LPR => uart;
 #define AVS_4CH_3559a 0  // 1: 4 vi => avs => 1 venc; 0: 4 vi => 4 venc;
 #define AVS_2CH_3516d 0  // 1: 2 vi => vo => 1 venc;  0: 2 vi => 2 venc;
-#define SECOND_CHANNEL BT656EN // second channel;
 
 #ifndef PIC_VGA
 #define PIC_VGA PIC_CIF
@@ -207,7 +206,7 @@ static int sub_recv(char *msg, int size, int err)
     for(i = 0; i < yolos->cnt; i++)
     {
       //person filter;
-      #if BT656EN
+      #if PERSON_FILTER
       if(!strstr(yolos->box[i].label, "person"))
         continue;
       #endif
@@ -510,9 +509,11 @@ int mpp_start(gsf_bsp_def_t *def)
         //cpu type; 
         strcpy(cfg.type, def->board.type);
         
-        //second channel;
-        cfg.second = (cfg.snscnt > 1)?0:SECOND_CHANNEL;
-
+        //second channel from bsp_def.json;
+        cfg.second = (cfg.snscnt > 1)?0:
+                     (def->board.second <= 0)?0:def->board.second;
+        printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);
+        
         #if(AVS_2CH_3516d == 1)
         {
           // imx335-0-0-4-30
