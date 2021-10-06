@@ -769,11 +769,13 @@ int mpp_start(gsf_bsp_def_t *def)
     gsf_mpp_vi_start(&vi);
     
     //start af;
-	#if LPR2UART
-	gsf_lens_af_start(-1, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
-	#else
-	gsf_lens_af_start(0, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
-	#endif
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+  	#if LPR2UART
+  	gsf_lens_af_start(-1, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
+  	#else
+  	gsf_lens_af_start(0, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
+  	#endif
+  	#endif
     
     // vpss start;
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
