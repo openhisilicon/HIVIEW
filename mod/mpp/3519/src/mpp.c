@@ -93,7 +93,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
     printf("%s => snsstr:%s, unknow.\n", __func__, snsstr);
     return -1;
   } 
-  
+
   char loadstr[256];
   //sprintf(loadstr, "%s/ko/load3519v101 -i -sensor0 %s -offline", path, cfg->snsname);
   // fixed vi0=>snsname, vi1=>bt1120;
@@ -196,7 +196,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     stViConfig.enViMode   = SENSOR_TYPE;
     stViConfig.enRotate   = ROTATE_NONE;
     stViConfig.enNorm     = VIDEO_ENCODING_MODE_AUTO;
-    stViConfig.enViChnSet = VI_CHN_SET_FLIP; //VI_CHN_SET_NORMAL; // maohw VI_CHN_SET_FLIP for sml imx334;
+    stViConfig.enViChnSet = (SENSOR_TYPE == SONY_IMX334_MIPI_4K_30FPS)?VI_CHN_SET_FLIP:VI_CHN_SET_NORMAL; // maohw VI_CHN_SET_FLIP for sml imx334;
     stViConfig.enWDRMode  = WDR_MODE_NONE;
     s32Ret = SAMPLE_COMM_VI_StartVi(&stViConfig);
     if (HI_SUCCESS != s32Ret)
