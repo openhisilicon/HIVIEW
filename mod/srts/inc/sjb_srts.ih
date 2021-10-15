@@ -1,0 +1,10 @@
+#pragma pack(push, 4)
+
+STRUCT(gsf_srts_t)
+{
+  FIELD(int, en);
+  STRING(url, 256); //"srt://:6666"
+};
+
+
+#pragma pack(pop)

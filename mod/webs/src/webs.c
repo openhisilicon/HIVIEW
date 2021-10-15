@@ -159,9 +159,6 @@ int main(int argc, char *argv[])
 
   reg2bsp();
 
-  // udpsend port;
-  //rawudp_open("192.168.0.166", 5555);
-
   //libws port;
   //ws_flv_open(7788);
   

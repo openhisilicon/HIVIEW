@@ -4,18 +4,20 @@ CC := $(shell echo ${GSF_CC})
 AR := $(shell echo ${GSF_AR})
 CFLAGS := $(shell echo ${GSF_CFLAGS})
 LDFLAGS := -g $(shell echo ${GSF_LDFLAGS})
-TARG := bin/webs.exe
+TARG := bin/srts.exe
 
 #============================================================= 
 
 INCS := -I$(HOME) -Isrc -Iinc \
-        -I$(HOME)/fw/openssl/openssl-1.1.0l \
-        -DMG_ENABLE_HTTP_STREAMING_MULTIPART
+        -I$(HOME)/fw/comm/inc \
+        -I$(HOME)/fw/libmpeg/inc
+        
 #SRCS := $(shell ls src/*.c)
-SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
-OBJS := $(patsubst %.c, %.o, $(SRCS))
+SUBDIRS=$(shell find ./src/ -maxdepth 7 -type d)
+SRCS:=$(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lssl -lcrypto -lm
+OBJS := $(patsubst %.c, %.o, $(SRCS))
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lmpeg -lcfifo -lnm -lcjson -lm -lpthread -lrt
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
@@ -25,7 +27,7 @@ $(TARG): SJB $(OBJS)
 	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
 
 SJB:
-	touch src/sjb_webs.c;touch src/webs.c
+	touch src/sjb_srts.c;touch src/cfg.c
   
 .Phony: clean
 clean:

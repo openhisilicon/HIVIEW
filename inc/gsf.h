@@ -35,6 +35,8 @@ enum {
     GSF_MOD_ID_SVP   = 6,
     GSF_MOD_ID_APP   = 7,
     GSF_MOD_ID_SIPS  = 8,
+    GSF_MOD_ID_RTMPS = 9,
+    GSF_MOD_ID_SRTS  = 10,
     //user custom mod;
     GSF_MOD_ID_END   = 15
 };

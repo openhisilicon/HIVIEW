@@ -15,6 +15,7 @@ MOD_DIRS := mod/bsp   \
 			mod/svp   \
 			mod/rtmps \
 			mod/sips  \
+			mod/srts  \
 			mod/app 
 
 FW_DIRS :=  fw/nm       \

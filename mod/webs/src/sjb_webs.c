@@ -10,6 +10,7 @@
 #include "mod/onvif/inc/sjb_onvif.h"
 #include "mod/svp/inc/sjb_svp.h"
 #include "mod/sips/inc/sjb_sips.h"
+#include "mod/srts/inc/sjb_srts.h"
 // add ...
 
 // source
@@ -25,6 +26,7 @@
 #include "mod/onvif/inc/sjb_onvif.ih"
 #include "mod/svp/inc/sjb_svp.ih"
 #include "mod/sips/inc/sjb_sips.ih"
+#include "mod/srts/inc/sjb_srts.ih"
 // add ...
 
 
