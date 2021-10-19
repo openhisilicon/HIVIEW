@@ -8,14 +8,21 @@ TARG := bin/webs.exe
 
 #============================================================= 
 
+#WEBRTC
+RTC_INCS :=  -DWEBRTC_ENABLE
+RTC_LIBS := -lkvsWebrtcClient -lkvspic -lsrtp2 -lusrsctp
+
 INCS := -I$(HOME) -Isrc -Iinc \
         -I$(HOME)/fw/openssl/openssl-1.1.0l \
-        -DMG_ENABLE_HTTP_STREAMING_MULTIPART
+        -DMG_ENABLE_HTTP_STREAMING_MULTIPART \
+        -I$(HOME)/fw/kvs/inc $(RTC_INCS)
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lssl -lcrypto -lm
+
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) $(RTC_LIBS) \
+        -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lssl -lcrypto -lm
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)

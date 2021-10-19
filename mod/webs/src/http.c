@@ -19,9 +19,9 @@
 
 #include "http.h"
 #include "cfg.h"
+#include "webrtc.h"
 
-
-static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
+unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
     unsigned int size = sizeof(gsf_frm_t);
 
@@ -42,7 +42,7 @@ static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned c
     return 0;
 }
 
-static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
+unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
     unsigned int size = sizeof(gsf_frm_t);
 
@@ -63,7 +63,7 @@ static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned ch
     return 0;
 }
 
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
 {
     unsigned int len = cfifo_recsize(p1, n1, p2);
     unsigned int l = CFIFO_MIN(len, n1);
@@ -90,6 +90,7 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
 
 #define MAX_FRAME_SIZE (800*1024)
 typedef struct {
+  char flag[32];  //session flag;
   struct cfifo_ex* video;
   struct cfifo_ex* audio;
   unsigned char* data;
@@ -106,13 +107,14 @@ typedef struct {
   unsigned int wr, rd;
 }lws_session_t;
 
+
 static pthread_t gpid;
 static int session_cnt = 0;
 static sig_atomic_t s_received_signal = 0;
 
 #if 1
 
-static void on_stdin_read(struct mg_connection *nc, int ev, void *p) {
+static void on_flv_send(struct mg_connection *nc, int ev, void *p) {
   (void) ev;
   
   if(!p)
@@ -154,8 +156,6 @@ static void on_stdin_read(struct mg_connection *nc, int ev, void *p) {
     
   }
 }
-
-
 
 static void be_write_uint32(uint8_t* ptr, uint32_t val)
 {
@@ -210,7 +210,7 @@ static int flv_send_header(lws_session_t *sess)
   sess->wsbuf_len[sess->wr%2] = len;
   //assert(sess->wr - sess->rd < 2);
   sess->wr++;
-  mg_broadcast(mgr, on_stdin_read, &sess, sizeof(sess)); 
+  mg_broadcast(mgr, on_flv_send, &sess, sizeof(sess)); 
   
   
   return 0;
@@ -235,7 +235,7 @@ static int flv_send_tag(lws_session_t *sess, int type, const void* data, size_t 
   sess->wsbuf_len[sess->wr%2] = len;
   //assert(sess->wr - sess->rd < 2);
   sess->wr++;
-  mg_broadcast(mgr, on_stdin_read, &sess, sizeof(sess)); 
+  mg_broadcast(mgr, on_flv_send, &sess, sizeof(sess)); 
   
   
   return 0;
@@ -408,6 +408,7 @@ static void *send_thread_func(void *param) {
 
 struct mg_serve_http_opts s_http_server_opts;
 
+
 static void ev_handler(struct mg_connection *nc, int ev, void *p) {
   switch (ev) {
 
@@ -429,7 +430,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         return;
         }
     
-      if(!nc->user_data)
+      if(!nc->user_data && !strncmp(hm->uri.p, "/flv", strlen("/flv")))
       {
         int ret = 0;
         int channel = 0, sid = 0;
@@ -456,6 +457,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         session_cnt++;
         
         lws_session_t *sess = (lws_session_t*)calloc(1, sizeof(lws_session_t));
+        strcpy(sess->flag, "flv");
         sess->data     = malloc(MAX_FRAME_SIZE);
         sess->wsbuf[0] = malloc(MAX_FRAME_SIZE);
         sess->wsbuf[1] = malloc(MAX_FRAME_SIZE);
@@ -475,14 +477,63 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         printf("open ok video_shmid:%d, audio_shmid:%d, flv:%p, uri:%.*s\n"
             , sdp->video_shmid, sdp->audio_shmid, sess->flv, (int) hm->uri.len, hm->uri.p);
       }
-
+      else if(!nc->user_data && !strncmp(hm->uri.p, "/webrtc", strlen("/webrtc")))
+      {
+        // new session;
+        rtc_sess_t *rtc_sess = rtc_sess_new();
+        rtc_sess->mgr = nc->mgr;
+        nc->user_data = rtc_sess;
+        printf("SET rtc_sess nc:%p, user_data:%p\n", nc, nc->user_data);
+      }
       break;
     }
     
     case MG_EV_WEBSOCKET_FRAME: {
       struct websocket_message *wm = (struct websocket_message *) p;
+      
+      #if 0
       printf("MG_EV_WEBSOCKET_FRAME [%s:%d], nc:%p, user_data:%p\n"
             , wm->data, wm->size, nc, nc->user_data);
+      #endif
+      
+      if(nc->user_data && !strncmp(nc->user_data, "rtc", 3))
+      {
+        rtc_sess_t *rtc_sess = (rtc_sess_t*)nc->user_data;
+        
+        if(!strncmp(wm->data, "{\"type\":\"hello", strlen("{\"type\":\"hello")))
+        {
+          char sdp_json[4096] = {0};
+          unsigned int sdp_json_len = sizeof(sdp_json);
+          
+          rtc_createOffer(rtc_sess, sdp_json, sdp_json_len);
+          printf("send createOffer:[%s]\n\n", sdp_json);
+          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, sdp_json, strlen(sdp_json));
+        }
+        else if(!strncmp(wm->data, "{\"type\":\"answer", strlen("{\"type\":\"answer")))
+        {
+          char sdp_json[4096] = {0};
+          
+          memcpy(sdp_json, wm->data, wm->size);
+          printf("recv createAnswe:[%s]\n\n", sdp_json);
+
+          rtc_setAnswer(rtc_sess, sdp_json);
+          
+        }
+        else if(!strncmp(wm->data, "{\"candidate\":\"candidate", strlen("{\"candidate\":\"candidate")))
+        {
+          char ice_json[4096] = {0};
+          
+          memcpy(ice_json, wm->data, wm->size);
+          printf("recv candidate:[%s]\n\n", ice_json);
+         
+          rtc_setCandidate(rtc_sess, ice_json);
+          
+          char *local_ice = rtc_getCandidate(rtc_sess);
+          printf("send candidate:[%s]\n\n", local_ice);
+          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, local_ice, strlen(local_ice));
+        }
+      }
+      
       break;
     }
     
@@ -492,13 +543,25 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
     }
 
     case MG_EV_CLOSE:{
-      printf("MG_EV_CLOSE [%s], nc:%p, user_data:%p\n", "", nc, nc->user_data);
-      lws_session_t *sess = (lws_session_t*)nc->user_data;
-      if(sess)
+      if(nc->user_data)
       {
-        if(sess->thread_id)
+        if(!strncmp(nc->user_data, "flv", 3))
         {
-          sess->thread_exit = 1;
+          printf("MG_EV_CLOSE [%s], nc:%p, user_data:%p\n", "flv", nc, nc->user_data);
+          
+          lws_session_t *sess = (lws_session_t*)nc->user_data;
+          if(sess->thread_id)
+          {
+            sess->thread_exit = 1;
+          }
+        }
+        else if(!strncmp(nc->user_data, "rtc", 3))
+        {
+          printf("MG_EV_CLOSE [%s], nc:%p, user_data:%p\n", "rtc", nc, nc->user_data);
+          
+          // free sesson;
+          rtc_sess_t *rtc_sess = (rtc_sess_t*)nc->user_data;
+          rtc_sess_free(rtc_sess);
         }
       }
       break;
@@ -511,9 +574,40 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 
 int http_close()
 {
+  rtc_uninit();
+  
   s_received_signal = 1;
   return pthread_join(gpid, NULL);
 }
+
+
+
+
+static void on_rtc_send(struct mg_connection *nc, int ev, void *p) {
+  (void) ev;
+  
+  if(!p)
+  {
+    printf("%s => p == NULL.\n", __func__);
+    return;
+  }
+  
+  rtc_sess_t *sess = (rtc_sess_t*)p;
+
+  //printf("%s => >>>>>>>>nc:%p, user_data:%p, sess:%p\n", __func__, nc, nc->user_data,sess);
+  
+  struct mg_connection *c = nc;
+  
+  if(1)//for (c = mg_next(nc->mgr, NULL); c != NULL; c = mg_next(nc->mgr, c)) 
+  {
+    if (c->user_data != NULL) {
+      if (c->user_data == sess) {
+          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, sess->ice_json, strlen(sess->ice_json));
+      }
+    }
+  }
+}
+
 
 
 static void* ws_task(void* parm);
@@ -523,6 +617,8 @@ int http_open(int port)
   
   system("ifconfig lo 127.0.0.1");
   
+  rtc_init();
+
   s_received_signal = 0;
   if(pthread_create(&gpid, NULL, ws_task, (void*)port) != 0)
   {
