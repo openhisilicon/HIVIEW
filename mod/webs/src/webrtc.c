@@ -28,19 +28,40 @@ unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2
 unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
 unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u);
 
+struct list_head sess_list;
+pthread_mutex_t sess_list_lock;
+pthread_once_t once = PTHREAD_ONCE_INIT;
+rtc_sess_t *__rtc_sess_new();
+int __rtc_sess_free(rtc_sess_t *rtc_sess);
+
+void once_run(void)  
+{ 
+  int i = 0;
+  for(i = 0; i < 2; i++)
+  {
+    rtc_sess_t* rtc_sess = __rtc_sess_new();
+    
+    pthread_mutex_lock(&sess_list_lock);
+    list_add(&rtc_sess->list, &sess_list);
+    pthread_mutex_unlock(&sess_list_lock);
+  }
+}  
+
 int rtc_init()
 {
   int ret = initKvsWebRtc();
   printf("initKvsWebRtc ret:%x\n", ret);
   
-  return ret;
+  INIT_LIST_HEAD(&sess_list);
+  pthread_mutex_init(&sess_list_lock, NULL);
+  return pthread_once(&once,once_run);
 }
 int rtc_uninit()
 {
   return deinitKvsWebRtc();
 }
 
-int rtc_sess_free(rtc_sess_t *rtc_sess)
+int __rtc_sess_free(rtc_sess_t *rtc_sess)
 {
   int ret = 0;
   rtc_sess->terminated = 1;
@@ -51,6 +72,16 @@ int rtc_sess_free(rtc_sess_t *rtc_sess)
   free(rtc_sess);
   return ret;
 }
+
+int rtc_sess_free(rtc_sess_t *rtc_sess)
+{
+  __rtc_sess_free(rtc_sess);
+  
+  rtc_sess = __rtc_sess_new();
+  list_add(&rtc_sess->list, &sess_list);
+  return 0;
+}
+
 
 void* rtc_video_send_task(void *parm);
 
@@ -118,7 +149,7 @@ void rtc_RtcOnFrame(UINT64 customData, PFrame frame)
   }
 }
 
-rtc_sess_t *rtc_sess_new()
+rtc_sess_t *__rtc_sess_new()
 {
   int ret = 0;
   rtc_sess_t *rtc_sess = calloc(1, sizeof(rtc_sess_t));
@@ -159,6 +190,24 @@ rtc_sess_t *rtc_sess_new()
   printf("new rtc_sess:%p\n", rtc_sess);
   return rtc_sess;
 }
+
+
+rtc_sess_t *rtc_sess_new()
+{
+  rtc_sess_t *rtc_sess = NULL;
+  
+  pthread_mutex_lock(&sess_list_lock);
+  
+  if(!list_empty(&sess_list))
+  {
+    rtc_sess = list_entry(sess_list.next, rtc_sess_t, list); 
+    list_del(&rtc_sess->list);
+  }
+  pthread_mutex_unlock(&sess_list_lock);
+  
+  return rtc_sess;
+}
+
 
 int rtc_createOffer(rtc_sess_t *rtc_sess, char* sdp_json, int sdp_json_len)
 {
