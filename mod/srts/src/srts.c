@@ -192,26 +192,30 @@ void* udp_send_task(void *parm)
   void* ts = mpeg_ts_create(&tshandler, &dest);
   
   GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
-  sdp->video_shmid = sdp->audio_shmid = -1;
-  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, 0
-                        , sizeof(gsf_sdp_t)
-                        , GSF_IPC_CODEC
-                        , 2000);
+  do
+  {
+    //wait codec.exe;
+    sdp->video_shmid = sdp->audio_shmid = -1;
+    ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, 0
+                          , sizeof(gsf_sdp_t)
+                          , GSF_IPC_CODEC
+                          , 2000);
+  }while(destport && ret < 0);
+  
   if(ret == 0)
   {
     video_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->video_shmid);
     //audio_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->audio_shmid);
     
-	cfifo_ep_ctl(ep, CFIFO_EP_ADD, video_fifo);
-	unsigned int video_utc = cfifo_newest(video_fifo, 1);
-	 
-	if(audio_fifo)
-	{
-	  cfifo_ep_ctl(ep, CFIFO_EP_ADD, audio_fifo);
-	  unsigned int audio_utc = cfifo_oldest(audio_fifo, video_utc);
-	  printf("video_utc:%u, audio_utc:%u\n", video_utc, audio_utc);
-	}
-    
+    cfifo_ep_ctl(ep, CFIFO_EP_ADD, video_fifo);
+    unsigned int video_utc = cfifo_newest(video_fifo, 1);
+     
+    if(audio_fifo)
+    {
+      cfifo_ep_ctl(ep, CFIFO_EP_ADD, audio_fifo);
+      unsigned int audio_utc = cfifo_oldest(audio_fifo, video_utc);
+      printf("video_utc:%u, audio_utc:%u\n", video_utc, audio_utc);
+    }
   }
   while(destport)
   {
