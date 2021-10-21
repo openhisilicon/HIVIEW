@@ -1,0 +1,271 @@
+<div id="main_view"></div>
+<div id="main_code"></div>
+
+<!--CODE-->
+<link rel="stylesheet" type="text/css" href="../webrtc/demo.css">
+<div class="content">
+  
+  <div id="ctl_container">
+    <div id="channel_select">
+      <label for="channel_name">Enter a channel name:</label>
+      <input id="channel_name" type="text" value="01239F-C8ADE4-630DEE"></input>
+      <button id="connect_channel">Connect</button>
+    </div>
+    
+    <div id="channel_close">
+      <label for="channel_tips">Please close it before you leave:</label>
+      <button id="close_channel">Close</button>
+    </div>
+  </div>
+  
+  <video autoPlay style="width: 960px; height: 540px; margin-left: 2px;"></video>
+
+  <div id="logs_container">
+    <div id="reliable_logs">
+      <h2>WebSocket Logs</h2>
+      <ul id="reliable_log_list">
+      </ul>
+    </div>
+    
+    <div id="datachannel_logs">
+      <h2>DataChannel Logs</h2>
+      <label for="datachannel_msg">Send Msg:</label>
+      <input id="datachannel_msg" type="text"></input>
+      <button id="send_datachannel_msg">Send</button>
+      <ul id="datachannel_log_list">
+      </ul>
+    </div>
+  </div>
+
+  
+
+</div>
+
+<!--CODE-->
+
+<script src="../webrtc/adapter.min.js"></script>
+
+<script>
+  
+  
+function reliable_log_msg(msg) {
+  console.log(msg);
+  $("#reliable_log_list").prepend("<li>" + msg + "</li>");
+}
+
+function datachannel_log_msg(msg) {
+  console.log(msg);
+  $("#datachannel_log_list").prepend("<li>" + msg + "</li>");
+}
+
+
+// Global vars
+var dataChannelLabel = "op";
+var reliableSocket = null;
+var peerConnection = null;
+var dataChannel = null;
+var remoteCandidates = [];
+var have_offer = false;
+
+
+$(function () {
+
+  /**
+   * Add the various callback handlers to the PeerConnection.
+   * Shared between both clients.
+   */
+  var setupPeerConnection = function () {
+    
+    //peerConnection = new RTCPeerConnection();
+    
+    peerConnection = new RTCPeerConnection({
+      iceServers: [{
+          urls: "stun:208.91.197.54:3478"
+         }]
+   	});
+    
+    peerConnection.onaddstream = function(obj) {
+	var vid = document.querySelector("video");
+	vid.srcObject = obj.stream;
+    }
+    
+    peerConnection.onicecandidate = function (event) {
+      if (event.candidate) {
+        reliableSocket.sendMessage("candidate", event.candidate);
+      } else {
+        reliableSocket.sendMessage("candidate", {"candidate":""});
+        datachannel_log_msg("All local candidates received");
+      }
+    };
+
+    peerConnection.ondatachannel = function (event) {
+      if (event.channel.label == dataChannelLabel) {
+        dataChannel = event.channel;
+        datachannel_log_msg("DataChannel received");
+        setupDataChannel(event.channel);
+      } else {
+        datachannel_log_msg("Unknown CataChannel label: " + event.channel.label);
+      }
+    }
+  };
+
+  /**
+   * Add the various callback handlers to the DataChannel.
+   * Shared between both clients.
+   */
+  var setupDataChannel = function (dataChannel) {
+    dataChannel.onopen = function (e) {
+      datachannel_log_msg("DataChannel open and ready to be used");
+
+      $("#send_datachannel_msg").click(function () {
+        var msg = $("#datachannel_msg").val();
+        datachannel_log_msg("Sending message: " + msg);
+        dataChannel.send(msg);
+      });
+    };
+
+    dataChannel.onclose = function () {
+      datachannel_log_msg("DataChannel closed");
+    };
+
+    dataChannel.onerror = function (e) {
+      datachannel_log_msg("DataChannel error: " + e.message);
+      console.log(e);
+    };
+
+    dataChannel.onmessage = function (e) {
+      datachannel_log_msg("Received message: " + e.data);
+    };
+  };
+
+  var createAnswer = function (msg) {
+    setupPeerConnection();
+
+    var desc = new RTCSessionDescription(msg);
+
+    peerConnection.setRemoteDescription(desc)
+    .then(function () {
+      return peerConnection.createAnswer();
+    })
+    .then(function(answer) {
+      return peerConnection.setLocalDescription(answer);
+    })
+    .then(function() {
+      reliableSocket.sendMessage("answer", peerConnection.localDescription);
+    })
+    .catch(function () {
+      console.log("RTC Error", reason);
+    });
+  };
+
+  var closePeerConnection = function () {
+    
+    console.log("closePeerConnection ...\n");
+    
+    if(peerConnection != null)
+    {
+      console.log("peerConnection.close()\n");
+      peerConnection.close();
+      peerConnection = null;
+    }
+
+    if(reliableSocket != null)
+    {
+      console.log("reliableSocket.close()\n");
+      reliableSocket.close();
+      reliableSocket = null;
+    }
+    
+    dataChannel = null;
+    remoteCandidates = [];
+    have_offer = false;
+    
+    console.log("closePeerConnection end.\n");
+  };
+
+  var handleCandidate = function (msg) {
+    var candidate = new RTCIceCandidate(msg);
+    peerConnection.addIceCandidate(candidate).then(function () {
+      datachannel_log_msg("New remote candidate received");
+    }).catch(function (e) {
+      console.log("Error: Failure during addIceCandidate()", e);
+    });
+  }
+
+  $("#connect_channel").on('click', function (e) {
+    var channel_name = $("#channel_name").val();
+    var wsAddress = "ws://" + window.location.host + "/webrtc/channel/" + channel_name;
+    console.log("Attempting WebSocket connection to " + wsAddress);
+
+    reliableSocket = new WebSocket(wsAddress);
+
+    reliableSocket.onopen = function (event) {
+      // Socket is now ready to send and receive messages
+      console.log("reliableSocket is open and ready to use");
+      reliableSocket.sendMessage("hello", {});
+    };
+
+    reliableSocket.onerror = function (event) {
+      // Socket failed to connect
+    };
+
+    reliableSocket.onclose = function (event) {
+      console.log("ERROR: Reliable socket has closed");
+    };
+
+    // Simple helper to send JSON messages with a given type
+    reliableSocket.sendMessage = function (type, msg) {
+      reliable_log_msg("Sending msg of type: " + type);
+      var jsonStr = JSON.stringify(msg);
+      var msg_clone_ = JSON.parse(jsonStr);
+      msg_clone_["type"] = type;
+      reliableSocket.send(JSON.stringify(msg_clone_));
+    }
+
+    reliableSocket.onmessage = function (event) {
+      console.log("Got msg", event);
+      var msg = JSON.parse(event.data);
+
+      reliable_log_msg("Received msg of type: " + msg.type);
+      console.log(msg);
+
+      switch (msg.type) {
+        case "offer":
+          createAnswer(msg);
+          have_offer = true;
+          var i = 0;
+          for (i = 0; i < remoteCandidates.length; i++) {
+            handleCandidate(remoteCandidates[i]);
+          }
+          break;
+        case "candidate":
+          if (msg.candidate) {
+            if (!have_offer) {
+              remoteCandidates.push(msg);
+            } else {
+              handleCandidate(msg);
+            }
+          } else {
+            console.log("Remote peer has no more candidates");
+          }
+          break;
+        default:
+          console.log("WARNING: Ignoring unknown msg of type '" + msg.type + "'");
+          break;
+      }
+    };
+
+
+  });
+
+
+  $("#close_channel").on('click', function (e) {
+    
+    closePeerConnection();
+    
+  });
+  
+
+});
+
+</script>

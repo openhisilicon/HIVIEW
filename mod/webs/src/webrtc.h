@@ -5,6 +5,7 @@
 
 typedef struct {
   char flag[32];
+  struct list_head list;
   void *mgr;
   pthread_t pid;
   PRtcPeerConnection  peer_;

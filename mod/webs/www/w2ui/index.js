@@ -25,12 +25,12 @@ $(function () {
                     }
                }
             },
-            { type: 'main', style: 'background-color: white;' 
+            { type: 'main', style: 'background-color: Snow;'
             }
         ]
     });
     
-    w2ui['main_layout'].content('top', '<div style="padding: 12px 20px; font-size: 18px;">HiView Webs</div>');
+    w2ui['main_layout'].content('top', '<div style="padding: 12px 20px; font-size: 18px; background-color: SkyBlue;">HiView Webs</div>');
     load_html('left', 'sidebar-live');
 
 });

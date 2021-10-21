@@ -481,7 +481,10 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
       {
         // new session;
         rtc_sess_t *rtc_sess = rtc_sess_new();
-        rtc_sess->mgr = nc->mgr;
+        if(rtc_sess)
+        {  
+          rtc_sess->mgr = nc->mgr;
+        }
         nc->user_data = rtc_sess;
         printf("SET rtc_sess nc:%p, user_data:%p\n", nc, nc->user_data);
       }
@@ -529,8 +532,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
           rtc_setCandidate(rtc_sess, ice_json);
           
           char *local_ice = rtc_getCandidate(rtc_sess);
-          printf("send candidate:[%s]\n\n", local_ice);
-          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, local_ice, strlen(local_ice));
+          if(local_ice)
+          {
+            printf("send candidate:[%s]\n\n", local_ice);
+            mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, local_ice, strlen(local_ice));
+          }
         }
       }
       

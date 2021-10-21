@@ -13,3 +13,17 @@
 #datachannel_logs {
   flex: 1;
 }
+
+#ctl_container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+#channel_select {
+  flex: 1;
+}
+
+#channel_close {
+  flex: 1;
+}

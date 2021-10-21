@@ -30,14 +30,16 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
 
 struct list_head sess_list;
 pthread_mutex_t sess_list_lock;
-pthread_once_t once = PTHREAD_ONCE_INIT;
+pthread_t once = PTHREAD_ONCE_INIT;
 rtc_sess_t *__rtc_sess_new();
 int __rtc_sess_free(rtc_sess_t *rtc_sess);
 
-void once_run(void)  
+void* once_run(void* parm)  
 { 
-  int i = 0;
-  for(i = 0; i < 2; i++)
+  pthread_detach(pthread_self());
+  
+  int i = 0, cnt = (int)parm;
+  for(i = 0; i < cnt; i++)
   {
     rtc_sess_t* rtc_sess = __rtc_sess_new();
     
@@ -45,6 +47,7 @@ void once_run(void)
     list_add(&rtc_sess->list, &sess_list);
     pthread_mutex_unlock(&sess_list_lock);
   }
+  return NULL;
 }  
 
 int rtc_init()
@@ -54,7 +57,7 @@ int rtc_init()
   
   INIT_LIST_HEAD(&sess_list);
   pthread_mutex_init(&sess_list_lock, NULL);
-  return pthread_once(&once,once_run);
+  return pthread_create(&once, NULL, once_run, (void*)2);
 }
 int rtc_uninit()
 {
@@ -65,9 +68,15 @@ int __rtc_sess_free(rtc_sess_t *rtc_sess)
 {
   int ret = 0;
   rtc_sess->terminated = 1;
-  pthread_join(rtc_sess->pid, NULL);
-  ret = closePeerConnection(rtc_sess->peer_);
-  ret |= freePeerConnection(&rtc_sess->peer_);
+  
+  if(rtc_sess->pid)
+    pthread_join(rtc_sess->pid, NULL);
+  
+  if(rtc_sess->peer_)
+  {  
+    ret = closePeerConnection(rtc_sess->peer_);
+    ret |= freePeerConnection(&rtc_sess->peer_);
+  }
   printf("free rtc_sess:%p\n", rtc_sess);
   free(rtc_sess);
   return ret;
@@ -75,11 +84,12 @@ int __rtc_sess_free(rtc_sess_t *rtc_sess)
 
 int rtc_sess_free(rtc_sess_t *rtc_sess)
 {
+  if(!rtc_sess)
+    return -1;
+  
   __rtc_sess_free(rtc_sess);
   
-  rtc_sess = __rtc_sess_new();
-  list_add(&rtc_sess->list, &sess_list);
-  return 0;
+  return pthread_create(&once, NULL, once_run, (void*)1);
 }
 
 
@@ -211,6 +221,9 @@ rtc_sess_t *rtc_sess_new()
 
 int rtc_createOffer(rtc_sess_t *rtc_sess, char* sdp_json, int sdp_json_len)
 {
+  if(!rtc_sess)
+    return -1;
+    
   RtcSessionDescriptionInit offer;
   createOffer(rtc_sess->peer_, &offer);
   setLocalDescription(rtc_sess->peer_, &offer);
@@ -222,6 +235,9 @@ int rtc_createOffer(rtc_sess_t *rtc_sess, char* sdp_json, int sdp_json_len)
           
 int rtc_setAnswer(rtc_sess_t *rtc_sess, char* sdp_json)
 {
+  if(!rtc_sess)
+    return -1;
+    
   RtcSessionDescriptionInit answer;
   int ret = deserializeSessionDescriptionInit(sdp_json, strlen(sdp_json), &answer);
   printf("deserializeSessionDescriptionInit ret:0x%x\n", ret);
@@ -235,6 +251,9 @@ int rtc_setAnswer(rtc_sess_t *rtc_sess, char* sdp_json)
 
 int rtc_setCandidate(rtc_sess_t *rtc_sess, char* ice_json)
 {
+  if(!rtc_sess)
+    return -1;
+    
   RtcIceCandidateInit ice;
   
   int ret = deserializeRtcIceCandidateInit(ice_json, strlen(ice_json), &ice);
@@ -249,6 +268,9 @@ int rtc_setCandidate(rtc_sess_t *rtc_sess, char* ice_json)
 
 char* rtc_getCandidate(rtc_sess_t *rtc_sess)
 {
+  if(!rtc_sess)
+    return NULL;
+    
   return rtc_sess->ice_json;
 }
 
