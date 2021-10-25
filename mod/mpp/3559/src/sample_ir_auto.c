@@ -50,7 +50,8 @@ typedef struct
 	pthread_t pThread;
 }HI_IR_AUTO_THREAD_S;
 static HI_IR_AUTO_THREAD_S g_astIrThread[ISP_MAX_PIPE_NUM] = {{0}};
-
+static pthread_mutex_t g_ir_mutex = PTHREAD_MUTEX_INITIALIZER;
+static gsf_mpp_ir_t g_ir_switch = {0,};
 static ISP_IR_AUTO_ATTR_S g_astIrAttr[ISP_MAX_PIPE_NUM] = {{0}};
 static VI_PIPE ViPipe = 0;
 
@@ -378,14 +379,24 @@ static HI_S32 SAMPLE_IR_Set_Reg(HI_U32 u32Addr,HI_U32 u32Value)
 }
 
 //Normal Mode
-void SAMPLE_IR_CUT_ENBLE(void)
-{                                      //only EV300 demo
+void SAMPLE_IR_CUT_ENBLE(VI_PIPE ViPipe)
+{   
+    pthread_mutex_lock(&g_ir_mutex);
+    if(g_ir_switch.cb)
+    {
+      g_ir_switch.cb(ViPipe, 0, g_ir_switch.uargs);
+    }
+    pthread_mutex_unlock(&g_ir_mutex);
+    
+    g_astIrAttr[ViPipe].enIrStatus = ISP_IR_STATUS_NORMAL;
+    return;
+    
+    //only EV300 demo
     // himm 0x120c0008 0
     // himm 0x120c000c 0
     // himm 0x120B1400 0xff
     // himm 0x120B1010 0x4
     // himm 0x120B1020 0x8
-
 
     //pin_mux
     SAMPLE_IR_Set_Reg(0x120c0008,0x0);//GPIO1_2, GPIO
@@ -403,8 +414,17 @@ void SAMPLE_IR_CUT_ENBLE(void)
 
 }
 //IR MODE
-void SAMPLE_IR_CUT_DISABLE(void)
+void SAMPLE_IR_CUT_DISABLE(VI_PIPE ViPipe)
 {
+    pthread_mutex_lock(&g_ir_mutex);
+    if(g_ir_switch.cb)
+    {
+      g_ir_switch.cb(ViPipe, 1, g_ir_switch.uargs);
+    }
+    pthread_mutex_unlock(&g_ir_mutex);
+    g_astIrAttr[ViPipe].enIrStatus = ISP_IR_STATUS_IR;
+    return;
+  
     //pin_mux
     SAMPLE_IR_Set_Reg(0x120c0008,0x0);//GPIO1_2, GPIO
     SAMPLE_IR_Set_Reg(0x120c000c,0x0);//GPIO1_3, GPIO
@@ -460,7 +480,7 @@ HI_S32 ISP_IrSwitchToNormal(VI_PIPE ViPipe)
     ISP_COLORMATRIX_ATTR_S stIspCCMAttr;
 
     /* switch ir-cut to normal */
-    //maohw SAMPLE_IR_CUT_ENBLE();
+    SAMPLE_IR_CUT_ENBLE(ViPipe);
 
 
     /* switch isp config to normal */
@@ -575,7 +595,7 @@ HI_S32 ISP_IrSwitchToIr(VI_PIPE ViPipe)
     usleep(1000000);
 
     /* switch ir-cut to ir */
-    //maohw SAMPLE_IR_CUT_DISABLE();
+    SAMPLE_IR_CUT_DISABLE(ViPipe);
 
 
     return HI_SUCCESS;
@@ -600,6 +620,12 @@ HI_S32 SAMPLE_ISP_IrAutoRun(VI_PIPE ViPipe)
         /* run_interval: 40 ms */
         //usleep(40000);
         usleep(40000*4);
+        
+        if(!g_ir_switch.cb)
+          continue;
+        else
+          stIrAttr.enIrStatus = g_astIrAttr[ViPipe].enIrStatus;
+        
         s32Ret = HI_MPI_ISP_IrAutoRunOnce(ViPipe, &stIrAttr);
         if (HI_SUCCESS != s32Ret)
         {
@@ -618,7 +644,7 @@ HI_S32 SAMPLE_ISP_IrAutoRun(VI_PIPE ViPipe)
                 return s32Ret;
             }
 
-            stIrAttr.enIrStatus = ISP_IR_STATUS_IR;
+            g_astIrAttr[ViPipe].enIrStatus = stIrAttr.enIrStatus = ISP_IR_STATUS_IR;
         }
         else if (ISP_IR_SWITCH_TO_NORMAL == stIrAttr.enIrSwitch) /* IR to Normal */
         {
@@ -631,7 +657,7 @@ HI_S32 SAMPLE_ISP_IrAutoRun(VI_PIPE ViPipe)
                 return s32Ret;
             }
 
-            stIrAttr.enIrStatus = ISP_IR_STATUS_NORMAL;
+            g_astIrAttr[ViPipe].enIrStatus = stIrAttr.enIrStatus = ISP_IR_STATUS_NORMAL;
         }
         else
         {}
@@ -767,6 +793,45 @@ int SAMPLE_IR_AUTO_Thread(int argc,char* argv[])
 
     return HI_SUCCESS;
 }
+
+HI_S32 ISP_IrMode(gsf_mpp_ir_t *ir)
+{
+  pthread_mutex_lock(&g_ir_mutex);
+  if(ir)
+    g_ir_switch = *ir;
+  else
+    g_ir_switch.cb = NULL;
+  pthread_mutex_unlock(&g_ir_mutex);
+  return 0;
+}
+
+
+
+HI_S32 ISP_IrSwitchAuto(VI_PIPE ViPipe)
+{
+    if(g_astIrThread[ViPipe].pThread)
+      return 0;
+  
+    /* need to modified when sensor/lens/IR-cut/Infrared light changed */
+    g_astIrAttr[ViPipe].bEnable = HI_TRUE;
+    g_astIrAttr[ViPipe].u32Normal2IrIsoThr = 16000;
+    g_astIrAttr[ViPipe].u32Ir2NormalIsoThr = 400;
+    g_astIrAttr[ViPipe].u32RGMax = 280 *1.5;
+    g_astIrAttr[ViPipe].u32RGMin = 190 /1.5;
+    g_astIrAttr[ViPipe].u32BGMax = 280 *1.5;
+    g_astIrAttr[ViPipe].u32BGMin = 190 /1.5;
+    g_astIrAttr[ViPipe].enIrStatus = ISP_IR_STATUS_NORMAL;
+    
+    g_astIrThread[ViPipe].bThreadFlag = HI_TRUE;
+
+    int s32Ret = pthread_create(&g_astIrThread[ViPipe].pThread, HI_NULL, SAMPLE_ISP_IrAutoThread, (HI_VOID *)ViPipe);
+    if (0 != s32Ret)
+    {
+        printf("%s: create isp ir_auto thread failed!, error: %d, %s\r\n", __FUNCTION__, s32Ret, strerror(s32Ret));
+        return HI_FAILURE;
+    }    
+}
+
 
 /******************************************************************************
 * function : to process abnormal case

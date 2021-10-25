@@ -48,6 +48,8 @@ extern int sample_af_main(gsf_mpp_af_t *af);
 //from sample_ir_auto.c;
 extern HI_S32 ISP_IrSwitchToIr(VI_PIPE ViPipe);
 extern HI_S32 ISP_IrSwitchToNormal(VI_PIPE ViPipe);
+extern HI_S32 ISP_IrSwitchAuto(VI_PIPE ViPipe);
+extern HI_S32 ISP_IrMode(gsf_mpp_ir_t *ir);
 
 //from sample_audio.c;
 extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
@@ -593,7 +595,21 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   switch(id)
   {
     case GSF_MPP_ISP_CTL_IR:
-      ret = ((int)args)?ISP_IrSwitchToIr(ViPipe):ISP_IrSwitchToNormal(ViPipe);
+      switch((int)args)
+      {
+        case 0:
+          ISP_IrMode((gsf_mpp_ir_t*)NULL);
+          ret = ISP_IrSwitchToNormal(ViPipe);
+          break;
+        case 1:
+          ISP_IrMode((gsf_mpp_ir_t*)NULL);
+          ret = ISP_IrSwitchToIr(ViPipe);
+          break;
+        default:
+          ISP_IrMode((gsf_mpp_ir_t*)args);
+          ret = ISP_IrSwitchAuto(ViPipe);
+          break;
+      }
       break;
     case GSF_MPP_ISP_CTL_IMG:
       {

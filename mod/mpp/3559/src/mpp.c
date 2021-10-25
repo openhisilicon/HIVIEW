@@ -46,6 +46,8 @@ extern int sample_af_main(gsf_mpp_af_t *af);
 //from sample_ir_auto.c;
 extern HI_S32 ISP_IrSwitchToIr(VI_PIPE ViPipe);
 extern HI_S32 ISP_IrSwitchToNormal(VI_PIPE ViPipe);
+extern HI_S32 ISP_IrSwitchAuto(VI_PIPE ViPipe);
+extern HI_S32 ISP_IrMode(gsf_mpp_ir_t *ir);
 
 //from sample_audio.c;
 extern HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID);
@@ -588,7 +590,21 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   switch(id)
   {
     case GSF_MPP_ISP_CTL_IR:
-      ret = ((int)args)?ISP_IrSwitchToIr(ViPipe):ISP_IrSwitchToNormal(ViPipe);
+      switch((int)args)
+      {
+        case 0:
+          ISP_IrMode((gsf_mpp_ir_t*)NULL);
+          ret = ISP_IrSwitchToNormal(ViPipe);
+          break;
+        case 1:
+          ISP_IrMode((gsf_mpp_ir_t*)NULL);
+          ret = ISP_IrSwitchToIr(ViPipe);
+          break;
+        default:
+          ISP_IrMode((gsf_mpp_ir_t*)args);
+          ret = ISP_IrSwitchAuto(ViPipe);
+          break;
+      }
       break;
     case GSF_MPP_ISP_CTL_IMG:
       {
@@ -912,6 +928,10 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
         int k = 0;
         for(k = 0; k < VO_MAX_CHN_NUM; k++)
           vo_mng[i].layer[j].chs[k].src_grp = vo_mng[i].layer[j].chs[k].src_chn = -1;
+      
+        vo_mng[i].layer[j].rect.s32X = vo_mng[i].layer[j].rect.s32Y = 0;
+        vo_mng[i].layer[j].rect.u32Width = stVoConfig.stDispRect.u32Width;
+        vo_mng[i].layer[j].rect.u32Height = stVoConfig.stDispRect.u32Height;
       }
     }
 
@@ -1242,7 +1262,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   stStream.pu8Addr = data;
   stStream.u32Len  = attr->size;
   stStream.bEndOfFrame  = HI_TRUE;
-  stStream.bEndOfStream = HI_FALSE;   
+  stStream.bEndOfStream = HI_FALSE;
   stStream.bDisplay = 1;
   s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
   //printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x\n", ch, s32Ret);

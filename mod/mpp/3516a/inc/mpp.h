@@ -138,8 +138,14 @@ typedef struct {
 }gsf_mpp_img_attr;
 
 
+typedef struct {
+  void *uargs;
+  int (*cb)(int ViPipe, int night, void* uargs);
+}gsf_mpp_ir_t;
+
+
 enum {
-  GSF_MPP_ISP_CTL_IR  = 0, // 0: Day, 1: Night
+  GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
   GSF_MPP_ISP_CTL_IMG = 1,    // gsf_mpp_img_attr;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);

@@ -138,8 +138,14 @@ typedef struct {
 }gsf_mpp_img_attr;
 
 
+typedef struct {
+  void *uargs;
+  int (*cb)(int ViPipe, int night, void* uargs);
+}gsf_mpp_ir_t;
+
+
 enum {
-  GSF_MPP_ISP_CTL_IR  = 0, // 0: Day, 1: Night
+  GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
   GSF_MPP_ISP_CTL_IMG = 1,    // gsf_mpp_img_attr;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
@@ -155,7 +161,6 @@ typedef struct {
 
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc);
 int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc);
-
 
 enum {
   GSF_MPP_RGN_CREATE      = 0, // HI_MPI_RGN_Create
@@ -280,8 +285,13 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 //设置通道源图像裁剪区域(用于局部放大)
 int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
-//设置VO通道显示区域(rect返回调整后的位置)
+//设置VO通道显示区域比例(rect返回调整后的位置)
 int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
+
+//设置VO通道显示区域(位置&大小);
+int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority);
+
+
 
 //private for mpp;
 extern int SENSOR_TYPE;
