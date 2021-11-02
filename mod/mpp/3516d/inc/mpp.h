@@ -102,6 +102,7 @@ typedef struct {
   HI_U32          u32FrameRate;
   HI_U32          u32Gop;
   HI_U32          u32BitRate;
+  HI_U32          u32LowDelay;
 }gsf_mpp_venc_t;
 
 //SAMPLE_COMM_VPSS_Bind_VENC
@@ -286,7 +287,7 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 //设置通道源图像裁剪区域(用于局部放大)
 int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
-//设置VO通道显示区域(rect返回调整后的位置)
+//设置VO通道显示区域比例(rect返回调整后的位置)
 int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
 
 //private for mpp;

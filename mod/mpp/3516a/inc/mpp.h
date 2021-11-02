@@ -102,6 +102,7 @@ typedef struct {
   HI_U32          u32FrameRate;
   HI_U32          u32Gop;
   HI_U32          u32BitRate;
+  HI_U32          u32LowDelay;
 }gsf_mpp_venc_t;
 
 //SAMPLE_COMM_VPSS_Bind_VENC
@@ -161,6 +162,7 @@ typedef struct {
 
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc);
 int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc);
+
 
 enum {
   GSF_MPP_RGN_CREATE      = 0, // HI_MPI_RGN_Create
