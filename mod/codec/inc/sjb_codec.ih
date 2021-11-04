@@ -12,6 +12,7 @@ STRUCT(gsf_venc_t)
   FIELD(int, bitrate);
   FIELD(int, profile);
   FIELD(int, qp);
+  FIELD(int, lowdelay);
 };
 
 
@@ -49,8 +50,8 @@ STRUCT(gsf_vi_t)
 
 STRUCT(gsf_vo_t)
 {
-  FIELD(int, intf);  // 0: HDMI, 1: MIPI
-  FIELD(int, sync); // 
+  FIELD(int, intf);  // -1: NONE, 0: HDMI,  1: MIPI
+  FIELD(int, sync);  // 0: 1080P, 1: 4K
 };
 
 STRUCT(gsf_codec_ipc_t)

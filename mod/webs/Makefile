@@ -22,7 +22,7 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) $(RTC_LIBS) \
-        -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lssl -lcrypto -lm
+        -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lcomm -lssl -lcrypto -lm
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)

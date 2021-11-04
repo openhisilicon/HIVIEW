@@ -108,7 +108,7 @@ function uploadFile() {
      url :  "/stat?id=GSF_ID_BSP_UPG&args=G0C0S0",
      contentType: 'application/json', // req body type;
      data : {},
-     dataTpye : "json", // rsp body type
+     dataType : "json", // rsp body type
      success : function(data) {
      	  $("#wrprog").text(JSON.stringify(data));
      	  if(data.progress < 0 || data.progress >= 100)

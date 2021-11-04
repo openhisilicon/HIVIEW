@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,7 @@
 #include "hifb.h"
 #include "mpp.h"
 
-#define SCRIPT_NAME(type) strstr(type, "3516AV300")?"load3516av300":"load3516dv300"
+#define SCRIPT_NAME(type) strcasestr(type, "3516a")?"load3516av300":"load3516dv300"
 
 #include "mppex.h"
 

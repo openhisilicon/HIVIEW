@@ -1,0 +1,135 @@
+<div class="content">
+    <div id="main_view"></div>
+    <div id="example_code"></div>
+</div>
+
+
+<!--CODE-->
+<div class="chart-container">
+  <canvas id="myChart" style="width:100%;max-width:800px"></canvas>
+</div>
+<!--CODE-->
+
+
+<script>
+  
+var timer;
+  
+$(function () {
+
+  // get data from JSON
+   var getStat = {
+       type : "post",
+       url :  "/stat?id=GSF_ID_BSP_SSTAT&args=G0C0S0",
+       data : {},
+       contentType: 'application/json', // req body type;
+       dataType : "json", // rsp body type
+       success : function(data) {
+        
+          console.log("data = ", data);
+       	  addData(data);
+       },
+       error:function(){
+       	  ;
+       }
+   };
+
+  // work with chart.js library
+  const ctx = document.getElementById('myChart').getContext('2d');
+  const myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          datasets: [{
+              label: 'CPU usage %',
+              backgroundColor: 'LimeGreen',
+              borderColor: 'LimeGreen',
+              borderWidth: 1
+          },
+          {
+              label: 'CPU temp \u2103',
+              backgroundColor: 'red',
+              borderColor: 'red',
+              borderWidth: 1
+          },
+          {
+              label: 'MEM usage %',
+              backgroundColor: 'blue',
+              borderColor: 'blue',
+              borderWidth: 1
+          },
+          {
+              label: 'DDR usage %',
+              backgroundColor: 'DarkOrange',
+              borderColor: 'DarkOrange',
+              borderWidth: 1
+          }],
+      }, options: {
+          title: {
+              display: true,
+              text: 'CPU Monitor'
+          },
+          scales: {
+              yAxes: [{
+                  ticks: {
+                      //beginAtZero: true,
+                      min: 0,
+                      max: 150,
+                  }
+              }],
+              xAxes: [{
+                  display: true
+              }],
+          },
+      },
+  });
+
+  function formatDate(time){
+    var date = new Date(time);
+
+    var year = date.getFullYear(),
+        month = date.getMonth() + 1,//月份是从0开始的
+        day = date.getDate(),
+        hour = date.getHours(),
+        min = date.getMinutes(),
+        sec = date.getSeconds();
+
+    var newTime =//year + '-' +
+                 //month + '-' +
+                 //day + ' ' +
+                hour + ':' +
+                min + ':' +
+                sec;
+
+    return newTime;        
+  }
+
+  // update myChart
+  function addData(data) {
+      myChart.data.labels.push(formatDate(new Date().getTime()));
+      if(myChart.data.labels.length > 30)
+        myChart.data.labels.shift();
+      
+      myChart.data.datasets.forEach((dataset) => {
+          if(data === 0) {
+              dataset.data.push(dataset.data[dataset.data.length - 1]);
+          } else {
+            if(dataset.data.length > 30)
+              dataset.data.shift();
+            if('CPU usage %' == dataset.label)
+              dataset.data.push(data.cpu);
+            else if('CPU temp \u2103' == dataset.label)
+              dataset.data.push(data.temp);
+            else if('MEM usage %' == dataset.label)
+              dataset.data.push(data.mem);
+            else if('DDR usage %' == dataset.label)
+              dataset.data.push(data.ddr);
+          };
+      });
+      myChart.update();
+  };
+
+  clearInterval(timer);
+  timer = setInterval(function(){$.ajax(getStat)},2000);
+
+});
+</script>

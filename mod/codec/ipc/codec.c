@@ -1,9 +1,12 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include "inc/gsf.h"
 #include "fw/comm/inc/proc.h"
+#include "fw/comm/inc/sstat.h"
 #include "mod/bsp/inc/bsp.h"
 #include "mod/svp/inc/svp.h"
 #include "mod/rtsps/inc/rtsps.h"
@@ -364,6 +367,7 @@ int venc_start(int start)
       .u32FrameRate = codec_ipc.venc[j].fps,
       .u32Gop       = codec_ipc.venc[j].gop,
       .u32BitRate   = codec_ipc.venc[j].bitrate,
+      .u32LowDelay   = codec_ipc.venc[j].lowdelay,
     };
 
     #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
@@ -506,9 +510,11 @@ int mpp_start(gsf_bsp_def_t *def)
       }
       #elif defined(GSF_CPU_3516d)
       {
-        //cpu type; 
-        strcpy(cfg.type, def->board.type);
-        
+        // cpu type try sstat_chipid(), otherwise use board.type;
+		char *chipid = sstat_chipid(); // [3516a300 3516d300 35590200]
+		printf("chipid[%s]\n", chipid);
+		strcpy(cfg.type, def->board.type);
+		chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
         //second channel from bsp_def.json;
         cfg.second = (cfg.snscnt > 1)?0:
                      (def->board.second <= 0)?0:def->board.second;
@@ -531,7 +537,7 @@ int mpp_start(gsf_bsp_def_t *def)
           }
           else if(strstr(cfg.snsname, "imx415"))
           {
-              if(strstr(cfg.type, "3516AV300"))
+              if(strcasestr(cfg.type, "3516a"))
               {
                 cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
                 rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
@@ -587,7 +593,7 @@ int mpp_start(gsf_bsp_def_t *def)
           }
           else if(strstr(cfg.snsname, "imx415"))
           {
-              if(strstr(cfg.type, "3516AV300"))
+              if(strcasestr(cfg.type, "3516a"))
               {
                 cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
                 rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
@@ -623,7 +629,7 @@ int mpp_start(gsf_bsp_def_t *def)
           else if(strstr(cfg.snsname, "yuv422"))
           {
             // yuv422-0-0-8-30
-            if(strstr(cfg.type, "3516AV300"))
+            if(strcasestr(cfg.type, "3516a"))
             {
               cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
               rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
@@ -842,8 +848,14 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
     };
     gsf_mpp_audio_start(&aenc);
     //gsf_mpp_audio_start(NULL);
-
-    // test vo;
+    
+    if(codec_ipc.vo.intf < 0)
+    {
+      printf("vo.intf: %d\n", codec_ipc.vo.intf);
+      return 0;
+    }
+    
+    // start vo;
     //int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
     int mipi_800x1280 = codec_ipc.vo.intf;
     if(mipi_800x1280)

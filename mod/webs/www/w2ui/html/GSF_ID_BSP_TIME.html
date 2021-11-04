@@ -67,6 +67,7 @@ $(function () {
           
           // gsftodate;
           data["data"]["year"] += 1900;
+          data["data"]["month"] += 1;
           
           rsp_edit.set(data);
         },
@@ -86,7 +87,7 @@ $(function () {
       
       //datetogsf;
       rsp["data"]["year"] -= 1900;
-      
+      rsp["data"]["month"] -= 1;
       
       $.ajax({
         async: true,
