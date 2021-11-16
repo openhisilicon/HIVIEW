@@ -1,0 +1,9 @@
+#pragma pack(push, 4)
+
+STRUCT(gsf_uvc_t)
+{
+  FIELD(int, en);
+};
+
+
+#pragma pack(pop)

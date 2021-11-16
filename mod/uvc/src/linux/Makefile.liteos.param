@@ -1,0 +1,23 @@
+SRC_PATH := $(shell pwd)
+
+CFLAGS += -I$(SRC_PATH)
+CFLAGS += -I$(SRC_PATH)/liteos
+
+CFLAGS += -DHI_UAC_COMPILE
+
+SRCS := $(SRC_PATH)/application.c
+SRCS += $(SRC_PATH)/camera.c
+SRCS += $(SRC_PATH)/frame_cache.c
+SRCS += $(SRC_PATH)/histream.c
+SRCS += $(SRC_PATH)/hiuvc.c
+SRCS += $(SRC_PATH)/hiuac.c
+SRCS += $(SRC_PATH)/sample_yuv.c
+SRCS += $(SRC_PATH)/uvc_venc_glue.c
+SRCS += $(SRC_PATH)/liteos/uvc_gadget.c
+SRCS += $(SRC_PATH)/liteos/uac_gadget.c
+
+SRCS += $(SRC_PATH)/sample_comm_venc.c
+SRCS += $(SRC_PATH)/sample_venc.c
+
+SRCS += $(SRC_PATH)/hiaudio.c
+SRCS += $(SRC_PATH)/sample_audio.c

@@ -1,0 +1,41 @@
+UAC_COMPILE := n
+#UAC_COMPILE := y
+
+ifeq ($(UAC_COMPILE), y)
+CFLAGS += -DHI_UAC_COMPILE
+endif
+
+SRC_PATH := $(shell pwd)
+
+INC_FLAGS += -I$(SRC_PATH)
+INC_FLAGS += -I$(SRC_PATH)/linux
+
+SRCS := $(SRC_PATH)/application.c
+SRCS += $(SRC_PATH)/camera.c
+SRCS += $(SRC_PATH)/config_svc.c
+SRCS += $(SRC_PATH)/dictionary.c
+SRCS += $(SRC_PATH)/frame_cache.c
+SRCS += $(SRC_PATH)/histream.c
+SRCS += $(SRC_PATH)/hiuvc.c
+SRCS += $(SRC_PATH)/iniparser.c
+SRCS += $(SRC_PATH)/log.c
+SRCS += $(SRC_PATH)/sample_yuv.c
+SRCS += $(SRC_PATH)/uvc_venc_glue.c
+SRCS += $(SRC_PATH)/linux/uvc_gadget.c
+
+SRCS += $(SRC_PATH)/sample_comm_venc.c
+SRCS += $(SRC_PATH)/sample_venc.c
+
+SRCS += $(SRC_PATH)/hiaudio.c
+SRCS += $(SRC_PATH)/hiuac.c
+
+ifeq ($(UAC_COMPILE), y)
+SRCS += $(SRC_PATH)/sample_audio.c
+endif
+
+# ALSA
+ifeq ($(UAC_COMPILE), y)
+AUDIO_ALSA_DIR ?= $(shell pwd)/alsa
+COMM_INC += -I$(AUDIO_ALSA_DIR)/include
+MPI_LIBS += -L$(AUDIO_ALSA_DIR)/lib/ -lasound
+endif
