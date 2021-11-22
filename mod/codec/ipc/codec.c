@@ -547,7 +547,7 @@ int mpp_start(gsf_bsp_def_t *def)
         {
           // imx335-0-0-4-30
           if(strstr(cfg.snsname, "imx327") 
-            || strstr(cfg.snsname, "imx290"))
+            || strstr(cfg.snsname, "imx290") || strstr(cfg.snsname, "imx307"))
           {
             cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
@@ -595,7 +595,7 @@ int mpp_start(gsf_bsp_def_t *def)
         if(cfg.snscnt < 2)
         {
           if(strstr(cfg.snsname, "imx327") 
-            || strstr(cfg.snsname, "imx290"))
+            || strstr(cfg.snsname, "imx290") || strstr(cfg.snsname, "imx307"))
           {
           	// imx327-0-0-2-30
           	#if 1
