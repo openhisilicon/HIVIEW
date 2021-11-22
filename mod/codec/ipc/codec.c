@@ -20,7 +20,7 @@
 
 #define HYBRIDEN 0       // 1: 1 sensor + 1 rtsp => vo;
 #define PERSON_FILTER 0  // 1: only show person;
-#define LPR2UART 0       // 1: GSF_EV_SVP_LPR => uart;
+#define LPR2UART      0  // 1: GSF_EV_SVP_LPR => uart;
 #define AVS_4CH_3559a 0  // 1: 4 vi => avs => 1 venc; 0: 4 vi => 4 venc;
 #define AVS_2CH_3516d 0  // 1: 2 vi => vo => 1 venc;  0: 2 vi => 2 venc;
 
@@ -30,6 +30,10 @@
 #ifndef PIC_7680x4320
 #define PIC_7680x4320 PIC_3840x2160
 #endif
+#ifndef PIC_512P
+#define PIC_512P PIC_CIF
+#endif
+
 
 #define PIC_WIDTH(w, h) \
             (w >= 7680)?PIC_7680x4320:\
@@ -40,6 +44,7 @@
             (w >= 1280)?PIC_720P: \
             (w >= 720 && h >= 576)?PIC_D1_PAL: \
             (w >= 720 && h >= 480)?PIC_D1_NTSC: \
+            (w >= 640 && h >= 512)?PIC_512P: \
             PIC_VGA
             
 #define PT_VENC(t) \
@@ -59,6 +64,7 @@
             else if (e == PIC_720P){ w = 1280; h = 720;}\
             else if (e == PIC_D1_PAL){ w = 720; h = 576;}\
             else if (e == PIC_D1_NTSC){ w = 720; h = 480;}\
+            else if (e == PIC_512P){ w = 640; h = 512;}\
             else { w = 352; h = 288;}
 
 
@@ -88,6 +94,17 @@ int vo_ly_get(gsf_layout_t *ly) { *ly = voly; return 0;}
 
 static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
+int second_sdp(gsf_sdp_t *sdp)
+{
+  if(p_cfg->second)
+  {
+    sdp->audio_shmid = -1;
+    sdp->venc.width = 720;
+    sdp->venc.height = (p_cfg->second == 1)?576:480;
+    return 0; 
+  }
+  return -1;
+}
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -232,7 +249,7 @@ static int sub_recv(char *msg, int size, int err)
     {
       //second osd;
       codec_ipc.venc[0].width = 720;
-      codec_ipc.venc[0].height = 576;
+      codec_ipc.venc[0].height = (p_cfg->second == 1)?576:480;
     }
     #endif
     
@@ -385,9 +402,15 @@ int venc_start(int start)
     if(p_cfg->second && i == 1)
     {
       if(j == 0 || j == 2)
-        venc.enSize = PIC_WIDTH(720, 576);
+      {  
+        venc.enSize = (p_cfg->second == 1)?PIC_WIDTH(720, 576):PIC_WIDTH(720, 480);
+        venc.u32BitRate = 2000; //adjust bps;
+      }    
       else
+      {  
         venc.enSize = PIC_WIDTH(352, 288);
+        venc.u32BitRate = 1000; //adjust bps;
+      }  
     }
     #endif
 
@@ -515,7 +538,7 @@ int mpp_start(gsf_bsp_def_t *def)
 		printf("chipid[%s]\n", chipid);
 		strcpy(cfg.type, def->board.type);
 		chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
-        //second channel from bsp_def.json;
+        //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT601.512P]
         cfg.second = (cfg.snscnt > 1)?0:
                      (def->board.second <= 0)?0:def->board.second;
         printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);
@@ -533,7 +556,8 @@ int mpp_start(gsf_bsp_def_t *def)
             
 			      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
             if(cfg.second)
-				      VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+				      VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
+				      
           }
           else if(strstr(cfg.snsname, "imx415"))
           {
@@ -552,7 +576,7 @@ int mpp_start(gsf_bsp_def_t *def)
                 VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
               }
               if(cfg.second)
-            	  VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+            	  VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
           }
           else if(strstr(cfg.snsname, "imx335"))
           {
@@ -561,7 +585,7 @@ int mpp_start(gsf_bsp_def_t *def)
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
             VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
             if(cfg.second)
-            	VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+            	VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
           }
           break;
         }
@@ -588,7 +612,7 @@ int mpp_start(gsf_bsp_def_t *def)
             if(cfg.second)
             {
               rgn_ini.ch_num = venc_ini.ch_num = 2;
-              VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+              VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
             }
           }
           else if(strstr(cfg.snsname, "imx415"))
@@ -610,7 +634,7 @@ int mpp_start(gsf_bsp_def_t *def)
 			  if(cfg.second)
 			  {
 			    rgn_ini.ch_num = venc_ini.ch_num = 2;
-				VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+				  VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
 			  }
           }
           else if(strstr(cfg.snsname, "imx335"))
@@ -623,7 +647,7 @@ int mpp_start(gsf_bsp_def_t *def)
             if(cfg.second)
             {
               rgn_ini.ch_num = venc_ini.ch_num = 2;
-              VPSS(1, 1, 1, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+              VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
             }
           }
           else if(strstr(cfg.snsname, "yuv422"))
@@ -838,17 +862,20 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
     int hybrid = HYBRIDEN;
     gsf_shmid_t shmid = {-1, -1};
     
-    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3559a)
     //aenc;
-    gsf_mpp_aenc_t aenc = {
-      .AeChn = 0,
-      .enPayLoad = PT_AAC,
-      .uargs = NULL,
-      .cb = gsf_aenc_recv,
-    };
-    gsf_mpp_audio_start(&aenc);
-    //gsf_mpp_audio_start(NULL);
-    
+    if( codec_ipc.aenc.en)
+    {
+      gsf_mpp_aenc_t aenc = {
+        .AeChn = 0,
+        .enPayLoad = PT_AAC,
+        .uargs = NULL,
+        .cb = gsf_aenc_recv,
+      };
+      gsf_mpp_audio_start(&aenc);
+      //gsf_mpp_audio_start(NULL);
+    }
+
     if(codec_ipc.vo.intf < 0)
     {
       printf("vo.intf: %d\n", codec_ipc.vo.intf);
@@ -857,15 +884,14 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
     
     // start vo;
     //int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
+    //---- 800x640 -----//
+    //---- 800x640 -----//
     int mipi_800x1280 = codec_ipc.vo.intf;
     if(mipi_800x1280)
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
-      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
       gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
       
-      //---- 800x640 -----//
-      //---- 800x640 -----//
       gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
       vo_ly_set(VO_LAYOUT_2MUX);
       
@@ -948,7 +974,7 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
       {
         if(p_cfg->second)
     	  {
-          RECT_S rect = {20, 0, 720, 576};
+          RECT_S rect = {20, 0, 720, (p_cfg->second ==1)?576:480};
           gsf_mpp_vo_aspect(VOLAYER_HD0, 1, &rect);
         }
         gsf_mpp_vo_src_t src1 = {1, 0};

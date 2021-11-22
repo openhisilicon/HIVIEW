@@ -104,6 +104,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {SONY_IMX415_MIPI_8M_30FPS_12BIT,             "imx415-0-0-8-30", "libsns_imx415.so", "stSnsImx415Obj"},
     {SONY_IMX415_MIPI_8M_20FPS_12BIT,             "imx415-0-0-8-20", "libsns_imx415.so", "stSnsImx415Obj"},
     {SONY_IMX415_MIPI_2M_60FPS_12BIT,             "imx415-0-0-2-60", "libsns_imx415.so", "stSnsImx415Obj"},
+    {MIPI_YUV_1M_60FPS_8BIT,                      "yuv422-0-0-1-60", NULL,                NULL},
     {MIPI_YUV_2M_60FPS_8BIT,                      "yuv422-0-0-2-60", NULL,                NULL},
     {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
@@ -195,7 +196,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = BT656_YUV_0M_60FPS_8BIT;
+    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT:
+                   BT656N_YUV_0M_60FPS_8BIT;
   }
   
   if(dl)
@@ -856,6 +858,25 @@ END1:
 
 
 
+static int vo_csc()
+{
+  if(vo_mng[0].intf == VO_INTF_MIPI)
+  {
+    VO_CSC_S stGhCSC = {0};
+    int s32Ret = HI_MPI_VO_GetGraphicLayerCSC(0, &stGhCSC);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("HI_MPI_VO_GetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+    }
+    stGhCSC.enCscMatrix = VO_CSC_MATRIX_IDENTITY;
+    s32Ret = HI_MPI_VO_SetGraphicLayerCSC(0, &stGhCSC);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("HI_MPI_VO_SetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+    }
+  }
+}
+
 
 
 //启动视频输出设备;
@@ -1377,6 +1398,7 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
   s32Ret = SAMPLE_COMM_VPSS_Bind_VO(src->VpssGrp, src->VpssChn, volayer, ch);
   
   pthread_mutex_unlock(&vdev->lock);
+    
   return 0;
 }
 
@@ -1474,6 +1496,7 @@ static struct fb_bitfield s_b32 = {0,8,0};
 
 static int vo_fd[VOFB_BUTT];
 
+
 int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
 {
     int i = 0, j = 0, x = 0, y = 0;
@@ -1502,6 +1525,8 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         SAMPLE_PRT("open %s failed!\n",file);
         return -1;
     } 
+
+    vo_csc();
 
     HI_BOOL bShow = HI_FALSE;
     if (ioctl(fd, FBIOPUT_SHOW_HIFB, &bShow) < 0)
@@ -1633,22 +1658,7 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         return -1;
     }
     
-    if(vo_mng[0].intf == VO_INTF_MIPI)
-    {
-      VO_CSC_S stGhCSC = {0};
-      int s32Ret = HI_MPI_VO_GetGraphicLayerCSC(0, &stGhCSC);
-      if (HI_SUCCESS != s32Ret)
-      {
-          SAMPLE_PRT("HI_MPI_VO_GetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
-      }
-      stGhCSC.enCscMatrix = VO_CSC_MATRIX_IDENTITY;
-      s32Ret = HI_MPI_VO_SetGraphicLayerCSC(0, &stGhCSC);
-      if (HI_SUCCESS != s32Ret)
-      {
-          SAMPLE_PRT("HI_MPI_VO_SetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
-      }
-    }
-  
+    //vo_csc();
     memset(pShowScreen, 0x00, fix.smem_len);
     
     #if 0

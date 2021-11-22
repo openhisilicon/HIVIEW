@@ -867,7 +867,24 @@ END1:
 }
 
 
-
+static int vo_csc()
+{
+  if(vo_mng[0].intf == VO_INTF_MIPI)
+  {
+    VO_CSC_S stGhCSC = {0};
+    int s32Ret = HI_MPI_VO_GetGraphicLayerCSC(0, &stGhCSC);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("HI_MPI_VO_GetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+    }
+    stGhCSC.enCscMatrix = VO_CSC_MATRIX_IDENTITY;
+    s32Ret = HI_MPI_VO_SetGraphicLayerCSC(0, &stGhCSC);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("HI_MPI_VO_SetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
+    }
+  }
+}
 
 
 //启动视频输出设备;
@@ -1519,6 +1536,8 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         return -1;
     } 
 
+    vo_csc();
+
     HI_BOOL bShow = HI_FALSE;
     if (ioctl(fd, FBIOPUT_SHOW_HIFB, &bShow) < 0)
     {
@@ -1649,22 +1668,7 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         return -1;
     }
     
-    if(vo_mng[0].intf == VO_INTF_MIPI)
-    {
-      VO_CSC_S stGhCSC = {0};
-      int s32Ret = HI_MPI_VO_GetGraphicLayerCSC(0, &stGhCSC);
-      if (HI_SUCCESS != s32Ret)
-      {
-          SAMPLE_PRT("HI_MPI_VO_GetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
-      }
-      stGhCSC.enCscMatrix = VO_CSC_MATRIX_IDENTITY;
-      s32Ret = HI_MPI_VO_SetGraphicLayerCSC(0, &stGhCSC);
-      if (HI_SUCCESS != s32Ret)
-      {
-          SAMPLE_PRT("HI_MPI_VO_SetGraphicLayerCSC failed s32Ret:0x%x!\n", s32Ret);
-      }
-    }
-  
+    //vo_csc();
     memset(pShowScreen, 0x00, fix.smem_len);
     
     #if 0
@@ -1708,6 +1712,8 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
           close(fd);
           return -1;
       }
+      
+      
     }
     
     vo_fd[vofb] = fd;//close(fd);

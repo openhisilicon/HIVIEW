@@ -3994,7 +3994,7 @@ static void DSI_Single(HI_S32 fd, int addr ,int val)
         close(fd);
         return;
     }
-    usleep(1000);
+    //usleep(1000);
 
 }
 
@@ -4016,7 +4016,7 @@ static void DSI_Cmd(HI_S32 fd, int val)
         return;
     }
 
-    usleep(1000);
+    //usleep(1000);
 
 }
 
@@ -4559,9 +4559,9 @@ static int SAMPLE_PRIVATE_VO_InitScreen800x1280(HI_S32 fd)
   //////DSI_Single(fd,0x36,0x08); //*** RGB->BRG
   DSI_Single(fd,0x35,0x00); 
   DSI_Cmd(fd,0x11);	  //sleep out
-  usleep(120*1000);
+  usleep(120*1000*0);
   DSI_Cmd(fd,0x29);	  //display on
-  usleep(20*1000);
+  usleep(20*1000*0);
 }
 // maohw .end
 
@@ -4674,7 +4674,7 @@ void SAMPLE_COMM_VO_StartMipiTx(VO_INTF_SYNC_E enVoIntfSync)
     SAMPLE_PRIVATE_VO_InitMipiTxDev(enVoIntfSync);
     #endif
 
-    usleep(10000);
+    //usleep(10*1000); // maohw keep it;
 
     /*
     * step 3 : enable mipi_tx controller.

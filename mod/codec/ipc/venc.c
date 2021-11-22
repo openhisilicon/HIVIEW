@@ -83,6 +83,16 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   rec.video.height = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;
   rec.size = 0;
   
+  if(mgr->vst/GSF_CODEC_VENC_NUM)
+  {  
+    gsf_sdp_t sdp;
+    extern int second_sdp(gsf_sdp_t *sdp);
+    if(second_sdp(&sdp) == 0)
+    {
+      rec.video.width = sdp.venc.width;
+      rec.video.height = sdp.venc.height;
+    }
+  }
   for (i = 0; i < pstStream->u32PackCount && i < GSF_FRM_NAL_NUM; i++)
   {
     rec.video.nal[i] = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;

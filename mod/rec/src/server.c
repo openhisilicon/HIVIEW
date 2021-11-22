@@ -305,6 +305,8 @@ __open:
     winfo.v.w  = frm->video.width;
     winfo.v.h  = frm->video.height;
     winfo.v.fps= 30;
+    if(0)
+      printf("VIDEO type:%d, enc:%d, w:%d, h:%d, ms:%u\n", winfo.type, winfo.enc, winfo.v.w, winfo.v.h, winfo.ms);
   } 
   else
   {
@@ -313,6 +315,8 @@ __open:
     winfo.a.sp = frm->audio.sp;
     winfo.a.bps = frm->audio.bps;
     winfo.a.chs= frm->audio.chn;
+    if(0)
+      printf("AUDIO type:%d, enc:%d, sp:%d, chs:%d, ms:%u\n", winfo.type, winfo.enc, winfo.a.sp, winfo.a.chs, winfo.ms);
   }
   
   fd_av_write(*fd, frm->data, frm->size, &winfo);
@@ -517,7 +521,9 @@ static int ti_q_cb(struct ti_query_cond_t *cond, ti_file_info_t *info)
   printf("i:%d, ch:%d, btime:[%d.%d], etime[%d], size:%d\n"
         , uargs->c, info->channel, info->btime, info->btime_ms, info->etime, info->size);
   #endif
-  uargs->files[uargs->c++] = *((gsf_file_t*)info);
+  
+  if(info->channel == uargs->q->channel)
+    uargs->files[uargs->c++] = *((gsf_file_t*)info);
   return 0;
 }
 

@@ -53,6 +53,13 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   sdp->audio_shmid = audio_shmid;
   sdp->venc = codec_ipc.venc[req->sid];
   sdp->aenc = codec_ipc.aenc;
+  
+  if(req->ch == 1)
+  {
+    extern int second_sdp(gsf_sdp_t *sdp);
+    second_sdp(sdp);
+  }
+  
   sdp->val[0]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0];
   sdp->val[1]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1];
   sdp->val[2]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2];
@@ -79,7 +86,7 @@ static void msg_func_osd(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
     gsf_osd_t *osd = (gsf_osd_t*)req->data;
     
     codec_ipc.osd[req->sid] = *osd;
-    if(gsf_rgn_osd_set(0, req->sid, osd) == 0)
+    if(gsf_rgn_osd_set(req->ch, req->sid, osd) == 0)
       json_parm_save(codec_parm_path, &codec_ipc);
     rsp->err  = 0;
     rsp->size = 0;

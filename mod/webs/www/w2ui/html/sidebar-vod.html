@@ -36,7 +36,7 @@ function formatNum(num, strlength) {
 //播放视频
 function playVideo(obj){ 
   var info =  w2ui['grid-video'].get($(obj).data('id')); 
-  vUrl = '/rec/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.tags,3)+'.mp4'; 
+  vUrl = '/rec/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.channel,3)+'.mp4'; 
   if (flvjs.isSupported()) { 
   var videoElement = document.getElementById('videoElement');
   var flvPlayer = flvjs.createPlayer({
@@ -51,7 +51,7 @@ function playVideo(obj){
 //下载视频
 function downVideo(obj){ 
   var info =  w2ui['grid-video'].get($(obj).data('id'));
-  var filename = formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.tags,3);
+  var filename = formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.channel,3);
   var a = document.createElement("a"), 
         e = document.createEvent("MouseEvents");
     e.initEvent("click", false, false);
@@ -110,7 +110,7 @@ function loadVideo(){
 					nodeslevel[index] = data;
 					nodeslevel[index]['recid'] = index+1;
 					nodeslevel[index]['btime'] = data.btime;
-					// nodeslevel[index]['lname'] = data.tags;
+					nodeslevel[index]['channel'] = data.channel;
 					nodeslevel[index]['play'] = '<a href="javascript:;" data-id="'+(index+1)+'" onClick="playVideo(this)" class="playVideo">播放</a>';
 					nodeslevel[index]['down'] =  '<a href="javascript:;" data-id="'+(index+1)+'" onClick="downVideo(this)" class="playVideo">下载</a>';
 					nodeslevel[index]['datetime'] = timestampToTime(data.btime);
@@ -151,7 +151,7 @@ $(function () {
         },
         multiSearch: true,
         columns: [                
-            { field: 'recid', caption: 'ID', size: '10%', sortable: true, attr: 'align=center' },
+          { field: 'recid', caption: 'ID', size: '10%', sortable: true, attr: 'align=center' },
             { field: 'datetime', caption: 'Time', size: '50%', sortable: true, attr: 'align=center'},
             { field: 'play', caption: 'Play', size: '18%',  attr: 'align=center'},
             { field: 'down', caption: 'Down', size: '18%',  attr: 'align=center'},

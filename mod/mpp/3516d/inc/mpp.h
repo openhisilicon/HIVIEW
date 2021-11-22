@@ -66,8 +66,9 @@ int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideo
 
 
 enum {
-  GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(ch);
-  GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(ch);
+  GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
+  GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(VpssGrp);
+  GSF_MPP_VPSS_CTL_CROP  = 2, //HI_MPI_VPSS_SetGrpCrop(VpssGrp, VPSS_CROP_INFO_S *args);
 };
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
@@ -289,6 +290,11 @@ int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
 //设置VO通道显示区域比例(rect返回调整后的位置)
 int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
+
+//设置VO通道显示区域(位置&大小);
+int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority);
+
+
 
 //private for mpp;
 extern int SENSOR_TYPE;
