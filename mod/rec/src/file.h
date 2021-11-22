@@ -71,8 +71,8 @@ typedef struct _rec_media_info_s
 
 typedef struct fd_av_s {
     FILE *fd; // first field;
-    int stime;
-    int size;
+    uint32_t stime;
+    uint32_t size;
     
     // track;
     int vtrack;
@@ -130,7 +130,7 @@ fd_av_t*
 int fd_av_close(fd_av_t *fd);             /* 关闭视频文件 */
 int fd_av_flush(fd_av_t *fd);             /* 刷数据到磁盘 */
 int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info);   /* 写视频文件 */
-int fd_av_size(fd_av_t *fd);              /* 获取文件大小 */
+uint32_t fd_av_size(fd_av_t *fd);         /* 获取文件大小 */
 
 /* 视频文件读 */
 fd_av_t*

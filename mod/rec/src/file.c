@@ -1,3 +1,4 @@
+#define _FILE_OFFSET_BITS 64
 #include "file.h"
 
 
@@ -159,7 +160,7 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* 写视
 	return ret;
 }
 
-int fd_av_size(fd_av_t *fd)                      /* 获取文件大小 */
+uint32_t fd_av_size(fd_av_t *fd)    /* 获取文件大小 */
 {
   fd_av_t *_hdl = (fd_av_t*)fd;
   return _hdl->size;
