@@ -164,10 +164,32 @@ static void msg_func_upg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 
 static void msg_func_def(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
-  gsf_bsp_def_t *cfg = (gsf_bsp_def_t*)rsp->data;
-  
-  *cfg = bsp_def;
-  rsp->size = sizeof(gsf_bsp_def_t);
+  if(req->set)
+  {
+    gsf_bsp_def_t *def = (gsf_bsp_def_t*)req->data;
+    if(!req->size // check valid;
+      || !strlen(def->board.model)
+      || !strlen(def->base.name)
+      || !strlen(def->eth.ipaddr)
+      || !strlen(def->admin.name)
+      )
+    {
+      rsp->size = 0;
+      rsp->err  = -1;
+      return;
+    }
+    
+    bsp_def = *def;
+    json_def_save(bsp_def_path, &bsp_def);
+    rsp->size = 0;
+    rsp->err  = 0;
+  }
+  else 
+  {
+    gsf_bsp_def_t *cfg = (gsf_bsp_def_t*)rsp->data;
+    *cfg = bsp_def;
+    rsp->size = sizeof(gsf_bsp_def_t);
+  }
 }
 
 

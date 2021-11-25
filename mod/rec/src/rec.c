@@ -43,12 +43,12 @@ int main(int argc, char *argv[])
       json_parm_save(rec_parm_path, &rec_parm);
       json_parm_load(rec_parm_path, &rec_parm);
     }
-    info("rec_parm => pattern:%s, cfg[0].en:%d\n", rec_parm.pattern, rec_parm.cfg[0].en);
+    info("rec_parm => pattern:%s, cfg[0].en:%d, segtime:%dsec\n", rec_parm.pattern, rec_parm.cfg[0].en, rec_parm.cfg[0].segtime);
     
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_REC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
 
-    while(0) // DEBUG;
+    while(1) // DEBUG;
     {
       //register To;
       GSF_MSG_DEF(gsf_mod_reg_t, reg, 8*1024);

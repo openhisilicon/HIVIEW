@@ -11,8 +11,10 @@
 #include "list.h"
 #include "server.h"
 
-#define SER_USED_PER  (98)           // 98%
-#define SER_FILE_SIZE (64*1024*1024) // BYTE
+#define SER_USED_PER  (95)           // 98%
+//#define SER_FILE_SIZE (64*1024*1024) // BYTE
+//#define SER_FILE_SIZE (3*1024*1024*1024U) // BYTE
+
 
 #define SER_FILENAME(mnt, info, name) \
         sprintf(name, "%s/data/%08d_%03d_%03d.%s", mnt, \
@@ -111,7 +113,7 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
       if(cost > 33)
         printf("u:%p, get rec ok [delay:%d ms].\n", u, cost);
         
-      assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
+      //assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
     }
     return len;
 }
@@ -131,14 +133,9 @@ static int unclosed_cb(void *_ti, ti_file_info_t *info)
   gettimeofday(&tv, NULL);
   
   // commit TI_CLOSE;
-  struct stat st;
   char filename[256];
   SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
-  if(stat(filename, &st) == 0)
-  {
-    info->size  = st.st_size;
-    info->etime = st.st_mtime;
-  }
+  fd_stat(filename, &info->size, &info->etime);
   int err = ti_sync(_ti, TI_CLOSE, info, 1);
   return 0;
 }
@@ -219,22 +216,34 @@ static int ser_disk_check()
     
   ser.check_disk_sec = tv.tv_sec;
   
-  int percent = disk_percent(ser.curr->disk.mnt_dir);
-  if(percent < 0)
-    return -1;
+  int cnt = 10;
+  do{
+  
+    int percent = disk_percent(ser.curr->disk.mnt_dir);
+    if(percent < 0)
+        return -1;
     
-  if(percent >= SER_USED_PER)
-  {
-    ti_file_info_t _info;
-    ti_file_info_t *info = &_info;
-    ti_oldset_get(ser.curr->ti, info, NULL);
-    
-    char filename[256];
-    SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
-    printf("del filename[%s]\n", filename);
-    fd_rm(filename);
-    ti_oldset_rm(ser.curr->ti, 1);
-  }
+    if(percent >= SER_USED_PER)
+    {
+      ti_file_info_t _info;
+      ti_file_info_t *info = &_info;
+      if(ti_oldset_get(ser.curr->ti, info, NULL) < 0)
+        return -1;
+
+      char filename[256];
+      SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
+      printf("fd_rm filename[%s]\n", filename);
+      fd_rm(filename);
+      
+      if(ti_oldset_rm(ser.curr->ti, 1) < 0)
+        return -1;
+    }
+    else 
+    {
+      break;
+    }
+  }while(cnt-- > 0);
+  
   return 0;
 }
 
@@ -251,10 +260,13 @@ static int ser_file_writer(int ch, gsf_frm_t *frm)
     return -1;
   
   idr = ((frm->type == GSF_FRM_VIDEO) && (frm->flag & GSF_FRM_FLAG_IDR));
-  
+
+  struct timespec ts1, ts2;  
+
 __open:
   if(*fd == NULL)
   {
+    clock_gettime(CLOCK_MONOTONIC, &ts1);
     gettimeofday(&tv, NULL);
     info->btime    = tv.tv_sec;
     info->btime_ms = tv.tv_usec/1000;
@@ -269,17 +281,22 @@ __open:
 
     SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
     *fd = fd_av_open(filename);
-    
-    printf("open filename[%s]\n", filename);
+    if(*fd == NULL)
+      return -1;
+
+    clock_gettime(CLOCK_MONOTONIC, &ts2);
+    int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+
+    printf("open filename[%s], cost:%dms\n", filename, cost);
   }
   
-  if((fd_av_size(*fd) > SER_FILE_SIZE) && idr)
+  gettimeofday(&tv, NULL);
+  int segtime = rec_parm.cfg[ch].segtime?:5;
+  if((abs(tv.tv_sec - info->btime) >= segtime) && idr)
+  //if((fd_av_size(*fd) > SER_FILE_SIZE) && idr)
   {
+    clock_gettime(CLOCK_MONOTONIC, &ts1);
     SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
-        
-    printf("close filename[%s]\n", filename);
-    
-    gettimeofday(&tv, NULL);
     info->etime = tv.tv_sec;
     info->tags  = 0;
     info->size  = fd_av_size(*fd);
@@ -289,6 +306,10 @@ __open:
 
     fd_av_close(*fd);
     *fd = NULL;
+    
+    clock_gettime(CLOCK_MONOTONIC, &ts2);
+    int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+    printf("close filename[%s], cost:%dms\n", filename, cost);
     goto __open;
   }
   
@@ -305,8 +326,7 @@ __open:
     winfo.v.w  = frm->video.width;
     winfo.v.h  = frm->video.height;
     winfo.v.fps= 30;
-    if(0)
-      printf("VIDEO type:%d, enc:%d, w:%d, h:%d, ms:%u\n", winfo.type, winfo.enc, winfo.v.w, winfo.v.h, winfo.ms);
+    //printf("VIDEO ch:%d, type:%d, enc:%d, w:%d, h:%d, ms:%u\n", ch, winfo.type, winfo.enc, winfo.v.w, winfo.v.h, winfo.ms);
   } 
   else
   {
@@ -315,12 +335,19 @@ __open:
     winfo.a.sp = frm->audio.sp;
     winfo.a.bps = frm->audio.bps;
     winfo.a.chs= frm->audio.chn;
-    if(0)
-      printf("AUDIO type:%d, enc:%d, sp:%d, chs:%d, ms:%u\n", winfo.type, winfo.enc, winfo.a.sp, winfo.a.chs, winfo.ms);
+    //printf("AUDIO ch:%d, type:%d, enc:%d, sp:%d, chs:%d, ms:%u\n", ch, winfo.type, winfo.enc, winfo.a.sp, winfo.a.chs, winfo.ms);
   }
   
-  fd_av_write(*fd, frm->data, frm->size, &winfo);
+  clock_gettime(CLOCK_MONOTONIC, &ts1);
+  
+  if(fd_av_write(*fd, frm->data, frm->size, &winfo) < 0)
+    return -1;
 
+  clock_gettime(CLOCK_MONOTONIC, &ts2);
+  int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+  if(cost > 100)
+    warn("fd_av_write cost:%d ms\n", cost);
+    
   if(tv.tv_sec - *sync_file_sec < 10)
     return 0;
   *sync_file_sec = tv.tv_sec;
@@ -333,7 +360,7 @@ __open:
   pthread_mutex_unlock(&ser.lock);
  
   SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
-  printf("write filename[%s]\n", filename);
+  printf("ti_sync filename[%s]\n", filename);
   
   return 0;
 }
@@ -365,7 +392,11 @@ static void* ser_thread(void *param)
   while(ser.stat == SER_STAT_INIT)
   {
     // disk check;
-    ser_disk_check();
+    if(ser_disk_check() < 0)
+    {
+      error("ser_disk_check err.\n");
+      goto __exit;
+    }
     
     for(i = 0; i < GSF_REC_CH_NUM; i++)
     {
@@ -431,9 +462,11 @@ static void* ser_thread(void *param)
     {
        printf("cfifo_ep_wait err fds:%d\n", fds);
     }
-
+    
     for(i = 0; i < fds; i++)
     {
+      struct timespec ts1, ts2;
+      clock_gettime(CLOCK_MONOTONIC, &ts1);
       do{
         struct cfifo_ex* fifo = result[i];
         int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
@@ -443,11 +476,24 @@ static void* ser_thread(void *param)
         }
         // file write;
         void* ch = cfifo_get_u(fifo);
-        ser_file_writer((int)ch, frm);
+        if(ser_file_writer((int)ch, frm) < 0)
+        {
+          error("ser_file_writer err.\n");
+          goto __exit;
+        }
+        
+        clock_gettime(CLOCK_MONOTONIC, &ts2);
+        int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+        if(cost > 500)
+        {
+          warn("the disk is slowly.\n");
+          break;
+        }
       }while(1);
     }
   }
   
+__exit:  
   if(buf)
     free(buf);
     

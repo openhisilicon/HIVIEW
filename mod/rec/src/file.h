@@ -123,6 +123,7 @@ int fd_write(file_t *fd, char *buf, int size);  /* 写文件 */
 int fd_read(file_t *fd, char *buf, int size);   /* 读文件 */
 int fd_size(file_t *fd);                        /* 文件大小 */
 int fd_rm(char *name);                          /* 删除文件 */
+int fd_stat(char* filename, uint32_t *size, uint32_t *mtime); //获取文件信息;
 
 /* 视频文件写 */
 fd_av_t*
@@ -146,7 +147,6 @@ int fd_dir_mk(char *name);                /* 创建一个目录 如果此目录已存返回成功
 int fd_dir_mv(char *src, char *dst);      /* 目录改名 */
 int fd_dir_rm(char *name);                /* 删除目录及目录中的所有文件 */
 int fd_dir_each(char *name, int (*cb)(char *name, int is_dir, void *u), void *u); /* 遍历目录下的所有文件及子目录 */
-
 
 
 #endif //__file_h__

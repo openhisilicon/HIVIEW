@@ -5,6 +5,7 @@
 STRUCT(gsf_rec_cfg_t)
 {
   FIELD(int, en);
+  FIELD(int, segtime); //SEC
 };
 
 

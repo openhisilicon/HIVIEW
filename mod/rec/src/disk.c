@@ -447,3 +447,6 @@ int disk_percent(char *mnt)
   printf("disk_percent statvfs mnt:%s, percent:%d%\n", mnt, (int)percent);
 	return percent;
 }
+
+
+

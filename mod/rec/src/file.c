@@ -1,3 +1,4 @@
+#define _LARGEFILE64_SOURCE
 #define _FILE_OFFSET_BITS 64
 #include "file.h"
 
@@ -11,6 +12,12 @@ fd_av_t*
     _hdl->vtrack = -1;
     _hdl->atrack = -1;
     _hdl->fd = fopen(name, "wb+");
+    if(_hdl->fd == NULL)
+    {
+      free(_hdl);
+      return NULL;
+    }
+
 	  _hdl->w = fmp4_writer_create(mov_file_buffer(), _hdl->fd, 0);
 	  _hdl->s_length = 400*1024;  // init size;
 	  _hdl->s_buffer = (uint8_t*)malloc(_hdl->s_length);
@@ -76,7 +83,7 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* 写视
             if(_hdl->vtrack != -1)
             {
               //if(info->type == GSF_FRM_VIDEO_I) printf("video write vtrack.\n");
-              fmp4_writer_write(_hdl->w, _hdl->vtrack, _hdl->s_buffer, n, info->ms, info->ms, (info->type == GSF_FRM_VIDEO_I)? MOV_AV_FLAG_KEYFREAME : 0);
+              ret = fmp4_writer_write(_hdl->w, _hdl->vtrack, _hdl->s_buffer, n, info->ms, info->ms, (info->type == GSF_FRM_VIDEO_I)? MOV_AV_FLAG_KEYFREAME : 0);
             }
           
           }
@@ -97,7 +104,7 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* 写视
             }
             if(_hdl->vtrack != -1)
             {
-              fmp4_writer_write(_hdl->w, _hdl->vtrack, _hdl->s_buffer, n, info->ms, info->ms, (info->type == GSF_FRM_VIDEO_I)? MOV_AV_FLAG_KEYFREAME : 0);
+              ret = fmp4_writer_write(_hdl->w, _hdl->vtrack, _hdl->s_buffer, n, info->ms, info->ms, (info->type == GSF_FRM_VIDEO_I)? MOV_AV_FLAG_KEYFREAME : 0);
             }
           }
           else
@@ -106,7 +113,7 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* 写视
              {
       				_hdl->vtrack = fmp4_writer_add_video(_hdl->w, MOV_OBJECT_JPEG, info->v.w, info->v.h, "null", strlen("null"));
              }
-             fmp4_writer_write(_hdl->w, _hdl->vtrack, buf, size, info->ms, info->ms, (info->type == GSF_FRM_VIDEO_I)? MOV_AV_FLAG_KEYFREAME : 0);
+             ret = fmp4_writer_write(_hdl->w, _hdl->vtrack, buf, size, info->ms, info->ms, (info->type == GSF_FRM_VIDEO_I)? MOV_AV_FLAG_KEYFREAME : 0);
           }
       }
       else if(info->type == GSF_FRM_AUDIO_1)
@@ -143,7 +150,7 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* 写视
             if(-1 != _hdl->atrack)
             {
           		int framelen = ((buf[3] & 0x03) << 11) | (buf[4] << 3) | (buf[5] >> 5);
-          		fmp4_writer_write(_hdl->w, _hdl->atrack, buf + 7, framelen - 7, info->ms, info->ms, 0);
+          		ret = fmp4_writer_write(_hdl->w, _hdl->atrack, buf + 7, framelen - 7, info->ms, info->ms, 0);
 	          }
           }
       }
@@ -553,6 +560,20 @@ int fd_size(file_t *fd)
   }
   return ret;
 }
+
+int fd_stat(char* filename, uint32_t *size, uint32_t *mtime)
+{
+  struct stat st;
+  int ret = stat(filename, &st);
+  if(ret == 0)
+  {
+    *size  = st.st_size;
+    *mtime = st.st_mtime;
+  }
+  return ret;
+}
+
+
 
 
 /////////////////////////////////////

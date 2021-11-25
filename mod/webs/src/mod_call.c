@@ -126,7 +126,7 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
       char *_rsp = cJSON_Print(json2);
       char *rsp = _rsp;
 
-      if(strstr(str, "GSF_ID_BSP_DEF"))
+      if(0)//if(strstr(str, "GSF_ID_BSP_DEF"))
       {
          //only keep board;
         char *p1 = strstr(rsp, "\"board\":");

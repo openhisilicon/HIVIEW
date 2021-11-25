@@ -18,8 +18,7 @@
 #include "venc.h"
 #include "lens.h"
 
-#define HYBRIDEN 0       // 1: 1 sensor + 1 rtsp => vo;
-#define PERSON_FILTER 0  // 1: only show person;
+#define HYBRIDEN      0  // 1: 1 sensor + 1 rtsp => vo;
 #define LPR2UART      0  // 1: GSF_EV_SVP_LPR => uart;
 #define AVS_4CH_3559a 0  // 1: 4 vi => avs => 1 venc; 0: 4 vi => 4 venc;
 #define AVS_2CH_3516d 0  // 1: 2 vi => vo => 1 venc;  0: 2 vi => 2 venc;
@@ -225,12 +224,6 @@ static int sub_recv(char *msg, int size, int err)
     int j = 0;
     for(i = 0; i < yolos->cnt; i++)
     {
-      //person filter;
-      #if PERSON_FILTER
-      if(!strstr(yolos->box[i].label, "person"))
-        continue;
-      #endif
-        
       rects.box[j].rect[0] = xr + yolos->box[i].rect[0]/wr;
       rects.box[j].rect[1] = yr + yolos->box[i].rect[1]/hr;
       rects.box[j].rect[2] = yolos->box[i].rect[2]/wr;
