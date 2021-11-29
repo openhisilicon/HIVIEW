@@ -26,10 +26,12 @@
 /* Color depth:
  * - 1:  1 byte per pixel
  * - 8:  RGB233
- * - 16: RGB565
+ * - 16: ARGB1555
  * - 32: ARGB8888
  */
+ 
 #define LV_COLOR_DEPTH     32
+//#define LV_COLOR_DEPTH     16 //ARGB1555
 
 /* Swap the 2 bytes of RGB565 color.
  * Useful if the display has a 8 bit interface (e.g. SPI)*/
@@ -124,7 +126,7 @@ typedef int16_t lv_coord_t;
  *==================*/
 
 /*1: Enable the Animations */
-#define LV_USE_ANIMATION        1
+#define LV_USE_ANIMATION        0
 #if LV_USE_ANIMATION
 
 /*Declare the type of the user data of animations (can be e.g. `void *`, `int`, `struct`)*/
@@ -417,7 +419,7 @@ typedef void * lv_obj_user_data_t;
 #endif
 
 /*Preload (dependencies: lv_arc, lv_anim)*/
-#define LV_USE_PRELOAD      1
+#define LV_USE_PRELOAD      0
 #if LV_USE_PRELOAD != 0
 #  define LV_PRELOAD_DEF_ARC_LENGTH   60      /*[deg]*/
 #  define LV_PRELOAD_DEF_SPIN_TIME    1000    /*[ms]*/

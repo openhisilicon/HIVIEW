@@ -115,16 +115,16 @@ enum {
 # define LV_COLOR_GET_A8(c) 0xFF
 
 # define LV_COLOR_SET_R16(c, v) (c).ch.red = (uint8_t)(v) & 0x1FU;
-# define LV_COLOR_SET_G16(c, v) (c).ch.green = (uint8_t)(v) & 0x3FU;
+# define LV_COLOR_SET_G16(c, v) (c).ch.green = (uint8_t)(v) & 0x1FU; //0x3FU
 # define LV_COLOR_SET_G16_SWAP(c, v) {(c).ch.green_h = (uint8_t)(((v) >> 3) & 0x7); (c).ch.green_l = (uint8_t)((v) & 0x7);}
 # define LV_COLOR_SET_B16(c, v) (c).ch.blue = (uint8_t)(v) & 0x1FU;
-# define LV_COLOR_SET_A16(c, v) do {} while(0)
+# define LV_COLOR_SET_A16(c, v) (c).ch.alpha = (v)?1:0; //do {} while(0)
 
 # define LV_COLOR_GET_R16(c) (c).ch.red
 # define LV_COLOR_GET_G16(c) (c).ch.green
 # define LV_COLOR_GET_G16_SWAP(c) (((c).ch.green_h << 3) + (c).ch.green_l)
 # define LV_COLOR_GET_B16(c) (c).ch.blue
-# define LV_COLOR_GET_A16(c) 0xFF
+# define LV_COLOR_GET_A16(c) (c).ch.alpha //0xFF
 
 # define LV_COLOR_SET_R32(c, v) (c).ch.red = (uint32_t)((v) & 0xFF);
 # define LV_COLOR_SET_G32(c, v) (c).ch.green = (uint32_t)((v) & 0xFF);
@@ -224,10 +224,11 @@ typedef union
 {
     struct
     {
-#if LV_COLOR_16_SWAP == 0
+#if LV_COLOR_16_SWAP == 0     //ARGB1555
         uint16_t blue : 5;
-        uint16_t green : 6;
+        uint16_t green : 6-1; //add alpha;
         uint16_t red : 5;
+        uint16_t alpha : 1;   //add alpha;
 #else
         uint16_t green_h : 3;
         uint16_t red : 5;
@@ -353,7 +354,7 @@ static inline uint16_t lv_color_to16(lv_color_t color)
     lv_color16_t ret;
     LV_COLOR_SET_R16(ret, LV_COLOR_GET_R(color) * 4);     /*(2^5 - 1)/(2^3 - 1) = 31/7 = 4*/
 #if LV_COLOR_16_SWAP == 0
-    LV_COLOR_SET_G16(ret,  LV_COLOR_GET_G(color) * 9); /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
+    LV_COLOR_SET_G16(ret,  LV_COLOR_GET_G(color) * 4);    /*(2^5 - 1)/(2^3 - 1) = 31/7 = 4*/
 #else
     LV_COLOR_SET_G16_SWAP(ret, (LV_COLOR_GET_G(color) * 9)); /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
 #endif
@@ -366,7 +367,7 @@ static inline uint16_t lv_color_to16(lv_color_t color)
     LV_COLOR_SET_R16(ret, LV_COLOR_GET_R(color) >> 3);   /* 8 - 5  = 3*/
 
 #if LV_COLOR_16_SWAP == 0
-    LV_COLOR_SET_G16(ret, LV_COLOR_GET_G(color) >> 2); /* 8 - 6  = 2*/
+    LV_COLOR_SET_G16(ret, LV_COLOR_GET_G(color) >> 3); /* 8 - 5  = 3*/
 #else
     LV_COLOR_SET_G16_SWAP(ret, ret.ch.green_h = (LV_COLOR_GET_G(color) >> 2); /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
 #endif
@@ -466,7 +467,7 @@ static inline uint8_t lv_color_brightness(lv_color_t color)
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(uint8_t)((b8 >> 6) & 0x3U), (uint8_t)((g8 >> 5) & 0x7U), (uint8_t)((r8 >> 5) & 0x7U)}})
 #elif LV_COLOR_DEPTH == 16
 #if LV_COLOR_16_SWAP == 0
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(uint16_t)((b8 >> 3) & 0x1FU), (uint16_t)((g8 >> 2) & 0x3FU), (uint16_t)((r8 >> 3) & 0x1FU)}})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(uint16_t)((b8 >> 3) & 0x1FU), (uint16_t)((g8 >> 3) & 0x1FU), (uint16_t)((r8 >> 3) & 0x1FU), 0x1}}) /*Fix 0x1 alpha*/
 #else
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(uint16_t)((g8 >> 5) & 0x7U), (uint16_t)((r8 >> 3) & 0x1FU), (uint16_t)((b8 >> 3) & 0x1FU), (uint16_t)((g8 >> 2) & 0x7U)}})
 #endif
