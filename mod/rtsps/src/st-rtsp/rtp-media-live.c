@@ -389,12 +389,6 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
         , gsf_sdp->audio_shmid
         , m->track[MEDIA_TRACK_AUDIO].m_reader
         , m->track[MEDIA_TRACK_AUDIO].m_evfd);
-        
-  if(m->track[MEDIA_TRACK_AUDIO].m_reader == NULL 
-    || m->track[MEDIA_TRACK_AUDIO].m_evfd < 0)
-  {
-    return 0;
-  }
   
   char media[1024] = {0};
   if(gsf_sdp->venc.type == GSF_ENC_H265)
@@ -409,28 +403,29 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   strcat(media, "\r\n");
   strcat(sdp, media);
   
-  
-	static const char* pattern_audio =
-  	"m=audio 0 RTP/AVP %d\r\n"
-  	"a=rtpmap:%d %s/%d/%d\r\n"
-    "a=range:npt=now-\r\n"
-    "a=recvonly\r\n"
-  	"a=control:audio\r\n";
-  
-  if(gsf_sdp->aenc.type == GSF_ENC_AAC)
-    snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_MP4A, RTP_PAYLOAD_MP4A, "mpeg4-generic",48000, 2);
-  else 	
-    snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, "PCMU", 8000, 2);
-
-  strcat(sdp, media);
-  
-  if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+  if(m->track[MEDIA_TRACK_AUDIO].m_reader)
   {
-    char fmtp[256];
-    sprintf(fmtp, "a=fmtp:%d streamType=5;profile-level-id=1;mode=AAC-hbr;sizelength=13;indexlength=3;indexdeltalength=3\r\n", RTP_PAYLOAD_MP4A);
-    strcat(sdp, fmtp);
-  }
+  	static const char* pattern_audio =
+    	"m=audio 0 RTP/AVP %d\r\n"
+    	"a=rtpmap:%d %s/%d/%d\r\n"
+      "a=range:npt=now-\r\n"
+      "a=recvonly\r\n"
+    	"a=control:audio\r\n";
+    
+    if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+      snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_MP4A, RTP_PAYLOAD_MP4A, "mpeg4-generic",48000, 2);
+    else 	
+      snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, "PCMU", 8000, 2);
 
+    strcat(sdp, media);
+    
+    if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+    {
+      char fmtp[256];
+      sprintf(fmtp, "a=fmtp:%d streamType=5;profile-level-id=1;mode=AAC-hbr;sizelength=13;indexlength=3;indexdeltalength=3\r\n", RTP_PAYLOAD_MP4A);
+      strcat(sdp, fmtp);
+    }
+  }
   return 0;
 }
 
