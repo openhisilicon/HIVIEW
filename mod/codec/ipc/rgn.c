@@ -845,6 +845,74 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
 }
 
 
+int gsf_rgn_canvas(int ch, int idx, gsf_osd_act_t *act)
+{
+  int sub = 0;
+  int mask = 1;
+  static int handle = -1;
+  
+  if(act->w != codec_ipc.venc[sub].width)
+  {
+     //warn("act->w:%d, codec_ipc width:%d\n", act->w, codec_ipc.venc[sub].width);
+    return -1;
+  }
+  
+  //printf("act->w:%d, codec_ipc width:%d\n", act->w, codec_ipc.venc[sub].width);
+  
+  if(handle == -1)
+  {
+    gsf_rgn_rects_t rects = {0};
+    gsf_rgn_rect_set(ch, idx, &rects, mask);
+    handle = GSF_RGN_OBJ_HANDLE(ch, OBJ_OSD, sub, idx);
+  }
+  
+  BITMAP_S  bitMap;
+  
+  #ifdef __RGN_CANVAS
+  RGN_CANVAS_INFO_S stRgnCanvasInfo = {0};
+  if((gsf_mpp_rgn_canvas_get(handle, &stRgnCanvasInfo) < 0)
+    || (stRgnCanvasInfo.stSize.u32Width == 0)
+    || (stRgnCanvasInfo.stSize.u32Height == 0))
+  {
+    return -1;
+  }
+  
+  HI_U16 *p = (HI_VOID*)(HI_UL)stRgnCanvasInfo.u64VirtAddr;
+  int w     = stRgnCanvasInfo.u32Stride/2;
+  int h	    = stRgnCanvasInfo.stSize.u32Height;
+  HI_U16 *act_p = (HI_U16 *)act->data;
+  
+  #else
+  HI_U16 *p = bitMap.pData = rgn_obj[handle].osd_bmp;
+  int w	    = bitMap.u32Width = rgn_obj[handle].osd_info->osdW;
+  int h	    = bitMap.u32Height = rgn_obj[handle].osd_info->osdH;
+  HI_U16 *act_p = (HI_U16 *)act->data;  
+  bitMap.enPixelFormat = PIXEL_FORMAT_ARGB_1555;
+  #endif
+   
+  uint16_t * fbp16 = (uint16_t *)p;
+  int32_t y;
+  for(y = act->y1; y <= act->y2; y++) 
+  {
+    int location = (act->x1 + 0) + (y + 0) * w;
+    memcpy(&fbp16[location], (uint16_t*)act_p, (act->x2 - act->x1 + 1) * 2);
+    act_p += (act->x2 - act->x1 + 1);
+  }
+
+  #ifdef __RGN_CANVAS
+  gsf_mpp_rgn_canvas_update(handle);
+  #else
+  gsf_mpp_rgn_bitmap(handle, &bitMap);
+  gsf_mpp_rgn_ctl(handle, GSF_MPP_RGN_SETDISPLAY, &rgn_obj[handle].rgn);
+  #endif
+  
+  return 0;
+}
+
+
+
+
+
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_STANDARD_VARARGS

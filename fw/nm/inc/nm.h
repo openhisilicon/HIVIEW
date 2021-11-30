@@ -33,6 +33,7 @@ int nm_pull_close(void* pull);
 int nm_push_conn(char *s);
 int nm_push_close(int push);
 int nm_push_send(int push, char *msg, int size);
+int nm_push_send_wait(int push, char *msg, int size);
 
 //pub/sub;
 void* nm_pub_listen(char *s);

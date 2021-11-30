@@ -15,6 +15,7 @@ extern "C" {
 
 enum {
     GSF_ID_APP_CHSRC  = 1,  // [ gsf_chsrc_t, gsf_chsrc_t .... N]
+    GSF_ID_APP_GUI    = 2,  // gsf_gui_t
     GSF_ID_APP_END
 };
 

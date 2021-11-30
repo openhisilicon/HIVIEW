@@ -44,6 +44,16 @@ void fbdev_init(void);
 void fbdev_exit(void);
 void fbdev_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
 
+struct fb_var_info{
+    uint32_t xoffset;
+    uint32_t yoffset;
+    uint32_t xres;
+    uint32_t yres;
+    int bits_per_pixel;
+ };
+ 
+int  fbdev_var(struct fb_var_info *var);
+
 
 /**********************
  *      MACROS

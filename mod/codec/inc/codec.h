@@ -10,7 +10,7 @@ extern "C" {
 //for json cfg;
 #include "mod/codec/inc/sjb_codec.h"
 
-
+#define GSF_IPC_OSD        "ipc:///tmp/codec_osd"
 #define GSF_IPC_CODEC      "ipc:///tmp/codec_rep"
 
 enum {
@@ -78,7 +78,12 @@ typedef struct {
   gsf_sdp_val_t val[4];
 }gsf_sdp_t;
 
-
+typedef struct {
+  int  pixel;   /*16 bit per pixel*/
+  int  x, y, w, h;
+  int  x1,y1,x2,y2;
+  char data[0]; /*data of pixel buffer */
+}gsf_osd_act_t;
 
 #ifdef __cplusplus
 }

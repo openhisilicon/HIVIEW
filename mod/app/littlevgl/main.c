@@ -14,11 +14,15 @@
 #include <sys/select.h>
 
 #include "mod/svp/inc/svp.h"
+#include "mod/codec/inc/codec.h"
+
+#define DISP_BUF_SIZE (80*LV_HOR_RES_MAX/*1280*/)
 
 static pthread_t tid;
 static int lv_running = 0, lv_w = 1280, lv_h = 1024, lt = 1;
 static void* lvgl_main(void* p);
 static int msq = -1;
+static int lv_push_osd = 0;
 
 int lvgl_stop(void)
 {
@@ -26,10 +30,11 @@ int lvgl_stop(void)
   return pthread_join(tid, NULL);
 }
 
-int lvgl_start(int w, int h)
+int lvgl_start(int w, int h, int push_osd)
 {
   lv_w = w;
   lv_h = h;
+  lv_push_osd = push_osd;
   lv_running = 1;
   return pthread_create(&tid, NULL, lvgl_main, NULL);
 }
@@ -60,6 +65,55 @@ static int sub_recv(char *msg, int size, int err)
   return 0;
 }
 
+//send act to GSF_IPC_OSD;
+static void fb_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
+{
+  static int osd_push = 0;
+  static char* osd_buf = NULL;
+  static struct fb_var_info var = {0};
+  
+  fbdev_var(&var);
+  
+  if(sizeof(lv_color_t) != 2
+     || var.xres > 1920 || var.bits_per_pixel != 16)
+  {
+    //warn("lv_color_t:%d, bits_per_pixel:%d, xres:%d\n", sizeof(lv_color_t), var.xres, var.bits_per_pixel);
+    return fbdev_flush(drv, area, color_p);
+  }  
+
+  
+  if(!osd_push)
+  {
+    osd_push = nm_push_conn(GSF_IPC_OSD);
+    if(!osd_buf)
+    {
+      osd_buf = malloc(sizeof(gsf_osd_act_t) + DISP_BUF_SIZE*2);
+    }
+    usleep(100*1000);
+    //printf("nm_push_conn osd_push:%d\n", osd_push);
+  }
+  if(osd_push && osd_buf)
+  {
+    gsf_osd_act_t *act = (gsf_osd_act_t*)osd_buf;
+    
+    act->pixel = 16;
+    act->x = act->y = 0;
+    act->w = var.xres;
+    act->h = var.yres;
+    act->x1 = area->x1 < 0 ? 0 : area->x1;
+    act->y1 = area->y1 < 0 ? 0 : area->y1;
+    act->x2 = area->x2 > ((int32_t)var.xres - 1) ? (int32_t)var.xres - 1 : area->x2;
+    act->y2 = area->y2 > ((int32_t)var.yres - 1) ? (int32_t)var.yres - 1 : area->y2;
+      
+    int act_size = (act->x2-act->x1+1)*(act->y2-act->y1+1)*2;
+    memcpy(act->data, color_p, act_size);
+    nm_push_send_wait(osd_push, (char*)act, sizeof(gsf_osd_act_t)+act_size);
+    //printf("nm_push_send_wait act_size:%d\n", act_size);
+
+  }
+  return fbdev_flush(drv, area, color_p);
+}
+
 static void* lvgl_main(void* p)
 {
     /*LittlevGL init*/
@@ -75,7 +129,6 @@ static void* lvgl_main(void* p)
     /*Set the resolution of the display*/
     disp_drv.hor_res = lv_w; //1280
     disp_drv.ver_res = lv_h; //1024
-    #define DISP_BUF_SIZE (80*LV_HOR_RES_MAX/*1280*/)
     
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -84,7 +137,7 @@ static void* lvgl_main(void* p)
     lv_disp_buf_init(&disp_buf, buf, NULL, DISP_BUF_SIZE);
     
     disp_drv.buffer = &disp_buf;
-    disp_drv.flush_cb = fbdev_flush;
+    disp_drv.flush_cb = lv_push_osd?fb_flush:fbdev_flush;
     lv_disp_drv_register(&disp_drv);
      
     mouse_hid_init();
@@ -114,9 +167,9 @@ static void* lvgl_main(void* p)
     static lv_style_t style_tv_body_fg;
     lv_style_copy(&style_tv_body_fg, &lv_style_plain);
     style_tv_body_fg.body.main_color = LV_COLOR_RED;
-    LV_COLOR_SET_A(style_tv_body_fg.body.main_color, 40);
+    LV_COLOR_SET_A(style_tv_body_fg.body.main_color, 0);
     style_tv_body_fg.body.grad_color = LV_COLOR_RED;
-    LV_COLOR_SET_A(style_tv_body_fg.body.grad_color, 40);
+    LV_COLOR_SET_A(style_tv_body_fg.body.grad_color, 0);
     style_tv_body_fg.body.padding.top = 0;
     style_tv_body_fg.body.border.color = LV_COLOR_RED;
     style_tv_body_fg.body.border.width = 4;
@@ -156,6 +209,8 @@ static void* lvgl_main(void* p)
 
     /*Create a Demo*/
     //lv_obj_t* tv = demo_create();
+    
+    // GSF_PUB_SVP
     msq = msgget(111, IPC_CREAT | 0666);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     

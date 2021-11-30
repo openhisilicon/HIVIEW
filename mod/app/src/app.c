@@ -13,7 +13,7 @@
 GSF_LOG_GLOBAL_INIT("APP", 8*1024);
 
 extern int lvgl_stop(void);
-extern int lvgl_start(int w, int h);
+extern int lvgl_start(int w, int h, int push_osd);
 extern int lvgl_ctl(int cmd, void* args);
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
     lvgl_ctl(0, (void*)lt);
     
     //kbd_mon("/dev/ttyAMA2");
-    lvgl_start(res.w, res.h);
+    lvgl_start(res.w, res.h, app_nvr.gui.push_osd);
 
     #ifdef GSF_DEV_NVR
     #warning "...... DDDDDDDD GSF_DEV_NVR DDDDDDDD ......"

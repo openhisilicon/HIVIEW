@@ -40,7 +40,7 @@
 /**********************
  *      STRUCTURES
  **********************/
-
+ 
 struct bsd_fb_var_info{
     uint32_t xoffset;
     uint32_t yoffset;
@@ -235,6 +235,21 @@ void fbdev_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color
 
     lv_disp_flush_ready(drv);
 }
+
+
+int  fbdev_var(struct fb_var_info *var)
+{
+  if(var)
+  {
+    var->xoffset = vinfo.xoffset;
+    var->yoffset = vinfo.yoffset;
+    var->xres = vinfo.xres;
+    var->yres = vinfo.yres;
+    var->bits_per_pixel = vinfo.bits_per_pixel;
+  }
+  return 0;
+}
+
 
 /**********************
  *   STATIC FUNCTIONS
