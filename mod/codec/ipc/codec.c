@@ -537,10 +537,10 @@ int mpp_start(gsf_bsp_def_t *def)
       #elif defined(GSF_CPU_3516d)
       {
         // cpu type try sstat_chipid(), otherwise use board.type;
-		char *chipid = sstat_chipid(); // [3516a300 3516d300 35590200]
-		printf("chipid[%s]\n", chipid);
-		strcpy(cfg.type, def->board.type);
-		chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
+        char *chipid = sstat_chipid(); // [3516a300 3516d300 35590200]
+        printf("chipid[%s]\n", chipid);
+        strcpy(cfg.type, def->board.type);
+        chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
         //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT601.512P]
         cfg.second = (cfg.snscnt > 1)?0:
                      (def->board.second <= 0)?0:def->board.second;

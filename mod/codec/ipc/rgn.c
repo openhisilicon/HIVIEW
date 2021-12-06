@@ -924,8 +924,8 @@ int gsf_rgn_canvas(int ch, int idx, gsf_osd_act_t *act)
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_INCLUDE_SOFTWARE_FONT
 #include <math.h>
-#include "nuklear.h"
-#include "nuklear_rawfb.h"
+#include "fw/nuklear/inc/nuklear.h"
+#include "fw/nuklear/inc/nuklear_rawfb.h"
 
 static int nk_win_id;
 
