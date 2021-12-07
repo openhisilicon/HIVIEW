@@ -937,6 +937,10 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
         int k = 0;
         for(k = 0; k < VO_MAX_CHN_NUM; k++)
           vo_mng[i].layer[j].chs[k].src_grp = vo_mng[i].layer[j].chs[k].src_chn = -1;
+      
+        vo_mng[i].layer[j].rect.s32X = vo_mng[i].layer[j].rect.s32Y = 0;
+        vo_mng[i].layer[j].rect.u32Width = stVoConfig.stDispRect.u32Width;
+        vo_mng[i].layer[j].rect.u32Height = stVoConfig.stDispRect.u32Height;
       }
     }
 
@@ -1267,7 +1271,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   stStream.pu8Addr = data;
   stStream.u32Len  = attr->size;
   stStream.bEndOfFrame  = HI_TRUE;
-  stStream.bEndOfStream = HI_FALSE;   
+  stStream.bEndOfStream = HI_FALSE;
   stStream.bDisplay = 1;
   s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
   //printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x\n", ch, s32Ret);

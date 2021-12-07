@@ -124,6 +124,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {OMNIVISION_OV2775_MIPI_2M_30FPS_12BIT_BUILTIN,   "ov2775-0-3-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
     {OMNIVISION_OV2775_2L_MIPI_2M_30FPS_12BIT,        "ov2775-2-0-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
     {OMNIVISION_OV2775_2L_MIPI_2M_30FPS_12BIT_WDR2TO1,"ov2775-2-1-2-30", "libsns_ov2775.so", "stSnsOV2775Obj"},
+    {MIPI_YUV_1M_60FPS_8BIT,                      "yuv422-0-0-1-60", NULL,                NULL},	
     {MIPI_YUV_2M_60FPS_8BIT,                      "yuv422-0-0-2-60", NULL,                NULL},
     {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
@@ -216,7 +217,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = BT656_YUV_0M_60FPS_8BIT;
+    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT:
+                   BT656N_YUV_0M_60FPS_8BIT;
   }
   
   if(dl)
@@ -261,6 +263,9 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg);
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
 {
+  //extern HI_S32 cipher_check(void);
+  //cipher_check();
+  
   mppex_hook_register();
   	
   if(cfg && cfg->snscnt > 0)
