@@ -44,7 +44,10 @@
 #define ELE_NUM_GET(e)   e##__
 #else
 #define __ELE_DEF(e)
-static  int __ele__;      //dummy;
+#ifndef ___ele___
+  #define ___ele___
+  static  int __ele__;      //dummy;
+#endif
 #define ELE_NUM_SET(e)    __ele__
 #define ELE_NUM_GET(e)   (sizeof(e)/sizeof(e[0]))
 #endif

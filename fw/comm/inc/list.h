@@ -2,6 +2,11 @@
 #define _LINUX_LIST_H
 
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
    prefetch(x) attempts to pre-emptively get the memory pointed to
    by address "x" into the CPU L1 cache. 
@@ -91,14 +96,14 @@ struct list_head {
  * This is only for internal list manipulation where we know
  * the prev/next entries already!
  */
-static inline void __list_add(struct list_head *new,
+static inline void __list_add(struct list_head *_new,
 		struct list_head *prev,
 		struct list_head *next)
 {
-	next->prev = new;
-	new->next = next;
-	new->prev = prev;
-	prev->next = new;
+	next->prev = _new;
+	_new->next = next;
+	_new->prev = prev;
+	prev->next = _new;
 }
 
 /**
@@ -109,9 +114,9 @@ static inline void __list_add(struct list_head *new,
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
-static inline void list_add(struct list_head *new, struct list_head *head)
+static inline void list_add(struct list_head *_new, struct list_head *head)
 {
-	__list_add(new, head, head->next);
+	__list_add(_new, head, head->next);
 }
 
 /**
@@ -122,9 +127,9 @@ static inline void list_add(struct list_head *new, struct list_head *head)
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-static inline void list_add_tail(struct list_head *new, struct list_head *head)
+static inline void list_add_tail(struct list_head *_new, struct list_head *head)
 {
-	__list_add(new, head->prev, head);
+	__list_add(_new, head->prev, head);
 }
 
 /*
@@ -558,5 +563,10 @@ static inline void hlist_add_after(struct hlist_node *n,
 			({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
 			pos = n)
 
+
+
+#ifdef __cplusplus
+}
+#endif 
 
 #endif
