@@ -60,6 +60,13 @@ int main(int argc, char *argv[])
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_UVC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
 
+    if(access("/sys/class/udc/100e0000.hidwc3_0", 0) == -1)
+    {
+      error("usb is not in DEVICE mode, exit.\n");
+      return 0;
+    }
+    system("/app/usbgadget/uvc.sh");
+
     if(uvc_parm.en)
     {
       if (create_config_svc("") != 0)
