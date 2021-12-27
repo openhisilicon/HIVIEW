@@ -281,6 +281,36 @@ static unsigned short argb8888_1555(unsigned int color)
   return (unsigned short)(a << 15 | r<<(10) | g<<5 | b);
 }
 
+extern int second_sdp(int i, gsf_sdp_t *sdp);
+static int codec_venc_width(int ch, int i)
+{
+  if(!ch)
+  {
+    return codec_ipc.venc[i].width;
+  }
+  gsf_sdp_t sdp;
+  if(second_sdp(i, &sdp) == 0)
+  {
+    return sdp.venc.width;
+  }
+  return codec_ipc.venc[i].width;
+}
+
+static int codec_venc_height(int ch, int i)
+{
+  if(!ch)
+  {
+    return codec_ipc.venc[i].height;
+  }
+  gsf_sdp_t sdp;
+  if(second_sdp(i, &sdp) == 0)
+  {
+    return sdp.venc.height;
+  }
+  return codec_ipc.venc[i].height;
+}
+
+
 //#define __RGN_CANVAS // __RGN_CANVAS is bad
 
 int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
@@ -299,10 +329,10 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     memset(&rgn_obj[handle].rgn, 0, sizeof(rgn_obj[handle].rgn));
     
     
-    float wr = codec_ipc.venc[i].width; 
-    wr /= codec_ipc.venc[0].width;
-    float hr = codec_ipc.venc[i].height;
-    hr /= codec_ipc.venc[0].height;
+    float wr = codec_venc_width(ch, i);
+    wr /=  codec_venc_width(ch, 0);
+    float hr = codec_venc_height(ch, i);
+    hr /= codec_venc_height(ch, 0);
     
     osd->point[0] *= wr;
     osd->point[1] *= hr;
@@ -343,7 +373,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
     if(osd->text[0])
     {
       gsf_parse_text(osd->text, info->lines, &info->lineN, &info->colN);
-      gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
+      gsf_calc_fontsize(codec_venc_width(ch, i), codec_venc_height(ch, i), osd->fontsize, &info->fontW, &info->fontH, &info->fontS);
     }
     else
     {
@@ -565,8 +595,8 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
     rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(codec_ipc.venc[i].width, 2);
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(codec_ipc.venc[i].height, 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(codec_venc_width(ch, i), 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(codec_venc_height(ch, i), 2);
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
     
     rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;
@@ -693,7 +723,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
       if(rects->box[r].label[0])
       {
         gsf_parse_text(rects->box[r].label, info->lines, &info->lineN, &info->colN);
-        gsf_calc_fontsize(codec_ipc.venc[i].width, codec_ipc.venc[i].height, 0/*fontsize*/, &info->fontW, &info->fontH, &info->fontS);
+        gsf_calc_fontsize(codec_venc_width(ch, i), codec_venc_height(ch, i), 0/*fontsize*/, &info->fontW, &info->fontH, &info->fontS);
       }
       else
       {
@@ -948,8 +978,8 @@ int gsf_rgn_nk_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
     rgn_obj[handle].rgn.stRegion.enType = OVERLAY_RGN;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.enPixelFmt = PIXEL_FORMAT_ARGB_1555;
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32BgColor = 0x00000000;//argb8888_1555(0x00FF0000);
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(codec_ipc.venc[i].width, 2);
-    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(codec_ipc.venc[i].height, 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Width = ALIGN_UP(codec_venc_width(ch, i), 2);
+    rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.stSize.u32Height = ALIGN_UP(codec_venc_height(ch, i), 2);
     rgn_obj[handle].rgn.stRegion.unAttr.stOverlay.u32CanvasNum = 2;
     
     rgn_obj[handle].rgn.stChn.enModId = HI_ID_VENC;

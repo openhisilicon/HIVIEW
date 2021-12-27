@@ -11,9 +11,8 @@
 static gsf_lens_ini_t _ini;
 static pthread_t serial_tid;
 static int serial_fd = -1;
-static void* serial_task(void *parm);
-static int af_uart_open(char *ttyAMA);
 static int _dayNight = 0;
+static void* serial_task(void *parm);
 
 int gsf_lens_init(gsf_lens_ini_t *ini)
 {
@@ -56,7 +55,7 @@ int gsf_lens_ircut(int ch, int dayNight)
 
 #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
 
-int af_uart_write(char *buf, int size)
+int gsf_uart_write(char *buf, int size)
 {
   int ret = 0;
 
@@ -92,11 +91,11 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
 
   buf[7] = _dayNight; //²ÊÉ«ÊÇ0 ºÚ°×ÊÇ1
 
-  int ret = af_uart_write(buf, 8);
+  int ret = gsf_uart_write(buf, 8);
   return 0;
 }
 
-int gsf_lens_af_start(int ch, char *ttyAMA)
+int gsf_lens_start(int ch, char *ttyAMA)
 {
   //test auto ircut;
   gsf_mpp_ir_t ir = {.cb = ir_cb};
@@ -107,7 +106,7 @@ int gsf_lens_af_start(int ch, char *ttyAMA)
       .cb = af_cb,
   };
   
-  af_uart_open(ttyAMA);
+  gsf_uart_open(ttyAMA);
   if(ch < 0)
   	return 0;
 
@@ -117,7 +116,7 @@ int gsf_lens_af_start(int ch, char *ttyAMA)
 int gsf_lens_stop(int ch)
 {
   char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c};
-  int ret = af_uart_write(buf, 8);
+  int ret = gsf_uart_write(buf, 8);
   return 0;
 }
 
@@ -127,7 +126,7 @@ int gsf_lens_zoom(int ch,  int dir, int speed)
   char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c};
   char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c};
   char *buf = (dir)?add:sub;
-  int ret = af_uart_write(buf, 8);
+  int ret = gsf_uart_write(buf, 8);
   return 0;
 }
 int gsf_lens_focus(int ch, int dir, int speed)
@@ -136,7 +135,7 @@ int gsf_lens_focus(int ch, int dir, int speed)
   char add[8] = {0xc5,0x00,0x01,0x00,0x00,0x00,0x00,0x5c};
   char sub[8] = {0xc5,0x00,0x00,0x80,0x00,0x00,0x00,0x5c};
   char *buf = (dir)?add:sub;
-  int ret = af_uart_write(buf, 8);
+  int ret = gsf_uart_write(buf, 8);
   return 0;
 }
 
@@ -144,13 +143,13 @@ int gsf_lens_cal(int ch)
 {
 	// lens calibration
   char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c};
-  int ret = af_uart_write(buf, 8);
+  int ret = gsf_uart_write(buf, 8);
   usleep(100*1000);
-  ret |= af_uart_write(buf, 8);
+  ret |= gsf_uart_write(buf, 8);
   return 0;
 }
 
-static int af_uart_open(char *ttyAMA)
+int gsf_uart_open(char *ttyAMA)
 {
   if(strstr(ttyAMA, "ttyAMA4"))
     system("himm 0x111F0000 2;himm 0x111F0004 2;"); //UART4 MUX

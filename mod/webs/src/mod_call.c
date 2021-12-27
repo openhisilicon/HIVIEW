@@ -40,6 +40,8 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   {GSF_ID_CODEC_VENC,  "GSF_ID_CODEC_VENC", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_venc_t,   (sjb_cb*)sjb_bind_gsf_venc_t,sizeof(gsf_venc_t), sizeof(gsf_venc_t),0},
   {GSF_ID_CODEC_OSD,   "GSF_ID_CODEC_OSD",  GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_osd_t,    (sjb_cb*)sjb_bind_gsf_osd_t,sizeof(gsf_osd_t), sizeof(gsf_osd_t),0},
   {GSF_ID_CODEC_VMASK, "GSF_ID_CODEC_VMASK", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_vmask_t, (sjb_cb*)sjb_bind_gsf_vmask_t,sizeof(gsf_vmask_t), sizeof(gsf_vmask_t),0},
+  //warn: id with the same prefix
+  {GSF_ID_CODEC_LENSTYPE,"GSF_ID_CODEC_LENSTYPE", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_lenstype_t, (sjb_cb*)sjb_bind_gsf_lenstype_t,sizeof(gsf_lenstype_t), sizeof(gsf_lenstype_t),0},
   {GSF_ID_CODEC_LENS,  "GSF_ID_CODEC_LENS", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_lens_t,   (sjb_cb*)sjb_bind_gsf_lens_t,sizeof(gsf_lens_t), sizeof(gsf_lens_t),0},
 
 //rec;
@@ -79,6 +81,7 @@ int mod_call(char *str, char *args, char *in, char *out, int osize)
     if(!strncmp(sjb_maps[i].str, str, strlen(sjb_maps[i].str)))
     {
       j = i;
+      printf("str[%s], maps_str[%s], maps_id[%d]\n", str, sjb_maps[i].str, sjb_maps[i].id);
       break;
     }
   }

@@ -638,6 +638,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         return HI_FAILURE;
     }
 
+    //maohw  warning only used SENSOR0 fps;
     SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
     if(SAMPLE_SNS_TYPE_BUTT == stViConfig.astViInfo[0].stSnsInfo.enSnsType)
     {

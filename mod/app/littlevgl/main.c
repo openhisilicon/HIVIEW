@@ -183,6 +183,7 @@ static void* lvgl_main(void* p)
     lv_obj_set_size(win, hres, vres);
     lv_obj_set_style(win, &style_tv_body_bg);
     
+    #if 1 // HDMI/LCD OUT LOGO;
     lv_obj_t *obj_note = lv_obj_create(win, NULL);
     lv_obj_t *label_note = lv_label_create(obj_note, NULL);
     lv_obj_set_style(label_note, &style_label);
@@ -192,6 +193,7 @@ static void* lvgl_main(void* p)
     lv_obj_set_x(obj_note, 0);
     lv_obj_set_y(obj_note, vres/1.5);
     lv_label_set_text(label_note, "LittlevGL && https://github.com/openhisilicon/HIVIEW");
+    #endif
     
     int i = 0, cnt = 0;
     lv_obj_t *obj[64];

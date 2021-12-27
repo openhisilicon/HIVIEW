@@ -69,7 +69,7 @@
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
-
+//cfifo;
 extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
 extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
 extern unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2);
@@ -83,28 +83,48 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
   return len;
 }
 
+//resolution;
 static gsf_resolu_t vores;
 #define vo_res_set(_w, _h) do{vores.w = _w; vores.h = _h;}while(0)
 int vo_res_get(gsf_resolu_t *res) { *res = vores; return 0;}
 
+//layout;
 static gsf_layout_t voly;
 #define vo_ly_set(ly) do{voly.layout = ly;}while(0)
 int vo_ly_get(gsf_layout_t *ly) { *ly = voly; return 0;}
 
 static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
-int second_sdp(gsf_sdp_t *sdp)
+
+//second sdp hook, fixed venc cfg;
+int second_sdp(int i, gsf_sdp_t *sdp)
 {
+  #if defined(GSF_CPU_3516d)
   if(p_cfg->second)
   {
     sdp->audio_shmid = -1;
-    sdp->venc.width = 720;
-    sdp->venc.height = (p_cfg->second == 1)?576:480;
+    if(i == 0 || i == 2)
+    {
+      sdp->venc.width = 720;
+      sdp->venc.height = (p_cfg->second == 1)?576:480;
+      sdp->venc.bitrate = 2000;
+      sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
+    }
+    else 
+    {
+      sdp->venc.width = 352;
+      sdp->venc.height = 288;
+      sdp->venc.bitrate = 1000;
+      sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
+    }
     return 0; 
   }
+  #endif
+  
   return -1;
 }
 
+// mod msg;
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
     int ret = 0;
@@ -119,11 +139,11 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 
     rsp->err = (ret == TRUE)?rsp->err:GSF_ERR_MSG;
     *osize = sizeof(gsf_msg_t)+rsp->size;
-
+    printf("req->id:%d, set:%d, rsp->err:%d, size:%d\n", req->id, req->set, rsp->err, rsp->size);
     return 0;
 }
 
-
+// osd msg;
 static int osd_recv(char *msg, int size, int err)
 {
   gsf_osd_act_t *act = ( gsf_osd_act_t *)msg;
@@ -131,8 +151,7 @@ static int osd_recv(char *msg, int size, int err)
   return 0;
 }
 
-
-
+// svp event;
 static int sub_recv(char *msg, int size, int err)
 {
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
@@ -187,7 +206,7 @@ static int sub_recv(char *msg, int size, int err)
       
       //printf("GSF_EV_SVP_LPR idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
       //      , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);
-      #if LPR2UART
+      #if LPR2UART // send LPR to uart;
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
       if(lprs->result[i].number[0])
       {
@@ -204,8 +223,8 @@ static int sub_recv(char *msg, int size, int err)
         }
         buf[2+l] = sum;
         buf[1] += 1;
-        extern int af_uart_write(char *buf, int size);
-        af_uart_write(buf, 2+buf[1]);
+        extern int gsf_uart_write(char *buf, int size);
+        gsf_uart_write(buf, 2+buf[1]);
       }
       #endif
 	  #endif
@@ -243,32 +262,11 @@ static int sub_recv(char *msg, int size, int err)
       j++;
     } rects.size = j;
     
-    
-    int width  = codec_ipc.venc[0].width;
-    int height = codec_ipc.venc[0].height;
-    
-    #if defined(GSF_CPU_3516d)
-    if(chn && p_cfg->second)
-    {
-      //second osd;
-      codec_ipc.venc[0].width = 720;
-      codec_ipc.venc[0].height = (p_cfg->second == 1)?576:480;
-    }
-    #endif
-    
     // osd to sub-stream if main-stream > 1080P;
     //printf("chn:%d, rects.size:%d\n", chn, rects.size);
     gsf_rgn_rect_set(chn, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
     //gsf_rgn_nk_set(0, 0, &rects, (codec_ipc.venc[0].width>1920)?2:1);
-
-    #if defined(GSF_CPU_3516d)
-    if(chn && p_cfg->second)
-    {
-      //second osd;
-      codec_ipc.venc[0].width = width;
-      codec_ipc.venc[0].height = height;
-    }
-    #endif
+    
   }
   else if(pmsg->id == GSF_EV_SVP_CFACE)
   {
@@ -404,16 +402,13 @@ int venc_start(int start)
     #if defined(GSF_CPU_3516d)
     if(p_cfg->second && i == 1)
     {
-      if(j == 0 || j == 2)
-      {  
-        venc.enSize = (p_cfg->second == 1)?PIC_WIDTH(720, 576):PIC_WIDTH(720, 480);
-        venc.u32BitRate = 2000; //adjust bps;
-      }    
-      else
-      {  
-        venc.enSize = PIC_WIDTH(352, 288);
-        venc.u32BitRate = 1000; //adjust bps;
-      }  
+      gsf_sdp_t sdp;
+      if(second_sdp(j, &sdp) == 0)
+      {
+        venc.enSize = PIC_WIDTH(sdp.venc.width, sdp.venc.height);
+        venc.u32BitRate = sdp.venc.bitrate;
+        venc.u32FrameRate = sdp.venc.fps;
+      }
     }
     #endif
 
@@ -552,7 +547,7 @@ int mpp_start(gsf_bsp_def_t *def)
           if(strstr(cfg.snsname, "imx327") 
             || strstr(cfg.snsname, "imx290") || strstr(cfg.snsname, "imx307"))
           {
-            cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+            cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 2; cfg.fps = strstr(cfg.snsname, "imx307")?50:30;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
             VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
@@ -562,7 +557,7 @@ int mpp_start(gsf_bsp_def_t *def)
 				      VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
 				      
           }
-          else if(strstr(cfg.snsname, "imx415"))
+          else if(strstr(cfg.snsname, "imx415") || strstr(cfg.snsname, "imx334"))
           {
               if(strcasestr(cfg.type, "3516a"))
               {
@@ -602,7 +597,7 @@ int mpp_start(gsf_bsp_def_t *def)
           {
           	// imx327-0-0-2-30
           	#if 1
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
+            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = strstr(cfg.snsname, "imx307")?50:30;
             rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
             venc_ini.ch_num = 1; venc_ini.st_num = 2;
             VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
@@ -618,8 +613,9 @@ int mpp_start(gsf_bsp_def_t *def)
               VPSS(1, 1, 1, 0, 1, 1, (cfg.second==1)?PIC_D1_PAL:PIC_D1_NTSC, PIC_CIF);
             }
           }
-          else if(strstr(cfg.snsname, "imx415"))
+          else if(strstr(cfg.snsname, "imx415") || strstr(cfg.snsname, "imx334"))
           {
+            
               if(strcasestr(cfg.type, "3516a"))
               {
                 cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
@@ -655,15 +651,32 @@ int mpp_start(gsf_bsp_def_t *def)
           }
           else if(strstr(cfg.snsname, "yuv422"))
           {
-            // yuv422-0-0-8-30
-            if(strcasestr(cfg.type, "3516a"))
+            if(codec_ipc.vi.res == 8)
             {
+              // yuv422-0-0-8-30
               cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
               rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
               venc_ini.ch_num = 1; venc_ini.st_num = 2;
               VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+
             }
-            else
+            else if (codec_ipc.vi.res == 2)
+            {
+              // yuv422-0-0-2-60
+              cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
+              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+              venc_ini.ch_num = 1; venc_ini.st_num = 2;
+              VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+            }
+            else if (codec_ipc.vi.res == 1)
+            {
+              // yuv422-0-0-1-60
+              cfg.lane = 0; cfg.wdr = 0; cfg.res = 1; cfg.fps = 60;
+              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
+              venc_ini.ch_num = 1; venc_ini.st_num = 2;
+              VPSS(0, 0, 0, 0, 1, 1, PIC_720P, PIC_D1_NTSC);
+            }
+            else  // other;
             {
               // yuv422-0-0-2-60
               cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
@@ -752,11 +765,18 @@ int mpp_start(gsf_bsp_def_t *def)
       #elif defined(GSF_CPU_3531d)
       {
         // 
-        //cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-        rgn_ini.ch_num = 2; rgn_ini.st_num = 1;
-        venc_ini.ch_num = 2; venc_ini.st_num = 1;
-        VPSS(0, 0, 0, 0, 1, 0, PIC_3840x2160, PIC_720P);
-        VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
+        //cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
+        rgn_ini.ch_num = 4; rgn_ini.st_num = 2;
+        venc_ini.ch_num = 4; venc_ini.st_num = 2;
+
+        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS(2, 2, 2, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS(3, 3, 3, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        //VPSS(4, 4, 4, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+        //VPSS(5, 5, 5, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+        //VPSS(6, 6, 6, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+        //VPSS(7, 7, 7, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
       }
       #else
       {
@@ -812,13 +832,22 @@ int mpp_start(gsf_bsp_def_t *def)
     
     gsf_mpp_vi_start(&vi);
     
-    //start af;
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-  	#if LPR2UART
-  	gsf_lens_af_start(-1, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
-  	#else
-  	gsf_lens_af_start(0, (cfg.snscnt < 2 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
-  	#endif
+    {
+      //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
+      char uart_name[32] = {0};
+      sprintf(uart_name, "%s", (cfg.snscnt == 1 && !cfg.second)?"/dev/ttyAMA2":"/dev/ttyAMA4");
+     
+  	  #if LPR2UART
+	    gsf_uart_open(uart_name); // send LPR to uart;
+  	  #else
+  	  if(codec_ipc.lenstype.type) // send AF-FV to uart;
+  	  {
+  	    sprintf(uart_name, "/dev/%s", codec_ipc.lenstype.uart);
+  	    gsf_lens_start(0, uart_name);
+  	  }
+  	  #endif
+  	}
   	#endif
     
     // vpss start;
@@ -977,7 +1006,8 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
       {
         if(p_cfg->second)
     	  {
-          RECT_S rect = {20, 0, 720, (p_cfg->second ==1)?576:480};
+    	    gsf_sdp_t sdp;
+          RECT_S rect = {20, 0, 720, (second_sdp(0, &sdp) == 0)?sdp.venc.height:576};
           gsf_mpp_vo_aspect(VOLAYER_HD0, 1, &rect);
         }
         gsf_mpp_vo_src_t src1 = {1, 0};
@@ -989,11 +1019,10 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
         vo_res_set(1920, 1080);
       else
         vo_res_set(3840, 2160);
-    }
 
-    gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
-    gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
-  
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+    }
     #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     
     return 0;
@@ -1050,7 +1079,7 @@ int main(int argc, char *argv[])
     info("parm.venc[0].type:%d, width:%d\n"
           , codec_ipc.venc[0].type
           , codec_ipc.venc[0].width);
-
+          
     // register to bsp && get bsp_def;
     if(reg2bsp() < 0)
       return -1;
@@ -1073,7 +1102,7 @@ int main(int argc, char *argv[])
                       , NM_REP_MAX_WORKERS
                       , NM_REP_OSIZE_MAX
                       , req_recv);
-    
+                      
     void* osd_pull = nm_pull_listen(GSF_IPC_OSD, osd_recv);
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);

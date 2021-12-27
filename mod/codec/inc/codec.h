@@ -25,6 +25,8 @@ enum {
     GSF_ID_CODEC_VOLY     = 9,  // ch, sid, gsf_layout_t;
     GSF_ID_CODEC_VOMV     = 10, // ch, sid, gsf_rect_t;
     GSF_ID_CODEC_LENS     = 11, // ch, sid, gsf_lens_t;
+    GSF_ID_CODEC_LENSTYPE = 12, // ch, sid, gsf_lenstype_t;
+    
     GSF_ID_CODEC_END
 };
 

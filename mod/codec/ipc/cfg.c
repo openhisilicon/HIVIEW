@@ -68,6 +68,12 @@ gsf_codec_ipc_t codec_ipc = {
   .aenc = {
     .en = 0, .type = GSF_ENC_AAC, .sprate = 48, .vol = 50,
   },
+  
+  .lenstype = {
+    .type = 0,
+    .uart = "ttyAMA2", //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
+  },
+  
   .osd = {
     [0] = {},
   },

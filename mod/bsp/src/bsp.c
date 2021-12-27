@@ -202,7 +202,21 @@ int main(int argc, char *argv[])
     
     while(1)
     {
-        sleep(10);
+        sleep(6);
+        
+        #if 0 //test get netlink status;
+        int stat = netcfg_netlink_status("eth0");
+        printf("eth0 stat:%d\n", stat);
+        
+        stat = netcfg_netlink_status("eth1");
+        printf("eth1 stat:%d\n", stat);
+        
+        stat = netcfg_netlink_status("wlan0");
+        printf("wlan0 stat:%d\n", stat);
+        
+        #endif
+        
+        
         #if 0 // test wifi scan;
         int i = 0;
         GSF_MSG_DEF(gsf_msg_t, msg, sizeof(gsf_wifi_list_t)*128);

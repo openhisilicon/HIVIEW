@@ -9,9 +9,10 @@
 GSF_LOG_GLOBAL_INIT("SEARCH", 8*1024);
 
 // route add -net 224.0.0.0 netmask 240.0.0.0 dev ens33
-// gcc -g  -o tt  search.c  src/sadp.c -I/mnt/hgfs/works/gsf-20190612/gsf -Isrc -Iinc -L/mnt/hgfs/works/gsf-20190612/gsf/lib/x86 -lnm -lpthread
-// export LD_LIBRARY_PATH=../../lib/x86
-// ./tt 238.238.238.238
+
+// gcc -g  -o tt  search.c  src/sadp.c -I/mnt/hgfs/works/gsf-20190612/gsf -Isrc -Iinc -L/mnt/hgfs/works/gsf-20190612/gsf/lib/x86  -lcomm -lnm -lm -lpthread
+
+// export LD_LIBRARY_PATH=../../lib/x86;./tt ens33 238.238.238.238 3
 
 
 static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out

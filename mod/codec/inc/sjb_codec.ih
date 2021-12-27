@@ -54,12 +54,23 @@ STRUCT(gsf_vo_t)
   FIELD(int, sync);  // 0: 1080P, 1: 4K
 };
 
+
+STRUCT(gsf_lenstype_t)
+{
+  FIELD(int, type); // lens-type 0: fixed lens, 1: zoom lens;
+  STRING(uart, 32); // uart-name "ttyAMA2" or "ttyAMA4";
+};
+
+
+
 STRUCT(gsf_codec_ipc_t)
 {
   //1
   FIELD(gsf_vi_t,    vi);
   FIELD(gsf_vo_t,    vo);
   FIELD(gsf_aenc_t,  aenc);
+  FIELD(gsf_lenstype_t, lenstype);
+  
   //2
   ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
   ARRAY(gsf_osd_t,   osd,   GSF_CODEC_OSD_NUM);

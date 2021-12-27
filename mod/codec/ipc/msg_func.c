@@ -12,6 +12,7 @@
 #include "mpp.h"
 #include "rgn.h"
 #include "lens.h"
+#include "venc.h"
 
 extern int venc_start(int start);
 extern int vo_res_get(gsf_resolu_t *res);
@@ -56,8 +57,8 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   
   if(req->ch == 1)
   {
-    extern int second_sdp(gsf_sdp_t *sdp);
-    second_sdp(sdp);
+    extern int second_sdp(int i, gsf_sdp_t *sdp);
+    second_sdp(req->ch, sdp);
   }
   
   sdp->val[0]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0];
@@ -235,6 +236,29 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 
+static void msg_func_lenstype(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_lenstype_t *lenstype = (gsf_lenstype_t*)req->data;
+    
+    codec_ipc.lenstype = *lenstype;
+    json_parm_save(codec_parm_path, &codec_ipc);
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set lenstype\n");
+  }
+  else
+  {
+    gsf_lenstype_t *lenstype = (gsf_lenstype_t*)rsp->data;
+    
+    *lenstype = codec_ipc.lenstype;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_lenstype_t);
+    printf("get lenstype\n");
+  } 
+}
+
 static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
     [GSF_ID_CODEC_VENC]   = msg_func_venc,
@@ -247,6 +271,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_VORES]  = msg_func_vores,
     [GSF_ID_CODEC_VOLY]   = msg_func_voly,
     [GSF_ID_CODEC_LENS]   = msg_func_lens,
+    [GSF_ID_CODEC_LENSTYPE] = msg_func_lenstype,
  };
 
 

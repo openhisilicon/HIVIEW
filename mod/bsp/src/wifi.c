@@ -13,8 +13,8 @@ int wifi_init(void)
   {
     if(strlen(wifi->ssid))
     {
-      sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf", wifi->ssid, home_path); system(cmd);
-      sprintf(cmd, "sed -i '/^psk=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf", wifi->pwd, home_path); system(cmd);
+      sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf;sync;", wifi->ssid, home_path); system(cmd);
+      sprintf(cmd, "sed -i '/^psk=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf;sync;", wifi->pwd, home_path); system(cmd);
       //sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=%s/}' %s/wifi/hostapd.conf", wifi->ssid, home_path); system(cmd);
       //sprintf(cmd, "sed -i '/^wpa_passphrase=/{h;s/=.*/=%s/}' %s/wifi/hostapd.conf", wifi->pwd, home_path); system(cmd);
     }
@@ -32,8 +32,8 @@ int wifi_set(gsf_wifi_t *wifi)
   {
     if(strlen(wifi->ssid))
     {
-      sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf", wifi->ssid, home_path); system(cmd);
-      sprintf(cmd, "sed -i '/^psk=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf", wifi->pwd, home_path); system(cmd);
+      sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf;sync", wifi->ssid, home_path); system(cmd);
+      sprintf(cmd, "sed -i '/^psk=/{h;s/=.*/=\"%s\"/}' %s/wifi/wpa.conf;sync", wifi->pwd, home_path); system(cmd);
       //sprintf(cmd, "sed -i '/^ssid=/{h;s/=.*/=%s/}' %s/wifi/hostapd.conf", wifi->ssid, home_path); system(cmd);
       //sprintf(cmd, "sed -i '/^wpa_passphrase=/{h;s/=.*/=%s/}' %s/wifi/hostapd.conf", wifi->pwd, home_path); system(cmd);
     }
