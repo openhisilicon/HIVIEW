@@ -99,9 +99,10 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
   	struct timespec _ts;  
     clock_gettime(CLOCK_MONOTONIC, &_ts);
     int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
+    #if 1
     if(cost > 33)
       printf("get rec ok [delay:%d ms].\n", cost);
-
+    #endif
     return len;
 }
 
@@ -132,11 +133,12 @@ static void ts_free(void* param, void* packet)
 	return;
 }
 
+#define UDP_SEND_SIZE 1316
 typedef struct {
   int sockfd;
   struct sockaddr_in *pdest_addr;
   int size;
-  unsigned char sendbuf[1316];
+  unsigned char sendbuf[4096];
 }dest_t;
 
 static int ts_write(void* param, const void* packet, size_t bytes)
@@ -146,7 +148,7 @@ static int ts_write(void* param, const void* packet, size_t bytes)
   memcpy(dest->sendbuf + dest->size, packet, bytes);
   dest->size += bytes;
   
-  if(dest->size < sizeof(dest->sendbuf))
+  if(dest->size < UDP_SEND_SIZE)
   {
     return 0;
   }
@@ -157,6 +159,89 @@ static int ts_write(void* param, const void* packet, size_t bytes)
   return 0;
 }
 
+static void* raw_create(dest_t *dest)
+{
+  return dest;
+}
+
+static int raw_send(void *raw, gsf_frm_t *rec)
+{
+  int ret = 0;
+	char *pbuf = rec->data;
+	int  left = rec->size;
+	int  cnt = 0;
+	
+	dest_t *dest = (dest_t*)raw;
+	
+	while(1)
+	{
+		if (left <= UDP_SEND_SIZE)
+		{
+			ret = sendto(dest->sockfd, pbuf, left, 0, (struct sockaddr *)dest->pdest_addr, sizeof(struct sockaddr_in));
+			assert(ret == left);
+			break;
+		}
+
+		ret = sendto(dest->sockfd, pbuf, UDP_SEND_SIZE, 0, (struct sockaddr *)dest->pdest_addr, sizeof(struct sockaddr_in));
+		assert(ret == UDP_SEND_SIZE);
+		pbuf += UDP_SEND_SIZE;
+		left -= UDP_SEND_SIZE;
+		cnt  += UDP_SEND_SIZE;
+		
+		if(0)//if(cnt >= 10*UDP_SEND_SIZE)
+		{
+		  cnt = 0;
+		  usleep(0);
+		}
+	}
+	return 0;
+}
+
+#include "rtp-profile.h"
+#include "rtp-payload.h"
+#include "rtp.h"
+
+#include "srtp.h"
+srtp_t srtp;
+
+enum {PROTOL_UDP  // udp://239.0.0.1:6666
+    , PROTOL_SRT  // srt://:6666
+    , PROTOL_RTP  // rtp://239.0.0.1:6666
+    , PROTOL_SRTP // srtp://239.0.0.1:6666
+    };
+int protol = PROTOL_SRT;
+
+void* RTPAlloc(void* param, int bytes)
+{
+	dest_t *dest = (dest_t*)param;
+	assert(bytes <= sizeof(dest->sendbuf));
+	return dest->sendbuf;
+}
+
+void RTPFree(void* param, void *packet)
+{
+	dest_t *dest = (dest_t*)param;
+	assert(dest->sendbuf == packet);
+}
+
+
+
+void RTPPacket(void* param, const void *packet, int bytes, uint32_t timestamp, int flags)
+{
+	dest_t *dest = (dest_t*)param;
+	assert(dest->sendbuf == packet);
+	
+	int len = bytes;
+	
+	if(protol == PROTOL_SRTP)
+	{
+    srtp_protect(srtp, (void*)packet, &len);
+  }
+	int ret = sendto(dest->sockfd, packet, len, 0, (struct sockaddr *)dest->pdest_addr, sizeof(struct sockaddr_in));
+	assert(ret == len);
+	// r <= 0 when peer close; assert(r == (int)len);
+  //printf("sendto ret:%d, bytes:%d\n", ret, bytes);
+}
 
 
 void* udp_send_task(void *parm)
@@ -171,12 +256,26 @@ void* udp_send_task(void *parm)
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   int reuse = 1;
   setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse));
-  int send_size = 1316;
+
   struct sockaddr_in dest_addr;
 	memset(&dest_addr, 0, sizeof(dest_addr));
 	dest_addr.sin_family = AF_INET;
 	dest_addr.sin_port   = htons(destport);
 	dest_addr.sin_addr.s_addr = inet_addr(destip);
+  
+  int mc1 = 0;
+  sscanf(destip, "%d.%*s", &mc1);
+  mc1 = (mc1 >= 224 && mc1 <= 239)?1:0;
+  if(mc1)
+  {
+    struct in_addr localInterface;
+    localInterface.s_addr = inet_addr("0.0.0.0");
+    if(setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, (char *)&localInterface, sizeof(localInterface)) < 0)
+    {
+      printf("setsockopt IP_MULTICAST_IF err.\n");
+    }
+  }
+  printf("destip[%s], mc1:%d\n", destip, mc1);
   
   dest_t dest = {
     .sockfd = sockfd,
@@ -191,6 +290,55 @@ void* udp_send_task(void *parm)
 	tshandler.free = ts_free;
   void* ts = mpeg_ts_create(&tshandler, &dest);
   
+  void* raw = raw_create(&dest);
+
+  struct rtp_event_t event;
+	event.on_rtcp = NULL;
+  extern uint32_t rtp_ssrc(void);
+  uint32_t ssrc = rtp_ssrc();
+
+  struct rtp_payload_t s_rtpfunc = {
+    RTPAlloc,
+    RTPFree,
+    RTPPacket,
+  };
+  //rtp_packet_setsize(1300);
+  
+  void* rtp = rtp_payload_encode_create(RTP_PAYLOAD_H264, "H264", (uint16_t)ssrc, ssrc, &s_rtpfunc, &dest);
+  
+  // 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D
+  // AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd
+  uint8_t key[30] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+                     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D
+                    };
+  
+  srtp_policy_t policy;
+  memset(&policy, 0x0, sizeof(srtp_policy_t));
+
+  int status = srtp_init();
+  if (status)
+    printf("error: srtp initialization failed with error code %d\n", status);
+    
+  srtp_crypto_policy_set_rtp_default(&policy.rtp);
+  srtp_crypto_policy_set_rtcp_default(&policy.rtcp); 
+  
+  policy.key = key;
+
+  //policy.ssrc.value = ssrc;
+  //policy.ssrc.type = ssrc_specific;
+  policy.ssrc.value = 0;
+  policy.ssrc.type = ssrc_any_outbound;
+  
+  policy.next = NULL;
+
+  policy.window_size = 128;
+  policy.allow_repeat_tx = 0;
+
+  policy.rtp.sec_serv = sec_serv_conf_and_auth;
+  policy.rtcp.sec_serv = sec_serv_none; /* we don't do RTCP anyway */
+
+  srtp_create(&srtp, &policy);
+
   GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
   do
   {
@@ -249,51 +397,37 @@ void* udp_send_task(void *parm)
           }
           
           // TODO;
-          
           gsf_frm_t *rec = (gsf_frm_t *)buf;
           //printf("rec->type:%d, seq:%d, utc:%u, size:%d\n", rec->type, rec->seq, rec->utc, rec->size);
           
-          if(0)
+          // only test h264;
+          if(rec->type != GSF_FRM_VIDEO || rec->video.encode != GSF_ENC_H264)
+            continue;
+            
+          switch(protol)
           {
-            // UDP-RAW;
-        		char *pbuf = rec->data;
-        		int  left = rec->size;
-        		int  cnt = 0;
-        		while(1)
-        		{
-        			if (left <= send_size)
-        			{
-        				ret = sendto(sockfd, pbuf, left, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-        				assert(ret == left);
-        				break;
-        			}
-
-        			ret = sendto(sockfd, pbuf, send_size, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-        			assert(ret == send_size);
-        			pbuf += send_size;
-        			left -= send_size;
-        			cnt  += send_size;
-        			
-        			if(cnt > 10*1300)
-        			{
-        			  cnt = 0;
-        			  usleep(1);
-        			}
-        		}
-      		}
-      		else if(rec->type == GSF_FRM_VIDEO && rec->video.encode == GSF_ENC_H264)
-      		{
-      		  // MPEG-TS
-      		  if(trackid <= 0)
-      		  {
-      		    trackid = mpeg_ts_add_stream(ts, PSI_STREAM_H264, NULL, 0);
-      		  }
-      		  if(trackid > 0)
-      		  {
-      		    int ret = mpeg_ts_write(ts, trackid, (rec->flag&GSF_FRM_FLAG_IDR)?1:0, rec->pts * 90, rec->pts * 90, rec->data, rec->size);
-      		    printf("mpeg_ts_write size:%d, ret:%d\n", rec->size, ret);
-      		  }
-      		}
+            case PROTOL_UDP:
+              ret = raw_send(raw, rec);
+              //printf("raw_send size:%d, ret:%d\n", rec->size, ret);
+              break;
+            case PROTOL_RTP:
+            case PROTOL_SRTP:
+              ret = rtp_payload_encode_input(rtp, rec->data, rec->size, rec->pts * 90);
+              //printf("rtp_payload_encode_input size:%d, ret:%d\n", rec->size, ret);
+              break;
+            case PROTOL_SRT:
+        		  // MPEG-TS
+        		  if(trackid <= 0)
+        		  {
+        		    trackid = mpeg_ts_add_stream(ts, PSI_STREAM_H264, NULL, 0);
+        		  }
+        		  if(trackid > 0)
+        		  {
+        		    int ret = mpeg_ts_write(ts, trackid, (rec->flag&GSF_FRM_FLAG_IDR)?1:0, rec->pts * 90, rec->pts * 90, rec->data, rec->size);
+        		    //printf("mpeg_ts_write size:%d, ret:%d\n", rec->size, ret);
+        		  }
+              break;
+          }
       }
     }
   }
@@ -303,6 +437,14 @@ void* udp_send_task(void *parm)
   
   if(ts)
     mpeg_ts_destroy(ts);
+  
+  if(rtp)
+    rtp_payload_encode_destroy(rtp);
+    
+  if(srtp)  
+    srtp_dealloc(srtp);
+    
+  srtp_shutdown();
   
   if(video_fifo)
     cfifo_free(video_fifo);
@@ -318,21 +460,27 @@ void* udp_send_task(void *parm)
 }
 
 
-int rawudp_open(char *ip, unsigned short port)
+int udp_open(char *ip, unsigned short port)
 {
   if(!strlen(srts_parm.url) || gpid)
     return -1;
     
-  char cmd[256];
-  sprintf(cmd, "srt-live-transmit -q udp://:%d %s &", port, srts_parm.url);
-  system(cmd);
+  if(protol == PROTOL_SRT)
+  { 
+    // local udp => srt-live-transmit srts_parm.url;
+    strcpy(ip, "127.0.0.1");
+    port = 6666;
+    char cmd[256];
+    sprintf(cmd, "srt-live-transmit -q udp://:%d %s &", port, srts_parm.url);
+    system(cmd);
+  }
   
   strcpy(destip, ip);
   destport = port;
   return pthread_create(&gpid, NULL, udp_send_task, (void*)NULL);
 }
 
-int rawudp_close(void)
+int udp_close(void)
 {
   if(!gpid)
     return -1;
@@ -360,8 +508,7 @@ int main(int argc, char *argv[])
       json_parm_save(srts_parm_path, &srts_parm);
       json_parm_load(srts_parm_path, &srts_parm);
     }
-    info("srts_parm => en:%d, url:[%s]\n", srts_parm.en, srts_parm.url);
-    
+
     GSF_LOG_CONN(1, 100);
     void* rep = nm_rep_listen(GSF_IPC_SRTS, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
 
@@ -372,10 +519,23 @@ int main(int argc, char *argv[])
       if(en != srts_parm.en)
       {
         if(en == 0 && srts_parm.en > 0)
-          rawudp_open("127.0.0.1", 5555);
-        else if(en > 0 && srts_parm.en == 0)
-          rawudp_close();
+        {
+          char pt[64] = {0};
+          char host[64] = {0};
+          int  port = 0;
+          sscanf(srts_parm.url, "%[^:]:%[^:]:%d", pt, host, &port);
+          
+          protol = !strcmp(pt, "udp")?PROTOL_UDP:
+                   !strcmp(pt, "srt")?PROTOL_SRT:
+                   !strcmp(pt, "rtp")?PROTOL_RTP:PROTOL_SRTP;
 
+          printf("url:[%s], protol:[%d], host:[%s], port:[%d]\n", srts_parm.url, protol, host, port);            
+          udp_open(&host[2], port);
+        }
+        else if(en > 0 && srts_parm.en == 0)
+        {
+          udp_close();
+        }
         en = srts_parm.en;
       }
       sleep(1);

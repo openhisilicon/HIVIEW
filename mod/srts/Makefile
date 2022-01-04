@@ -10,14 +10,16 @@ TARG := bin/srts.exe
 
 INCS := -I$(HOME) -Isrc -Iinc \
         -I$(HOME)/fw/comm/inc \
-        -I$(HOME)/fw/libmpeg/inc
+        -I$(HOME)/fw/libmpeg/inc \
+        -I$(HOME)/fw/librtp/inc  \
+        -I$(HOME)/fw/srtp/srtp2
         
 #SRCS := $(shell ls src/*.c)
 SUBDIRS=$(shell find ./src/ -maxdepth 7 -type d)
 SRCS:=$(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 
 OBJS := $(patsubst %.c, %.o, $(SRCS))
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lmpeg -lcfifo -lnm -lcjson -lm -lpthread -lrt
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lsrtp2 -lssl -lcrypto -lrtp -lmpeg -lcfifo -lnm -lcjson -lm -lpthread -lrt
 
 $(TARG): SJB $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
