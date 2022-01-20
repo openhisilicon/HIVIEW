@@ -317,7 +317,6 @@ static void *send_thread_func(void *param) {
         else if (ret > 0 && sess->idr)
         {
           //printf("cfifo frame ret:%d\n", ret);
-
           if(rec->type == GSF_FRM_VIDEO && rec->video.encode == GSF_ENC_H264)
           {
             if(!sess->vpts)

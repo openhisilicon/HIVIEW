@@ -236,26 +236,26 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 
-static void msg_func_lenstype(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+static void msg_func_lenscfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   if(req->set)
   {
-    gsf_lenstype_t *lenstype = (gsf_lenstype_t*)req->data;
+    gsf_lenscfg_t *lenscfg = (gsf_lenscfg_t*)req->data;
     
-    codec_ipc.lenstype = *lenstype;
+    codec_ipc.lenscfg = *lenscfg;
     json_parm_save(codec_parm_path, &codec_ipc);
     rsp->err  = 0;
     rsp->size = 0;
-    printf("set lenstype\n");
+    printf("set lenscfg\n");
   }
   else
   {
-    gsf_lenstype_t *lenstype = (gsf_lenstype_t*)rsp->data;
+    gsf_lenscfg_t *lenscfg = (gsf_lenscfg_t*)rsp->data;
     
-    *lenstype = codec_ipc.lenstype;
+    *lenscfg = codec_ipc.lenscfg;
     rsp->err  = 0;
-    rsp->size = sizeof(gsf_lenstype_t);
-    printf("get lenstype\n");
+    rsp->size = sizeof(gsf_lenscfg_t);
+    printf("get lenscfg\n");
   } 
 }
 
@@ -271,7 +271,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_VORES]  = msg_func_vores,
     [GSF_ID_CODEC_VOLY]   = msg_func_voly,
     [GSF_ID_CODEC_LENS]   = msg_func_lens,
-    [GSF_ID_CODEC_LENSTYPE] = msg_func_lenstype,
+    [GSF_ID_CODEC_LENSCFG]= msg_func_lenscfg,
  };
 
 

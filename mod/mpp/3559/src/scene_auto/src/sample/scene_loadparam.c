@@ -4304,7 +4304,6 @@ HI_S32 HI_SCENE_CreateParam(HI_CHAR *pdirname, HI_SCENE_PARAM_S *pstSceneParam, 
 
     //maohw snprintf(acInipath, SCENETOOL_MAX_FILESIZE, "%s%s", pdirname, "/config_cfgaccess_hd.ini");
     snprintf(acInipath, SCENETOOL_MAX_FILESIZE, "%s", pdirname);
-    
     printf("The iniPath is %s.\n", acInipath);
 
     s32Ret = HI_CONFACCESS_Init(SCENE_INIPARAM, acInipath, &u32ModuleNum);

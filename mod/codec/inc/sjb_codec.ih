@@ -55,10 +55,11 @@ STRUCT(gsf_vo_t)
 };
 
 
-STRUCT(gsf_lenstype_t)
+STRUCT(gsf_lenscfg_t)
 {
-  FIELD(int, type); // lens-type 0: fixed lens, 1: zoom lens;
+  FIELD(int, lens); // lens-type 0: fixed lens, 1: ldm lens;
   STRING(uart, 32); // uart-name "ttyAMA2" or "ttyAMA4";
+  FIELD(int, ircut);// 0: manual, 1: auto, 2: cds;
 };
 
 
@@ -69,7 +70,7 @@ STRUCT(gsf_codec_ipc_t)
   FIELD(gsf_vi_t,    vi);
   FIELD(gsf_vo_t,    vo);
   FIELD(gsf_aenc_t,  aenc);
-  FIELD(gsf_lenstype_t, lenstype);
+  FIELD(gsf_lenscfg_t, lenscfg);
   
   //2
   ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);

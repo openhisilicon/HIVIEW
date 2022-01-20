@@ -66,8 +66,9 @@ int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideo
 
 
 enum {
-  GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(ch);
-  GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(ch);
+  GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
+  GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(VpssGrp);
+  GSF_MPP_VPSS_CTL_CROP  = 2, //HI_MPI_VPSS_SetGrpCrop(VpssGrp, VPSS_CROP_INFO_S *args);
 };
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
@@ -141,6 +142,7 @@ typedef struct {
 
 typedef struct {
   void *uargs;
+  int (*cds)(int ViPipe, void* uargs);
   int (*cb)(int ViPipe, int night, void* uargs);
 }gsf_mpp_ir_t;
 

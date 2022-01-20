@@ -88,6 +88,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {SONY_IMX307_2L_SLAVE_MIPI_2M_30FPS_12BIT_WDR2TO1, "imx307-2-1-2-30", "libsns_imx307_2l_slave.so", "g_stSnsImx307_2l_Slave_Obj"},
     {PRIMESENSOR_PS5260_2L_MIPI_2M_30FPS_12BIT, "ps5260-2-0-2-30", "libsns_ps5260_2l.so",  "g_stSnsPs5260_2l_Obj"},
     {PRIMESENSOR_PS5260_2L_MIPI_2M_30FPS_12BIT_BUILTIN,"ps5260-2-1-2-30", "libsns_ps5260_2l.so",  "g_stSnsPs5260_2l_Obj"},
+    {SONY_IMX335_2L_MIPI_5M_30FPS_10BIT,        "imx335-2-0-5-30", "libsns_imx335_2l.so", "stSnsImx335_2l_Obj"},
     {SONY_IMX335_MIPI_5M_30FPS_12BIT,           "imx335-0-0-5-30", "libsns_imx335.so", "stSnsImx335Obj"},
     {SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1,   "imx335-0-1-5-30", "libsns_imx335.so", "stSnsImx335Obj"},
     {SONY_IMX335_MIPI_4M_30FPS_12BIT,           "imx335-0-0-4-30", "libsns_imx335.so", "stSnsImx335Obj"},
@@ -169,6 +170,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
     if (SIGINT == signo || SIGTERM == signo)
     {
         mppex_hook_destroy();
+        gsf_mpp_scene_stop();
         SAMPLE_COMM_VENC_StopGetStream();
         SAMPLE_COMM_AUDIO_DestoryAllTrd();
         SAMPLE_COMM_All_ISP_Stop();
@@ -198,7 +200,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[256];
   if(strstr(cfg->snsname, "bt1120"))
     sprintf(loadstr, "%s/ko/%s -i -yuv0 1", path, SCRIPT_NAME(cfg->type));
-  else if(strstr(cfg->snsname, "imx334")) // 24Mclk && i2c;
+  else if(strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378")) // 24Mclk && i2c;
     sprintf(loadstr, "%s/ko/%s -i -sensor0 %s", path, SCRIPT_NAME(cfg->type), "imx458");
   else
     sprintf(loadstr, "%s/ko/%s -i -sensor0 %s", path, SCRIPT_NAME(cfg->type), cfg->snsname);
@@ -221,7 +223,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   if(cfg->second && cfg->snscnt == 1)
   {
     SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT:
-                   BT656N_YUV_0M_60FPS_8BIT;
+                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT:BT601GD_YUV_0M_60FPS_8BIT;
   }
   
   if(dl)
@@ -436,6 +438,11 @@ int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
       ret = HI_MPI_VPSS_StartGrp(VpssGrp);
       printf("HI_MPI_VPSS_StartGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
       break;
+    case GSF_MPP_VPSS_CTL_CROP:
+      ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, (VPSS_CROP_INFO_S*)args);
+      if(ret)
+        printf("HI_MPI_VPSS_SetGrpCrop VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
   }
   return ret;
 }
@@ -557,7 +564,6 @@ int gsf_mpp_scene_stop()
       printf("HI_SCENE_Deinit failed\n");
       return HI_FAILURE;
   }
-  printf("The scene sample is end.");
   return s32ret;
 }
 
@@ -873,7 +879,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
         goto END1;
     }
 
-    //move to gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
+    //moveto gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
     return 0;
   
 END1:
@@ -967,7 +973,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
       }
     }
 
-    SAMPLE_VDEC_INIT(4);
+    //maohw 2x5M SAMPLE_VDEC_INIT(4);
 
     mppex_hook_vo(sync);
     return s32Ret;
@@ -1555,6 +1561,7 @@ static struct fb_bitfield s_b32 = {0,8,0};
 
 static int vo_fd[VOFB_BUTT];
 
+
 int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
 {
     int i = 0, j = 0, x = 0, y = 0;
@@ -1760,8 +1767,6 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
           close(fd);
           return -1;
       }
-      
-      
     }
     
     vo_fd[vofb] = fd;//close(fd);

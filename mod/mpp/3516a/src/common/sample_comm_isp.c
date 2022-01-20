@@ -565,6 +565,7 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
             memcpy(pstPubAttr, &ISP_PUB_ATTR_PS5260_MIPI_2M_30FPS_BUILTIN_LINE, sizeof(ISP_PUB_ATTR_S));
             break;
 
+        case SONY_IMX335_2L_MIPI_5M_30FPS_10BIT:
         case SONY_IMX335_MIPI_5M_30FPS_12BIT:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX335_MIPI_5M_30FPS, sizeof(ISP_PUB_ATTR_S));
             break;
@@ -748,6 +749,9 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
         case PRIMESENSOR_PS5260_2L_MIPI_2M_30FPS_12BIT_BUILTIN:
             return &g_stSnsPs5260_2l_Obj;
 
+        case SONY_IMX335_2L_MIPI_5M_30FPS_10BIT:
+            return &stSnsImx335_2l_Obj;
+            
         case SONY_IMX335_MIPI_5M_30FPS_12BIT:
         case SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1:
         case SONY_IMX335_MIPI_4M_30FPS_12BIT:

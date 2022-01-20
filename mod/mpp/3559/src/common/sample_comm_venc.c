@@ -466,6 +466,7 @@ HI_S32 SAMPLE_COMM_VENC_SaveStream(FILE* pFd, VENC_STREAM_S* pstStream)
 
     return HI_SUCCESS;
 }
+
 //maohw
 HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VENC_GETSTREAM_PARA_S* pstPara, VENC_STREAM_S* pstStream)
 {
@@ -2221,7 +2222,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
 
 #ifndef __HuaweiLite__
                     //maohw
-                    //SAMPLE_COMM_VENC_SaveStream;
+                    //s32Ret = SAMPLE_COMM_VENC_SaveStream(pFile[i], &stStream);
                     s32Ret = SAMPLE_COMM_VENC_CbStream(pstPara->VeChn[i], enPayLoadType[i], pstPara, &stStream);
 #else
                     s32Ret = SAMPLE_COMM_VENC_SaveStream_PhyAddr(pFile[i], &stStreamBufInfo[i], &stStream);

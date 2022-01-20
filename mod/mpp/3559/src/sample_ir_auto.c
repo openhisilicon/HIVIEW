@@ -384,34 +384,12 @@ void SAMPLE_IR_CUT_ENBLE(VI_PIPE ViPipe)
     pthread_mutex_lock(&g_ir_mutex);
     if(g_ir_switch.cb)
     {
-      g_ir_switch.cb(ViPipe, 0, g_ir_switch.uargs);
+      g_ir_switch.cb(ViPipe, ISP_IR_STATUS_NORMAL, g_ir_switch.uargs);
     }
     pthread_mutex_unlock(&g_ir_mutex);
     
     g_astIrAttr[ViPipe].enIrStatus = ISP_IR_STATUS_NORMAL;
     return;
-    
-    //only EV300 demo
-    // himm 0x120c0008 0
-    // himm 0x120c000c 0
-    // himm 0x120B1400 0xff
-    // himm 0x120B1010 0x4
-    // himm 0x120B1020 0x8
-
-    //pin_mux
-    SAMPLE_IR_Set_Reg(0x120c0008,0x0);//GPIO1_2, GPIO
-    SAMPLE_IR_Set_Reg(0x120c000c,0x0);//GPIO1_3, GPIO
-
-    //dir
-    SAMPLE_IR_Set_Reg(0x120B1400,0xff);//GPIO1_2 GPIO1_3
-    //data
-    SAMPLE_IR_Set_Reg(0x120B1010,0x0); //Set GPIO1_2 0
-    SAMPLE_IR_Set_Reg(0x120B1020,0x8); //Set GPIO1_3 1
-    usleep(1000000);
-    //back to original
-    SAMPLE_IR_Set_Reg(0x120B1010,0x0); //Set GPIO1_2 0
-    SAMPLE_IR_Set_Reg(0x120B1020,0x0); //Set GPIO1_3 0
-
 }
 //IR MODE
 void SAMPLE_IR_CUT_DISABLE(VI_PIPE ViPipe)
@@ -419,25 +397,11 @@ void SAMPLE_IR_CUT_DISABLE(VI_PIPE ViPipe)
     pthread_mutex_lock(&g_ir_mutex);
     if(g_ir_switch.cb)
     {
-      g_ir_switch.cb(ViPipe, 1, g_ir_switch.uargs);
+      g_ir_switch.cb(ViPipe, ISP_IR_STATUS_IR, g_ir_switch.uargs);
     }
     pthread_mutex_unlock(&g_ir_mutex);
     g_astIrAttr[ViPipe].enIrStatus = ISP_IR_STATUS_IR;
     return;
-  
-    //pin_mux
-    SAMPLE_IR_Set_Reg(0x120c0008,0x0);//GPIO1_2, GPIO
-    SAMPLE_IR_Set_Reg(0x120c000c,0x0);//GPIO1_3, GPIO
-
-    //dir
-    SAMPLE_IR_Set_Reg(0x120B1400,0xff);//GPIO1_2 GPIO1_3
-    //data
-    SAMPLE_IR_Set_Reg(0x120B1010,0x4); //Set GPIO1_2 1
-    SAMPLE_IR_Set_Reg(0x120B1020,0x0); //Set GPIO1_3 0
-    usleep(1000000);
-    //back to original
-    SAMPLE_IR_Set_Reg(0x120B1010,0x0); //Set GPIO1_2 0
-    SAMPLE_IR_Set_Reg(0x120B1020,0x0); //Set GPIO1_3 0
 }
 
 
@@ -626,11 +590,32 @@ HI_S32 SAMPLE_ISP_IrAutoRun(VI_PIPE ViPipe)
         else
           stIrAttr.enIrStatus = g_astIrAttr[ViPipe].enIrStatus;
         
-        s32Ret = HI_MPI_ISP_IrAutoRunOnce(ViPipe, &stIrAttr);
-        if (HI_SUCCESS != s32Ret)
+        if(g_ir_switch.cds)
         {
-            printf("HI_MPI_ISP_IrAutoRunOnce failed\n");
-            return s32Ret;
+          int night = 0; 
+          pthread_mutex_lock(&g_ir_mutex);
+          if(g_ir_switch.cds)
+          {
+            night = g_ir_switch.cds(ViPipe, g_ir_switch.uargs);
+          }
+          pthread_mutex_unlock(&g_ir_mutex);
+          if(stIrAttr.enIrStatus != night)
+          {
+            stIrAttr.enIrSwitch = (night)?ISP_IR_SWITCH_TO_IR:ISP_IR_SWITCH_TO_NORMAL;
+          }
+          else 
+          {
+            stIrAttr.enIrSwitch = ISP_IR_SWITCH_NONE;
+          }
+        }
+        else 
+        {
+          s32Ret = HI_MPI_ISP_IrAutoRunOnce(ViPipe, &stIrAttr);
+          if (HI_SUCCESS != s32Ret)
+          {
+              printf("HI_MPI_ISP_IrAutoRunOnce failed\n");
+              return s32Ret;
+          }
         }
 
         if (ISP_IR_SWITCH_TO_IR == stIrAttr.enIrSwitch) /* Normal to IR */

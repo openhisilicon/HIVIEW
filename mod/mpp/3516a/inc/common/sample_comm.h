@@ -140,11 +140,12 @@ extern "C" {
 /*******************************************************
     enum define
 *******************************************************/
-
 typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
     PIC_360P,      /* 640 * 360 */
+    #define __PIC_512P
+    PIC_512P,      /* 640 * 512 */    
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
     PIC_720P,      /* 1280 * 720  */
@@ -183,6 +184,7 @@ typedef enum hiSAMPLE_SNS_TYPE_E
     SONY_IMX307_2L_MIPI_2M_30FPS_12BIT_WDR2TO1,
     SONY_IMX307_2L_SLAVE_MIPI_2M_30FPS_12BIT,
     SONY_IMX307_2L_SLAVE_MIPI_2M_30FPS_12BIT_WDR2TO1,
+    SONY_IMX335_2L_MIPI_5M_30FPS_10BIT,
     SONY_IMX335_MIPI_5M_30FPS_12BIT,
     SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1,
     SONY_IMX335_MIPI_4M_30FPS_12BIT,
@@ -227,9 +229,10 @@ typedef enum hiSAMPLE_SNS_TYPE_E
     MIPI_YUV_8M_30FPS_8BIT,
     MIPI_YUVPKG_2M_60FPS_8BIT,
     BT1120_YUV_2M_60FPS_8BIT,
-    BT656_YUV_0M_60FPS_8BIT, // BT656 PAL;
-    BT601_YUV_0M_60FPS_8BIT, // BT601 PAL;
-    BT656N_YUV_0M_60FPS_8BIT,// BT656 NTSC;
+    BT656_YUV_0M_60FPS_8BIT,   // BT656 PAL;
+    BT601_YUV_0M_60FPS_8BIT,   // BT601 PAL;
+    BT656N_YUV_0M_60FPS_8BIT,  // BT656 NTSC;
+    BT601GD_YUV_0M_60FPS_8BIT, // BT601 GD;
     SAMPLE_SNS_TYPE_BUTT,
 } SAMPLE_SNS_TYPE_E;
 

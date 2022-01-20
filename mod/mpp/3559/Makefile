@@ -25,6 +25,7 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIBS += 
 DEP_OBJS := OBJS
 DEP_LIBS += libmppex.a
+DEP_LIBS += libguide.a
 
 $(TARG): $(OBJS) $(TARG_EX)
 	$(RM) lib/$(DEP_OBJS) -rf

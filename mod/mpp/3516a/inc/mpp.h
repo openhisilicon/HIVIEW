@@ -142,6 +142,7 @@ typedef struct {
 
 typedef struct {
   void *uargs;
+  int (*cds)(int ViPipe, void* uargs);
   int (*cb)(int ViPipe, int night, void* uargs);
 }gsf_mpp_ir_t;
 

@@ -148,6 +148,7 @@ void SAMPLE_VENC_HandleSig2(HI_S32 signo)
     if (SIGINT == signo || SIGTERM == signo)
     {
         mppex_hook_destroy();
+        gsf_mpp_scene_stop();
         SAMPLE_COMM_VENC_StopGetStream();
         SAMPLE_COMM_AUDIO_DestoryAllTrd();
         SAMPLE_COMM_All_ISP_Stop();
@@ -198,7 +199,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   if(cfg->second && cfg->snscnt == 1)
   {
     SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT:
-                   BT656N_YUV_0M_60FPS_8BIT;
+                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT:BT601GD_YUV_0M_60FPS_8BIT;
   }
   
   if(dl)
@@ -413,6 +414,11 @@ int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
       ret = HI_MPI_VPSS_StartGrp(VpssGrp);
       printf("HI_MPI_VPSS_StartGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
       break;
+    case GSF_MPP_VPSS_CTL_CROP:
+      ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, (VPSS_CROP_INFO_S*)args);
+      if(ret)
+        printf("HI_MPI_VPSS_SetGrpCrop VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
   }
   return ret;
 }
@@ -534,7 +540,6 @@ int gsf_mpp_scene_stop()
       printf("HI_SCENE_Deinit failed\n");
       return HI_FAILURE;
   }
-  printf("The scene sample is end.");
   return s32ret;
 }
 

@@ -1472,7 +1472,7 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAenc(HI_S32 s32AencChnCnt, AIO_ATTR_S *pstAioAttr,
     AENC_ATTR_AAC_S  stAencAac;
 
     /* set AENC chn attr */
-
+    
     stAencAttr.enType = enType;
     stAencAttr.u32BufSize = 30;
     stAencAttr.u32PtNumPerFrm = pstAioAttr->u32PtNumPerFrm;

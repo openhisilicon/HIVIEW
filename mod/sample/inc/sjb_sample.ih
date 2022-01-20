@@ -1,0 +1,10 @@
+#pragma pack(push, 4)
+
+STRUCT(gsf_sample_t)
+{
+  FIELD(int, en);
+  STRING(uart, 32);
+};
+
+
+#pragma pack(pop)
