@@ -22,17 +22,7 @@
 #define AVS_4CH_3559a 0  // 1: 4 vi => avs => 1 venc; 0: 4 vi => 4 venc;
 #define AVS_2CH_3516d 0  // 1: 2 vi => vo => 1 venc;  0: 2 vi => 2 venc;
 
-#ifndef __PIC_VGA
-#define PIC_VGA PIC_CIF
-#endif
-#ifndef __PIC_7680x4320
-#define PIC_7680x4320 PIC_3840x2160
-#endif
-#ifndef __PIC_512P
-#define PIC_512P PIC_CIF
-#endif
-
-
+// if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
 #define PIC_WIDTH(w, h) \
             (w >= 7680)?PIC_7680x4320:\
             (w >= 3840)?PIC_3840x2160:\
@@ -43,7 +33,7 @@
             (w >= 720 && h >= 576)?PIC_D1_PAL: \
             (w >= 720 && h >= 480)?PIC_D1_NTSC: \
             (w >= 640 && h >= 512)?PIC_512P: \
-            PIC_VGA
+            PIC_CIF
             
 #define PT_VENC(t) \
             (t == GSF_ENC_H264)? PT_H264:\
@@ -64,7 +54,7 @@
             else if (e == PIC_D1_NTSC){ w = 720; h = 480;}\
             else if (e == PIC_512P){ w = 640; h = 512;}\
             else { w = 352; h = 288;}
-
+//////////////////////////////////////////////////////////////////
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
@@ -105,14 +95,14 @@ int second_sdp(int i, gsf_sdp_t *sdp)
   if(p_cfg->second)
   {
     sdp->audio_shmid = -1;
-    if(i == 0 || i == 2)
+    if(i == 0 || i == 2) // main 
     {
       sdp->venc.width = SECOND_WIDTH(p_cfg->second);
       sdp->venc.height = SECOND_HEIGHT(p_cfg->second);
       sdp->venc.bitrate = 2000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
-    else 
+    else // sub
     {
       sdp->venc.width = 352;
       sdp->venc.height = 288;

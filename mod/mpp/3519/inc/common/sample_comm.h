@@ -160,7 +160,7 @@ enum // hi_comm_video.h:PIC_SIZE_E
     //--PIC_4096x2160,
     PIC_3000x3000 = PIC_3Kx3K,
     PIC_4000x3000 = PIC_12M,
-    //--PIC_7680x4320,
+    PIC_7680x4320,
     //--PIC_3840x8640,
     //PIC_BUTT
 };
