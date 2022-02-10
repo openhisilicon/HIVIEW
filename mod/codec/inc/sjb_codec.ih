@@ -15,7 +15,6 @@ STRUCT(gsf_venc_t)
   FIELD(int, lowdelay);
 };
 
-
 STRUCT(gsf_aenc_t)
 {
   FIELD(int, en);
@@ -46,6 +45,7 @@ STRUCT(gsf_vi_t)
   FIELD(int, wdr);
   FIELD(int, fps);
   FIELD(int, res);
+  FIELD(int, avs);
 };
 
 STRUCT(gsf_vo_t)

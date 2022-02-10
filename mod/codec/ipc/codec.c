@@ -18,9 +18,9 @@
 #include "venc.h"
 #include "lens.h"
 
-#define HYBRIDEN      0  // 1: 1 sensor + 1 rtsp => vo;
-#define AVS_4CH_3559a 0  // 1: 4 vi => avs => 1 venc; 0: 4 vi => 4 venc;
-#define AVS_2CH_3516d 0  // 1: 2 vi => vo => 1 venc;  0: 2 vi => 2 venc;
+#define HYBRIDEN  0  // 1: 1 sensor + 1 rtsp => vo;
+
+static int avs = 0; 
 
 // if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
 #define PIC_WIDTH(w, h) \
@@ -209,14 +209,18 @@ static int sub_recv(char *msg, int size, int err)
     int i = 0;
     gsf_rgn_rects_t rects = {0};
 
-    #if(AVS_2CH_3516d == 1)
-    float xr = 0 + pmsg->ch*(yolos->w/2.0), yr = yolos->h/4.0, wr = 2.0, hr = 2.0;
-    int chn = 0;
-    #else
     float xr = 0, yr = 0, wr = 1, hr = 1;
     int chn = pmsg->ch;
+    
+    #if defined(GSF_CPU_3516d)
+    if(avs == 1)
+    {
+      xr = 0 + pmsg->ch*(yolos->w/2.0);
+      yr = yolos->h/4.0, wr = 2.0, hr = 2.0;
+      chn = 0;
+    }
     #endif
-
+    
     rects.size = yolos->cnt;
     rects.w = yolos->w;
     rects.h = yolos->h;
@@ -359,16 +363,19 @@ int venc_start(int start)
       .u32LowDelay   = codec_ipc.venc[j].lowdelay,
     };
 
-    #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
-    venc.srcModId   = HI_ID_AVS;
-    venc.AVSGrp     = i;
-    venc.AVSChn    = (j<p_venc_ini->st_num)?j:0;
-    #elif defined(GSF_CPU_3516d) && (AVS_2CH_3516d == 1)
-    venc.srcModId   = HI_ID_VO;
-    venc.VpssGrp    = -1;
-    venc.VpssChn    = -1;
-    #endif
-
+    if(avs == 1)
+    {  
+      #if defined(GSF_CPU_3559a)
+      venc.srcModId   = HI_ID_AVS;
+      venc.AVSGrp     = i;
+      venc.AVSChn    = (j<p_venc_ini->st_num)?j:0;
+      #elif defined(GSF_CPU_3516d)
+      venc.srcModId   = HI_ID_VO;
+      venc.VpssGrp    = -1;
+      venc.VpssChn    = -1;
+      #endif
+    }
+    
     //only 3516D supported 
     #if defined(GSF_CPU_3516d)
     if(p_cfg->second && i == 1)
@@ -389,14 +396,14 @@ int venc_start(int start)
     if(!start)
     {
       ret = gsf_mpp_venc_stop(&venc);
-      printf("stop >>> ch:%d, st:%d, [%dx%d], ret:%d\n"
-            , i, j, w, h, ret);
+      printf("stop >>> ch:%d, st:%d, enSize:%d[%dx%d], ret:%d\n"
+            , i, j, venc.enSize, w, h, ret);
     }
     else
     {
       ret = gsf_mpp_venc_start(&venc);
-      printf("start >>> ch:%d, st:%d, [%dx%d], ret:%d\n"
-            , i, j, w, h, ret);
+      printf("start >>> ch:%d, st:%d, enSize:%d[%dx%d], ret:%d\n"
+            , i, j, venc.enSize, w, h, ret);
     }
     
     if(!start)
@@ -450,11 +457,13 @@ int mpp_start(gsf_bsp_def_t *def)
     //only used sensor[0];
     strcpy(cfg.snsname, def->board.sensor[0]);
     cfg.snscnt = def->board.snscnt;
+    
+    avs = codec_ipc.vi.avs;
 
     do{
       #ifdef GSF_CPU_3559a
       {
-        #if (AVS_4CH_3559a == 1)
+        if (avs == 1)
         {
           // imx334-0-0-8-30
           cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
@@ -465,7 +474,7 @@ int mpp_start(gsf_bsp_def_t *def)
           VPSS(2, 2, 2, 0, 1, 0, PIC_1080P, PIC_720P);
           VPSS(3, 3, 3, 0, 1, 0, PIC_1080P, PIC_720P);   
         }
-        #else
+        else
         {
           if(strstr(cfg.snsname, "sharp8k"))
           {
@@ -489,7 +498,6 @@ int mpp_start(gsf_bsp_def_t *def)
 
             
         }
-        #endif
 
       }
       #elif defined(GSF_CPU_3519a)
@@ -512,7 +520,7 @@ int mpp_start(gsf_bsp_def_t *def)
                      (def->board.second <= 0)?0:def->board.second;
         printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);
         
-        #if(AVS_2CH_3516d == 1)
+        if (avs == 1)
         {
           // imx335-0-0-4-30
           if(strstr(cfg.snsname, "imx327") 
@@ -558,8 +566,6 @@ int mpp_start(gsf_bsp_def_t *def)
           }
           break;
         }
-        #endif
-        
         
         if(cfg.snscnt < 2)
         {
@@ -789,21 +795,6 @@ int mpp_start(gsf_bsp_def_t *def)
     gsf_lens_init(&lens_ini);
 
     // vi start;
-    #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
-    gsf_mpp_vi_t vi = {
-        .bLowDelay = HI_FALSE,
-        .u32SupplementConfig = 0,
-        .stStitchGrpAttr = {
-          .bStitch = HI_TRUE,
-          .enMode  = VI_STITCH_ISP_CFG_NORMAL,
-          .u32PipeNum = 4,
-          .PipeId[0] = 0,
-          .PipeId[1] = 1,
-          .PipeId[2] = 2,
-          .PipeId[3] = 3,
-        }
-    };
-    #else
     gsf_mpp_vi_t vi = {
         .bLowDelay = HI_FALSE,
         .u32SupplementConfig = 0,
@@ -812,8 +803,22 @@ int mpp_start(gsf_bsp_def_t *def)
         .vpss_sz = {PIC_1080P, PIC_720P,},
         #endif
     };
-    #endif
     
+    #if defined(GSF_CPU_3559a)
+    if(avs == 1)
+    {
+        vi.stStitchGrpAttr = {
+          .bStitch = HI_TRUE,
+          .enMode  = VI_STITCH_ISP_CFG_NORMAL,
+          .u32PipeNum = 4,
+          .PipeId[0] = 0,
+          .PipeId[1] = 1,
+          .PipeId[2] = 2,
+          .PipeId[3] = 3,
+        }
+    }
+    #endif
+  
     gsf_mpp_vi_start(&vi);
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
@@ -826,38 +831,50 @@ int mpp_start(gsf_bsp_def_t *def)
   	#endif
     
     // vpss start;
-    #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
-    for(i = 0; i < 4; i++)
-    #elif defined(GSF_CPU_3516d) && (AVS_2CH_3516d == 1)
-    for(i = 0; i < 2; i++)
-    #else
-    for(i = 0; i < venc_ini.ch_num; i++)
-    #endif
+    if(avs == 1)
     {
-      gsf_mpp_vpss_start(&vpss[i]);
+      #if defined(GSF_CPU_3559a)
+      for(i = 0; i < 4; i++)
+      #elif defined(GSF_CPU_3516d)
+      for(i = 0; i < 2; i++)
+      #endif
+      {
+        gsf_mpp_vpss_start(&vpss[i]);
+      }
+    }
+    else 
+    {
+      for(i = 0; i < venc_ini.ch_num; i++)
+      {
+        gsf_mpp_vpss_start(&vpss[i]);
+      }
     }
     
     // scene start;
     char scene_ini[128] = {0};
     proc_absolute_path(scene_ini);
-    
-    #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
-    sprintf(scene_ini, "%s/../cfg/%savs.ini", scene_ini, cfg.snsname);
-    #else
     sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
+    
+    #if defined(GSF_CPU_3559a)
+    if(avs == 1)
+      sprintf(scene_ini, "%s/../cfg/%savs.ini", scene_ini, cfg.snsname);
     #endif
+   
     gsf_mpp_scene_start(scene_ini, 0);
 
-    #if defined(GSF_CPU_3559a) && (AVS_4CH_3559a == 1)
-    gsf_mpp_avs_t avs = {
-      .AVSGrp = 0,
-      .u32OutW = 1920*4,
-      .u32OutH = 1080,
-      .u32PipeNum = 4,
-      .enMode = AVS_MODE_NOBLEND_HOR,
-      .benChn1 = 0,
-    };
-    gsf_mpp_avs_start(&avs);
+    #if defined(GSF_CPU_3559a)
+    if(avs == 1)
+    {  
+      gsf_mpp_avs_t avs = {
+        .AVSGrp = 0,
+        .u32OutW = 1920*4,
+        .u32OutH = 1080,
+        .u32PipeNum = 4,
+        .enMode = AVS_MODE_NOBLEND_HOR,
+        .benChn1 = 0,
+      };
+      gsf_mpp_avs_start(&avs);
+    }
     #endif
     
     return 0;
@@ -962,10 +979,8 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
       #if defined(GSF_CPU_3516d)
         if(p_cfg->second || p_cfg->snscnt > 1)
           ly = VO_LAYOUT_2MUX;
-          
-        #if(AVS_2CH_3516d == 1)
-        ly = VO_LAYOUT_2MUX;
-        #endif
+        if (avs == 1)
+          ly = VO_LAYOUT_2MUX;
       #endif
       
       gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
