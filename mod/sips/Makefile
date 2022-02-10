@@ -23,17 +23,15 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lh26xbits -lsip -lrtsp -lrtp -lmpeg -lhttp -lst -lcfifo -lrt -lnm -lmxml -lcjson -lcomm -lm -lpthread
 
-$(TARG): SJB $(OBJS)
+$(TARG): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 	cp $(TARG) $(HOME)/bin/$(GSF_CPU_ARCH)/ -v
 
+DEPS := $(patsubst %.o, %.d, $(OBJS))
+-include $(DEPS)
 .c.o:
-	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
-
-SJB:
-	touch src/sjb_sips.c;touch src/cfg.c
-	touch src/sxb_sips.c;touch src/uas-app.c
+	$(CC) $(CFLAGS) -c -MMD $< $(INCS) -o $@
   
 .Phony: clean
 clean:
-	-rm $(TARG) $(OBJS) src/*.bak -rf
+	-rm $(TARG) $(OBJS) $(DEPS) src/*.bak -rf

@@ -54,19 +54,18 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiir_auto -l_hiac
 endif
 
 
-$(TARG): SJB $(OBJS)
+$(TARG): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 	cp $(TARG) $(HOME)/bin/$(GSF_CPU_ARCH)/ -v
 
+DEPS := $(patsubst %.o, %.d, $(OBJS))
+-include $(DEPS)
 .c.o:
-	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
+	$(CC) $(CFLAGS) -c -MMD $< $(INCS) -o $@
 
 .cpp.o:
-	$(CC) $(CXXFLAGS) -c $< $(INCS) -o $@
-
-SJB:
-	touch $(GSF_CPU_ARCH)/sjb_svp.c;touch $(GSF_CPU_ARCH)/cfg.c
+	$(CC) $(CXXFLAGS) -c -MMD $< $(INCS) -o $@
   
 .Phony: clean
 clean:
-	-rm $(TARG) $(OBJS) $(GSF_CPU_ARCH)/*.bak -rf
+	-rm $(TARG) $(OBJS) $(DEPS) $(GSF_CPU_ARCH)/*.bak -rf

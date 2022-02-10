@@ -17,18 +17,17 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -Llittlevgl -llittlevgl -llvgl -lcomm -lcfifo -lrt -lnm -lcjson -lm -lpthread
 
-$(TARG): SJB $(OBJS)
+$(TARG): $(OBJS)
 	@$(MAKE) -C littlevgl || exit "$$?"
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 	cp $(TARG) $(HOME)/bin/$(GSF_CPU_ARCH)/ -v
 
+DEPS := $(patsubst %.o, %.d, $(OBJS))
+-include $(DEPS)
 .c.o:
-	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
-
-SJB:
-	touch src/sjb_app.c;touch src/cfg.c
+	$(CC) $(CFLAGS) -c -MMD $< $(INCS) -o $@
   
 .Phony: clean
 clean:
 	$(MAKE) -C littlevgl clean
-	-rm $(TARG) $(OBJS) src/*.bak -rf
+	-rm $(TARG) $(OBJS) $(DEPS) src/*.bak -rf

@@ -51,16 +51,15 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -lhive_RES -laacenc -laacdec -laaccomm -ltde -lstdc++ 
 endif
 
-$(TARG): SJB $(OBJS)
+$(TARG): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 	cp $(TARG) $(HOME)/bin/$(GSF_CPU_ARCH)/ -v
 
+DEPS := $(patsubst %.o, %.d, $(OBJS))
+-include $(DEPS)
 .c.o:
-	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
+	$(CC) $(CFLAGS) -c -MMD $< $(INCS) -o $@
 
-SJB:
-	touch $(GSF_DEV_TYPE)/sjb_codec.c;touch $(GSF_DEV_TYPE)/cfg.c
-  
 .Phony: clean
 clean:
-	-rm $(TARG) $(OBJS) $(GSF_DEV_TYPE)/*.bak -rf
+	-rm $(TARG) $(OBJS) $(DEPS) $(GSF_DEV_TYPE)/*.bak -rf

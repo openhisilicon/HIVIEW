@@ -19,16 +19,15 @@ SRCS:=$(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lmov -ltindex -lcfifo -lrt -lnm -lcjson -lm -lpthread
 
-$(TARG): SJB $(OBJS)
+$(TARG): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 	cp $(TARG) $(HOME)/bin/$(GSF_CPU_ARCH)/ -v
 
+DEPS := $(patsubst %.o, %.d, $(OBJS))
+-include $(DEPS)
 .c.o:
-	$(CC) $(CFLAGS) -c $< $(INCS) -o $@
-
-SJB:
-	touch src/sjb_rec.c;touch src/cfg.c
+	$(CC) $(CFLAGS) -c -MMD $< $(INCS) -o $@
   
 .Phony: clean
 clean:
-	-rm $(TARG) $(OBJS) src/*.bak -rf
+	-rm $(TARG) $(OBJS) $(DEPS) src/*.bak -rf
