@@ -20,7 +20,7 @@
 
 #define HYBRIDEN  0  // 1: 1 sensor + 1 rtsp => vo;
 
-static int avs = 0; 
+static int avs = 0; // codec_ipc.vi.avs;
 
 // if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
 #define PIC_WIDTH(w, h) \
@@ -807,15 +807,13 @@ int mpp_start(gsf_bsp_def_t *def)
     #if defined(GSF_CPU_3559a)
     if(avs == 1)
     {
-        vi.stStitchGrpAttr = {
-          .bStitch = HI_TRUE,
-          .enMode  = VI_STITCH_ISP_CFG_NORMAL,
-          .u32PipeNum = 4,
-          .PipeId[0] = 0,
-          .PipeId[1] = 1,
-          .PipeId[2] = 2,
-          .PipeId[3] = 3,
-        }
+        vi.stStitchGrpAttr.bStitch = HI_TRUE;
+        vi.stStitchGrpAttr.enMode  = VI_STITCH_ISP_CFG_NORMAL;
+        vi.stStitchGrpAttr.u32PipeNum = 4;
+        vi.stStitchGrpAttr.PipeId[0] = 0;
+        vi.stStitchGrpAttr.PipeId[1] = 1;
+        vi.stStitchGrpAttr.PipeId[2] = 2;
+        vi.stStitchGrpAttr.PipeId[3] = 3;
     }
     #endif
   

@@ -235,6 +235,88 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   return;
 }
 
+#if defined(GSF_CPU_3516d)
+static void msg_func_imgall(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  gsf_img_all_t *all = (gsf_img_all_t*)rsp->data;
+  
+  gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IMG, all);
+  rsp->err  = 0;
+  rsp->size = sizeof(gsf_img_all_t);
+  printf("get all\n");
+  
+}
+static void msg_func_imgcsc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_csc_t *csc = (gsf_img_csc_t*)req->data;
+    
+    //codec_ipc.csc = *csc;
+    //json_parm_save(codec_parm_path, &codec_ipc);
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, csc);
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set csc\n");
+  }
+  else
+  {
+    gsf_img_csc_t *csc = (gsf_img_csc_t*)rsp->data;
+    
+    //*csc = codec_ipc.csc;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_csc_t);
+    printf("get csc\n");
+  } 
+}
+static void msg_func_imgae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_ae_t *ae = (gsf_img_ae_t*)req->data;
+    
+    //codec_ipc.ae = *ae;
+    //json_parm_save(codec_parm_path, &codec_ipc);
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, ae);
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set ae\n");
+  }
+  else
+  {
+    gsf_img_ae_t *ae = (gsf_img_ae_t*)rsp->data;
+    
+    //*ae = codec_ipc.ae;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_ae_t);
+    printf("get ae\n");
+  } 
+}
+
+static void msg_func_imgdehaze(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_dehaze_t *dehaze = (gsf_img_dehaze_t*)req->data;
+    
+    //codec_ipc.dehaze = *dehaze;
+    //json_parm_save(codec_parm_path, &codec_ipc);
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, dehaze);
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set dehaze\n");
+  }
+  else
+  {
+    gsf_img_dehaze_t *dehaze = (gsf_img_dehaze_t*)rsp->data;
+    
+    //*dehaze = codec_ipc.dehaze;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_dehaze_t);
+    printf("get dehaze\n");
+  } 
+}
+#endif
 
 static void msg_func_lenscfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
@@ -259,6 +341,7 @@ static void msg_func_lenscfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
   } 
 }
 
+
 static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
     [GSF_ID_CODEC_VENC]   = msg_func_venc,
@@ -272,6 +355,12 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_VOLY]   = msg_func_voly,
     [GSF_ID_CODEC_LENS]   = msg_func_lens,
     [GSF_ID_CODEC_LENSCFG]= msg_func_lenscfg,
+#if defined(GSF_CPU_3516d)    
+    [GSF_ID_CODEC_IMGALL]= msg_func_imgall,
+    [GSF_ID_CODEC_IMGCSC]= msg_func_imgcsc,
+    [GSF_ID_CODEC_IMGAE]= msg_func_imgae,
+    [GSF_ID_CODEC_IMGDEHAZE]= msg_func_imgdehaze,
+#endif    
  };
 
 

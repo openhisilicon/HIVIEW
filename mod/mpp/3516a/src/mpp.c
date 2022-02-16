@@ -628,8 +628,87 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_ISP_CTL_IMG:
       {
-        ;
+        // HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_all_t *all = (gsf_mpp_img_all_t*)args;
+        
+        ISP_CSC_ATTR_S stCSCFAttr;
+        ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
+        
+        all->csc.byPass = !stCSCFAttr.bEnable;
+        all->csc.u8Hue  =  stCSCFAttr.u8Hue;
+        all->csc.u8Luma =  stCSCFAttr.u8Luma;
+        all->csc.u8Contr =  stCSCFAttr.u8Contr;
+        all->csc.u8Satu =  stCSCFAttr.u8Satu;
+        
+        ISP_EXPOSURE_ATTR_S stExpAttr;
+        HI_MPI_ISP_GetExposureAttr(ViPipe, &stExpAttr);
+
+        all->ae.byPass = stExpAttr.bByPass;
+        all->ae.u8Speed = stExpAttr.stAuto.u8Speed;
+        all->ae.u8Compensation = stExpAttr.stAuto.u8Compensation;
+        all->ae.SysGainRangeMax = stExpAttr.stAuto.stSysGainRange.u32Max;
+        all->ae.SysGainRangeMin = stExpAttr.stAuto.stSysGainRange.u32Min;
+        all->ae.ExpTimeRangeMax = stExpAttr.stAuto.stExpTimeRange.u32Max;
+        all->ae.ExpTimeRangeMin = stExpAttr.stAuto.stExpTimeRange.u32Min;
+        
+        
+        ISP_DEHAZE_ATTR_S stDehazeAttr;
+        HI_MPI_ISP_GetDehazeAttr(ViPipe, &stDehazeAttr);
+        
+        all->dehaze.byPass = !stDehazeAttr.bEnable;
+        all->dehaze.u8strength = stDehazeAttr.stAuto.u8strength;
       }
+      break;
+    case GSF_MPP_ISP_CTL_CSC:
+      {
+        // HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_csc_t *csc = (gsf_mpp_img_csc_t*)args;
+        ISP_CSC_ATTR_S stCSCFAttr;
+        ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
+        
+        stCSCFAttr.bEnable = !csc->byPass;
+        stCSCFAttr.u8Hue =    csc->u8Hue;
+        stCSCFAttr.u8Luma =   csc->u8Luma;
+        stCSCFAttr.u8Contr =  csc->u8Contr;
+        stCSCFAttr.u8Satu =   csc->u8Satu;
+        ret = HI_MPI_ISP_SetCSCAttr(ViPipe, &stCSCFAttr);
+      }
+      break;
+    case GSF_MPP_ISP_CTL_AE:
+      {
+        // HI_SCENE_Pause(HI_TRUE);
+        
+        gsf_mpp_img_ae_t *ae = (gsf_mpp_img_ae_t*)args;
+        
+        ISP_EXPOSURE_ATTR_S stExpAttr;
+        ret = HI_MPI_ISP_GetExposureAttr(ViPipe, &stExpAttr);
+
+        stExpAttr.bByPass =  ae->byPass;
+        stExpAttr.stAuto.u8Speed = ae->u8Speed;
+        stExpAttr.stAuto.u8Compensation        = ae->u8Compensation;
+        stExpAttr.stAuto.stSysGainRange.u32Max = ae->SysGainRangeMax;
+        stExpAttr.stAuto.stSysGainRange.u32Min = ae->SysGainRangeMin;
+        stExpAttr.stAuto.stExpTimeRange.u32Max = ae->ExpTimeRangeMax;
+        stExpAttr.stAuto.stExpTimeRange.u32Min = ae->ExpTimeRangeMin;
+        
+        ret = HI_MPI_ISP_SetExposureAttr(ViPipe, &stExpAttr);
+      }
+      break;
+      case GSF_MPP_ISP_CTL_DEHAZE:
+      {
+        // HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_dehaze_t *dehaze = (gsf_mpp_img_dehaze_t*)args;
+
+        ISP_DEHAZE_ATTR_S stDehazeAttr;
+        ret = HI_MPI_ISP_GetDehazeAttr(ViPipe, &stDehazeAttr);
+        
+        stDehazeAttr.bEnable = !dehaze->byPass;
+        stDehazeAttr.stAuto.u8strength = dehaze->u8strength;
+        
+        ret = HI_MPI_ISP_SetDehazeAttr(ViPipe, &stDehazeAttr);
+      }
+      break;
+
     default:
       break;
   }

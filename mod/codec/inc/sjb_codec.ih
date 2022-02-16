@@ -93,5 +93,39 @@ STRUCT(gsf_lens_t)
   FIELD(int, arg2);
 };
 
+STRUCT(gsf_img_csc_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u8Hue);
+  FIELD(int, u8Luma);
+  FIELD(int, u8Contr);
+  FIELD(int, u8Satu);
+};
+
+STRUCT(gsf_img_ae_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u8Speed);
+  FIELD(int, u8Compensation);
+  FIELD(int, SysGainRangeMax);
+  FIELD(int, SysGainRangeMin);
+  FIELD(int, ExpTimeRangeMax);
+  FIELD(int, ExpTimeRangeMin);
+};
+
+
+STRUCT(gsf_img_dehaze_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u8strength);
+};
+
+STRUCT(gsf_img_all_t)
+{
+   FIELD(gsf_img_csc_t, csc);
+   FIELD(gsf_img_ae_t, ae);
+   FIELD(gsf_img_dehaze_t, dehaze);
+};
+
 
 #pragma pack(pop)

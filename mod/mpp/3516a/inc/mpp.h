@@ -135,21 +135,47 @@ enum {
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
 
 typedef struct {
-  int filp;
-  int a;
-}gsf_mpp_img_attr;
-
-
-typedef struct {
   void *uargs;
   int (*cds)(int ViPipe, void* uargs);
   int (*cb)(int ViPipe, int night, void* uargs);
 }gsf_mpp_ir_t;
 
+typedef struct {
+  int byPass;
+  int u8Hue;
+  int u8Luma;
+  int u8Contr;
+  int u8Satu;
+}gsf_mpp_img_csc_t;
+
+typedef struct {
+  int  byPass;
+  int  u8Speed;
+  int  u8Compensation;
+  int  SysGainRangeMax;
+  int  SysGainRangeMin;
+  int  ExpTimeRangeMax;
+  int  ExpTimeRangeMin;
+}gsf_mpp_img_ae_t;
+
+
+typedef struct {
+  int  byPass;
+  int  u8strength;
+}gsf_mpp_img_dehaze_t;
+
+typedef struct {
+  gsf_mpp_img_csc_t csc;
+  gsf_mpp_img_ae_t  ae;
+  gsf_mpp_img_dehaze_t dehaze;
+}gsf_mpp_img_all_t;
 
 enum {
   GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
-  GSF_MPP_ISP_CTL_IMG = 1,    // gsf_mpp_img_attr;
+  GSF_MPP_ISP_CTL_IMG = 1,    // get gsf_mpp_img_all_t;
+  GSF_MPP_ISP_CTL_CSC = 2,    // set gsf_mpp_img_csc_t;
+  GSF_MPP_ISP_CTL_AE  = 3,    // set gsf_mpp_img_ae_t;
+  GSF_MPP_ISP_CTL_DEHAZE = 4, // set gsf_mpp_img_dehaze_t;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 

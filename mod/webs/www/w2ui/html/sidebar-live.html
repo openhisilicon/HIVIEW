@@ -20,6 +20,18 @@
 <!--CODE-->
 <script>
   
+
+const RECID_SceneAuto = 000;
+const RECID_AE        = 100;
+const RECID_Sharpen   = 200;
+const RECID_HLC       = 300;
+const RECID_Gamma     = 400;
+const RECID_DRC       = 500;
+const RECID_NR        = 600;
+const RECID_DeHaze    = 700;
+const RECID_Demosaic  = 800;
+const RECID_CSC       = 900;
+
 $(function () {
   
   $().w2destroy('ptz-tabs');
@@ -27,22 +39,25 @@ $(function () {
    $('#ptz-tabs').w2tabs({
         name: 'ptz-tabs',
         style:  'background-color: #F0F0F0',
-        active: 'tab1',
+        //active: 'tabPT',
         tabs: [
-            { id: 'tab1', text: 'PT' },
-            { id: 'tab2', text: 'IM' },
-            { id: 'tab3', text: 'PM' }
+            { id: 'tabPT', text: 'PT' },
+            { id: 'tabIM', text: 'IM' },
+            { id: 'tabPM', text: 'PM' }
         ],
         onClick: function (event) {
-            $('#selected-tab').w2render('grid');
+            grid_load(event.target);
+            $('#selected-tab').w2render(event.target);
         }
     });
   
   
-    $().w2destroy('grid');
+    $().w2destroy('tabPT');
+    $().w2destroy('tabIM');
+    $().w2destroy('tabPM');
   
     $().w2grid({ 
-        name: 'grid', 
+        name: 'tabPT', 
         show: { 
             toolbar: true,
             toolbarReload: false,
@@ -63,7 +78,231 @@ $(function () {
         onDelete: function (event) {
             console.log('delete has default behavior');
         },
-        records: [
+        records: []
+    }); 
+    
+    $().w2grid({ 
+        name: 'tabIM', 
+        show: { 
+            toolbar: true,
+            toolbarInput:  false,
+            toolbarSearch: false,
+            toolbarSave: true,
+        },
+    
+        columns: [                
+            { field: 'fname', caption: 'Name', size: '40%', resizable: true, sortable: true},
+            { field: 'lname', caption: 'Value', size:'30%', resizable: true, sortable: true, attr: 'align=center', editable: { type: 'text' }},
+            { field: 'nname', caption: 'Note', size: '30%', resizable: true, sortable: true},
+        ],
+        onSave: function (event) {
+             console.log(event);
+             
+             // records to json;
+            var changeFlags = [];
+            for(i = 0; i < event.changes.length; i++)
+            {
+              changeFlags[parseInt(event.changes[i].recid/100)*100] = 1;
+            }
+
+            if(changeFlags[RECID_SceneAuto])
+            {
+              console.log("SceneAuto");  
+            } 
+            if(changeFlags[RECID_AE])
+            {              
+              var ae = w2ui[event.target].get(RECID_AE);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGAE",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(ae.lname, 10), 
+                    "u8Speed": parseInt(ae.w2ui.children[0].lname, 16), 
+                    "u8Compensation": parseInt(ae.w2ui.children[1].lname, 16), 
+                    "SysGainRangeMax": parseInt(ae.w2ui.children[2].lname, 16), 
+                    "SysGainRangeMin": parseInt(ae.w2ui.children[3].lname, 16),
+                    "ExpTimeRangeMax": parseInt(ae.w2ui.children[4].lname, 16), 
+                    "ExpTimeRangeMin": parseInt(ae.w2ui.children[5].lname, 16)
+                    }
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_AE+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_AE+1)
+                  req.data.u8Speed = parseInt(event.changes[i].lname, 16);
+                if(event.changes[i].recid == RECID_AE+2)
+                  req.data.u8Compensation = parseInt(event.changes[i].lname, 16);
+                if(event.changes[i].recid == RECID_AE+3)
+                  req.data.SysGainRangeMax = parseInt(event.changes[i].lname, 16);
+                if(event.changes[i].recid == RECID_AE+4)
+                  req.data.SysGainRangeMin = parseInt(event.changes[i].lname, 16);
+                if(event.changes[i].recid == RECID_AE+5)
+                  req.data.ExpTimeRangeMax = parseInt(event.changes[i].lname, 16);
+                if(event.changes[i].recid == RECID_AE+6)
+                  req.data.ExpTimeRangeMin = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            }
+            if(changeFlags[RECID_Sharpen])
+            {
+              console.log("Sharpen");  
+            } 
+            if(changeFlags[RECID_HLC])
+            {
+              console.log("HLC");
+            }  
+            if(changeFlags[RECID_Gamma])
+            {
+              console.log("Gamma");
+            }
+            if(changeFlags[RECID_DRC])
+            {
+              console.log("DRC");
+            }  
+            if(changeFlags[RECID_NR])
+            {
+              console.log("NR");
+            }
+            if(changeFlags[RECID_DeHaze])
+            {
+              var dehaze = w2ui[event.target].get(RECID_DeHaze);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGDEHAZE",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(dehaze.lname, 10), 
+                    "u8strength": parseInt(dehaze.w2ui.children[0].lname, 10)}
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_DeHaze+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_DeHaze+1)
+                  req.data.u8strength = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            } 
+            if(changeFlags[RECID_Demosaic])
+            {
+              console.log("Demosaic");
+            }
+            if(changeFlags[RECID_CSC])
+            {
+              var csc = w2ui[event.target].get(RECID_CSC);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGCSC",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(csc.lname, 10), 
+                    "u8Hue": parseInt(csc.w2ui.children[0].lname, 10), 
+                    "u8Luma": parseInt(csc.w2ui.children[1].lname, 10), 
+                    "u8Contr": parseInt(csc.w2ui.children[2].lname, 10), 
+                    "u8Satu": parseInt(csc.w2ui.children[3].lname, 10)}
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_CSC+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_CSC+1)
+                  req.data.u8Hue = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_CSC+2)
+                  req.data.u8Luma = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_CSC+3)
+                  req.data.u8Contr = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_CSC+4)
+                  req.data.u8Satu = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            }
+        },
+        records: []
+    }); 
+    
+    $().w2grid({ 
+        name: 'tabPM', 
+        show: { 
+            toolbar: true,
+            toolbarReload: false,
+            toolbarInput:  false,
+            toolbarSearch: false,
+            toolbarAdd: true,
+            toolbarDelete: true,
+        },
+    
+        columns: [                
+            { field: 'recid', caption: 'ID', size: '50px', sortable: true, attr: 'align=center' },
+            { field: 'fname', caption: 'Name', size: '30%', sortable: true },
+            { field: 'lname', caption: 'Valid', size: '30%', sortable: true , attr: 'align=center'},
+        ],
+        onAdd: function (event) {
+            w2alert('add');
+        },
+        onDelete: function (event) {
+            console.log('delete has default behavior');
+        },
+        records: []
+    }); 
+    
+    
+    $('#selected-tab').html('<br><br><H4> Welcome to OpenHisilicon </H4><br> <A HREF="https://github.com/openhisilicon">https://github.com/openhisilicon</A><br><br> <H5> When the video is paused or delayed, plase click [Play] </H5><br>');
+    load_html('main', 'live');
+       
+});
+
+function grid_load(grid_name)
+{
+  var records = []; 
+  
+  //post request;
+  //json to records;
+  console.log(grid_name);
+  
+  if (grid_name == 'tabPT') 
+  {
+    records = [
             { recid: 1, fname: 'preset1'  , lname: '1'},
             { recid: 2, fname: 'preset2'  , lname: '1'},
             { recid: 3, fname: 'preset3'  , lname: '1'},
@@ -73,15 +312,142 @@ $(function () {
             { recid: 7, fname: 'preset7'  , lname: '0'},
             { recid: 8, fname: 'preset8'  , lname: '0'},
             { recid: 9, fname: 'preset9'  , lname: '0'},
-        ]
-    }); 
-    
-    $('#selected-tab').w2render('grid');
+          ];
+    w2ui[grid_name].clear(); 
+    w2ui[grid_name].add(records);
+    w2ui[grid_name].refresh();    
+  }
+  else if (grid_name == 'tabIM')
+  {
+    var req = {
+          "id": "GSF_ID_CODEC_IMGALL",
+          "args":"G0C0S0",
+          "data":{}
+        }
+        
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log(data);
 
-    
-    load_html('main', 'live');
-       
-});
+        records = [
+            { recid: RECID_SceneAuto, fname: 'SceneAuto', lname: '0', nname: 'byPass'},
+            { recid: RECID_AE, fname: 'AE', lname: data.data.ae.byPass.toString(10), nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_AE+1, fname: 'u8Speed',          lname: data.data.ae.u8Speed.toString(16), nname: '[0x0, 0xFF]'},
+                      { recid: RECID_AE+2, fname: 'u8Compensation',   lname: data.data.ae.u8Compensation.toString(16), nname: '[0x0, 0xFF]'},
+                      { recid: RECID_AE+3, fname: 'SysGainRangeMax',  lname: data.data.ae.SysGainRangeMax.toString(16), nname: '[0x400, 0xFFFFFFFF]'},
+                      { recid: RECID_AE+4, fname: 'SysGainRangeMin',  lname: data.data.ae.SysGainRangeMin.toString(16), nname: '[0x400, 0xFFFFFFFF]'}, 
+                      { recid: RECID_AE+5, fname: 'ExpTimeRangeMax', lname: data.data.ae.ExpTimeRangeMax.toString(16), nname: '[0x0, 0xFFFFFFFF]'},
+                      { recid: RECID_AE+6, fname: 'ExpTimeRangeMin', lname: data.data.ae.ExpTimeRangeMin.toString(16), nname: '[0x0, 0xFFFFFFFF]'}
+                  ]
+              } 
+            },
+            { recid: RECID_Sharpen, fname: 'Sharpen', lname: '0', nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_Sharpen+1, fname: 'TextureStr', lname: '1', nname: '[1, 16]'},
+                      { recid: RECID_Sharpen+2, fname: 'EdgeStr',    lname: '1', nname: '[1, 16]'},
+                      { recid: RECID_Sharpen+3, fname: 'OverShoot',  lname: '1', nname: '[1, 16]'},
+                      { recid: RECID_Sharpen+4, fname: 'UnderShoot', lname: '1', nname: '[1, 16]'}
+                  ]
+              } 
+            },     
+            { recid: RECID_HLC, fname: 'HLC', lname: '0', nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_HLC+1, fname: 'u8LumaThr', lname: '248', nname: '[0, 255]'},
+                      { recid: RECID_HLC+2, fname: 'u8LumaTarget', lname: '10', nname: '[0, 255]'}
+                  ]
+              } 
+            },   
+            { recid: RECID_Gamma, fname: 'Gamma', lname: '0', nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_Gamma+1, fname: 'Table', lname: '1', nname: '[1, 16]'}
+                  ]
+              } 
+            },
+            { recid: RECID_DRC, fname: 'DRC', lname: '0', nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_DRC+1, fname: 'Strength', lname: '1', nname: '[1, 16]'}
+                  ]
+              } 
+            },    
+            { recid: RECID_NR, fname: 'NR', lname: '0', nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_NR+1, fname: 'Strength', lname: '1', nname: '[1, 16]'}
+                  ]
+              } 
+            },   
+            { recid: RECID_DeHaze, fname: 'DeHaze', lname: data.data.dehaze.byPass.toString(10), nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_DeHaze+1, fname: 'u8strength', lname: data.data.dehaze.u8strength.toString(10), nname: '[0,255]'}
+                  ]
+              } 
+            },
+            { recid: RECID_Demosaic, fname: 'Demosaic', lname: '0', nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_Demosaic+1, fname: 'Strength', lname: '1', nname: '[1, 16]'}
+                  ]
+              } 
+            },
+            { recid: RECID_CSC, fname: 'CSC', lname: data.data.csc.byPass.toString(10), nname: 'byPass',
+              w2ui: {
+                  children: [
+                      { recid: RECID_CSC+1, fname: 'u8Hue', lname: data.data.csc.u8Hue.toString(10), nname: '[0,100]'},
+                      { recid: RECID_CSC+2, fname: 'u8Luma', lname: data.data.csc.u8Luma.toString(10), nname: '[0,100]'},
+                      { recid: RECID_CSC+3, fname: 'u8Contr', lname: data.data.csc.u8Contr.toString(10), nname: '[0,100]'},
+                      { recid: RECID_CSC+4, fname: 'u8Satu', lname: data.data.csc.u8Satu.toString(10), nname: '[0,100]'}
+                  ]
+              } 
+            }, 
+          ];     
+        w2ui[grid_name].clear(); 
+        w2ui[grid_name].add(records);
+        w2ui[grid_name].refresh();
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+  }
+  else if (grid_name == 'tabPM')
+  {
+    records = [
+            { recid: 1, fname: 'vmask1'  , lname: '1'},
+            { recid: 2, fname: 'vmask2'  , lname: '1'},
+            { recid: 3, fname: 'vmask3'  , lname: '1'},
+            { recid: 4, fname: 'vmask4'  , lname: '1'},
+            { recid: 5, fname: 'vmask5'  , lname: '0'},
+            { recid: 6, fname: 'vmask6'  , lname: '0'},
+            { recid: 7, fname: 'vmask7'  , lname: '0'},
+            { recid: 8, fname: 'vmask8'  , lname: '0'},
+            { recid: 9, fname: 'vmask9'  , lname: '0'},
+          ];
+    w2ui[grid_name].clear(); 
+    w2ui[grid_name].add(records);
+    w2ui[grid_name].refresh();       
+  }
+  
+
+  
+}
+
+
+
+
+
 
 function ircutDay() {
     const req = {

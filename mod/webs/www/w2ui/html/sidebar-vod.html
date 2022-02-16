@@ -104,21 +104,21 @@ function loadVideo(){
      // console.log(JSON.stringify(query));
       $.post('//'+ window.location.hostname + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) {
         if (status == "success") {
-			if (result['code'] == 0){
-				$(result['data']).each(function(index,data){ 
-				if(data.btime !='undefined'){
-					nodeslevel[index] = data;
-					nodeslevel[index]['recid'] = index+1;
-					nodeslevel[index]['btime'] = data.btime;
-					nodeslevel[index]['channel'] = data.channel;
-					nodeslevel[index]['play'] = '<a href="javascript:;" data-id="'+(index+1)+'" onClick="playVideo(this)" class="playVideo">播放</a>';
-					nodeslevel[index]['down'] =  '<a href="javascript:;" data-id="'+(index+1)+'" onClick="downVideo(this)" class="playVideo">下载</a>';
-					nodeslevel[index]['datetime'] = timestampToTime(data.btime);
-				} 
-			  });
-			}else{
-				console.log("error code :"+result['code']);
-			}
+    			if (result['code'] == 0){
+    				$(result['data']).each(function(index,data){ 
+    				if(data.btime !='undefined'){
+    					nodeslevel[index] = data;
+    					nodeslevel[index]['recid'] = index+1;
+    					nodeslevel[index]['btime'] = data.btime;
+    					nodeslevel[index]['channel'] = data.channel;
+    					nodeslevel[index]['play'] = '<a href="javascript:;" data-id="'+(index+1)+'" onClick="playVideo(this)" class="playVideo">播放</a>';
+    					nodeslevel[index]['down'] =  '<a href="javascript:;" data-id="'+(index+1)+'" onClick="downVideo(this)" class="playVideo">下载</a>';
+    					nodeslevel[index]['datetime'] = timestampToTime(data.btime);
+    				} 
+    			  });
+    			}else{
+    				console.log("error code :"+result['code']);
+    			}
           w2ui['grid-video'].clear(); 
           w2ui['grid-video'].add(nodeslevel);
           w2ui['grid-video'].refresh();

@@ -44,6 +44,11 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   {GSF_ID_CODEC_LENSCFG,"GSF_ID_CODEC_LENSCFG", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_lenscfg_t, (sjb_cb*)sjb_bind_gsf_lenscfg_t,sizeof(gsf_lenscfg_t), sizeof(gsf_lenscfg_t),0},
   {GSF_ID_CODEC_LENS,  "GSF_ID_CODEC_LENS", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_lens_t,   (sjb_cb*)sjb_bind_gsf_lens_t,sizeof(gsf_lens_t), sizeof(gsf_lens_t),0},
 
+  {GSF_ID_CODEC_IMGALL, "GSF_ID_CODEC_IMGALL", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_all_t, (sjb_cb*)sjb_bind_gsf_img_all_t,sizeof(gsf_img_all_t), sizeof(gsf_img_all_t),0},
+  {GSF_ID_CODEC_IMGCSC, "GSF_ID_CODEC_IMGCSC", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_csc_t, (sjb_cb*)sjb_bind_gsf_img_csc_t,sizeof(gsf_img_csc_t), sizeof(gsf_img_csc_t),0},
+  {GSF_ID_CODEC_IMGAE,  "GSF_ID_CODEC_IMGAE", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_ae_t,   (sjb_cb*)sjb_bind_gsf_img_ae_t,sizeof(gsf_img_ae_t), sizeof(gsf_img_ae_t),0},
+  {GSF_ID_CODEC_IMGDEHAZE, "GSF_ID_CODEC_IMGDEHAZE", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_dehaze_t,   (sjb_cb*)sjb_bind_gsf_img_dehaze_t,sizeof(gsf_img_dehaze_t), sizeof(gsf_img_dehaze_t),0},
+    
 //rec;
   {GSF_ID_REC_CFG,  "GSF_ID_REC_CFG", GSF_IPC_REC  ,(sjb_cb*)sjb_bind_gsf_rec_cfg_t,(sjb_cb*)sjb_bind_gsf_rec_cfg_t,sizeof(gsf_rec_cfg_t),sizeof(gsf_rec_cfg_t),0},
   {GSF_ID_REC_QREC, "GSF_ID_REC_QREC", GSF_IPC_REC  ,(sjb_cb*)sjb_bind_gsf_rec_q_t, (sjb_cb*)sjb_bind_gsf_file_t,sizeof(gsf_rec_q_t),sizeof(gsf_file_t),1},

@@ -26,7 +26,10 @@ enum {
     GSF_ID_CODEC_VOMV     = 10, // ch, sid, gsf_rect_t;
     GSF_ID_CODEC_LENS     = 11, // ch, sid, gsf_lens_t;
     GSF_ID_CODEC_LENSCFG  = 12, // ch, sid, gsf_lenscfg_t;
-    
+    GSF_ID_CODEC_IMGALL   = 13, // ch, sid, gsf_img_all_t;
+    GSF_ID_CODEC_IMGCSC   = 14, // ch, sid, gsf_img_csc_t;
+    GSF_ID_CODEC_IMGAE    = 15, // ch, sid, gsf_img_ae_t;
+    GSF_ID_CODEC_IMGDEHAZE= 16, // ch, sid, gsf_img_dehaze_t;
     GSF_ID_CODEC_END
 };
 
