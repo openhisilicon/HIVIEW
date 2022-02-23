@@ -88,7 +88,7 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
 #define FLV_TYPE_VDIEO 9
 #define FLV_TYPE_SCRIPT 18
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 typedef struct {
   char flag[32];  //session flag;
   struct cfifo_ex* video;

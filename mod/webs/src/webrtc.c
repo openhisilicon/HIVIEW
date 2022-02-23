@@ -4,7 +4,7 @@
 
 #include "webrtc.h"
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 
 
 #ifndef WEBRTC_ENABLE

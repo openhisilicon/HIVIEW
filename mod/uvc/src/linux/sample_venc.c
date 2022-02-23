@@ -709,7 +709,7 @@ static struct input_terminal_ops venc_it_ops = { NULL };
 
 #include "mod/codec/inc/codec.h"
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 static pthread_t gpid;
 static int running;
 

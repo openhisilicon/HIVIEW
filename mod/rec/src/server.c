@@ -25,7 +25,7 @@ enum {
   SER_STAT_INIT = 1,
 };
 
-#define FRAME_MAX_SIZE (800*1024)
+#define FRAME_MAX_SIZE (1000*1024)
 
 
 typedef struct {

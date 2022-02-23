@@ -954,7 +954,7 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
       if(shmid.video_shmid >= 0)
       {
         *fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
-        *frm = (gsf_frm_t*)malloc(800*1024);
+        *frm = (gsf_frm_t*)malloc(1000*1024);
         cfifo_newest(*fifo, 1);
         cfifo_set_u(*fifo, (void*)1);
         printf("fifo:%p, frm:%p\n", *fifo, *frm);

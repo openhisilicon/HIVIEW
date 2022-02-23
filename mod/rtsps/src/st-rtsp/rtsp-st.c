@@ -6,7 +6,7 @@
 
 #include "h26xbits.h"
 
-#define FRAME_MAX_SIZE (800*1024)
+#define FRAME_MAX_SIZE (1000*1024)
 
 static pthread_t rtsp_st_pid;
 static void* st_rtsp_ctl_listen(char *ip, unsigned short port);

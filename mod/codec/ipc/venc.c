@@ -4,7 +4,7 @@
 
 #include "venc.h"
 
-#define VFRAME_MAX_SIZE (800*1024)
+#define VFRAME_MAX_SIZE (1000*1024)
 #define AFRAME_MAX_SIZE (2*1024)
 
 static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};

@@ -24,7 +24,7 @@
 GSF_LOG_GLOBAL_INIT("RTMPS", 8*1024);
 
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 
 typedef struct {
   int idr;

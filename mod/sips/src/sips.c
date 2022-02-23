@@ -16,7 +16,7 @@ GSF_LOG_GLOBAL_INIT("SIPS", 8*1024);
 #include "mod/bsp/inc/bsp.h"
 #include "mod/codec/inc/codec.h"
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {

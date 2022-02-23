@@ -20,7 +20,7 @@
 
 GSF_LOG_GLOBAL_INIT("SRTS", 8*1024);
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
@@ -114,7 +114,7 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
 #include <string.h>
 #include <stdio.h>
 
-#define MAX_FRAME_SIZE (800*1024)
+#define MAX_FRAME_SIZE (1000*1024)
 
 static pthread_t gpid;
 static int sendflag = 0;

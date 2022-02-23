@@ -28,7 +28,7 @@ static void* live_task(void *parm);
             PT_H264
 
 
-#define FRAME_MAX_SIZE (800*1024)
+#define FRAME_MAX_SIZE (1000*1024)
 
 static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
