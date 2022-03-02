@@ -240,6 +240,7 @@ static void msg_func_imgall(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
 {
   gsf_img_all_t *all = (gsf_img_all_t*)rsp->data;
   
+  *all = codec_ipc.img;
   gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IMG, all);
   rsp->err  = 0;
   rsp->size = sizeof(gsf_img_all_t);
