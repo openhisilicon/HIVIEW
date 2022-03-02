@@ -4886,6 +4886,7 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
         case SONY_IMX415_MIPI_2M_60FPS_12BIT:
         //maohw add;  
         case SONY_IMX327_2L_MIPI_2M_30FPS_12BIT:
+        case SONY_IMX290_2L_MIPI_2M_30FPS_12BIT:
           
             if (0 == s32SnsIdx)
             {
