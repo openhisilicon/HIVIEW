@@ -30,6 +30,14 @@ enum {
     GSF_ID_CODEC_IMGCSC   = 14, // ch, sid, gsf_img_csc_t;
     GSF_ID_CODEC_IMGAE    = 15, // ch, sid, gsf_img_ae_t;
     GSF_ID_CODEC_IMGDEHAZE= 16, // ch, sid, gsf_img_dehaze_t;
+    GSF_ID_CODEC_IMGSCENE  = 17, // ch, sid, gsf_img_scene_t;
+    GSF_ID_CODEC_IMGSHARPEN= 18, // ch, sid, gsf_img_sharpen_t;
+    GSF_ID_CODEC_IMGHLC    = 19, // ch, sid, gsf_img_hlc_t;
+    GSF_ID_CODEC_IMGGAMMA  = 20, // ch, sid, gsf_img_gamma_t;
+    GSF_ID_CODEC_IMGDRC    = 21, // ch, sid, gsf_img_drc_t;
+    GSF_ID_CODEC_IMGLDCI   = 22, // ch, sid, gsf_img_ldci_t;
+    GSF_ID_CODEC_IMG3DNR   = 23, // ch, sid, gsf_img_3dnr_t;
+    
     GSF_ID_CODEC_END
 };
 

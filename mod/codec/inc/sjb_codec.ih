@@ -62,30 +62,6 @@ STRUCT(gsf_lenscfg_t)
   FIELD(int, ircut);// 0: manual, 1: auto, 2: cds;
 };
 
-
-
-STRUCT(gsf_codec_ipc_t)
-{
-  //1
-  FIELD(gsf_vi_t,    vi);
-  FIELD(gsf_vo_t,    vo);
-  FIELD(gsf_aenc_t,  aenc);
-  FIELD(gsf_lenscfg_t, lenscfg);
-  
-  //2
-  ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
-  ARRAY(gsf_osd_t,   osd,   GSF_CODEC_OSD_NUM);
-  ARRAY(gsf_vmask_t, vmask, GSF_CODEC_VMASK_NUM); 
-  //3
-};
-
-
-STRUCT(gsf_codec_nvr_t)
-{
-  FIELD(int, resolu);
-  ARRAY(gsf_venc_t, venc, GSF_CODEC_VENC_NUM);
-};
-
 STRUCT(gsf_lens_t)
 {
   FIELD(int, cmd); // GSF_LENS_CMD_E
@@ -120,11 +96,97 @@ STRUCT(gsf_img_dehaze_t)
   FIELD(int, u8strength);
 };
 
+STRUCT(gsf_img_sharpen_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u16TextureFreq);
+  FIELD(int, u16EdgeFreq);
+  FIELD(int, u8DetailCtrl);
+};
+
+
+STRUCT(gsf_img_hlc_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u8LumaThr);
+  FIELD(int, u8LumaTarget);
+};
+
+
+STRUCT(gsf_img_gamma_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, enCurveType);
+  FIELD(int, TableNo);
+};
+
+
+STRUCT(gsf_img_drc_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u16Strength);
+  FIELD(int, u16StrengthMax);
+  FIELD(int, u16StrengthMin);
+};
+
+STRUCT(gsf_img_ldci_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u16BlcCtrl);
+  FIELD(int, stHePosWgt_u8Wgt);
+  FIELD(int, stHeNegWgt_u8Mean);
+};
+
+
+STRUCT(gsf_img_3dnr_t)
+{
+  FIELD(int, byPass);
+  FIELD(int, u8strength);
+};
+
+STRUCT(gsf_img_scene_t)
+{
+  FIELD(int, byPass);
+};
+
+
 STRUCT(gsf_img_all_t)
 {
+   FIELD(int, magic); // 0x55aa;
+   FIELD(gsf_img_scene_t, scene);
    FIELD(gsf_img_csc_t, csc);
    FIELD(gsf_img_ae_t, ae);
    FIELD(gsf_img_dehaze_t, dehaze);
+   FIELD(gsf_img_sharpen_t, sharpen);
+   FIELD(gsf_img_hlc_t, hlc);
+   FIELD(gsf_img_gamma_t, gamma);
+   FIELD(gsf_img_drc_t, drc);
+   FIELD(gsf_img_ldci_t, ldci);
+   FIELD(gsf_img_3dnr_t, _3dnr);
+};
+
+STRUCT(gsf_codec_ipc_t)
+{
+  //1
+  FIELD(gsf_vi_t,    vi);
+  FIELD(gsf_vo_t,    vo);
+  FIELD(gsf_aenc_t,  aenc);
+  FIELD(gsf_lenscfg_t, lenscfg);
+  
+  //2
+  ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
+  ARRAY(gsf_osd_t,   osd,   GSF_CODEC_OSD_NUM);
+  ARRAY(gsf_vmask_t, vmask, GSF_CODEC_VMASK_NUM); 
+  
+  //3
+  FIELD(gsf_img_all_t, img);
+};
+
+
+STRUCT(gsf_codec_nvr_t)
+{
+  FIELD(int, resolu);
+  ARRAY(gsf_venc_t, venc, GSF_CODEC_VENC_NUM);
 };
 
 

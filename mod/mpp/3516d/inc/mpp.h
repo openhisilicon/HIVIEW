@@ -158,16 +158,66 @@ typedef struct {
   int  ExpTimeRangeMin;
 }gsf_mpp_img_ae_t;
 
-
 typedef struct {
   int  byPass;
   int  u8strength;
 }gsf_mpp_img_dehaze_t;
 
 typedef struct {
-  gsf_mpp_img_csc_t csc;
-  gsf_mpp_img_ae_t  ae;
+  int byPass;
+  int u16TextureFreq;
+  int u16EdgeFreq;
+  int u8DetailCtrl;
+}gsf_mpp_img_sharpen_t;
+
+typedef struct {
+  int byPass;
+  int u8LumaThr;
+  int u8LumaTarget;
+}gsf_mpp_img_hlc_t;
+
+typedef struct {
+  int byPass;
+  int enCurveType;
+  int TableNo;
+}gsf_mpp_img_gamma_t;
+
+typedef struct {
+  int byPass;
+  int u16Strength;
+  int u16StrengthMax;
+  int u16StrengthMin;
+}gsf_mpp_img_drc_t;
+
+typedef struct {
+  int byPass;
+  int u16BlcCtrl;
+  int stHePosWgt_u8Wgt;
+  int stHeNegWgt_u8Mean;
+}gsf_mpp_img_ldci_t;
+
+typedef struct {
+  int byPass;
+  int u8strength;
+}gsf_mpp_img_3dnr_t;
+
+typedef struct {
+  int byPass;
+}gsf_mpp_img_scene_t;
+
+// gsf_mpp_img_all_t == gsf_img_all_t;
+typedef struct {
+  int magic;
+  gsf_mpp_img_scene_t scene;
+  gsf_mpp_img_csc_t   csc;
+  gsf_mpp_img_ae_t    ae;
   gsf_mpp_img_dehaze_t dehaze;
+  gsf_mpp_img_sharpen_t sharpen;
+  gsf_mpp_img_hlc_t   hlc;
+  gsf_mpp_img_gamma_t gamma;
+  gsf_mpp_img_drc_t   drc;
+  gsf_mpp_img_ldci_t  ldci;
+  gsf_mpp_img_3dnr_t  _3dnr;
 }gsf_mpp_img_all_t;
 
 enum {
@@ -176,6 +226,13 @@ enum {
   GSF_MPP_ISP_CTL_CSC = 2,    // set gsf_mpp_img_csc_t;
   GSF_MPP_ISP_CTL_AE  = 3,    // set gsf_mpp_img_ae_t;
   GSF_MPP_ISP_CTL_DEHAZE = 4, // set gsf_mpp_img_dehaze_t;
+  GSF_MPP_ISP_CTL_SCENE  = 5, // set gsf_mpp_img_scene_t;
+  GSF_MPP_ISP_CTL_SHARPEN= 6, // set gsf_mpp_img_sharpen_t;
+  GSF_MPP_ISP_CTL_HLC    = 7, // set gsf_mpp_img_hlc_t;
+  GSF_MPP_ISP_CTL_GAMMA  = 8, // set gsf_mpp_img_gamma_t;
+  GSF_MPP_ISP_CTL_DRC    = 9, // set gsf_mpp_img_drc_t;
+  GSF_MPP_ISP_CTL_LDCI   = 10,// set gsf_mpp_img_ldci_t;  
+  GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 

@@ -858,7 +858,28 @@ int mpp_start(gsf_bsp_def_t *def)
       sprintf(scene_ini, "%s/../cfg/%savs.ini", scene_ini, cfg.snsname);
     #endif
    
-    gsf_mpp_scene_start(scene_ini, 0);
+    if(gsf_mpp_scene_start(scene_ini, 0) < 0)
+    {
+      printf("scene_auto is bypass, set img(magic:0x%x) to isp.\n", codec_ipc.img.magic);
+      if(codec_ipc.img.magic == 0x55aa) 
+      {
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, &codec_ipc.img.csc);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, &codec_ipc.img.ae);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, &codec_ipc.img.dehaze);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SCENE, &codec_ipc.img.scene);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SHARPEN, &codec_ipc.img.sharpen);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_HLC, &codec_ipc.img.hlc);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_GAMMA, &codec_ipc.img.gamma);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DRC, &codec_ipc.img.drc);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_LDCI, &codec_ipc.img.ldci);
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_3DNR, &codec_ipc.img._3dnr);
+      }
+      else 
+      {
+        codec_ipc.img.magic = 0x55aa;
+        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IMG, &codec_ipc.img);
+      }
+    }
 
     #if defined(GSF_CPU_3559a)
     if(avs == 1)

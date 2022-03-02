@@ -252,9 +252,12 @@ static void msg_func_imgcsc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
   {
     gsf_img_csc_t *csc = (gsf_img_csc_t*)req->data;
     
-    //codec_ipc.csc = *csc;
-    //json_parm_save(codec_parm_path, &codec_ipc);
-    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, csc);
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, csc);
+    if(!ret)
+    {  
+      codec_ipc.img.csc = *csc;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
     rsp->err  = 0;
     rsp->size = 0;
     printf("set csc\n");
@@ -275,9 +278,12 @@ static void msg_func_imgae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
   {
     gsf_img_ae_t *ae = (gsf_img_ae_t*)req->data;
     
-    //codec_ipc.ae = *ae;
-    //json_parm_save(codec_parm_path, &codec_ipc);
-    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, ae);
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, ae);
+    if(!ret)
+    {  
+      codec_ipc.img.ae = *ae;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
     rsp->err  = 0;
     rsp->size = 0;
     printf("set ae\n");
@@ -299,9 +305,12 @@ static void msg_func_imgdehaze(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *o
   {
     gsf_img_dehaze_t *dehaze = (gsf_img_dehaze_t*)req->data;
     
-    //codec_ipc.dehaze = *dehaze;
-    //json_parm_save(codec_parm_path, &codec_ipc);
-    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, dehaze);
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, dehaze);
+    if(!ret)
+    {  
+      codec_ipc.img.dehaze = *dehaze;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
     rsp->err  = 0;
     rsp->size = 0;
     printf("set dehaze\n");
@@ -314,6 +323,174 @@ static void msg_func_imgdehaze(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *o
     rsp->err  = 0;
     rsp->size = sizeof(gsf_img_dehaze_t);
     printf("get dehaze\n");
+  } 
+}
+
+static void msg_func_imgscene(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_scene_t *scene = (gsf_img_scene_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SCENE, scene);
+    if(!ret)
+    {  
+      codec_ipc.img.scene = *scene;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set scene\n");
+  }
+  else
+  {
+    gsf_img_scene_t *scene = (gsf_img_scene_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_scene_t);
+    printf("get scene\n");
+  } 
+}
+
+static void msg_func_imgsharpen(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_sharpen_t *sharpen = (gsf_img_sharpen_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SHARPEN, sharpen);
+    if(!ret)
+    {  
+      codec_ipc.img.sharpen = *sharpen;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set sharpen\n");
+  }
+  else
+  {
+    gsf_img_sharpen_t *sharpen = (gsf_img_sharpen_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_sharpen_t);
+    printf("get sharpen\n");
+  } 
+}
+
+static void msg_func_imghlc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_hlc_t *hlc = (gsf_img_hlc_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_HLC, hlc);
+    if(!ret)
+    {  
+      codec_ipc.img.hlc = *hlc;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set hlc\n");
+  }
+  else
+  {
+    gsf_img_hlc_t *hlc = (gsf_img_hlc_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_hlc_t);
+    printf("get hlc\n");
+  } 
+}
+
+static void msg_func_imggamma(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_gamma_t *gamma = (gsf_img_gamma_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_GAMMA, gamma);
+    if(!ret)
+    {  
+      codec_ipc.img.gamma = *gamma;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set gamma\n");
+  }
+  else
+  {
+    gsf_img_gamma_t *gamma = (gsf_img_gamma_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_gamma_t);
+    printf("get gamma\n");
+  } 
+}
+
+static void msg_func_imgdrc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_drc_t *drc = (gsf_img_drc_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DRC, drc);
+    if(!ret)
+    {  
+      codec_ipc.img.drc = *drc;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set drc\n");
+  }
+  else
+  {
+    gsf_img_drc_t *drc = (gsf_img_drc_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_drc_t);
+    printf("get drc\n");
+  } 
+}
+
+static void msg_func_imgldci(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_ldci_t *ldci = (gsf_img_ldci_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_LDCI, ldci);
+    if(!ret)
+    {  
+      codec_ipc.img.ldci = *ldci;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set ldci\n");
+  }
+  else
+  {
+    gsf_img_ldci_t *ldci = (gsf_img_ldci_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_ldci_t);
+    printf("get ldci\n");
+  } 
+}
+
+static void msg_func_img3dnr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_3dnr_t *_3dnr = (gsf_img_3dnr_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_3DNR, _3dnr);
+    if(!ret)
+    {  
+      codec_ipc.img._3dnr = *_3dnr;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set _3dnr\n");
+  }
+  else
+  {
+    gsf_img_3dnr_t *_3dnr = (gsf_img_3dnr_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_3dnr_t);
+    printf("get _3dnr\n");
   } 
 }
 #endif
@@ -360,6 +537,13 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_IMGCSC]= msg_func_imgcsc,
     [GSF_ID_CODEC_IMGAE]= msg_func_imgae,
     [GSF_ID_CODEC_IMGDEHAZE]= msg_func_imgdehaze,
+    [GSF_ID_CODEC_IMGSCENE]= msg_func_imgscene,
+    [GSF_ID_CODEC_IMGSHARPEN]= msg_func_imgsharpen,
+    [GSF_ID_CODEC_IMGHLC]= msg_func_imghlc,
+    [GSF_ID_CODEC_IMGGAMMA]= msg_func_imggamma,
+    [GSF_ID_CODEC_IMGDRC]= msg_func_imgdrc,
+    [GSF_ID_CODEC_IMGLDCI]= msg_func_imgldci,
+    [GSF_ID_CODEC_IMG3DNR]= msg_func_img3dnr,
 #endif    
  };
 

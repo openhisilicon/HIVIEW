@@ -27,9 +27,9 @@ const RECID_Sharpen   = 200;
 const RECID_HLC       = 300;
 const RECID_Gamma     = 400;
 const RECID_DRC       = 500;
-const RECID_NR        = 600;
-const RECID_DeHaze    = 700;
-const RECID_Demosaic  = 800;
+const RECID_LDCI      = 600;
+const RECID_3DNR      = 700;
+const RECID_DeHaze    = 800;
 const RECID_CSC       = 900;
 
 $(function () {
@@ -107,7 +107,7 @@ $(function () {
 
             if(changeFlags[RECID_SceneAuto])
             {
-              console.log("SceneAuto");  
+              console.log("SceneAuto cannot be set.");  
             } 
             if(changeFlags[RECID_AE])
             {              
@@ -160,23 +160,230 @@ $(function () {
             }
             if(changeFlags[RECID_Sharpen])
             {
-              console.log("Sharpen");  
-            } 
+              var sharpen = w2ui[event.target].get(RECID_Sharpen);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGSHARPEN",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(sharpen.lname, 10),
+                    "u16TextureFreq": parseInt(sharpen.w2ui.children[0].lname, 10),
+                    "u16EdgeFreq": parseInt(sharpen.w2ui.children[1].lname, 10),
+                    "u8DetailCtrl": parseInt(sharpen.w2ui.children[2].lname, 10)
+                    }
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_Sharpen+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_Sharpen+1)
+                  req.data.u16TextureFreq = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_Sharpen+2)
+                  req.data.u16EdgeFreq = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_Sharpen+3)
+                  req.data.u8DetailCtrl = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            }
             if(changeFlags[RECID_HLC])
             {
-              console.log("HLC");
-            }  
+              var hlc = w2ui[event.target].get(RECID_HLC);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGHLC",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(hlc.lname, 10), 
+                    "u8LumaThr": parseInt(hlc.w2ui.children[0].lname, 10),
+                    "u8LumaTarget": parseInt(hlc.w2ui.children[1].lname, 10)
+                    }
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_HLC+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_HLC+1)
+                  req.data.u8LumaThr = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_HLC+2)
+                  req.data.u8LumaTarget = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            } 
             if(changeFlags[RECID_Gamma])
             {
-              console.log("Gamma");
+              var gamma = w2ui[event.target].get(RECID_Gamma);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGGAMMA",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(gamma.lname, 10), 
+                    "enCurveType": parseInt(gamma.w2ui.children[0].lname, 10),
+                    "TableNo": parseInt(gamma.w2ui.children[1].lname, 10)
+                    }
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_Gamma+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_Gamma+1)
+                  req.data.enCurveType = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_Gamma+2)
+                  req.data.TableNo = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
             }
             if(changeFlags[RECID_DRC])
             {
-              console.log("DRC");
-            }  
-            if(changeFlags[RECID_NR])
+              var drc = w2ui[event.target].get(RECID_DRC);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGDRC",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(drc.lname, 10), 
+                    "u16Strength": parseInt(drc.w2ui.children[0].lname, 10),
+                    "u16StrengthMax": parseInt(drc.w2ui.children[1].lname, 10),
+                    "u16StrengthMin": parseInt(drc.w2ui.children[2].lname, 10)
+                    }
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_DRC+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_DRC+1)
+                  req.data.u16Strength = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_DRC+2)
+                  req.data.u16StrengthMax = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_DRC+3)
+                  req.data.u16StrengthMin = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            }
+            if(changeFlags[RECID_LDCI])
             {
-              console.log("NR");
+              var ldci = w2ui[event.target].get(RECID_LDCI);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMGLDCI",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(ldci.lname, 10), 
+                    "u16BlcCtrl": parseInt(ldci.w2ui.children[0].lname, 10),
+                    "stHePosWgt_u8Wgt": parseInt(ldci.w2ui.children[1].lname, 10),
+                    "stHeNegWgt_u8Mean": parseInt(ldci.w2ui.children[2].lname, 10)
+                    }
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_LDCI+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_LDCI+1)
+                  req.data.u16BlcCtrl = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_LDCI+2)
+                  req.data.stHePosWgt_u8Wgt = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_LDCI+3)
+                  req.data.stHeNegWgt_u8Mean = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
+            }
+            if(changeFlags[RECID_3DNR])
+            {
+              var _3dnr = w2ui[event.target].get(RECID_3DNR);
+              var req = {
+                  "id": "GSF_ID_CODEC_IMG3DNR",
+                  "args":"G1C0S0",
+                  "data":{"byPass":  parseInt(_3dnr.lname, 10), 
+                    "u8strength": parseInt(_3dnr.w2ui.children[0].lname, 10)}
+              }
+              for(i = 0; i < event.changes.length; i++)
+              {
+                if(event.changes[i].recid == RECID_3DNR+0)
+                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                if(event.changes[i].recid == RECID_3DNR+1)
+                  req.data.u8strength = parseInt(event.changes[i].lname, 10);
+              }
+              console.log(req);
+              
+              $.ajax({
+                async: true,
+                type: "post",
+                url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+                data: JSON.stringify(req.data),
+                contentType: 'application/json', // req body type;
+                dataType: "json", // rsp body type;
+                success: function (data) {
+                  console.log("rsp:"+ data );
+                },
+                error: function () {
+                  //TODO;
+                }
+              });
             }
             if(changeFlags[RECID_DeHaze])
             {
@@ -210,10 +417,6 @@ $(function () {
                   //TODO;
                 }
               });
-            } 
-            if(changeFlags[RECID_Demosaic])
-            {
-              console.log("Demosaic");
             }
             if(changeFlags[RECID_CSC])
             {
@@ -335,11 +538,13 @@ function grid_load(grid_name)
       success: function (data) {
         console.log(data);
 
+        var rw = (data.data.scene.byPass == 0)?"(R)":"(RW)"; // When sceneAuto bypass, the following parameters are writable.
+
         records = [
-            { recid: RECID_SceneAuto, fname: 'SceneAuto', lname: '0', nname: 'byPass'},
-            { recid: RECID_AE, fname: 'AE', lname: data.data.ae.byPass.toString(10), nname: 'byPass',
+            { recid: RECID_SceneAuto, fname: 'SceneAuto', lname: data.data.scene.byPass.toString(10), nname: 'byPass' + rw },
+            { recid: RECID_AE, fname: 'AE', lname: data.data.ae.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
-                  children: [
+                  children: [ //auto
                       { recid: RECID_AE+1, fname: 'u8Speed',          lname: data.data.ae.u8Speed.toString(16), nname: '[0x0, 0xFF]'},
                       { recid: RECID_AE+2, fname: 'u8Compensation',   lname: data.data.ae.u8Compensation.toString(16), nname: '[0x0, 0xFF]'},
                       { recid: RECID_AE+3, fname: 'SysGainRangeMax',  lname: data.data.ae.SysGainRangeMax.toString(16), nname: '[0x400, 0xFFFFFFFF]'},
@@ -349,60 +554,64 @@ function grid_load(grid_name)
                   ]
               } 
             },
-            { recid: RECID_Sharpen, fname: 'Sharpen', lname: '0', nname: 'byPass',
+            { recid: RECID_Sharpen, fname: 'Sharpen', lname: data.data.sharpen.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
-                  children: [
-                      { recid: RECID_Sharpen+1, fname: 'TextureStr', lname: '1', nname: '[1, 16]'},
-                      { recid: RECID_Sharpen+2, fname: 'EdgeStr',    lname: '1', nname: '[1, 16]'},
-                      { recid: RECID_Sharpen+3, fname: 'OverShoot',  lname: '1', nname: '[1, 16]'},
-                      { recid: RECID_Sharpen+4, fname: 'UnderShoot', lname: '1', nname: '[1, 16]'}
+                  children: [ //manual
+                      { recid: RECID_Sharpen+1, fname: 'u16TextureFreq', lname: data.data.sharpen.u16TextureFreq.toString(10), nname: '[0, 4095]'},
+                      { recid: RECID_Sharpen+2, fname: 'u16EdgeFreq', lname: data.data.sharpen.u16EdgeFreq.toString(10), nname: '[0, 4095]'},
+                      { recid: RECID_Sharpen+3, fname: 'u8DetailCtrl', lname: data.data.sharpen.u8DetailCtrl.toString(10), nname: '[0, 255]'}
                   ]
               } 
             },     
-            { recid: RECID_HLC, fname: 'HLC', lname: '0', nname: 'byPass',
+            { recid: RECID_HLC, fname: 'HLC', lname: data.data.hlc.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
                   children: [
-                      { recid: RECID_HLC+1, fname: 'u8LumaThr', lname: '248', nname: '[0, 255]'},
-                      { recid: RECID_HLC+2, fname: 'u8LumaTarget', lname: '10', nname: '[0, 255]'}
+                      { recid: RECID_HLC+1, fname: 'u8LumaThr', lname: data.data.hlc.u8LumaThr.toString(10), nname: '[0, 255]'},
+                      { recid: RECID_HLC+2, fname: 'u8LumaTarget', lname: data.data.hlc.u8LumaTarget.toString(10), nname: '[0, 255]'}
                   ]
               } 
             },   
-            { recid: RECID_Gamma, fname: 'Gamma', lname: '0', nname: 'byPass',
+            { recid: RECID_Gamma, fname: 'Gamma', lname: data.data.gamma.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
                   children: [
-                      { recid: RECID_Gamma+1, fname: 'Table', lname: '1', nname: '[1, 16]'}
+                      { recid: RECID_Gamma+1, fname: 'enCurveType', lname: data.data.gamma.enCurveType.toString(10), nname: '[0:def,1:sdr,2:hdr,3:user]'},
+                      { recid: RECID_Gamma+2, fname: 'TableNo', lname: data.data.gamma.TableNo.toString(10), nname: '[0, 3]'}
                   ]
               } 
             },
-            { recid: RECID_DRC, fname: 'DRC', lname: '0', nname: 'byPass',
+            { recid: RECID_DRC, fname: 'DRC', lname: data.data.drc.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
-                  children: [
-                      { recid: RECID_DRC+1, fname: 'Strength', lname: '1', nname: '[1, 16]'}
+                  children: [ //auto
+                      { recid: RECID_DRC+1, fname: 'u16Strength', lname: data.data.drc.u16Strength.toString(10), nname: '[0, 1023]'},
+                      { recid: RECID_DRC+2, fname: 'u16StrengthMax', lname: data.data.drc.u16StrengthMax.toString(10), nname: '[0, 1023]'},
+                      { recid: RECID_DRC+3, fname: 'u16StrengthMin', lname: data.data.drc.u16StrengthMin.toString(10), nname: '[0, 1023]'}
+                  ]
+              } 
+            },
+            { recid: RECID_LDCI, fname: 'LDCI', lname: data.data.ldci.byPass.toString(10), nname: 'byPass' + rw,
+              w2ui: {
+                  children: [ //manual
+                      { recid: RECID_LDCI+1, fname: 'u16BlcCtrl', lname: data.data.ldci.u16BlcCtrl.toString(10), nname: '[0,511]'},
+                      { recid: RECID_LDCI+2, fname: 'stHePosWgt_u8Wgt', lname: data.data.ldci.stHePosWgt_u8Wgt.toString(10), nname: '[0,255]'},
+                      { recid: RECID_LDCI+3, fname: 'stHeNegWgt_u8Mean', lname: data.data.ldci.stHeNegWgt_u8Mean.toString(10), nname: '[0,255]'}
                   ]
               } 
             },    
-            { recid: RECID_NR, fname: 'NR', lname: '0', nname: 'byPass',
+            { recid: RECID_3DNR, fname: '3DNR', lname: data.data._3dnr.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
                   children: [
-                      { recid: RECID_NR+1, fname: 'Strength', lname: '1', nname: '[1, 16]'}
+                      { recid: RECID_3DNR+1, fname: 'u8strength', lname: data.data._3dnr.u8strength.toString(10), nname: '[0, 255]'}
                   ]
               } 
             },   
-            { recid: RECID_DeHaze, fname: 'DeHaze', lname: data.data.dehaze.byPass.toString(10), nname: 'byPass',
+            { recid: RECID_DeHaze, fname: 'DeHaze', lname: data.data.dehaze.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_DeHaze+1, fname: 'u8strength', lname: data.data.dehaze.u8strength.toString(10), nname: '[0,255]'}
                   ]
               } 
             },
-            { recid: RECID_Demosaic, fname: 'Demosaic', lname: '0', nname: 'byPass',
-              w2ui: {
-                  children: [
-                      { recid: RECID_Demosaic+1, fname: 'Strength', lname: '1', nname: '[1, 16]'}
-                  ]
-              } 
-            },
-            { recid: RECID_CSC, fname: 'CSC', lname: data.data.csc.byPass.toString(10), nname: 'byPass',
+            { recid: RECID_CSC, fname: 'CSC', lname: data.data.csc.byPass.toString(10), nname: 'byPass' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_CSC+1, fname: 'u8Hue', lname: data.data.csc.u8Hue.toString(10), nname: '[0,100]'},

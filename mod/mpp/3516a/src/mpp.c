@@ -527,6 +527,7 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
   return SAMPLE_COMM_VENC_SnapProcessCB(VencChn, SnapCnt, cb, u);
 }
 
+static int g_sceneByPass = 1;
 int gsf_mpp_scene_start(char *path, int scenemode)
 {
     HI_S32 s32ret = HI_SUCCESS;
@@ -553,6 +554,7 @@ int gsf_mpp_scene_start(char *path, int scenemode)
         return HI_FAILURE;
     }
     printf("The sceneauto is started.\n");
+    g_sceneByPass = 0;
     return s32ret;
 }
 int gsf_mpp_scene_stop()
@@ -628,8 +630,9 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_ISP_CTL_IMG:
       {
-        // HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_all_t *all = (gsf_mpp_img_all_t*)args;
+        
+        all->scene.byPass = g_sceneByPass;
         
         ISP_CSC_ATTR_S stCSCFAttr;
         ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
@@ -657,11 +660,54 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         
         all->dehaze.byPass = !stDehazeAttr.bEnable;
         all->dehaze.u8strength = stDehazeAttr.stAuto.u8strength;
+        
+
+        ISP_SHARPEN_ATTR_S stIspShpAttr;
+        ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
+        
+        all->sharpen.byPass = !stIspShpAttr.bEnable;
+        all->sharpen.u16TextureFreq = stIspShpAttr.stManual.u16TextureFreq;
+        all->sharpen.u16EdgeFreq = stIspShpAttr.stManual.u16EdgeFreq;
+        all->sharpen.u8DetailCtrl = stIspShpAttr.stManual.u8DetailCtrl;
+        
+        ISP_HLC_ATTR_S stIspHlcAttr;
+        ret = HI_MPI_ISP_GetIspHlcAttr(ViPipe, &stIspHlcAttr);
+        
+        all->hlc.byPass = !stIspHlcAttr.bEnable;
+        all->hlc.u8LumaThr= stIspHlcAttr.u8LumaThr;
+        all->hlc.u8LumaTarget = stIspHlcAttr.u8LumaTarget;
+        
+        ISP_GAMMA_ATTR_S stGammaAttr;
+        ret = HI_MPI_ISP_GetGammaAttr(ViPipe, &stGammaAttr);
+        
+        all->gamma.byPass = !stGammaAttr.bEnable;
+        all->gamma.enCurveType = stGammaAttr.enCurveType;
+        all->gamma.TableNo = 0;
+        
+        ISP_DRC_ATTR_S stDRC;
+        ret = HI_MPI_ISP_GetDRCAttr(ViPipe, &stDRC);
+        
+        all->drc.byPass = !stDRC.bEnable;
+        all->drc.u16Strength = stDRC.stAuto.u16Strength;
+        all->drc.u16StrengthMax = stDRC.stAuto.u16StrengthMax;
+        all->drc.u16StrengthMin = stDRC.stAuto.u16StrengthMin;
+        
+        ISP_LDCI_ATTR_S stLDCIAttr;
+        ret = HI_MPI_ISP_GetLDCIAttr(ViPipe, &stLDCIAttr);
+        
+        all->ldci.byPass = !stLDCIAttr.bEnable;
+        all->ldci.u16BlcCtrl = stLDCIAttr.stManual.u16BlcCtrl;
+        all->ldci.stHePosWgt_u8Wgt = stLDCIAttr.stManual.stHeWgt.stHePosWgt.u8Wgt;
+        all->ldci.stHeNegWgt_u8Mean = stLDCIAttr.stManual.stHeWgt.stHeNegWgt.u8Mean;
+        
+        all->_3dnr.byPass = 0;
+        all->_3dnr.u8strength = 0;
+        
       }
       break;
     case GSF_MPP_ISP_CTL_CSC:
       {
-        // HI_SCENE_Pause(HI_TRUE);
+        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_csc_t *csc = (gsf_mpp_img_csc_t*)args;
         ISP_CSC_ATTR_S stCSCFAttr;
         ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
@@ -676,8 +722,7 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_ISP_CTL_AE:
       {
-        // HI_SCENE_Pause(HI_TRUE);
-        
+        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_ae_t *ae = (gsf_mpp_img_ae_t*)args;
         
         ISP_EXPOSURE_ATTR_S stExpAttr;
@@ -696,7 +741,7 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
       case GSF_MPP_ISP_CTL_DEHAZE:
       {
-        // HI_SCENE_Pause(HI_TRUE);
+        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_dehaze_t *dehaze = (gsf_mpp_img_dehaze_t*)args;
 
         ISP_DEHAZE_ATTR_S stDehazeAttr;
@@ -708,6 +753,128 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ret = HI_MPI_ISP_SetDehazeAttr(ViPipe, &stDehazeAttr);
       }
       break;
+      
+     case GSF_MPP_ISP_CTL_SCENE:
+     {
+        gsf_mpp_img_scene_t *scene = (gsf_mpp_img_scene_t*)args;
+        g_sceneByPass = scene->byPass;
+        if(scene->byPass)
+          ret = HI_SCENE_Pause(HI_TRUE);
+        else 
+          ret = HI_SCENE_Pause(HI_FAILURE);
+     }
+     break;
+     
+     case GSF_MPP_ISP_CTL_SHARPEN:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
+
+        ISP_SHARPEN_ATTR_S stIspShpAttr;
+        ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
+        
+        stIspShpAttr.bEnable = !sharpen->byPass;
+        stIspShpAttr.enOpType= OP_TYPE_MANUAL;
+        stIspShpAttr.stManual.u16TextureFreq = sharpen->u16TextureFreq;
+        stIspShpAttr.stManual.u16EdgeFreq = sharpen->u16EdgeFreq;
+        stIspShpAttr.stManual.u8DetailCtrl = sharpen->u8DetailCtrl;
+        
+        ret = HI_MPI_ISP_SetIspSharpenAttr(ViPipe, &stIspShpAttr);
+     }
+     break; 
+
+     case GSF_MPP_ISP_CTL_HLC:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_hlc_t *hlc = (gsf_mpp_img_hlc_t*)args;
+
+        ISP_HLC_ATTR_S stIspHlcAttr;
+        ret = HI_MPI_ISP_GetIspHlcAttr(ViPipe, &stIspHlcAttr);
+        
+        stIspHlcAttr.bEnable = !hlc->byPass;
+        stIspHlcAttr.u8LumaThr = hlc->u8LumaThr;
+        stIspHlcAttr.u8LumaTarget = hlc->u8LumaTarget;
+        
+        ret = HI_MPI_ISP_SetIspHlcAttr(ViPipe, &stIspHlcAttr);
+     } 
+     break;
+     case GSF_MPP_ISP_CTL_GAMMA:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_gamma_t *gamma = (gsf_mpp_img_gamma_t*)args;
+
+        ISP_GAMMA_ATTR_S stGammaAttr;
+        ret = HI_MPI_ISP_GetGammaAttr(ViPipe, &stGammaAttr);
+        
+        stGammaAttr.bEnable = !gamma->byPass;
+        stGammaAttr.enCurveType = gamma->enCurveType;
+        //stGammaAttr.u16Table[1025] = u16Table[gamma->TableNo];
+        ret = HI_MPI_ISP_SetGammaAttr(ViPipe, &stGammaAttr);
+     } 
+     break;
+     case GSF_MPP_ISP_CTL_DRC:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_drc_t *drc = (gsf_mpp_img_drc_t*)args;
+
+        ISP_DRC_ATTR_S stDRC;
+        ret = HI_MPI_ISP_GetDRCAttr(ViPipe, &stDRC);
+        
+        stDRC.bEnable = !drc->byPass;
+        stDRC.enCurveSelect = DRC_CURVE_ASYMMETRY;
+        stDRC.enOpType = OP_TYPE_AUTO;
+        stDRC.stAuto.u16Strength = drc->u16Strength;
+        stDRC.stAuto.u16StrengthMax = drc->u16StrengthMax;
+        stDRC.stAuto.u16StrengthMin = drc->u16StrengthMin;        
+        ret = HI_MPI_ISP_SetDRCAttr(ViPipe, &stDRC);
+     }
+     break;
+     case GSF_MPP_ISP_CTL_LDCI:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_ldci_t *ldci = (gsf_mpp_img_ldci_t*)args;
+
+        ISP_LDCI_ATTR_S stLDCIAttr;
+        ret = HI_MPI_ISP_GetLDCIAttr(ViPipe, &stLDCIAttr);
+        
+        stLDCIAttr.bEnable = !ldci->byPass;
+        stLDCIAttr.enOpType = OP_TYPE_MANUAL;
+        stLDCIAttr.stManual.u16BlcCtrl = ldci->u16BlcCtrl;
+        stLDCIAttr.stManual.stHeWgt.stHePosWgt.u8Wgt = ldci->stHePosWgt_u8Wgt;
+        stLDCIAttr.stManual.stHeWgt.stHeNegWgt.u8Mean = ldci->stHeNegWgt_u8Mean;        
+        ret = HI_MPI_ISP_SetLDCIAttr(ViPipe, &stLDCIAttr);
+     }
+     break; 
+     case GSF_MPP_ISP_CTL_3DNR:
+     {
+        /* 3DNR */
+
+        //HI_S32 HI_MPI_VI_SetPipeNRXParam(VI_PIPE ViPipe, const VI_PIPE_NRX_PARAM_S *pstNrXParam);
+        //HI_S32 HI_MPI_VI_GetPipeNRXParam(VI_PIPE ViPipe, VI_PIPE_NRX_PARAM_S *pstNrXParam);
+              
+        //HI_S32 HI_MPI_VPSS_SetGrpNRXParam(VPSS_GRP VpssGrp, const VPSS_GRP_NRX_PARAM_S *pstNRXParam);
+        //HI_S32 HI_MPI_VPSS_GetGrpNRXParam(VPSS_GRP VpssGrp, VPSS_GRP_NRX_PARAM_S *pstNRXParam);
+
+        //HI_S32 HI_MPI_ISP_SetDEAttr(VI_PIPE ViPipe, const ISP_DE_ATTR_S *pstDEAttr);
+        //HI_S32 HI_MPI_ISP_GetDEAttr(VI_PIPE ViPipe, ISP_DE_ATTR_S *pstDEAttr);
+        
+        //HI_S32 HI_MPI_VI_SetPipeAttr(ViPipe, &stViPipeAttr); //stViPipeAttr.bNrEn = HI_TRUE;
+        //HI_S32 HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr ); //stGrpAttr.bNrEn = HI_TRUE;
+        
+        // HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_3dnr_t *_3dnr = (gsf_mpp_img_3dnr_t*)args;
+
+        VI_PIPE_NRX_PARAM_S stVINRXParam = {0};
+        stVINRXParam.enNRVersion = VI_NR_V2;
+        stVINRXParam.stNRXParamV2.enOptMode = OPERATION_MODE_MANUAL;
+        ret = HI_MPI_VI_GetPipeNRXParam(ViPipe, &stVINRXParam);
+        
+        VPSS_GRP_NRX_PARAM_S stVPSSNRXParam = {0};
+        stVPSSNRXParam.enNRVer = VPSS_NR_V2;
+        stVPSSNRXParam.stNRXParam_V2.enOptMode = OPERATION_MODE_MANUAL;
+        ret = HI_MPI_VPSS_GetGrpNRXParam(ViPipe, &stVPSSNRXParam);
+     }
+     break; 
 
     default:
       break;
