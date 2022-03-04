@@ -24,6 +24,7 @@
 #include "hi_scenecomm_log.h"
 
 #include "sample_comm.h"
+#include "sample_isp.h"
 #include "hifb.h"
 #include "mpp.h"
 
@@ -519,6 +520,7 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
   return SAMPLE_COMM_VENC_SnapProcessCB(VencChn, SnapCnt, cb, u);
 }
 
+static int g_sceneByPass = 1;
 int gsf_mpp_scene_start(char *path, int scenemode)
 {
     HI_S32 s32ret = HI_SUCCESS;
@@ -545,6 +547,7 @@ int gsf_mpp_scene_start(char *path, int scenemode)
         return HI_FAILURE;
     }
     printf("The sceneauto is started.\n");
+    g_sceneByPass = 0;
     return s32ret;
 }
 int gsf_mpp_scene_stop()
@@ -620,8 +623,549 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_ISP_CTL_IMG:
       {
-        ;
+        gsf_mpp_img_all_t *all = (gsf_mpp_img_all_t*)args;
+        
+        all->scene.byPass = g_sceneByPass;
+        
+        ISP_CSC_ATTR_S stCSCFAttr;
+        ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
+        
+        all->csc.byPass = !stCSCFAttr.bEnable;
+        all->csc.u8Hue  =  stCSCFAttr.u8Hue;
+        all->csc.u8Luma =  stCSCFAttr.u8Luma;
+        all->csc.u8Contr =  stCSCFAttr.u8Contr;
+        all->csc.u8Satu =  stCSCFAttr.u8Satu;
+        
+        ISP_EXPOSURE_ATTR_S stExpAttr;
+        HI_MPI_ISP_GetExposureAttr(ViPipe, &stExpAttr);
+
+        all->ae.byPass = stExpAttr.bByPass;
+        all->ae.u8Speed = stExpAttr.stAuto.u8Speed;
+        all->ae.u8Compensation = stExpAttr.stAuto.u8Compensation;
+        all->ae.SysGainRangeMax = stExpAttr.stAuto.stSysGainRange.u32Max;
+        all->ae.SysGainRangeMin = stExpAttr.stAuto.stSysGainRange.u32Min;
+        all->ae.ExpTimeRangeMax = stExpAttr.stAuto.stExpTimeRange.u32Max;
+        all->ae.ExpTimeRangeMin = stExpAttr.stAuto.stExpTimeRange.u32Min;
+        
+        
+        ISP_DEHAZE_ATTR_S stDehazeAttr;
+        HI_MPI_ISP_GetDehazeAttr(ViPipe, &stDehazeAttr);
+        
+        all->dehaze.byPass = !stDehazeAttr.bEnable;
+        all->dehaze.u8strength = stDehazeAttr.stAuto.u8strength;
+        
+
+        ISP_SHARPEN_ATTR_S stIspShpAttr;
+        ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
+        
+        all->sharpen.byPass = !stIspShpAttr.bEnable;
+        all->sharpen.u16TextureFreq = stIspShpAttr.stManual.u16TextureFreq;
+        all->sharpen.u16EdgeFreq = stIspShpAttr.stManual.u16EdgeFreq;
+        all->sharpen.u8DetailCtrl = stIspShpAttr.stManual.u8DetailCtrl;
+        
+        ISP_HLC_ATTR_S stIspHlcAttr;
+        ret = HI_MPI_ISP_GetIspHlcAttr(ViPipe, &stIspHlcAttr);
+        
+        all->hlc.byPass = !stIspHlcAttr.bEnable;
+        all->hlc.u8LumaThr= stIspHlcAttr.u8LumaThr;
+        all->hlc.u8LumaTarget = stIspHlcAttr.u8LumaTarget;
+        
+        ISP_GAMMA_ATTR_S stGammaAttr;
+        ret = HI_MPI_ISP_GetGammaAttr(ViPipe, &stGammaAttr);
+        
+        all->gamma.byPass = !stGammaAttr.bEnable;
+        all->gamma.enCurveType = stGammaAttr.enCurveType;
+        
+        ISP_DRC_ATTR_S stDRC;
+        ret = HI_MPI_ISP_GetDRCAttr(ViPipe, &stDRC);
+        
+        all->drc.byPass = !stDRC.bEnable;
+        all->drc.u16Strength = stDRC.stAuto.u16Strength;
+        all->drc.u16StrengthMax = stDRC.stAuto.u16StrengthMax;
+        all->drc.u16StrengthMin = stDRC.stAuto.u16StrengthMin;
+        
+        ISP_LDCI_ATTR_S stLDCIAttr;
+        ret = HI_MPI_ISP_GetLDCIAttr(ViPipe, &stLDCIAttr);
+        
+        all->ldci.byPass = !stLDCIAttr.bEnable;
+        all->ldci.u16BlcCtrl = stLDCIAttr.stManual.u16BlcCtrl;
+        all->ldci.stHePosWgt_u8Wgt = stLDCIAttr.stManual.stHeWgt.stHePosWgt.u8Wgt;
+        all->ldci.stHeNegWgt_u8Mean = stLDCIAttr.stManual.stHeWgt.stHeNegWgt.u8Mean;
+        
+        VPSS_GRP VpssGrp = 0;        
+        VPSS_GRP_ATTR_S stGrpAttr = {0};
+        ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
+        all->_3dnr.byPass = (stGrpAttr.bNrEn == HI_FALSE)?1:0;
+
       }
+      break;
+    case GSF_MPP_ISP_CTL_CSC:
+      {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_csc_t *csc = (gsf_mpp_img_csc_t*)args;
+        ISP_CSC_ATTR_S stCSCFAttr;
+        ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
+        
+        stCSCFAttr.bEnable = !csc->byPass;
+        stCSCFAttr.u8Hue =    csc->u8Hue;
+        stCSCFAttr.u8Luma =   csc->u8Luma;
+        stCSCFAttr.u8Contr =  csc->u8Contr;
+        stCSCFAttr.u8Satu =   csc->u8Satu;
+        ret = HI_MPI_ISP_SetCSCAttr(ViPipe, &stCSCFAttr);
+      }
+      break;
+    case GSF_MPP_ISP_CTL_AE:
+      {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_ae_t *ae = (gsf_mpp_img_ae_t*)args;
+        
+        ISP_EXPOSURE_ATTR_S stExpAttr;
+        ret = HI_MPI_ISP_GetExposureAttr(ViPipe, &stExpAttr);
+
+        stExpAttr.bByPass =  ae->byPass;
+        stExpAttr.stAuto.u8Speed = ae->u8Speed;
+        stExpAttr.stAuto.u8Compensation        = ae->u8Compensation;
+        stExpAttr.stAuto.stSysGainRange.u32Max = ae->SysGainRangeMax;
+        stExpAttr.stAuto.stSysGainRange.u32Min = ae->SysGainRangeMin;
+        stExpAttr.stAuto.stExpTimeRange.u32Max = ae->ExpTimeRangeMax;
+        stExpAttr.stAuto.stExpTimeRange.u32Min = ae->ExpTimeRangeMin;
+        
+        ret = HI_MPI_ISP_SetExposureAttr(ViPipe, &stExpAttr);
+      }
+      break;
+      case GSF_MPP_ISP_CTL_DEHAZE:
+      {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_dehaze_t *dehaze = (gsf_mpp_img_dehaze_t*)args;
+
+        ISP_DEHAZE_ATTR_S stDehazeAttr;
+        ret = HI_MPI_ISP_GetDehazeAttr(ViPipe, &stDehazeAttr);
+        
+        stDehazeAttr.bEnable = !dehaze->byPass;
+        stDehazeAttr.stAuto.u8strength = dehaze->u8strength;
+        
+        ret = HI_MPI_ISP_SetDehazeAttr(ViPipe, &stDehazeAttr);
+      }
+      break;
+      
+     case GSF_MPP_ISP_CTL_SCENE:
+     {
+        gsf_mpp_img_scene_t *scene = (gsf_mpp_img_scene_t*)args;
+        g_sceneByPass = scene->byPass;
+        if(scene->byPass)
+          ret = HI_SCENE_Pause(HI_TRUE);
+        else 
+          ret = HI_SCENE_Pause(HI_FAILURE);
+     }
+     break;
+     
+     case GSF_MPP_ISP_CTL_SHARPEN:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
+
+        ISP_SHARPEN_ATTR_S stIspShpAttr;
+        ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
+        
+        stIspShpAttr.bEnable = !sharpen->byPass;
+        stIspShpAttr.enOpType= OP_TYPE_MANUAL;
+        stIspShpAttr.stManual.u16TextureFreq = sharpen->u16TextureFreq;
+        stIspShpAttr.stManual.u16EdgeFreq = sharpen->u16EdgeFreq;
+        stIspShpAttr.stManual.u8DetailCtrl = sharpen->u8DetailCtrl;
+        
+        ret = HI_MPI_ISP_SetIspSharpenAttr(ViPipe, &stIspShpAttr);
+     }
+     break; 
+
+     case GSF_MPP_ISP_CTL_HLC:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_hlc_t *hlc = (gsf_mpp_img_hlc_t*)args;
+
+        ISP_HLC_ATTR_S stIspHlcAttr;
+        ret = HI_MPI_ISP_GetIspHlcAttr(ViPipe, &stIspHlcAttr);
+        
+        stIspHlcAttr.bEnable = !hlc->byPass;
+        stIspHlcAttr.u8LumaThr = hlc->u8LumaThr;
+        stIspHlcAttr.u8LumaTarget = hlc->u8LumaTarget;
+        
+        ret = HI_MPI_ISP_SetIspHlcAttr(ViPipe, &stIspHlcAttr);
+     } 
+     break;
+     case GSF_MPP_ISP_CTL_GAMMA:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_gamma_t *gamma = (gsf_mpp_img_gamma_t*)args;
+
+        ISP_GAMMA_ATTR_S stGammaAttr;
+        ret = HI_MPI_ISP_GetGammaAttr(ViPipe, &stGammaAttr);
+        
+        stGammaAttr.bEnable = !gamma->byPass;
+        stGammaAttr.enCurveType = gamma->enCurveType;
+        if(gamma->TableNo >= 0 && gamma->TableNo < GAMMATAB_MAX)
+          memcpy(stGammaAttr.u16Table, gammaTab[gamma->TableNo], sizeof(stGammaAttr.u16Table));
+        ret = HI_MPI_ISP_SetGammaAttr(ViPipe, &stGammaAttr);
+     } 
+     break;
+     case GSF_MPP_ISP_CTL_DRC:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_drc_t *drc = (gsf_mpp_img_drc_t*)args;
+
+        ISP_DRC_ATTR_S stDRC;
+        ret = HI_MPI_ISP_GetDRCAttr(ViPipe, &stDRC);
+        
+        stDRC.bEnable = !drc->byPass;
+        stDRC.enCurveSelect = DRC_CURVE_ASYMMETRY;
+        stDRC.enOpType = OP_TYPE_AUTO;
+        stDRC.stAuto.u16Strength = drc->u16Strength;
+        stDRC.stAuto.u16StrengthMax = drc->u16StrengthMax;
+        stDRC.stAuto.u16StrengthMin = drc->u16StrengthMin;        
+        ret = HI_MPI_ISP_SetDRCAttr(ViPipe, &stDRC);
+     }
+     break;
+     case GSF_MPP_ISP_CTL_LDCI:
+     {
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_ldci_t *ldci = (gsf_mpp_img_ldci_t*)args;
+
+        ISP_LDCI_ATTR_S stLDCIAttr;
+        ret = HI_MPI_ISP_GetLDCIAttr(ViPipe, &stLDCIAttr);
+        
+        stLDCIAttr.bEnable = !ldci->byPass;
+        stLDCIAttr.enOpType = OP_TYPE_MANUAL;
+        stLDCIAttr.stManual.u16BlcCtrl = ldci->u16BlcCtrl;
+        stLDCIAttr.stManual.stHeWgt.stHePosWgt.u8Wgt = ldci->stHePosWgt_u8Wgt;
+        stLDCIAttr.stManual.stHeWgt.stHeNegWgt.u8Mean = ldci->stHeNegWgt_u8Mean;        
+        ret = HI_MPI_ISP_SetLDCIAttr(ViPipe, &stLDCIAttr);
+     }
+     break; 
+     case GSF_MPP_ISP_CTL_3DNR:
+     {
+        /* 3DNR */
+
+        //HI_S32 HI_MPI_VI_SetPipeNRXParam(VI_PIPE ViPipe, const VI_PIPE_NRX_PARAM_S *pstNrXParam);
+        //HI_S32 HI_MPI_VI_GetPipeNRXParam(VI_PIPE ViPipe, VI_PIPE_NRX_PARAM_S *pstNrXParam);
+              
+        //HI_S32 HI_MPI_VPSS_SetGrpNRXParam(VPSS_GRP VpssGrp, const VPSS_GRP_NRX_PARAM_S *pstNRXParam);
+        //HI_S32 HI_MPI_VPSS_GetGrpNRXParam(VPSS_GRP VpssGrp, VPSS_GRP_NRX_PARAM_S *pstNRXParam);
+
+        //HI_S32 HI_MPI_ISP_SetDEAttr(VI_PIPE ViPipe, const ISP_DE_ATTR_S *pstDEAttr);
+        //HI_S32 HI_MPI_ISP_GetDEAttr(VI_PIPE ViPipe, ISP_DE_ATTR_S *pstDEAttr);
+        
+        //HI_S32 HI_MPI_VI_SetPipeAttr(ViPipe, &stViPipeAttr); //stViPipeAttr.bNrEn = HI_TRUE;
+        //HI_S32 HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr ); //stGrpAttr.bNrEn = HI_TRUE;
+        
+        HI_SCENE_Pause(HI_TRUE);
+        gsf_mpp_img_3dnr_t *_3dnr = (gsf_mpp_img_3dnr_t*)args;
+
+        VI_PIPE ViPipe = 0;
+        VI_PIPE_ATTR_S stViPipeAttr = {0};
+        VPSS_GRP VpssGrp = 0;
+        VPSS_GRP_ATTR_S stGrpAttr = {0};
+        
+        VI_PIPE_NRX_PARAM_S stVINRXParam = {0};
+        stVINRXParam.enNRVersion = VI_NR_V2;
+        stVINRXParam.stNRXParamV2.enOptMode = OPERATION_MODE_MANUAL;
+        ret = HI_MPI_VI_GetPipeNRXParam(ViPipe, &stVINRXParam);
+        
+        VPSS_GRP_NRX_PARAM_S stVPSSNRXParam = {0};
+        stVPSSNRXParam.enNRVer = VPSS_NR_V2;
+        stVPSSNRXParam.stNRXParam_V2.enOptMode = OPERATION_MODE_MANUAL;
+        ret = HI_MPI_VPSS_GetGrpNRXParam(ViPipe, &stVPSSNRXParam);
+        
+
+        int i = 0, j = 0;
+        HI_SCENE_3DNR_VI_S astThreeDNRVIValue;
+        HI_SCENE_3DNR_VPSS_S astThreeDNRVPSSValue;
+        
+        _3dnr->u8strength = (_3dnr->u8strength >= 0 && _3dnr->u8strength <= 14)?_3dnr->u8strength:0;
+        char* pszString = _3dnrParam[_3dnr->u8strength];
+        {
+            HI_SCENE_3DNR_VI_S *pVIX      = &astThreeDNRVIValue;
+            HI_SCENE_3DNR_VPSS_S *pVPX    = &astThreeDNRVPSSValue;
+            HI_SCENE_3DNR_VI_IEy *pViI    = &(pVIX->IEy);
+            HI_SCENE_3DNR_VI_SFy *pViS    = &(pVIX->SFy);
+            HI_SCENE_3DNR_VPSS_IEy  *pVpI = pVPX->IEy;
+            HI_SCENE_3DNR_VPSS_SFy  *pVpS = pVPX->SFy;
+            HI_SCENE_3DNR_VPSS_MDy  *pVpM = pVPX->MDy;
+            HI_SCENE_3DNR_VPSS_TFy  *pVpT = pVPX->TFy;
+            HI_SCENE_3DNR_VPSS_RFs  *pVpR = &pVPX->RFs;
+
+            static HI_S32 g_enGmc = NR_MOTION_MODE_NORMAL;
+            sscanf(pszString,
+                   " -en                    |             %3d |             %3d |             %3d "
+                   " -nXsf1     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d "
+                   " -nXsf2     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d "
+                   " -nXsf4     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d "
+                   " -bwsf4             %3d |             %3d |                 |                 "
+                   " -kmsf4                 |                 |             %3d |             %3d "
+                   " -nXsf5 %3d:%3d:%3d:%3d | %3d:%3d:%3d:%3d | %3d:%3d:%3d:%3d | %3d:%3d:%3d:%3d "
+                   " -dzsf5             %3d |             %3d |             %3d |             %4d "
+                   " -nXsf6 %3d:%3d:%3d:%3d | %3d:%3d:%3d:%3d | %3d:%3d:%3d:%3d | %3d:%3d:%3d:%3d "
+                   " -nXsfr6    %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d "
+                   "                        |                 |                 |                 "
+                   " -SelRt         %3d:%3d |                 |                 |                 "
+                   " -DeRt          %3d:%3d |                 |                 |                 "
+                   "                        |                 |                 |                 "
+                   " -TriTh             %3d |             %3d |             %3d |             %3d "
+                   " -nXsfn     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d |     %3d:%3d:%3d "
+                   " -nXsth         %3d:%3d |         %3d:%3d |         %3d:%3d |         %3d:%3d "
+                   " -sfr    (0)        %3d |             %3d |             %3d |             %3d "
+                   "                        |                 |                 |                 "
+                   " -tedge                 |             %3d |             %3d |                 "
+                   "                        |                 |                 |                 "
+                   " -ref                   |         %3d:%3d |                 |                 "
+                   " -refUpt                |             %3d |                 |                 "
+                   " -rftIdx                |             %3d |                 |                 "
+                   " -refCtl                |         %3d:%3d |                 |                 "
+                   "                        |                 |                 |                 "
+                   " -biPath                |             %3d |             %3d |                 "
+                   " -nXstr   (1)           |         %3d:%3d |         %3d:%3d |                 "
+                   " -nXsdz                 |         %3d:%3d |         %3d:%3d |                 "
+                   "                        |                 |                 |                 "
+                   " -nXtss                 |         %3d:%3d |         %3d:%3d |                 "
+                   " -nXtsi                 |         %3d:%3d |         %3d:%3d |                 "
+                   " -nXtfs                 |         %3d:%3d |         %3d:%3d |                 "
+                   " -nXdzm                 |         %3d:%3d |         %3d:%3d |                 "
+                   " -nXtdz   (3)           |         %3d:%3d |         %3d:%3d |                 "
+                   " -nXtdx                 |         %3d:%3d |         %3d:%3d |                 "
+                   "                        |                 |                 |                 "
+                   " -nXtfr0  (2)           |     %3d:%3d:%3d |     %3d:%3d:%3d |                 "
+                   "                        |     %3d:%3d:%3d |     %3d:%3d:%3d |                 "
+                   " -nXtfr1  (2)           |     %3d:%3d:%3d |     %3d:%3d:%3d |                 "
+                   "                        |     %3d:%3d:%3d |     %3d:%3d:%3d |                 "
+                   "                        |                 |                 |                 "
+                   " -mXid0                 |     %3d:%3d:%3d |     %3d:%3d:%3d |                 "
+                   " -mXid1                 |     %3d:%3d:%3d |     %3d:%3d:%3d |                 "
+                   " -mXmadz                |         %3d:%3d |         %3d:%3d |                 "
+                   " -mXmabr                |         %3d:%3d |         %3d:%3d |                 "
+                   "                        |                 |                 +------pNRc------+"
+                   " -AdvMath               |         %3d     |                 |  -sfc      %3d  "
+                   " -mXmath                |         %3d:%3d |         %3d:%3d |                 "
+                   "                        |                 |                 |  -ctfs     %3d  "
+                   "                        |                 |                 |  -tfc      %3d  "
+                   " -mXmate                |         %3d:%3d |         %3d:%3d |                 "
+                   " -mXmabw                |         %3d:%3d |         %3d:%3d |                 "
+                   " -mXmatw                |             %3d |             %3d |                 "
+                   " -mXmasw                |             %3d |             %3d |                 ",
+                   &pVpS[0].NRyEn, &pVpS[1].NRyEn, &pVpS[2].NRyEn,
+                   &pViS->SFS1, &pViS->SFT1, &pViS->SBR1, &pVpS[0].SFS1, &pVpS[0].SFT1, &pVpS[0].SBR1, &pVpS[1].SFS1, &pVpS[1].SFT1, &pVpS[1].SBR1, &pVpS[2].SFS1, &pVpS[2].SFT1, &pVpS[2].SBR1,
+                   &pViS->SFS2, &pViS->SFT2, &pViS->SBR2, &pVpS[0].SFS2, &pVpS[0].SFT2, &pVpS[0].SBR2, &pVpS[1].SFS2, &pVpS[1].SFT2, &pVpS[1].SBR2, &pVpS[2].SFS2, &pVpS[2].SFT2, &pVpS[2].SBR2,
+                   &pViS->SFS4, &pViS->SFT4, &pViS->SBR4, &pVpS[0].SFS4, &pVpS[0].SFT4, &pVpS[0].SBR4, &pVpS[1].SFS4, &pVpS[1].SFT4, &pVpS[1].SBR4, &pVpS[2].SFS4, &pVpS[2].SFT4, &pVpS[2].SBR4,
+                   &pViS->BWSF4, &pVpS[0].BWSF4,
+                   &pVpS[1].kMode, &pVpS[2].kMode,
+                   &pViI->IES0, &pViI->IES1, &pViI->IES2, &pViI->IES3, &pVpI[0].IES0, &pVpI[0].IES1, &pVpI[0].IES2, &pVpI[0].IES3, &pVpI[1].IES0, &pVpI[1].IES1, &pVpI[1].IES2, &pVpI[1].IES3, &pVpI[2].IES0, &pVpI[2].IES1, &pVpI[2].IES2, &pVpI[2].IES3,
+                   &pViI->IEDZ, &pVpI[0].IEDZ, &pVpI[1].IEDZ, &pVpI[2].IEDZ,
+                   &pViS->SPN6, &pViS->SBN6, &pViS->PBR6, &pViS->JMODE, &pVpS[0].SPN6, &pVpS[0].SBN6, &pVpS[0].PBR6, &pVpS[0].JMODE, &pVpS[1].SPN6, &pVpS[1].SBN6, &pVpS[1].PBR6, &pVpS[1].JMODE, &pVpS[2].SPN6, &pVpS[2].SBN6, &pVpS[2].PBR6, &pVpS[2].JMODE,
+                   &pViS->SFR6[0], &pViS->SFR6[1], &pViS->SFR6[2], &pVpS[0].SFR6[0], &pVpS[0].SFR6[1], &pVpS[0].SFR6[2], &pVpS[1].SFR6[0], &pVpS[1].SFR6[1], &pVpS[1].SFR6[2], &pVpS[2].SFR6[0], &pVpS[2].SFR6[1], &pVpS[2].SFR6[2],
+                   &pViS->SRT0, &pViS->SRT1,
+                   &pViS->DeRate, &pViS->DeIdx,
+                   &pViS->TriTh, &pVpS[0].TriTh, &pVpS[1].TriTh, &pVpS[2].TriTh,
+                   &pViS->SFN0, &pViS->SFN1, &pViS->SFN3, &pVpS[0].SFN0, &pVpS[0].SFN1, &pVpS[0].SFN3, &pVpS[1].SFN0, &pVpS[1].SFN1, &pVpS[1].SFN3, &pVpS[2].SFN0, &pVpS[2].SFN1, &pVpS[2].SFN3,
+                   &pViS->STH1, &pViS->STH3, &pVpS[0].STH1, &pVpS[0].STH3, &pVpS[1].STH1, &pVpS[1].STH3, &pVpS[2].STH1, &pVpS[2].STH3,
+                   &pViS->SFR, &pVpS[0].SFR, &pVpS[1].SFR, &pVpS[2].SFR,
+                   &pVpT[0].tEdge, &pVpT[1].tEdge,
+                   &pVpT[0].bRef, &g_enGmc,
+                   &pVpR[0].RFUI,
+                   &pVpT[0].RFI,
+                   &pVpR[0].RFDZ, &pVpR[0].RFSLP,
+                   &pVpM[0].biPath, &pVpM[1].biPath,
+                   &pVpT[0].STR0, &pVpT[0].STR1, &pVpT[1].STR0, &pVpT[1].STR1,
+                   &pVpT[0].SDZ0, &pVpT[0].SDZ1, &pVpT[1].SDZ0, &pVpT[1].SDZ1,
+                   &pVpT[0].TSS0, &pVpT[0].TSS1, &pVpT[1].TSS0, &pVpT[1].TSS1,
+                   &pVpT[0].TSI0, &pVpT[0].TSI1, &pVpT[1].TSI0, &pVpT[1].TSI1,
+                   &pVpT[0].TFS0, &pVpT[0].TFS1, &pVpT[1].TFS0, &pVpT[1].TFS1,
+                   &pVpT[0].DZMode0, &pVpT[0].DZMode1, &pVpT[1].DZMode0, &pVpT[1].DZMode1,
+                   &pVpT[0].TDZ0, &pVpT[0].TDZ1, &pVpT[1].TDZ0, &pVpT[1].TDZ1,
+                   &pVpT[0].TDX0, &pVpT[0].TDX1, &pVpT[1].TDX0, &pVpT[1].TDX1,
+                   &pVpT[0].TFR0[0], &pVpT[0].TFR0[1], &pVpT[0].TFR0[2], &pVpT[1].TFR0[0], &pVpT[1].TFR0[1], &pVpT[1].TFR0[2],
+                   &pVpT[0].TFR0[3], &pVpT[0].TFR0[4], &pVpT[0].TFR0[5], &pVpT[1].TFR0[3], &pVpT[1].TFR0[4], &pVpT[1].TFR0[5],
+                   &pVpT[0].TFR1[0], &pVpT[0].TFR1[1], &pVpT[0].TFR1[2], &pVpT[1].TFR1[0], &pVpT[1].TFR1[1], &pVpT[1].TFR1[2],
+                   &pVpT[0].TFR1[3], &pVpT[0].TFR1[4], &pVpT[0].TFR1[5], &pVpT[1].TFR1[3], &pVpT[1].TFR1[4], &pVpT[1].TFR1[5],
+                   &pVpM[0].MAI00, &pVpM[0].MAI01, &pVpM[0].MAI02, &pVpM[1].MAI00, &pVpM[1].MAI01, &pVpM[1].MAI02,
+                   &pVpM[0].MAI10, &pVpM[0].MAI11, &pVpM[0].MAI12, &pVpM[1].MAI10, &pVpM[1].MAI11, &pVpM[1].MAI12,
+                   &pVpM[0].MADZ0, &pVpM[0].MADZ1, &pVpM[1].MADZ0, &pVpM[1].MADZ1,
+                   &pVpM[0].MABR0, &pVpM[0].MABR1, &pVpM[1].MABR0, &pVpM[1].MABR1,
+                   &pVpR[0].advMATH, &pVPX->pNRc.SFC,
+                   &pVpM[0].MATH0, &pVpM[0].MATH1, &pVpM[1].MATH0, &pVpM[1].MATH1,
+                   &pVPX->pNRc.CTFS,
+                   &pVPX->pNRc.TFC,
+                   &pVpM[0].MATE0, &pVpM[0].MATE1, &pVpM[1].MATE0, &pVpM[1].MATE1,
+                   &pVpM[0].MABW0, &pVpM[0].MABW1, &pVpM[1].MABW0, &pVpM[1].MABW1,
+                   &pVpM[0].MATW, &pVpM[1].MATW,
+                   &pVpM[0].MASW, &pVpM[1].MASW
+                  );
+        }
+        
+        /*VPSS 3dnr_level: 1, 2, 3 */
+        for (i = 0; i < 3; i++)
+        {
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFS1 = astThreeDNRVPSSValue.SFy[i].SFS1; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFS2 = astThreeDNRVPSSValue.SFy[i].SFS2; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFS4 = astThreeDNRVPSSValue.SFy[i].SFS4; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFT1 = astThreeDNRVPSSValue.SFy[i].SFT1; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFT2 = astThreeDNRVPSSValue.SFy[i].SFT2; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFT4 = astThreeDNRVPSSValue.SFy[i].SFT4; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SBR1 = astThreeDNRVPSSValue.SFy[i].SBR1; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SBR2 = astThreeDNRVPSSValue.SFy[i].SBR2; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SBR4 = astThreeDNRVPSSValue.SFy[i].SBR4; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFR  = astThreeDNRVPSSValue.SFy[i].SFR ; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.IEy[i].IES0 = astThreeDNRVPSSValue.IEy[i].IES0; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.IEy[i].IES1 = astThreeDNRVPSSValue.IEy[i].IES1; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.IEy[i].IES2 = astThreeDNRVPSSValue.IEy[i].IES2; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.IEy[i].IES3 = astThreeDNRVPSSValue.IEy[i].IES3; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.IEy[i].IEDZ = astThreeDNRVPSSValue.IEy[i].IEDZ; //Interpulate
+
+            for (j = 0; j < 3; j++)
+            {
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFR6[j]  = astThreeDNRVPSSValue.SFy[i].SFR6[j];
+            }
+
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].NRyEn = astThreeDNRVPSSValue.SFy[i].NRyEn;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].BWSF4 = astThreeDNRVPSSValue.SFy[i].BWSF4;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SPN6  = astThreeDNRVPSSValue.SFy[i].SPN6;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SBN6  = astThreeDNRVPSSValue.SFy[i].SBN6;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].PBR6  = astThreeDNRVPSSValue.SFy[i].PBR6;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].JMODE = astThreeDNRVPSSValue.SFy[i].JMODE;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].TriTh = astThreeDNRVPSSValue.SFy[i].TriTh;
+
+            if (stVINRXParam.stNRXParamV2.stNRXManualV2.stNRXParamV2.SFy.TriTh)
+            {
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN0 = astThreeDNRVPSSValue.SFy[i].SFN0;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN1 = astThreeDNRVPSSValue.SFy[i].SFN1;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN2 = astThreeDNRVPSSValue.SFy[i].SFN2;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN3 = astThreeDNRVPSSValue.SFy[i].SFN3;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].STH1 = astThreeDNRVPSSValue.SFy[i].STH1; //Interpulate
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].STH2 = astThreeDNRVPSSValue.SFy[i].STH2; //Interpulate
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].STH3 = astThreeDNRVPSSValue.SFy[i].STH3; //Interpulate
+            }
+            else
+            {
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN0 = astThreeDNRVPSSValue.SFy[i].SFN0;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN1 = astThreeDNRVPSSValue.SFy[i].SFN1;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].SFN3 = astThreeDNRVPSSValue.SFy[i].SFN3;
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].STH1 = astThreeDNRVPSSValue.SFy[i].STH1; //Interpulate
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[i].STH3 = astThreeDNRVPSSValue.SFy[i].STH3; //Interpulate
+            }
+        }
+
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[1].kMode = astThreeDNRVPSSValue.SFy[1].kMode;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[2].kMode = astThreeDNRVPSSValue.SFy[2].kMode;
+
+        if (stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[1].kMode > 1)
+        {
+            for (j = 0; j < 32; j++)
+            {
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[1].SBSk[j] = astThreeDNRVPSSValue.SFy[1].SBSk[j];
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[1].SDSk[j] = astThreeDNRVPSSValue.SFy[1].SDSk[j];
+            }
+        }
+
+        if (stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[2].kMode > 1)
+        {
+            for (j = 0; j < 32; j++)
+            {
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[2].SBSk[j] = astThreeDNRVPSSValue.SFy[2].SBSk[j];
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.SFy[2].SDSk[j] = astThreeDNRVPSSValue.SFy[2].SDSk[j];
+            }
+        }
+
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[0].tEdge = astThreeDNRVPSSValue.TFy[0].tEdge;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[1].tEdge = astThreeDNRVPSSValue.TFy[1].tEdge;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[0].bRef = astThreeDNRVPSSValue.TFy[0].bRef;
+        //stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.GMC.GMEMode = astThreeDNRVPSSValue.GMC.GMEMode;
+        stGrpAttr.stNrAttr.enNrMotionMode = astThreeDNRVPSSValue.GMC.GMEMode;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[0].RFI = astThreeDNRVPSSValue.TFy[0].RFI;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[0].DZMode0 = astThreeDNRVPSSValue.TFy[0].DZMode0;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[0].DZMode1 = astThreeDNRVPSSValue.TFy[0].DZMode1;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[1].DZMode0 = astThreeDNRVPSSValue.TFy[1].DZMode0;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[1].DZMode1 = astThreeDNRVPSSValue.TFy[1].DZMode1;
+
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.RFs.RFUI = astThreeDNRVPSSValue.RFs.RFUI;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.RFs.RFDZ = astThreeDNRVPSSValue.RFs.RFDZ;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.RFs.RFSLP = astThreeDNRVPSSValue.RFs.RFSLP;
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.RFs.advMATH = astThreeDNRVPSSValue.RFs.advMATH;
+
+        for (i = 0; i < 2; i++)
+        {
+
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MATH0 = astThreeDNRVPSSValue.MDy[i].MATH0 <= 511?astThreeDNRVPSSValue.MDy[i].MATH0:511; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MATH1 = astThreeDNRVPSSValue.MDy[i].MATH1 <= 511?astThreeDNRVPSSValue.MDy[i].MATH1:511; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MATE0 = astThreeDNRVPSSValue.MDy[i].MATE0; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MATE1 = astThreeDNRVPSSValue.MDy[i].MATE1; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MABW0 = astThreeDNRVPSSValue.MDy[i].MABW0; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MABW1 = astThreeDNRVPSSValue.MDy[i].MABW1; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MASW  = astThreeDNRVPSSValue.MDy[i].MASW ; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MADZ0 = astThreeDNRVPSSValue.MDy[i].MADZ0; //Interpulate
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MADZ1 = astThreeDNRVPSSValue.MDy[i].MADZ1; //Interpulate 
+
+            if ((stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MADZ0 > 0) || (stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MADZ1 > 0))
+            {
+                //for (j = 0; j > 16; j++)
+                {
+                    stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MABR0 = astThreeDNRVPSSValue.MDy[i].MABR0;
+                    stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MABR1 = astThreeDNRVPSSValue.MDy[i].MABR1;
+                }
+            }
+
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].biPath = astThreeDNRVPSSValue.MDy[i].biPath;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MAI00 = astThreeDNRVPSSValue.MDy[i].MAI00;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MAI01 = astThreeDNRVPSSValue.MDy[i].MAI01;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MAI02 = astThreeDNRVPSSValue.MDy[i].MAI02;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MAI10 = astThreeDNRVPSSValue.MDy[i].MAI10;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MAI11 = astThreeDNRVPSSValue.MDy[i].MAI11;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MAI12 = astThreeDNRVPSSValue.MDy[i].MAI12;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MATW  = astThreeDNRVPSSValue.MDy[i].MATW;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.MDy[i].MASW  = astThreeDNRVPSSValue.MDy[i].MASW;
+        }
+
+        for (i = 0; i < 2; i++)
+        {
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TSS0 = astThreeDNRVPSSValue.TFy[i].TSS0; //Interpulate  
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TSS1 = astThreeDNRVPSSValue.TFy[i].TSS1; //Interpulate  
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TFS0 = astThreeDNRVPSSValue.TFy[i].TFS0 <= 10?astThreeDNRVPSSValue.TFy[i].TFS0:10; //Interpulate  
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TFS1 = astThreeDNRVPSSValue.TFy[i].TFS1 <= 10? astThreeDNRVPSSValue.TFy[i].TFS1:10; //Interpulate
+
+            for (j = 0; j < 6; j++)
+            {
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TFR0[j] = astThreeDNRVPSSValue.TFy[i].TFR0[j]; //Interpulate  
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TFR0[j] = astThreeDNRVPSSValue.TFy[i].TFR0[j]; //Interpulate  
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TFR1[j] = astThreeDNRVPSSValue.TFy[i].TFR1[j]; //Interpulate  
+                stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TFR1[j] = astThreeDNRVPSSValue.TFy[i].TFR1[j]; //Interpulate  
+            }
+
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].STR0 = astThreeDNRVPSSValue.TFy[i].STR0;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].STR1 = astThreeDNRVPSSValue.TFy[i].STR1;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].SDZ0 = astThreeDNRVPSSValue.TFy[i].SDZ0;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].SDZ1 = astThreeDNRVPSSValue.TFy[i].SDZ1;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TSI0 = astThreeDNRVPSSValue.TFy[i].TSI0;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TSI1 = astThreeDNRVPSSValue.TFy[i].TSI1;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TDZ0 = astThreeDNRVPSSValue.TFy[i].TDZ0;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TDZ1 = astThreeDNRVPSSValue.TFy[i].TDZ1;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TDX0 = astThreeDNRVPSSValue.TFy[i].TDX0;
+            stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.TFy[i].TDX1 = astThreeDNRVPSSValue.TFy[i].TDX1;
+        }
+
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.pNRc.SFC  = astThreeDNRVPSSValue.pNRc.SFC ; //Interpulate
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.pNRc.CTFS = astThreeDNRVPSSValue.pNRc.CTFS; //Interpulate
+        stVPSSNRXParam.stNRXParam_V2.stNRXManual.stNRXParam.pNRc.TFC  = astThreeDNRVPSSValue.pNRc.TFC ; //Interpulate
+        printf("_3dnr->u8strength:%d, pNRc.SFC:%d\n", _3dnr->u8strength, astThreeDNRVPSSValue.pNRc.SFC);
+        
+        //stVINRXParam.enNRVersion = VI_NR_V2;
+        //stVINRXParam.stNRXParamV2.enOptMode = OPERATION_MODE_MANUAL;
+        //ret = HI_MPI_VI_SetPipeNRXParam(ViPipe, &stVINRXParam);
+        
+        stVPSSNRXParam.enNRVer = VPSS_NR_V2;
+        stVPSSNRXParam.stNRXParam_V2.enOptMode = OPERATION_MODE_MANUAL;
+        ret = HI_MPI_VPSS_SetGrpNRXParam(VpssGrp, &stVPSSNRXParam);
+
+        ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
+        stGrpAttr.bNrEn = _3dnr->byPass?HI_FALSE:HI_TRUE;
+        ret = HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr);
+     }
+     break; 
+
     default:
       break;
   }

@@ -861,7 +861,7 @@ int mpp_start(gsf_bsp_def_t *def)
     if(gsf_mpp_scene_start(scene_ini, 0) < 0)
     {
       // First tested on Hi3516X;
-      #if defined(GSF_CPU_3516d)
+      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
       printf("scene_auto is bypass, set img(magic:0x%x) to isp.\n", codec_ipc.img.magic);
       if(codec_ipc.img.magic == 0x55aa) 
       {
