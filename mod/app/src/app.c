@@ -208,20 +208,27 @@ int main(int argc, char *argv[])
       return -1;
     }
     
-    //get ly;
-    gsf_layout_t ly = {0};
-    voly_get(&ly);
-    lt = ly.layout;
-    lvgl_ctl(0, (void*)lt);
-    
-    //kbd_mon("/dev/ttyAMA2");
-    lvgl_start(res.w, res.h, app_nvr.gui.push_osd);
-
     #ifdef GSF_DEV_NVR
-    #warning "...... DDDDDDDD GSF_DEV_NVR DDDDDDDD ......"
-    live_mon();
+    {
+      #warning "...... DDDDDDDD GSF_DEV_NVR DDDDDDDD ......"
+    
+      //set ly to codec.exe;
+      //kbd_mon("/dev/ttyAMA2");
+      live_mon();
+      lvgl_start(res.w, res.h, app_nvr.gui.push_osd);
+    }
     #else
-    #warning "...... UUUUUUUU GSF_DEV_NVR UUUUUUUU ......"
+    {
+      #warning "...... DDDDDDDD GSF_DEV_IPC DDDDDDDD ......"
+      
+      //get ly from codec.exe;
+      gsf_layout_t ly = {0};
+      voly_get(&ly);
+      lt = ly.layout;
+      lvgl_ctl(0, (void*)lt);
+      
+      lvgl_start(res.w, res.h, app_nvr.gui.push_osd);
+    }  
     #endif
 
     //init listen;

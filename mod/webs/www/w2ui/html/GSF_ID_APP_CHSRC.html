@@ -1,0 +1,144 @@
+<div class="content">
+    <div id="main_view"></div>
+    <div id="example_code"></div>
+</div>
+
+<!--CODE-->
+
+
+<div id="req-id" style="width: 400px; height: 200px;"></div>
+<div id="res-id" style="position:relative;left:500px;top:-200px;width:400px;height:200px"></div>
+<button id="get-id" class="w2ui-btn" style="position:relative;left:150px;top:-180px;">GET</button>
+<div id="rsp-id" style="position:relative;left:0px;top:-160px;width:900px;height:400px"></div>
+
+<!--CODE-->
+<script>
+$(function () {
+
+    const options = {
+      mode: 'code'
+    }
+
+    console.log( w2ui['sidebar1'].selected);
+    
+    $().w2destroy('grid_chs');
+    $().w2grid({ 
+        name: 'grid_chs', 
+        show: { 
+            toolbar: true,
+            toolbarInput: false,
+            toolbarSearch: false,
+            toolbarSave: true,
+        },
+    
+        columns: [                
+            { field: 'recid', caption: 'CH', size: '50px', resizable: true, sortable: true},
+            { field: 'fname', caption: 'EN', size:'50px',  resizable: true, sortable: true, editable: { type: 'text' }},
+            { field: 'lname', caption: 'RTSP', size:'50%', resizable: true, sortable: true, editable: { type: 'text' }},
+        ],
+        onSave: function (event) {
+             console.log(event);
+             
+          // records to json;
+          var req = {
+              "id": "GSF_ID_APP_CHSRC",
+              "args":"G1C0S0",
+              "data":{"en": false,
+                "host": "",
+                "transp": 0,
+                "st1": "",
+                "st2": ""}
+          }
+          for(i = 0; i < event.changes.length; i++)
+          {
+            var chsrc = w2ui['grid_chs'].get(event.changes[i].recid);
+            
+            req.data.en = chsrc.fname === 'true';
+            req.data.st1 = chsrc.lname;
+            
+            if (typeof event.changes[i].fname !== "undefined") {
+              req.data.en = event.changes[i].fname === 'true';
+            }
+            if (typeof event.changes[i].lname !== "undefined") {
+              req.data.st1 = event.changes[i].lname;
+            }
+            
+            var args = req.args;
+            
+            $.ajax({
+              async: true,
+              type: "post",
+              url:  '/config?id=' + req.id + '&' + 'args=' + args.replace("C0",'C'+ event.changes[i].recid),
+              data: JSON.stringify(req.data),
+              contentType: 'application/json', // req body type;
+              dataType: "json", // rsp body type;
+              success: function (data) {
+                console.log("rsp:"+ data );
+              },
+              error: function () {
+                //TODO;
+              }
+            });
+            console.log(req);
+          }
+        },
+        records: []
+    }); 
+   
+    const req_ele = document.getElementById("req-id")
+    const req_edit = new JSONEditor(req_ele, options)
+    // set json
+    const req_init = {
+        "id": "GSF_ID_APP_CHSRC",
+        "args":"G0C0S0",
+        "data":{}
+    }
+    req_edit.set(req_init);
+
+    const res_ele = document.getElementById("res-id")
+    const res_edit = new JSONEditor(res_ele, options)
+    // set json
+    const res_init = {
+    	"code":	0
+    }
+    res_edit.set(res_init);
+
+    $("#get-id").click(function(){
+      
+      const req = req_edit.get();
+      
+      $.ajax({
+        async: true,
+        type: "post",
+        url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+        data: JSON.stringify(req.data),
+        contentType: 'application/json', // req body type;
+        dataType: "json", // rsp body type;
+        success: function (data) {
+          
+        console.log(data);
+        //update grid data;
+        var records = [
+            { recid: 0, fname: data.data[0].en.toString(), lname: data.data[0].st1},
+            { recid: 1, fname: data.data[1].en.toString(), lname: data.data[1].st1},
+            { recid: 2, fname: data.data[2].en.toString(), lname: data.data[2].st1},
+            { recid: 3, fname: data.data[3].en.toString(), lname: data.data[3].st1},
+            { recid: 4, fname: data.data[4].en.toString(), lname: data.data[4].st1},
+            { recid: 5, fname: data.data[5].en.toString(), lname: data.data[5].st1},
+            { recid: 6, fname: data.data[6].en.toString(), lname: data.data[6].st1},
+            { recid: 7, fname: data.data[7].en.toString(), lname: data.data[7].st1},
+          ];
+          w2ui['grid_chs'].clear(); 
+          w2ui['grid_chs'].add(records);
+          w2ui['grid_chs'].refresh(); 
+          $('#rsp-id').w2render('grid_chs');
+        },
+        error: function () {
+          //TODO;
+        }
+      });
+
+    });
+
+});
+</script>

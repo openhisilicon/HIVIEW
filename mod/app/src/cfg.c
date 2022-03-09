@@ -5,14 +5,14 @@ char app_parm_path[128] = {0};
 gsf_app_nvr_t app_nvr = {
   .chsrc[0] = {
     .en = 1,
-    .host = "onvif://admin:12345@192.168.1.2:8000",
+    //.host = "onvif://admin:12345@192.168.1.2:8000",
     .transp = 0,
-    .st1  = "",
+    .st1  = "rtsp://admin:12345@192.168.0.3:554/0/0",
     .st2  = "",
   },
   .chsrc[1] = {
     .en = 0,
-    .host = "onvif://admin:admin@192.168.1.101:80",
+    .host = "",
     .transp = 0,
     .st1  = "",
     .st2  = "",

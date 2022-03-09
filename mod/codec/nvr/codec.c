@@ -233,13 +233,13 @@ int main(int argc, char *argv[])
       //get bsp_def;
       GSF_MSG_DEF(gsf_msg_t, msg, 4*1024);
       int ret = GSF_MSG_SENDTO(GSF_ID_BSP_DEF, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
-      gsf_bsp_def_t *cfg = (gsf_bsp_def_t*)__pmsg->data;
-      printf("GET GSF_ID_BSP_DEF To:%s, ret:%d, model:%s\n", GSF_IPC_BSP, ret, cfg->board.model);
+      gsf_bsp_def_t *def = (gsf_bsp_def_t*)__pmsg->data;
+      printf("GET GSF_ID_BSP_DEF To:%s, ret:%d, model:%s\n", GSF_IPC_BSP, ret, def->board.model);
     
       if(ret < 0)
         return 0;
         
-      bsp_def = *cfg;
+      bsp_def = *def;
     }
     
     #endif
@@ -248,14 +248,20 @@ int main(int argc, char *argv[])
     proc_absolute_path(home_path);
     sprintf(home_path, "%s/../", home_path);
     printf("home_path:[%s]\n", home_path);
-    gsf_mpp_cfg(home_path, NULL);
     
+    int mipi_800x1280 = codec_nvr.vo.intf;
+    int sync = codec_nvr.vo.sync?VO_OUTPUT_3840x2160_30:VO_OUTPUT_1080P60;
+    
+    //mpp_cfg;
+    gsf_mpp_cfg_t cfg = {0};
+    cfg.res = (sync == VO_OUTPUT_1080P60)?2:8;
+    gsf_mpp_cfg(home_path, &cfg);
     
     #if defined(GSF_CPU_3559a)
     
-    //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, VO_OUTPUT_1280x1024_60, 0);
-    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
-    gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+    //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, sync, 0);
+    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
+    gsf_mpp_fb_start(VOFB_GUI, sync, 0);
     
     live_mon();
     
@@ -265,7 +271,6 @@ int main(int argc, char *argv[])
     
     #else
     
-    int mipi_800x1280 = 0;
     if(mipi_800x1280)
     {
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
@@ -278,11 +283,15 @@ int main(int argc, char *argv[])
     }
     else
     {
-      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0);
-      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_1080P60, 0);
+      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
+      gsf_mpp_fb_start(VOFB_GUI, sync, 0);
       
       gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
-      vo_res_set(1920, 1080);
+      
+      if(sync == VO_OUTPUT_1080P60)
+        vo_res_set(1920, 1080);
+      else
+        vo_res_set(3840, 2160);
     }
     
     live_mon();

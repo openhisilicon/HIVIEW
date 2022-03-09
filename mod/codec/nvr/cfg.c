@@ -3,7 +3,7 @@
 #include "cfg.h"
 
 gsf_codec_nvr_t codec_nvr = {
-  .resolu = 0,
+  .vo = {0, 0},
   .venc = {
     [0] = {
         .en     = 1,

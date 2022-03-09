@@ -1346,8 +1346,8 @@ static int SAMPLE_VDEC_INIT(HI_U32 u32VdecChnNum)
     for(i=0; i<u32VdecChnNum; i++)
     {
         astSampleVdec[i].enType                           = PT_H264;
-        astSampleVdec[i].u32Width                         = 1920;
-        astSampleVdec[i].u32Height                        = 1080;
+        astSampleVdec[i].u32Width                         = u32VdecChnNum>1?1920:3840;
+        astSampleVdec[i].u32Height                        = u32VdecChnNum>1?1080:2160;
         astSampleVdec[i].enMode                           = VIDEO_MODE_FRAME;
         astSampleVdec[i].stSapmleVdecVideo.enDecMode      = VIDEO_DEC_MODE_IP;//VIDEO_DEC_MODE_IPB;
         astSampleVdec[i].stSapmleVdecVideo.enBitWidth     = DATA_BITWIDTH_8;
@@ -1391,7 +1391,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
     step1:  init SYS, init common VB(for VPSS and VO)
     *************************************************/
     SIZE_S stDispSize;
-    PIC_SIZE_E enDispPicSize = PIC_1080P;
+    PIC_SIZE_E enDispPicSize = (cfg->res<=2)?PIC_1080P:PIC_3840x2160; 
     s32Ret =  SAMPLE_COMM_SYS_GetPicSize(enDispPicSize, &stDispSize);
     if(s32Ret != HI_SUCCESS)
     {
@@ -1404,7 +1404,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
     VB_CONFIG_S stVbConfig;
     memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
     stVbConfig.u32MaxPoolCnt             = 128;
-    stVbConfig.astCommPool[0].u32BlkCnt  = 10*4;
+    stVbConfig.astCommPool[0].u32BlkCnt  = (enDispPicSize == PIC_1080P)?10*4:10*1;
     stVbConfig.astCommPool[0].u64BlkSize = COMMON_GetPicBufferSize(stDispSize.u32Width, stDispSize.u32Height,
                                                 PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_SEG, 0);
     s32Ret = SAMPLE_COMM_SYS_Init(&stVbConfig);
@@ -1414,7 +1414,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
         goto END1;
     }
 
-    //move to gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
+    //moveto gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
     return 0;
   
 END1:
@@ -1508,7 +1508,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
       }
     }
 
-    //maohw 2x5M SAMPLE_VDEC_INIT(4);
+    SAMPLE_VDEC_INIT((sync==VO_OUTPUT_1080P60)?4:1);
 
     mppex_hook_vo(sync);
     return s32Ret;
