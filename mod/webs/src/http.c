@@ -17,9 +17,9 @@
 #include "mod_call.h"
 #include "gsf_urldec.h"
 
-#include "http.h"
 #include "cfg.h"
 #include "webrtc.h"
+#include "http.h"
 
 unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
@@ -407,6 +407,101 @@ static void *send_thread_func(void *param) {
 
 struct mg_serve_http_opts s_http_server_opts;
 
+int webrtc_proc(struct mg_connection *nc, rtc_sess_t **rtc_sess, struct websocket_message *wm)
+{
+  int ret = 0;
+  
+  if(!strncmp(wm->data, "{\"type\":\"hello", strlen("{\"type\":\"hello")))
+  {
+    char sdp_json[4096] = {0};
+    unsigned int sdp_json_len = sizeof(sdp_json);
+    memcpy(sdp_json, wm->data, wm->size);
+    
+    int new_flag = 0;
+    
+    // new session;
+    if(!(*rtc_sess))
+    {
+      *rtc_sess = rtc_sess_new();
+      if(*rtc_sess)
+      {
+        (*rtc_sess)->mgr = nc->mgr;
+        char *dst = strstr(sdp_json, ",\"src\":\"");
+        sscanf(dst, ",\"src\":\"%127[^\"]", (*rtc_sess)->dst);
+        warn("rtc_sess_new nc:%p, (*rtc_sess):%p, src:[%s]\n", nc, *rtc_sess, (*rtc_sess)->dst);
+        ret = WEBRTC_NEW;
+      }
+    }
+    
+    
+    
+    if(!(*rtc_sess))
+    {
+      char dst[128] = {0};
+      char *pdst = strstr(sdp_json, ",\"src\":\"");
+      sscanf(pdst, ",\"src\":\"%127[^\"]", dst);
+      
+      sprintf(sdp_json, "{\"type\":\"close\",\"dst\":\"%s\",\"msg\":\"%s\"}"
+            , dst, "conncet too much.");
+      mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, sdp_json, strlen(sdp_json));
+      return 0;
+    }
+    
+    sdp_json[0] = '\0';
+    rtc_createOffer((*rtc_sess), sdp_json, sdp_json_len);
+    
+    //dst = src;
+    sdp_json[strlen(sdp_json)-1] = ',';
+    char dst_token[128]; sprintf(dst_token,"\"dst\":\"%s\"}", (*rtc_sess)->dst);
+    strcat(sdp_json, dst_token);
+    
+    printf("send createOffer:[%s]\n\n", sdp_json);
+    mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, sdp_json, strlen(sdp_json));
+    
+    return ret;
+  }
+  else if(!strncmp(wm->data, "{\"type\":\"leave", strlen("{\"type\":\"leave")))
+  {
+    printf("LEAVE [%.*s].\n", wm->size, wm->data);
+    return ret = WEBRTC_DEL;
+  }
+  else if(!strncmp(wm->data, "{\"type\":\"answer", strlen("{\"type\":\"answer")))
+  {
+    char sdp_json[4096] = {0};
+    
+    memcpy(sdp_json, wm->data, wm->size);
+    printf("recv createAnswe:[%s]\n\n", sdp_json);
+
+    rtc_setAnswer((*rtc_sess), sdp_json);
+  }
+  else if(!strncmp(wm->data, "{\"candidate\":\"candidate", strlen("{\"candidate\":\"candidate")))
+  {
+    do
+    {
+      char *local_ice = rtc_getCandidate((*rtc_sess));
+      if(!local_ice)
+        break;
+      {
+        //dst = src;
+        local_ice[strlen(local_ice)-1] = ',';
+        char dst_token[128]; sprintf(dst_token,"\"dst\":\"%s\"}", (*rtc_sess)->dst);
+        strcat(local_ice, dst_token);
+        
+        warn("send candidate:[%s]\n\n", local_ice);
+        mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, local_ice, strlen(local_ice));
+      }
+    }while(1);
+   
+    char ice_json[4096] = {0};
+    memcpy(ice_json, wm->data, wm->size);
+    printf("recv candidate:[%s]\n\n", ice_json);
+    rtc_setCandidate((*rtc_sess), ice_json);
+  }
+  
+  return ret;
+}
+
+
 
 static void ev_handler(struct mg_connection *nc, int ev, void *p) {
   switch (ev) {
@@ -500,43 +595,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
       
       if(nc->user_data && !strncmp(nc->user_data, "rtc", 3))
       {
-        rtc_sess_t *rtc_sess = (rtc_sess_t*)nc->user_data;
-        
-        if(!strncmp(wm->data, "{\"type\":\"hello", strlen("{\"type\":\"hello")))
-        {
-          char sdp_json[4096] = {0};
-          unsigned int sdp_json_len = sizeof(sdp_json);
-          
-          rtc_createOffer(rtc_sess, sdp_json, sdp_json_len);
-          printf("send createOffer:[%s]\n\n", sdp_json);
-          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, sdp_json, strlen(sdp_json));
-        }
-        else if(!strncmp(wm->data, "{\"type\":\"answer", strlen("{\"type\":\"answer")))
-        {
-          char sdp_json[4096] = {0};
-          
-          memcpy(sdp_json, wm->data, wm->size);
-          printf("recv createAnswe:[%s]\n\n", sdp_json);
-
-          rtc_setAnswer(rtc_sess, sdp_json);
-          
-        }
-        else if(!strncmp(wm->data, "{\"candidate\":\"candidate", strlen("{\"candidate\":\"candidate")))
-        {
-          char ice_json[4096] = {0};
-          
-          memcpy(ice_json, wm->data, wm->size);
-          printf("recv candidate:[%s]\n\n", ice_json);
-         
-          rtc_setCandidate(rtc_sess, ice_json);
-          
-          char *local_ice = rtc_getCandidate(rtc_sess);
-          if(local_ice)
-          {
-            printf("send candidate:[%s]\n\n", local_ice);
-            mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, local_ice, strlen(local_ice));
-          }
-        }
+        webrtc_proc(nc, (rtc_sess_t**)&nc->user_data, wm);
       }
       
       break;
@@ -588,7 +647,7 @@ int http_close()
 
 
 
-static void on_rtc_send(struct mg_connection *nc, int ev, void *p) {
+void on_rtc_send(struct mg_connection *nc, int ev, void *p) {
   (void) ev;
   
   if(!p)
@@ -597,17 +656,28 @@ static void on_rtc_send(struct mg_connection *nc, int ev, void *p) {
     return;
   }
   
-  rtc_sess_t *sess = (rtc_sess_t*)p;
+  rtc_sess_t *rtc_sess = (rtc_sess_t*)p;
 
-  //printf("%s => >>>>>>>>nc:%p, user_data:%p, sess:%p\n", __func__, nc, nc->user_data,sess);
+  printf("%s => p != NULL.\n", __func__);
   
   struct mg_connection *c = nc;
   
-  if(1)//for (c = mg_next(nc->mgr, NULL); c != NULL; c = mg_next(nc->mgr, c)) 
+  if(1)
   {
     if (c->user_data != NULL) {
-      if (c->user_data == sess) {
-          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, sess->ice_json, strlen(sess->ice_json));
+      if(c->user_data == rtc_sess)
+      {
+        char *local_ice = rtc_getCandidate(rtc_sess);
+        if(local_ice)
+        {
+          //dst = src;
+          local_ice[strlen(local_ice)-1] = ',';
+          char dst_token[128]; sprintf(dst_token,"\"dst\":\"%s\"}", rtc_sess->dst);
+          strcat(local_ice, dst_token);
+          
+          printf("send candidate:[%s]\n\n", local_ice);
+          mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, local_ice, strlen(local_ice));
+        }
       }
     }
   }
@@ -621,7 +691,7 @@ int http_open(int port)
   signal(SIGPIPE, SIG_IGN);
   
   system("ifconfig lo 127.0.0.1");
-  
+
   rtc_init();
 
   s_received_signal = 0;
@@ -629,6 +699,11 @@ int http_open(int port)
   {
   	printf("create ws_task error%d(%s)\n",errno, strerror(errno));
     return -1;
+  }
+  
+  if(webs_cfg.webrtc_en)
+  {  
+    return signaling_init(webs_cfg.webrtc_url);
   }
   return 0;
 }

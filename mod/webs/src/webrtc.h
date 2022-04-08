@@ -15,7 +15,10 @@ typedef struct {
   RtcMediaStreamTrack video_track_;
   RtcMediaStreamTrack audio_track_;
   int  terminated;
-  char ice_json[2048];
+  #define ICE_JSON_MAX 16
+  char ice_json[ICE_JSON_MAX][2048];
+  int  ice_json_r, ice_json_w;
+  char dst[128];
 }rtc_sess_t;
 
 int rtc_init();

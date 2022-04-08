@@ -9911,7 +9911,9 @@ void mg_send_websocket_handshake3v(struct mg_connection *nc,
             "Connection: Upgrade\r\n"
             "%.*s"
             "Sec-WebSocket-Version: 13\r\n"
-            "Sec-WebSocket-Key: %s\r\n",
+            "Sec-WebSocket-Key: %s\r\n"
+            "User-Agent: mongoose\r\n"
+            ,
             (int) path.len, path.p, (int) auth.len,
             (auth.buf == NULL ? "" : auth.buf), key);
 

@@ -7,6 +7,7 @@
 #include "mod/bsp/inc/bsp.h"
 #include "fw/comm/inc/proc.h"
 
+#include "webrtc.h"
 #include "http.h"
 #include "mod_call.h"
 #include "msg_func.h"

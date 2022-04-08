@@ -1,7 +1,7 @@
 #include "webs.h"
 #include "mod/codec/inc/codec.h"
 
-
+#include "mongoose.h" // src/mongoose.h:2644:0: warning: "LIST_HEAD" redefined
 #include "webrtc.h"
 
 #define MAX_FRAME_SIZE (1000*1024)
@@ -57,7 +57,7 @@ int rtc_init()
   
   INIT_LIST_HEAD(&sess_list);
   pthread_mutex_init(&sess_list_lock, NULL);
-  return pthread_create(&once, NULL, once_run, (void*)2);
+  return pthread_create(&once, NULL, once_run, (void*)5);
 }
 int rtc_uninit()
 {
@@ -96,19 +96,25 @@ int rtc_sess_free(rtc_sess_t *rtc_sess)
 void* rtc_video_send_task(void *parm);
 
 
+extern void on_rtc_send(struct mg_connection *nc, int ev, void *p);
+
 void rtc_RtcOnIceCandidate(UINT64 customData, PCHAR iceStr) 
 {
   rtc_sess_t *rtc_sess = (rtc_sess_t*)customData;
   
   if(iceStr)
   {
-    sprintf(rtc_sess->ice_json, "%s", "{\"type\":\"candidate\",");
-    strncat(rtc_sess->ice_json, iceStr+1, sizeof(rtc_sess->ice_json)-strlen(rtc_sess->ice_json));
-
+    char *ice_json = rtc_sess->ice_json[rtc_sess->ice_json_w++];
+    assert(rtc_sess->ice_json_w < ICE_JSON_MAX);
+    sprintf(ice_json, "%s", "{\"type\":\"candidate\",");
+    strncat(ice_json, iceStr+1, sizeof(ice_json)-strlen(ice_json));
+    //warn("i:%d, ice_json[%s]\n", rtc_sess->ice_json_w, ice_json);
+    
     #if 0
     if(rtc_sess->mgr)
+    {
       mg_broadcast(rtc_sess->mgr, on_rtc_send, rtc_sess, sizeof(rtc_sess));
-    printf("send candidate:[%s]\n", rtc_sess->ice_json);
+    }
     #endif  
   }
 }
@@ -170,8 +176,11 @@ rtc_sess_t *__rtc_sess_new()
   conf_.iceTransportPolicy = ICE_TRANSPORT_POLICY_ALL;
   //conf_.kvsRtcConfiguration.generatedCertificateBits = 2048;
   conf_.kvsRtcConfiguration.generateRSACertificate = 1;
+  
   //strcpy(conf_.iceServers[0].urls, "stun:77.72.169.213:3478");
-  strcpy(conf_.iceServers[0].urls, "stun:208.91.197.54:3478");
+  strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.us-west-2.amazonaws.com:443");
+
+
   ret = createPeerConnection(&conf_, &rtc_sess->peer_);
   printf("createPeerConnection ret:%x\n", ret);
 
@@ -270,8 +279,13 @@ char* rtc_getCandidate(rtc_sess_t *rtc_sess)
 {
   if(!rtc_sess)
     return NULL;
+  
+  if(rtc_sess->ice_json_r == rtc_sess->ice_json_w)
+    return NULL;
     
-  return rtc_sess->ice_json;
+  assert(rtc_sess->ice_json_r < ICE_JSON_MAX);
+    
+  return rtc_sess->ice_json[rtc_sess->ice_json_r++];
 }
 
 

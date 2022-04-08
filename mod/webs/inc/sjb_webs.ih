@@ -4,6 +4,8 @@ STRUCT(gsf_webs_cfg_t)
 {
   FIELD(int, port);
   FIELD(int, auth);
+  FIELD(int, webrtc_en);  // 1: enable conncet public webrtc server;
+  STRING(webrtc_url,256); //"wss://openhisilicon.glitch.me/hiview-camera"
 };
 
 #pragma pack(pop)

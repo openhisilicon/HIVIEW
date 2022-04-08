@@ -3027,7 +3027,7 @@ struct {								\
 #endif
 
 #ifndef MG_ENABLE_ASYNC_RESOLVER
-#define MG_ENABLE_ASYNC_RESOLVER 0
+#define MG_ENABLE_ASYNC_RESOLVER 1
 #endif
 
 #ifndef MG_ENABLE_BROADCAST
@@ -3047,7 +3047,7 @@ struct {								\
 #endif
 
 #ifndef MG_ENABLE_DNS
-#define MG_ENABLE_DNS 0
+#define MG_ENABLE_DNS 1
 #endif
 
 #ifndef MG_ENABLE_DNS_SERVER
