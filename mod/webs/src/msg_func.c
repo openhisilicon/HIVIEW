@@ -17,10 +17,10 @@ static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   {
     gsf_webs_cfg_t *cfg = (gsf_webs_cfg_t*)req->data;
     
-    http_close();
+    //http_close();
     
     webs_cfg = *cfg;
-    if(http_open(webs_cfg.port) == 0)
+    //if(http_open(webs_cfg.port) == 0)
     {
       json_parm_save(webs_parm_path, &webs_cfg);
     }
