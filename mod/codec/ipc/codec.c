@@ -902,6 +902,11 @@ int mpp_start(gsf_bsp_def_t *def)
     return 0;
 }
 
+
+#define AU_PT(gsf) \
+        (gsf == GSF_ENC_AAC)?PT_AAC:\
+        (gsf == GSF_ENC_G711A)?PT_G711A:\
+        PT_G711U
 int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
     // test hybrid;
@@ -914,7 +919,11 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
     {
       gsf_mpp_aenc_t aenc = {
         .AeChn = 0,
-        .enPayLoad = PT_AAC,
+        .enPayLoad = AU_PT(codec_ipc.aenc.type),
+        .adtype = 0, // 0:INNER, 1:I2S, 2:PCM;
+        .stereo = (codec_ipc.aenc.type == GSF_ENC_AAC)?1:0, //stereo 
+        .sp = codec_ipc.aenc.sprate*1000, //sampleRate 
+        .br = 0,    //bitRate;
         .uargs = NULL,
         .cb = gsf_aenc_recv,
       };

@@ -1121,6 +1121,14 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAi(AUDIO_DEV AiDevId, HI_S32 s32AiChnCnt,
         printf("%s: HI_MPI_AI_Enable(%d) failed with %#x\n", __FUNCTION__, AiDevId, s32Ret);
         return s32Ret;
     }
+    
+    //maohw mix;
+    if(s32AiChnCnt == 1)
+    //if(0)
+    {
+      s32Ret = HI_MPI_AI_SetTrackMode(AiDevId, AUDIO_TRACK_MIX);
+      printf("%s: HI_MPI_AI_SetTrackMode(%d, MIX) s32Ret: %#x\n", __FUNCTION__, AiDevId, s32Ret);
+    }
 
     for (i = 0; i < s32AiChnCnt>>pstAioAttr->enSoundmode; i++)
     {
@@ -1346,6 +1354,16 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAo(AUDIO_DEV AoDevId, HI_S32 s32AoChnCnt,
         return HI_FAILURE;
     }
 
+
+    //maohw mix
+    if(s32AoChnCnt == 1)
+    //if(0)
+    {
+      s32Ret = HI_MPI_AO_SetTrackMode(AoDevId, AUDIO_TRACK_MIX);
+      printf("%s: HI_MPI_AO_SetTrackMode(%d, MIX) s32Ret: %#x!\n", __FUNCTION__, AoDevId, s32Ret);
+    }
+
+
     for (i = 0; i < s32AoChnCnt>>pstAioAttr->enSoundmode; i++)
     {
         s32Ret = HI_MPI_AO_EnableChn(AoDevId, i);
@@ -1469,7 +1487,7 @@ HI_S32 SAMPLE_COMM_AUDIO_StartAenc(HI_S32 s32AencChnCnt, AIO_ATTR_S *pstAioAttr,
     stAencAttr.enType = enType;
     stAencAttr.u32BufSize = 30;
     stAencAttr.u32PtNumPerFrm = pstAioAttr->u32PtNumPerFrm;
-
+    printf("%s => enType:%d, u32PtNumPerFrm:%d\n", __func__, stAencAttr.enType, stAencAttr.u32PtNumPerFrm);
     if (PT_ADPCMA == stAencAttr.enType)
     {
         stAencAttr.pValue       = &stAdpcmAenc;

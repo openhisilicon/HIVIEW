@@ -447,7 +447,7 @@ static void* ser_thread(void *param)
           cfifo_au[i] = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->audio_shmid);
           if(cfifo_au[i])
           {
-            cfifo_set_u(cfifo_au[i], (void*)i);
+            cfifo_set_u(cfifo_au[i], (void*)(i|0xff00));
             unsigned int audio_utc = cfifo_oldest(cfifo_au[i], video_utc);
             printf("ch:%d, sync video_utc:%u, audio_utc:%u\n", i, video_utc, audio_utc);
             cfifo_ep_ctl(ep, CFIFO_EP_ADD, cfifo_au[i]);
@@ -463,33 +463,49 @@ static void* ser_thread(void *param)
        printf("cfifo_ep_wait err fds:%d\n", fds);
     }
     
-    for(i = 0; i < fds; i++)
-    {
+    { // interlaced write;
       struct timespec ts1, ts2;
       clock_gettime(CLOCK_MONOTONIC, &ts1);
-      do{
-        struct cfifo_ex* fifo = result[i];
-        int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
-        if(ret <= 0)
+      
+      int remain = 1;
+      while(remain)
+      {
+        remain = 0;
+        for(i = 0; i < fds; i++)
         {
-          break;
+          struct cfifo_ex* fifo = result[i];
+__get:
+          int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
+          if(ret <= 0)
+          {
+            continue;
+          }
+          remain = 1;
+          
+          // file write;
+          void* ch = cfifo_get_u(fifo);
+          if(ser_file_writer((int)(ch&0xff), frm) < 0)
+          {
+            error("ser_file_writer err.\n");
+            goto __exit;
+          }
+          
+          //get all audio frm;
+          if(ch&0xff00)
+          {
+            goto __get;
+          }
+          
+          clock_gettime(CLOCK_MONOTONIC, &ts2);
+          int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+          if(cost > 500)
+          {
+            warn("the disk is slowly.\n");
+            remain = 0;
+            break;
+          }
         }
-        // file write;
-        void* ch = cfifo_get_u(fifo);
-        if(ser_file_writer((int)ch, frm) < 0)
-        {
-          error("ser_file_writer err.\n");
-          goto __exit;
-        }
-        
-        clock_gettime(CLOCK_MONOTONIC, &ts2);
-        int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
-        if(cost > 500)
-        {
-          warn("the disk is slowly.\n");
-          break;
-        }
-      }while(1);
+      }
     }
   }
   

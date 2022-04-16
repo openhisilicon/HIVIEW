@@ -1156,6 +1156,7 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   return ret;
 }
 
+static gsf_mpp_aenc_t _aenc;
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
   static int init = 0;
@@ -1176,6 +1177,8 @@ int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
   else
   {
     extern HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc);
+    
+    _aenc = *aenc;
     return SAMPLE_AUDIO_AiAenc(aenc);
   }
   return 0;
@@ -1835,9 +1838,6 @@ int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 }
 
 #include "audio_aac_adp.h"
-//from sample_audio.c;
-extern HI_BOOL gs_bAioReSample;
-extern AUDIO_SAMPLE_RATE_E enInSampleRate;
 
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
 {
@@ -1851,20 +1851,24 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   
   AUDIO_DEV   AiDev = aidev;//SAMPLE_AUDIO_INNER_AI_DEV;
   AUDIO_DEV   AoDev = aodev;//SAMPLE_AUDIO_INNER_AO_DEV; SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
-  
-  stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
+
+  HI_BOOL bAioReSample = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?0:
+                         (_aenc.sp != AUDIO_SAMPLE_RATE_48000)?1:0;
+  AUDIO_SAMPLE_RATE_E enInSampleRate = _aenc.sp;
+
+  stAioAttr.enSamplerate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_aenc.sp:AUDIO_SAMPLE_RATE_48000;
   stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
   stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
-  stAioAttr.enSoundmode    = AUDIO_SOUND_MODE_STEREO;
+  stAioAttr.enSoundmode    = _aenc.stereo;//AUDIO_SOUND_MODE_STEREO;
   stAioAttr.u32EXFlag      = 0;
   stAioAttr.u32FrmNum      = 30;
-  stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
-  stAioAttr.u32ChnCnt      = 2;
+  stAioAttr.u32PtNumPerFrm = (_aenc.enPayLoad==PT_AAC)?AACLC_SAMPLES_PER_FRAME:80*6;//AACLC_SAMPLES_PER_FRAME;
+  stAioAttr.u32ChnCnt      = 1<<_aenc.stereo;
   stAioAttr.u32ClkSel      = 0;
   stAioAttr.enI2sType      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?AIO_I2STYPE_INNERCODEC:AIO_I2STYPE_INNERHDMI;
 
   s32AoChnCnt = stAioAttr.u32ChnCnt;
-  s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, gs_bAioReSample);
+  s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, bAioReSample);
   if (s32Ret != HI_SUCCESS)
   {
     printf("SAMPLE_COMM_AUDIO_StartAo err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
@@ -1881,7 +1885,7 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   return 0;
   
 __err:
-  s32Ret = SAMPLE_COMM_AUDIO_StopAo(AoDev, s32AoChnCnt, gs_bAioReSample);
+  s32Ret = SAMPLE_COMM_AUDIO_StopAo(AoDev, s32AoChnCnt, bAioReSample);
   if (s32Ret != HI_SUCCESS)
   {
     printf("SAMPLE_COMM_AUDIO_StopAo err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);

@@ -238,9 +238,9 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
 typedef struct {
   int AeChn;
-  PAYLOAD_TYPE_E enPayLoad;
+  PAYLOAD_TYPE_E enPayLoad; // PT;
   int adtype; // 0:INNER, 1:I2S, 2:PCM;
-  int stereo, sp, br;//channels, sampleRate, bitRate;
+  int stereo, sp, br;//stereo, sampleRate, bitRate;
   void *uargs;
   int (*cb)(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 }gsf_mpp_aenc_t;

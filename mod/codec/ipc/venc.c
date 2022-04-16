@@ -235,9 +235,9 @@ unsigned int cfifo_recput_au(unsigned char *p1, unsigned int n1, unsigned char *
   rec.utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
   rec.pts  = pstStream->u64TimeStamp/1000;
   
-  rec.audio.encode = GSF_ENC_AAC;
-  rec.audio.chn = 2;
-  rec.audio.sp  = 48; //k;
+  rec.audio.encode = codec_ipc.aenc.type;//GSF_ENC_AAC;
+  rec.audio.chn = (codec_ipc.aenc.type == GSF_ENC_AAC)?2:1;
+  rec.audio.sp  = codec_ipc.aenc.sprate;//48; //k;
   rec.audio.bps = 16;
   rec.size = 0;
   

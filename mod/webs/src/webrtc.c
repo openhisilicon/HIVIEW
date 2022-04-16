@@ -28,6 +28,8 @@ unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2
 unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
 unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u);
 
+#define SESS_MAX_CNT 5
+int sess_free_cnt = 0;
 struct list_head sess_list;
 pthread_mutex_t sess_list_lock;
 pthread_t once = PTHREAD_ONCE_INIT;
@@ -45,6 +47,7 @@ void* once_run(void* parm)
     
     pthread_mutex_lock(&sess_list_lock);
     list_add(&rtc_sess->list, &sess_list);
+    sess_free_cnt++;
     pthread_mutex_unlock(&sess_list_lock);
   }
   return NULL;
@@ -57,7 +60,7 @@ int rtc_init()
   
   INIT_LIST_HEAD(&sess_list);
   pthread_mutex_init(&sess_list_lock, NULL);
-  return pthread_create(&once, NULL, once_run, (void*)5);
+  return pthread_create(&once, NULL, once_run, (void*)SESS_MAX_CNT);
 }
 int rtc_uninit()
 {
@@ -221,9 +224,10 @@ rtc_sess_t *rtc_sess_new()
   {
     rtc_sess = list_entry(sess_list.next, rtc_sess_t, list); 
     list_del(&rtc_sess->list);
+    sess_free_cnt--;
   }
   pthread_mutex_unlock(&sess_list_lock);
-  
+  warn("current sess cnt:%d\n", (SESS_MAX_CNT - sess_free_cnt));
   return rtc_sess;
 }
 
@@ -311,20 +315,24 @@ void* rtc_video_send_task(void *parm)
   if(ret == 0)
   {
     video_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->video_shmid);
-    //audio_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->audio_shmid);
+    audio_fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, sdp->audio_shmid);
     
+  	cfifo_set_u(video_fifo, (void*)rtc_sess->videoTransceiver_);
   	cfifo_ep_ctl(ep, CFIFO_EP_ADD, video_fifo);
   	unsigned int video_utc = cfifo_newest(video_fifo, 1);
   	 
   	if(audio_fifo)
   	{
+  	  cfifo_set_u(audio_fifo, (void*)rtc_sess->audioTransceiver_);
   	  cfifo_ep_ctl(ep, CFIFO_EP_ADD, audio_fifo);
   	  unsigned int audio_utc = cfifo_oldest(audio_fifo, video_utc);
   	  printf("video_utc:%u, audio_utc:%u\n", video_utc, audio_utc);
   	}
   }
   
-  Frame frame = {0};
+  Frame frame_v = {0};
+  Frame frame_a = {0};
+  unsigned int  pts_v = 0, pts_a = 0;
   
   while(!rtc_sess->terminated)
   {
@@ -358,14 +366,34 @@ void* rtc_video_send_task(void *parm)
           }
           
           gsf_frm_t *rec = (gsf_frm_t *)buf;
-          //printf("rec->type:%d, seq:%d, utc:%u, size:%d\n", rec->type, rec->seq, rec->utc, rec->size);
+          PRtcRtpTransceiver transceiver = (PRtcRtpTransceiver)cfifo_get_u(fifo);
           
-          frame.frameData = (PBYTE)rec->data;
-          frame.size = rec->size;
-          frame.presentationTs += (((10LL * 1000LL) * 1000LL) / 30);
-          ret = writeFrame(rtc_sess->videoTransceiver_, &frame);
-          if(ret != 0)
-            printf("writeFrame(video) ret:0x%x\n", ret);
+          if(transceiver == rtc_sess->videoTransceiver_
+            && rec->video.encode == GSF_ENC_H264)
+          {
+            frame_v.frameData = (PBYTE)rec->data;
+            frame_v.size = rec->size;
+
+            //frame_v.presentationTs += (((10LL * 1000LL) * 1000LL) / 30);
+            frame_v.presentationTs += (pts_v?(rec->pts - pts_v):0)*10000;
+            pts_v = rec->pts;
+            ret = writeFrame(rtc_sess->videoTransceiver_, &frame_v);
+            if(ret != 0)
+              printf("writeFrame(video) ret:0x%x\n", ret);
+          }
+          else if(transceiver == rtc_sess->audioTransceiver_
+            && rec->audio.encode == GSF_ENC_G711A)
+          {
+            frame_a.frameData = (PBYTE)(rec->data + 4);
+            frame_a.size = rec->size - 4;
+    
+            //frame_a.presentationTs += (((10LL * 1000LL) * 1000LL) / 16.66);
+            frame_a.presentationTs += (pts_a?(rec->pts - pts_a):0)*10000;
+            pts_a = rec->pts; 
+            ret = writeFrame(rtc_sess->audioTransceiver_, &frame_a);
+            if(ret != 0)
+              printf("writeFrame(audio) size:%d, ret:0x%x\n", frame_a.size, ret);
+          }
       }
     }
   }

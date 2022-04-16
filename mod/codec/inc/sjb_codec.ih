@@ -17,10 +17,10 @@ STRUCT(gsf_venc_t)
 
 STRUCT(gsf_aenc_t)
 {
-  FIELD(int, en);
-  FIELD(int, type);
-  FIELD(int, sprate);
-  FIELD(int, vol);
+  FIELD(int, en);     // 1: enable, 0: disable;
+  FIELD(int, type);   // GSF_ENC_AAC, GSF_ENC_G711A, ...
+  FIELD(int, sprate); // 48k, 8k ...
+  FIELD(int, vol);    // reserve
 };
 
 STRUCT(gsf_osd_t)

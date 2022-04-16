@@ -141,7 +141,6 @@ typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
     PIC_360P,      /* 640 * 360 */
-    #define __PIC_512P
     PIC_512P,      /* 640 * 512 */    
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
