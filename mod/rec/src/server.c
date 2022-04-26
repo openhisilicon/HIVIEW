@@ -473,9 +473,10 @@ static void* ser_thread(void *param)
         remain = 0;
         for(i = 0; i < fds; i++)
         {
+          int ret = 0;
           struct cfifo_ex* fifo = result[i];
 __get:
-          int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
+          ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
           if(ret <= 0)
           {
             continue;
@@ -484,14 +485,14 @@ __get:
           
           // file write;
           void* ch = cfifo_get_u(fifo);
-          if(ser_file_writer((int)(ch&0xff), frm) < 0)
+          if(ser_file_writer((int)ch&0xff, frm) < 0)
           {
             error("ser_file_writer err.\n");
             goto __exit;
           }
           
           //get all audio frm;
-          if(ch&0xff00)
+          if((int)ch&0xff00)
           {
             goto __get;
           }
