@@ -409,16 +409,45 @@ int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
   {
     case GSF_MPP_VPSS_CTL_PAUSE:
       ret = HI_MPI_VPSS_StopGrp(VpssGrp);
-      printf("HI_MPI_VPSS_StopGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_PAUSE VpssGrp:%d, err 0x%x\n", VpssGrp, ret);    
       break;
-    case GSF_MPP_VPSS_CTL_RESUM:
+    case GSF_MPP_VPSS_CTL_RESUM:  
       ret = HI_MPI_VPSS_StartGrp(VpssGrp);
-      printf("HI_MPI_VPSS_StartGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      if(ret)  
+        printf("GSF_MPP_VPSS_CTL_RESUM VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
       break;
     case GSF_MPP_VPSS_CTL_CROP:
       ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, (VPSS_CROP_INFO_S*)args);
       if(ret)
-        printf("HI_MPI_VPSS_SetGrpCrop VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+        printf("GSF_MPP_VPSS_CTL_CROP VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_ASPECT:
+      {
+        int i = 0;
+        VPSS_CHN_ATTR_S stChnAttr;
+    
+        for(i = 0; i < 2; i++)
+        {
+          if(HI_MPI_VPSS_GetChnAttr(VpssGrp, i, &stChnAttr) == HI_SUCCESS)
+          {
+            stChnAttr.stAspectRatio = *((ASPECT_RATIO_S*)args);
+            ret = HI_MPI_VPSS_SetChnAttr(VpssGrp, i, &stChnAttr);
+            if(ret)
+              printf("GSF_MPP_VPSS_CTL_ASPECT VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, i, ret);
+          }
+        }
+      }
+      break;
+    case  GSF_MPP_VPCH_CTL_ENABLE:
+      ret = HI_MPI_VPSS_EnableChn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_ENABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPCH_CTL_DISABLE:
+      ret = HI_MPI_VPSS_DisableChn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_DISABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
       break;
   }
   return ret;
@@ -1855,6 +1884,9 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   HI_BOOL bAioReSample = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?0:
                          (_aenc.sp != AUDIO_SAMPLE_RATE_48000)?1:0;
   AUDIO_SAMPLE_RATE_E enInSampleRate = _aenc.sp;
+  
+  if(bAioReSample && AoDev != SAMPLE_AUDIO_INNER_AO_DEV)
+    return 0;
 
   stAioAttr.enSamplerate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_aenc.sp:AUDIO_SAMPLE_RATE_48000;
   stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
