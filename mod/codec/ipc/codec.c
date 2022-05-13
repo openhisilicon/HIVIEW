@@ -187,8 +187,10 @@ static int sub_recv(char *msg, int size, int err)
       osd.type = 0;
       osd.fontsize = 1;
 
-      osd.point[0] = 16+i*300;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
-      osd.point[1] = 16;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
+      //osd.point[0] = 16+i*300;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
+      //osd.point[1] = 16;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
+      osd.point[0] = (unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
+      osd.point[1] = (unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
       osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*1920)&(-1);
       osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*1080)&(-1);
       
@@ -432,6 +434,320 @@ int venc_start(int start)
   return 0;
 }
 
+#define VPSS(_i, _g, _p, _ch, _en0, _en1, _sz0, _sz1) do{ \
+      vpss[_i].VpssGrp=_g; vpss[_i].ViPipe=_p; vpss[_i].ViChn=_ch;\
+      vpss[_i].enable[0]=_en0;vpss[_i].enable[1]=_en1;\
+      vpss[_i].enSize[0]=_sz0;vpss[_i].enSize[1]=_sz1;}while(0)
+      
+#if defined(GSF_CPU_3559a)
+void mpp_ini_3559a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  if (avs == 1)
+  {
+    // imx334-0-0-8-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 1;
+    venc_ini->ch_num = 1; venc_ini->st_num = 1;
+    VPSS(0, 0, 0, 0, 1, 0, PIC_1080P, PIC_720P);
+    VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
+    VPSS(2, 2, 2, 0, 1, 0, PIC_1080P, PIC_720P);
+    VPSS(3, 3, 3, 0, 1, 0, PIC_1080P, PIC_720P);   
+  }
+  else
+  {
+    if(strstr(cfg->snsname, "sharp8k"))
+    {
+      //sharp8k-0-0-16-30
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 16; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_7680x4320, PIC_3840x2160);
+    }
+    else
+    {
+      // imx334-0-0-8-30
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+      rgn_ini->ch_num = 4; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 4; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS(2, 2, 2, 0, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS(3, 3, 3, 0, 1, 1, PIC_3840x2160, PIC_720P);
+    } 
+  }
+}
+#endif
+#if defined(GSF_CPU_3519a)
+void mpp_ini_3519a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  // imx334-0-0-8-60
+  cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+  rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+  venc_ini->ch_num = 1; venc_ini->st_num = 2;
+  VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+}
+#endif
+#if defined(GSF_CPU_3519)
+void mpp_ini_3519(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  if(strstr(cfg->snsname, "imx290"))
+  {
+  	// imx290-0-0-2-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+  }
+  else
+  {
+    // imx334-0-0-8-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+    rgn_ini->ch_num = 2; rgn_ini->st_num = 1;
+    venc_ini->ch_num = 2; venc_ini->st_num = 1;
+    VPSS(0, 0, 0, 0, 1, 0, PIC_3840x2160, PIC_720P);
+    VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
+  }
+}
+#endif
+#if defined(GSF_CPU_3559)
+void mpp_ini_3559(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  #if 0
+  // yuv422-0-0-2-60
+  cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+  rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+  venc_ini->ch_num = 1; venc_ini->st_num = 2;
+  VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  return;
+  #endif
+  
+  if(strstr(cfg->snsname, "imx335"))
+  {
+    // imx335-0-0-4-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+    return;
+  }
+  else
+  {
+    // imx415-0-0-8-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+    return;
+  }
+}
+#endif
+#if defined(GSF_CPU_3516d)
+void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  if (avs == 1)
+  {
+    // imx335-0-0-4-30
+    if(strstr(cfg->snsname, "imx327") 
+      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307"))
+    {
+      cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx307")?50:30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+      
+      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
+      if(cfg->second)
+	      VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+	      
+    }
+    else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378"))
+    {
+        if(strcasestr(cfg->type, "3516a"))
+        {
+          cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+          rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+          venc_ini->ch_num = 1; venc_ini->st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1-1, PIC_3840x2160, PIC_1080P);
+        }
+        else
+        {
+          cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+          rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+          venc_ini->ch_num = 1; venc_ini->st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        }
+        if(cfg->second)
+      	  VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+    }
+    else if(strstr(cfg->snsname, "imx335"))
+    {
+      cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+      if(cfg->second)
+      	VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+    }
+    return;
+  }
+  
+  if(cfg->snscnt < 2)
+  {
+    if(strstr(cfg->snsname, "imx327") 
+      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307"))
+    {
+    	// imx327-0-0-2-30
+    	#if 1
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx307")?50:30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+      #else
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 120;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+      #endif
+      if(cfg->second)
+      {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+      }
+    }
+    else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378"))
+    {
+      
+        if(strcasestr(cfg->type, "3516a"))
+        {
+          cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+          rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+          venc_ini->ch_num = 1; venc_ini->st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+        }
+        else
+        {
+          cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+          rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+          venc_ini->ch_num = 1; venc_ini->st_num = 2;
+          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        }
+			  if(cfg->second)
+			  {
+			    rgn_ini->ch_num = venc_ini->ch_num = 2;
+				  VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+			  }
+    }
+    else if(strstr(cfg->snsname, "imx335"))
+    {
+      // imx335-0-0-4-30
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+      if(cfg->second)
+      {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+      }
+    }
+    else if(strstr(cfg->snsname, "yuv422"))
+    {
+      if(codec_ipc.vi.res == 8)
+      {
+        // yuv422-0-0-8-30
+        cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+        rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+        venc_ini->ch_num = 1; venc_ini->st_num = 2;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+
+      }
+      else if (codec_ipc.vi.res == 2)
+      {
+        // yuv422-0-0-2-60
+        cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+        rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+        venc_ini->ch_num = 1; venc_ini->st_num = 2;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      }
+      else if (codec_ipc.vi.res == 1)
+      {
+        // yuv422-0-0-1-60
+        cfg->lane = 0; cfg->wdr = 0; cfg->res = 1; cfg->fps = 60;
+        rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+        venc_ini->ch_num = 1; venc_ini->st_num = 2;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_720P, PIC_D1_NTSC);
+      }
+      else  // other;
+      {
+        // yuv422-0-0-2-60
+        cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+        rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+        venc_ini->ch_num = 1; venc_ini->st_num = 2;
+        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      }
+    }
+    else
+    {
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    }
+  }
+  else
+  {
+   
+    if(strstr(cfg->snsname, "imx335"))
+    {
+      // imx335-2-0-5-30
+      cfg->lane = 2; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
+      rgn_ini->ch_num = 2; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 2; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
+      VPSS(1, 1, 1, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
+    }
+    else  
+    {
+      // imx327-2-0-2-30
+      cfg->lane = 2; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
+      rgn_ini->ch_num = 2; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 2; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    }
+  }
+}
+#endif
+
+#if defined(GSF_CPU_3516e)
+void mpp_ini_3516e(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  // sc2335-0-0-2-30
+  cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
+  rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+  venc_ini->ch_num = 1; venc_ini->st_num = 2;
+  VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P); 
+}
+#endif
+
+#if defined(GSF_CPU_3531d)
+void mpp_ini_3531d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  // 
+  //cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+  rgn_ini->ch_num = 4; rgn_ini->st_num = 2;
+  venc_ini->ch_num = 4; venc_ini->st_num = 2;
+
+  VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS(2, 2, 2, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS(3, 3, 3, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  //VPSS(4, 4, 4, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+  //VPSS(5, 5, 5, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+  //VPSS(6, 6, 6, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+  //VPSS(7, 7, 7, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+}
+#endif
 
 int mpp_start(gsf_bsp_def_t *def)
 {
@@ -449,11 +765,6 @@ int mpp_start(gsf_bsp_def_t *def)
     static gsf_lens_ini_t lens_ini;
     static gsf_mpp_vpss_t vpss[GSF_CODEC_IPC_CHN];
     
-    #define VPSS(_i, _g, _p, _ch, _en0, _en1, _sz0, _sz1) do{ \
-      vpss[_i].VpssGrp=_g; vpss[_i].ViPipe=_p; vpss[_i].ViChn=_ch;\
-      vpss[_i].enable[0]=_en0;vpss[_i].enable[1]=_en1;\
-      vpss[_i].enSize[0]=_sz0;vpss[_i].enSize[1]=_sz1;}while(0)
-    
     //only used sensor[0];
     strcpy(cfg.snsname, def->board.sensor[0]);
     cfg.snscnt = def->board.snscnt;
@@ -461,52 +772,13 @@ int mpp_start(gsf_bsp_def_t *def)
     avs = codec_ipc.vi.avs;
 
     do{
-      #ifdef GSF_CPU_3559a
+      #if defined(GSF_CPU_3559a)
       {
-        if (avs == 1)
-        {
-          // imx334-0-0-8-30
-          cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-          rgn_ini.ch_num = 1; rgn_ini.st_num = 1;
-          venc_ini.ch_num = 1; venc_ini.st_num = 1;
-          VPSS(0, 0, 0, 0, 1, 0, PIC_1080P, PIC_720P);
-          VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
-          VPSS(2, 2, 2, 0, 1, 0, PIC_1080P, PIC_720P);
-          VPSS(3, 3, 3, 0, 1, 0, PIC_1080P, PIC_720P);   
-        }
-        else
-        {
-          if(strstr(cfg.snsname, "sharp8k"))
-          {
-            //sharp8k-0-0-16-30
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 16; cfg.fps = 30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_7680x4320, PIC_3840x2160);
-          }
-          else
-          {
-            // imx334-0-0-8-30
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-            rgn_ini.ch_num = 4; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 4; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
-            VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_720P);
-            VPSS(2, 2, 2, 0, 1, 1, PIC_3840x2160, PIC_720P);
-            VPSS(3, 3, 3, 0, 1, 1, PIC_3840x2160, PIC_720P);
-          }
-
-            
-        }
-
+        mpp_ini_3559a(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #elif defined(GSF_CPU_3519a)
       {
-        // imx334-0-0-8-60
-        cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+        mpp_ini_3519a(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #elif defined(GSF_CPU_3516d)
       {
@@ -520,253 +792,23 @@ int mpp_start(gsf_bsp_def_t *def)
                      (def->board.second <= 0)?0:def->board.second;
         printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);
         
-        if (avs == 1)
-        {
-          // imx335-0-0-4-30
-          if(strstr(cfg.snsname, "imx327") 
-            || strstr(cfg.snsname, "imx290") || strstr(cfg.snsname, "imx307"))
-          {
-            cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 2; cfg.fps = strstr(cfg.snsname, "imx307")?50:30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-            
-			      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
-            if(cfg.second)
-				      VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg.second), PIC_CIF);
-				      
-          }
-          else if(strstr(cfg.snsname, "imx415") || strstr(cfg.snsname, "imx334") || strstr(cfg.snsname, "imx378"))
-          {
-              if(strcasestr(cfg.type, "3516a"))
-              {
-                cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-                rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-                venc_ini.ch_num = 1; venc_ini.st_num = 2;
-                VPSS(0, 0, 0, 0, 1, 1-1, PIC_3840x2160, PIC_1080P);
-              }
-              else
-              {
-                cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-                rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-                venc_ini.ch_num = 1; venc_ini.st_num = 2;
-                VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-              }
-              if(cfg.second)
-            	  VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg.second), PIC_CIF);
-          }
-          else if(strstr(cfg.snsname, "imx335"))
-          {
-            cfg.lane = (cfg.second)?0:2; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
-            if(cfg.second)
-            	VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg.second), PIC_CIF);
-          }
-          break;
-        }
-        
-        if(cfg.snscnt < 2)
-        {
-          if(strstr(cfg.snsname, "imx327") 
-            || strstr(cfg.snsname, "imx290") || strstr(cfg.snsname, "imx307"))
-          {
-          	// imx327-0-0-2-30
-          	#if 1
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = strstr(cfg.snsname, "imx307")?50:30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-            #else
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 120;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-            #endif
-            if(cfg.second)
-            {
-              rgn_ini.ch_num = venc_ini.ch_num = 2;
-              VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg.second), PIC_CIF);
-            }
-          }
-          else if(strstr(cfg.snsname, "imx415") || strstr(cfg.snsname, "imx334") || strstr(cfg.snsname, "imx378"))
-          {
-            
-              if(strcasestr(cfg.type, "3516a"))
-              {
-                cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-                rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-                venc_ini.ch_num = 1; venc_ini.st_num = 2;
-                VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
-              }
-              else
-              {
-                cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-                rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-                venc_ini.ch_num = 1; venc_ini.st_num = 2;
-                VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-              }
-      			  if(cfg.second)
-      			  {
-      			    rgn_ini.ch_num = venc_ini.ch_num = 2;
-      				  VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg.second), PIC_CIF);
-      			  }
-          }
-          else if(strstr(cfg.snsname, "imx335"))
-          {
-            // imx335-0-0-4-30
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
-            if(cfg.second)
-            {
-              rgn_ini.ch_num = venc_ini.ch_num = 2;
-              VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg.second), PIC_CIF);
-            }
-          }
-          else if(strstr(cfg.snsname, "yuv422"))
-          {
-            if(codec_ipc.vi.res == 8)
-            {
-              // yuv422-0-0-8-30
-              cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-              venc_ini.ch_num = 1; venc_ini.st_num = 2;
-              VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
-
-            }
-            else if (codec_ipc.vi.res == 2)
-            {
-              // yuv422-0-0-2-60
-              cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-              venc_ini.ch_num = 1; venc_ini.st_num = 2;
-              VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-            }
-            else if (codec_ipc.vi.res == 1)
-            {
-              // yuv422-0-0-1-60
-              cfg.lane = 0; cfg.wdr = 0; cfg.res = 1; cfg.fps = 60;
-              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-              venc_ini.ch_num = 1; venc_ini.st_num = 2;
-              VPSS(0, 0, 0, 0, 1, 1, PIC_720P, PIC_D1_NTSC);
-            }
-            else  // other;
-            {
-              // yuv422-0-0-2-60
-              cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-              rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-              venc_ini.ch_num = 1; venc_ini.st_num = 2;
-              VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-            }
-          }
-          else
-          {
-            cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-            rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 1; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-          }
-        }
-        else
-        {
-         
-          if(strstr(cfg.snsname, "imx335"))
-          {
-            // imx335-2-0-5-30
-            cfg.lane = 2; cfg.wdr = 0; cfg.res = 5; cfg.fps = 30;
-            rgn_ini.ch_num = 2; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 2; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
-            VPSS(1, 1, 1, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
-          }
-          else  
-          {
-            // imx327-2-0-2-30
-            cfg.lane = 2; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
-            rgn_ini.ch_num = 2; rgn_ini.st_num = 2;
-            venc_ini.ch_num = 2; venc_ini.st_num = 2;
-            VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-            VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-          }
-        }
+        mpp_ini_3516d(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #elif defined(GSF_CPU_3516e)
       {
-        // sc2335-0-0-2-30
-        cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
-        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P); 
+        mpp_ini_3516e(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #elif defined(GSF_CPU_3519)
       {
-        if(strstr(cfg.snsname, "imx290"))
-        {
-        	// imx290-0-0-2-30
-          cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 30;
-          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-          venc_ini.ch_num = 1; venc_ini.st_num = 2;
-          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
-        }
-        else
-        {
-          // imx334-0-0-8-30
-          cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-          rgn_ini.ch_num = 2; rgn_ini.st_num = 1;
-          venc_ini.ch_num = 2; venc_ini.st_num = 1;
-          VPSS(0, 0, 0, 0, 1, 0, PIC_3840x2160, PIC_720P);
-          VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
-        }
+        mpp_ini_3519(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #elif defined(GSF_CPU_3559)
       {
-        #if 0
-        // yuv422-0-0-2-60
-        cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-        rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 1; venc_ini.st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-        break;
-        #endif
-        
-        if(strstr(cfg.snsname, "imx335"))
-        {
-          // imx335-0-0-4-30
-          cfg.lane = 0; cfg.wdr = 0; cfg.res = 4; cfg.fps = 30;
-          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-          venc_ini.ch_num = 1; venc_ini.st_num = 2;
-          VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
-          break;
-        }
-        else
-        {
-          // imx415-0-0-8-30
-          cfg.lane = 0; cfg.wdr = 0; cfg.res = 8; cfg.fps = 30;
-          rgn_ini.ch_num = 1; rgn_ini.st_num = 2;
-          venc_ini.ch_num = 1; venc_ini.st_num = 2;
-          VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
-          break;
-        }
+        mpp_ini_3559(&cfg, &rgn_ini, &venc_ini, vpss);
       }
-      
       #elif defined(GSF_CPU_3531d)
       {
-        // 
-        //cfg.lane = 0; cfg.wdr = 0; cfg.res = 2; cfg.fps = 60;
-        rgn_ini.ch_num = 4; rgn_ini.st_num = 2;
-        venc_ini.ch_num = 4; venc_ini.st_num = 2;
-
-        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-        VPSS(2, 2, 2, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-        VPSS(3, 3, 3, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-        //VPSS(4, 4, 4, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
-        //VPSS(5, 5, 5, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
-        //VPSS(6, 6, 6, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
-        //VPSS(7, 7, 7, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+        mpp_ini_3531d(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #else
       {
@@ -921,8 +963,8 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
         .AeChn = 0,
         .enPayLoad = AU_PT(codec_ipc.aenc.type),
         .adtype = 0, // 0:INNER, 1:I2S, 2:PCM;
-        .stereo = (codec_ipc.aenc.type == GSF_ENC_AAC)?1:0, //stereo 
-        .sp = codec_ipc.aenc.sprate*1000, //sampleRate 
+        .stereo = (codec_ipc.aenc.type == GSF_ENC_AAC)?1:0, //codec_ipc.aenc.stereo
+        .sp = codec_ipc.aenc.sprate*1000, //sampleRate
         .br = 0,    //bitRate;
         .uargs = NULL,
         .cb = gsf_aenc_recv,

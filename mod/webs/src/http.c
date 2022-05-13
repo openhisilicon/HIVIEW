@@ -1036,7 +1036,7 @@ void handle_stat(struct mg_connection *nc, int ev, void *pp)
     extern int sys_stat(float *cpu, float *temp, float *mem, float *ddr);
     
     sys_stat(&cpu, &temp, &mem, &ddr);
-    printf("cpu:%0.2f, temp:%0.2f, mem:%0.2f, ddr:%0.2f", cpu, temp, mem, ddr);
+    printf("cpu:%0.2f, temp:%0.2f, mem:%0.2f, ddr:%0.2f\n", cpu, temp, mem, ddr);
     sprintf(out, "{"
                   "\"cpu\": %.2f,"
                   "\"temp\": %.2f,"

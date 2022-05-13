@@ -65,7 +65,7 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   sdp->val[1]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1];
   sdp->val[2]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2];
   sdp->val[3]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[3];
-  printf("sid:%d, val.size[%d,%d,%d,%d]\n", req->sid,
+  printf("sid:%d, type:%d, val.size[%d,%d,%d,%d]\n", req->sid, sdp->venc.type,
         venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0].size,
         venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1].size,
         venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2].size,
@@ -86,9 +86,16 @@ static void msg_func_osd(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   {
     gsf_osd_t *osd = (gsf_osd_t*)req->data;
     
+    if(req->nsave == 0)
+    {
     codec_ipc.osd[req->sid] = *osd;
     if(gsf_rgn_osd_set(req->ch, req->sid, osd) == 0)
       json_parm_save(codec_parm_path, &codec_ipc);
+    }
+    else 
+    {
+      gsf_rgn_osd_set(req->ch, req->sid, osd);
+    }  
     rsp->err  = 0;
     rsp->size = 0;
   }

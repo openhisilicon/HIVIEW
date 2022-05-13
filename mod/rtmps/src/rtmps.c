@@ -218,11 +218,11 @@ rtmp_push_t* rtmp_push_open(char* url)
     
     char packet[64*1024];
   	snprintf(packet, sizeof(packet), "rtmp://%s/%s", host, app);
-    printf("push url:[%s/%s]\n", packet, stream);
-
 
     if(host[0] == '\0' || app[0] == '\0' || stream[0] == '\0')
       return NULL;
+
+    printf("push url:[%s/%s]\n", packet, stream);
 
   	struct rtmp_client_handler_t handler;
   	memset(&handler, 0, sizeof(handler));
