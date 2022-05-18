@@ -1,0 +1,326 @@
+#!/bin/sh
+# Useage: ./load3531dv200 [ -r|-i|-a ] [ -ad xxx ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+# e.g: ./load3531dv200 -i
+
+
+####################Variables Definition##########################
+#DDR start:0x40000000;  kernel start:0x40000000,  OS(512M); MMZ start:0x60000000
+mem_total=2048                # 2048M, total mem
+mem_start=0x40000000          # phy mem start
+
+os_mem_size=512               # 512M, os mem
+
+mmz_start=0x60000000;         # mmz start addr
+mmz_size=1536M;               # 1536M, mmz size
+reserve_mem_size=0            # 0M, reserve mmz size
+
+ad_type=tp2854b               #nvp6158,tp2854b,tp2856
+##################################################################
+
+report_error()
+{
+    echo "******* Error: There's something wrong, please check! *****"
+    exit 1
+}
+
+insert_audio()
+{
+    insmod hi3531dv200_aio.ko
+    insmod hi3531dv200_ai.ko
+    insmod hi3531dv200_ao.ko
+    insmod hi3531dv200_aenc.ko
+    insmod hi3531dv200_adec.ko
+
+    insmod extdrv/hi_es8388.ko
+    echo "insert audio"
+}
+
+remove_audio()
+{
+    rmmod hi3531dv200_adec
+    rmmod hi3531dv200_aenc
+    rmmod hi3531dv200_ao
+    rmmod hi3531dv200_ai
+    rmmod hi3531dv200_aio
+
+    rmmod hi_es8388
+    echo "remove audio"
+}
+
+get_board_type()
+{
+    case $ad_type in
+        tp2854b)
+            board_type=0
+            ;;
+        tp2856)
+            board_type=0
+            ;;
+        nvp6158)
+            board_type=1
+            ;;
+        *)
+            echo "xxxx Invalid ad type $ad_type xxxx"
+            report_error;;
+    esac
+}
+
+insert_ad()
+{
+    case $ad_type in
+        tp2854b)
+            insmod extdrv/hi_tp2854b.ko chips=8;
+            ;;
+        tp2856)
+            insmod extdrv/hi_tp2856.ko chips=4;
+            ;;
+        nvp6158)
+            insmod extdrv/hi_nvp6158.ko;
+            ;;
+        *)
+            echo "xxxx Invalid ad type $ad_type xxxx"
+            report_error;;
+    esac
+
+    if [ $board_type = 0 ]; then
+        insmod hi_mipi_rx.ko
+    fi
+}
+
+remove_ad()
+{
+    case $ad_type in
+        tp2854b)
+            rmmod hi_tp2854b.ko;
+            board_type=0;
+            ;;
+	tp2856)
+            rmmod hi_tp2856.ko;
+            board_type=0;
+            ;;
+        nvp6158)
+            rmmod hi_nvp6158.ko;
+            board_type=1
+            ;;
+        *)
+            echo "xxxx Invalid ad type $ad_type xxxx"
+            report_error;;
+    esac
+
+    if [ $board_type = 0 ]; then
+        rmmod hi_mipi_rx.ko
+    fi
+}
+
+insert_ko()
+{
+    get_board_type
+    insmod sys_config.ko chip="hi3531dv200" g_board_type=$board_type cas_type="cas_mm"
+
+    # driver load
+    insmod hi_securec.ko
+    insmod hi_osal.ko anony=1 mmz_allocator=hisi mmz=anonymous,0,$mmz_start,$mmz_size || report_error
+    insmod hi3531dv200_base.ko
+    insmod hi3531dv200_sys.ko
+    insmod hi3531dv200_tde.ko
+    insmod hi3531dv200_rgn.ko
+    insmod hi3531dv200_vgs.ko
+    insmod hi3531dv200_vi.ko
+    insmod hi3531dv200_vpss.ko
+    insmod hi3531dv200_vo.ko
+    insmod hifb.ko video="hifb:vram0_size:64800,vram1_size:64800,vram2_size:256,vram3_size:16200"     # default fb0:4k*4*2/1024,fb1:4k*4*2/1024,fb2:256x256*4/1024,fb3:720*576*4*2/1024
+
+    insmod hi3531dv200_chnl.ko
+    insmod hi3531dv200_vedu.ko
+    insmod hi3531dv200_rc.ko
+    insmod hi3531dv200_venc.ko
+    insmod hi3531dv200_h264e.ko
+    insmod hi3531dv200_h265e.ko
+    insmod hi3531dv200_jpege.ko
+    insmod hi3531dv200_jpegd.ko
+    insmod hi3531dv200_vfmw.ko
+    insmod hi3531dv200_vdec.ko
+    insmod hi3531dv200_vda.ko
+    insmod hi3531dv200_ive.ko save_power=1
+    insmod hi3531dv200_nnie.ko nnie_save_power=1 nnie_max_mem_info_num=32
+    insmod hi3531dv200_mau.ko mau_save_power=1 mau_max_mem_info_num=32
+    insert_ad
+    insmod extdrv/hi_lt8618sx.ko norm=24   #24:HDMI_1080P60 32:HDMI_4KP30
+    insert_audio
+
+    insmod hi3531dv200_hdmi.ko
+    insmod hi_user.ko
+}
+
+remove_ko()
+{
+    rmmod hi_user
+    remove_audio
+    rmmod hi3531dv200_hdmi.ko
+    rmmod hi_lt8618sx.ko
+    remove_ad
+    rmmod hi3531dv200_mau
+    rmmod hi3531dv200_nnie
+    rmmod hi3531dv200_ive
+    rmmod hi3531dv200_vda
+    rmmod hi3531dv200_jpegd
+    rmmod hi3531dv200_vfmw
+    rmmod hi3531dv200_vdec
+    rmmod hi3531dv200_rc
+    rmmod hi3531dv200_jpege
+    rmmod hi3531dv200_h264e
+    rmmod hi3531dv200_h265e
+    rmmod hi3531dv200_venc
+    rmmod hi3531dv200_vedu
+    rmmod hi3531dv200_chnl
+    rmmod hifb
+    rmmod hi3531dv200_vo
+    rmmod hi3531dv200_vpss
+    rmmod hi3531dv200_vi
+
+    rmmod hi3531dv200_vgs
+    rmmod hi3531dv200_rgn
+    rmmod hi3531dv200_tde
+
+#   rmmod hi_sensor_i2c &> /dev/null
+#   rmmod hi_sensor_spi &> /dev/null
+    rmmod hi3531dv200_sys
+    rmmod hi3531dv200_base
+    rmmod hi_osal
+    rmmod hi_securec
+    rmmod sys_config
+}
+
+load_usage()
+{
+    echo "Usage:  ./load3531dv200 [option]"
+    echo "options:"
+    echo "    -i                       insert modules"
+    echo "    -r                       remove modules"
+    echo "    -a                       remove modules first, then insert modules"
+    echo "    -ad ad_name              config ad type [default: tp2854b]"
+    echo "    -total mem_size          config total mem size [unit: M, default: 2048]"
+    echo "    -osmem os_mem_size       config os mem size [unit: M, default: 512]"
+    echo "    -h                       help information"
+    echo -e "for example: ./load3531dv200 -a -ad tp2854b\n"
+}
+
+calc_mmz_info()
+{
+        mmz_start=`echo "$mem_start $os_mem_size" |
+        awk 'BEGIN { temp = 0; }
+        {
+                temp = $1/1024/1024 + $2;
+        }
+        END { printf("0x%x00000\n", temp); }'`
+
+        mmz_size=`echo "$mem_total $os_mem_size $reserve_mem_size" |
+        awk 'BEGIN { temp = 0; }
+        {
+                temp = $1 - $2 - $3;
+        }
+        END { printf("%dM\n", temp); }'`
+        echo "mmz_start: $mmz_start, mmz_size: $mmz_size"
+}
+
+######################parse arg###################################
+b_arg_insmod=0
+b_arg_remove=0
+b_arg_restore=0
+b_arg_ad=0
+b_arg_total_mem=0
+b_arg_os_mem=0
+b_mem_out_config=0
+board_type=0                  #0:mipi,1:bt656
+
+for arg in $@
+do
+    if [ $b_arg_ad -eq 1 ] ; then
+        b_arg_ad=0;
+        ad_type=$arg;
+    fi
+
+	if [ $b_arg_total_mem -eq 1 ]; then
+		b_arg_total_mem=0;
+		mem_total=$arg;
+
+		if [ -z $mem_total ]; then
+			echo "[error] mem_total is null"
+			exit;
+		fi
+	fi
+
+	if [ $b_arg_os_mem -eq 1 ] ; then
+		b_arg_os_mem=0;
+		os_mem_size=$arg;
+
+		if [ -z $os_mem_size ]; then
+			echo "[error] os_mem_size is null"
+			exit;
+		fi
+	fi
+
+    case $arg in
+        "-i")
+            b_arg_insmod=1;
+            ;;
+        "-r")
+            b_arg_remove=1;
+            ;;
+        "-a")
+            b_arg_insmod=1;
+            b_arg_remove=1;
+            ;;
+        "-h")
+            load_usage;
+            ;;
+		"-osmem")
+			b_arg_os_mem=1;
+			b_mem_out_config=1;
+			;;
+		"-total")
+			b_arg_total_mem=1;
+			b_mem_out_config=1;
+			;;
+        "-restore")
+            b_arg_restore=1;
+            ;;
+        "-ad")
+            b_arg_ad=1;
+            ;;
+    esac
+done
+#######################parse arg end########################
+if [ $os_mem_size -ge $(($mem_total - $reserve_mem_size)) ] ; then
+	echo "[err] os_mem[$os_mem_size], over total_mem[$mem_total] - reserve_mem[$reserve_mem_size]"
+	exit;
+fi
+
+if [ $b_mem_out_config -eq 1 ]; then
+    calc_mmz_info;
+fi
+
+
+#######################Action###############################
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+
+if [ $b_arg_remove -eq 1 ]; then
+    remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+    insert_ko;
+fi
+
+if [ $b_arg_restore -eq 1 ]; then
+    sys_restore;
+fi
+

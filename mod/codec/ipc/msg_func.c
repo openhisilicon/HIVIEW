@@ -137,10 +137,10 @@ static int snap_cb(int idx, VENC_STREAM_S* pstStream, void* u)
   sprintf(name, "/tmp/snap_%02d_%01d.jpg", rsp->ch, rsp->sid);
   FILE* pFile = fopen(name, "wb");
   
-  for (i = 0; i < pstStream->u32PackCount; i++)
+  for (i = 0; i < venc_pack_count; i++)
   {
-    char *src = pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset;
-    int len = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;
+    char *src = venc_pack_addr + venc_pack_off;
+    int len = venc_pack_len - venc_pack_off;
     if(pFile)
     {
       //printf("len:%d, rsp->size:%d\n", len, rsp->size);

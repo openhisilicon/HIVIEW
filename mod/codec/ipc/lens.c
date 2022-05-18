@@ -27,13 +27,21 @@ int gsf_lens_init(gsf_lens_ini_t *ini)
   //#10-3, 10-4; IRCUT1
   system("himm 0x111F0030 0x401;himm 0x111F0034 0x401;echo 83 > /sys/class/gpio/export;echo 84 > /sys/class/gpio/export;");
   system("echo low > /sys/class/gpio/gpio83/direction;echo low > /sys/class/gpio/gpio84/direction");
+  
+  //night
+  //system("echo 0 > /sys/class/gpio/gpio83/value;echo 1 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio84/value");
+  //day
   system("echo 1 > /sys/class/gpio/gpio83/value;echo 0 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio83/value");
 
-  //#10-5, 6-6; IRCUT2
+  //#6-6 10-5; IRCUT2
   system("himm 0x10FF0018 0x0502;himm 0x111F0024 0x0600;echo 85 > /sys/class/gpio/export;echo 54 > /sys/class/gpio/export;");
   system("echo low > /sys/class/gpio/gpio85/direction;echo low > /sys/class/gpio/gpio54/direction");
-  system("echo 1 > /sys/class/gpio/gpio85/value;echo 0 > /sys/class/gpio/gpio54/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio85/value");
-
+  
+  //night
+  //system("echo 1 > /sys/class/gpio/gpio85/value;echo 0 > /sys/class/gpio/gpio54/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio85/value");
+  //day
+  system("echo 0 > /sys/class/gpio/gpio85/value;echo 1 > /sys/class/gpio/gpio54/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio54/value");
+  
   //#11-1 IRlamp out 0: open,  1: close;
   system("himm 0x112F00AC 0x0601;echo 89 > /sys/class/gpio/export;echo out > /sys/class/gpio/gpio89/direction;");
   system("echo 1 > /sys/class/gpio/gpio89/value;");
