@@ -232,7 +232,14 @@ static void *live_send_task(void *arg)
           printf("track %d ts:%u ms, size:%d, [%02X %02X %02X %02X]\n", j, timestamp, rec->size
                 , rec->data[0], rec->data[1], rec->data[2], rec->data[3]);
           
-          rtp_payload_encode_input(m->track[j].m_rtppacker, rec->data, rec->size, timestamp * sp /*kHz*/);
+          int skip = 0;
+          if(rec->type == GSF_FRM_AUDIO 
+            && (rec->audio.encode == GSF_ENC_G711A || rec->audio.encode == GSF_ENC_G711U))
+          {
+            skip = 4;
+          }
+          
+          rtp_payload_encode_input(m->track[j].m_rtppacker, rec->data+skip, rec->size-skip, timestamp * sp /*kHz*/);
           // SendRTP() used st_writev();
           // SendRTCP(&m->track[j]);
         }while(1);
@@ -351,9 +358,9 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   m->track[MEDIA_TRACK_VIDEO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
   m->track[MEDIA_TRACK_VIDEO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_VIDEO].m_reader);
   
-  printf("%s => get SDP ok. ch:%d, st:%d, video[shmid:%d, reader:%p, evfd:%d]\n" 
+  printf("%s => get SDP ok. ch:%d, st:%d, type:%d, video[shmid:%d, reader:%p, evfd:%d]\n" 
         , __func__
-        , m->ch, m->st
+        , m->ch, m->st, gsf_sdp->venc.type
         , gsf_sdp->video_shmid
         , m->track[MEDIA_TRACK_VIDEO].m_reader
         , m->track[MEDIA_TRACK_VIDEO].m_evfd);
@@ -367,18 +374,26 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
   uint32_t ssrc2 = rtp_ssrc();
   
   if(gsf_sdp->aenc.type == GSF_ENC_AAC)
+  {  
     m->track[MEDIA_TRACK_AUDIO].m_rtppacker = 
         rtp_payload_encode_create(RTP_PAYLOAD_MP4A, "mpeg4-generic", (uint16_t)ssrc2, ssrc2, &s_rtpfunc, &m->track[MEDIA_TRACK_AUDIO]);
+    m->track[MEDIA_TRACK_AUDIO].m_rtp = rtp_create(&event, NULL, ssrc2, ssrc2, 48000, 4*1024, 1);
+    rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.aac");
+  }
+  else if(gsf_sdp->aenc.type == GSF_ENC_G711A)
+  {
+    m->track[MEDIA_TRACK_AUDIO].m_rtppacker =
+        rtp_payload_encode_create(RTP_PAYLOAD_PCMA, "pcma", (uint16_t)ssrc2, ssrc2, &s_rtpfunc, &m->track[MEDIA_TRACK_AUDIO]);
+    m->track[MEDIA_TRACK_AUDIO].m_rtp = rtp_create(&event, NULL, ssrc2, ssrc2, 8000, 4*1024, 1);
+    rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.pcma");
+  }
   else
+  {  
     m->track[MEDIA_TRACK_AUDIO].m_rtppacker = 
         rtp_payload_encode_create(RTP_PAYLOAD_PCMU, "pcmu", (uint16_t)ssrc2, ssrc2, &s_rtpfunc, &m->track[MEDIA_TRACK_AUDIO]);
-
-	m->track[MEDIA_TRACK_AUDIO].m_rtp = rtp_create(&event, NULL, ssrc2, ssrc2, 48000, 4*1024, 1);
-	
-	if(gsf_sdp->aenc.type == GSF_ENC_AAC)
-	  rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.aac");
-	else
-	  rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.pcmu");
+    m->track[MEDIA_TRACK_AUDIO].m_rtp = rtp_create(&event, NULL, ssrc2, ssrc2, 8000, 4*1024, 1);
+    rtp_set_info(m->track[MEDIA_TRACK_AUDIO].m_rtp, "RTSPServer", "live.pcmu");
+  }
   
   m->track[MEDIA_TRACK_AUDIO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->audio_shmid);
   m->track[MEDIA_TRACK_AUDIO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_AUDIO].m_reader);
@@ -414,8 +429,10 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
     
     if(gsf_sdp->aenc.type == GSF_ENC_AAC)
       snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_MP4A, RTP_PAYLOAD_MP4A, "mpeg4-generic",48000, 2);
+    else if(gsf_sdp->aenc.type == GSF_ENC_G711A)
+      snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMA, RTP_PAYLOAD_PCMU, "PCMA", 8000, 1);
     else 	
-      snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, "PCMU", 8000, 2);
+      snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, "PCMU", 8000, 1);
 
     strcat(sdp, media);
     

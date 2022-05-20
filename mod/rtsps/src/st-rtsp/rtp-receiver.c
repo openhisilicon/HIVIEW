@@ -161,7 +161,7 @@ static int rtp_receiver(struct rtp_context_t* ctx, st_netfd_t rtp[2], int timeou
       }
     }
     
-    #if 1 // io-collect
+    #if 0 // io-collect
     st_usleep(40*1000);
     #endif
 	}
