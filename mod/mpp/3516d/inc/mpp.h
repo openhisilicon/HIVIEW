@@ -18,7 +18,6 @@ typedef struct {
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
 
-
 //vi;
 typedef struct {
   HI_BOOL bLowDelay;
@@ -113,6 +112,12 @@ typedef struct {
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc);
 int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc);
 
+typedef struct {
+  int(*cb)(VENC_STREAM_S* pstStream, void* u);
+  void* u;
+}gsf_mpp_venc_get_t;
+//HI_MPI_VENC_SendFrame(VENC_CHN VeChn, const VIDEO_FRAME_INFO_S *pstFrame, HI_S32 s32MilliSec);
+int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, gsf_mpp_venc_get_t *get);
 
 typedef struct {
   HI_S32 s32Cnt;
@@ -371,7 +376,6 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src);
 //audio ao_bind_ai;
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 
-
 //设置通道源图像裁剪区域(用于局部放大)
 int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
@@ -380,7 +384,6 @@ int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
 
 //设置VO通道显示区域(位置&大小);
 int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority);
-
 
 
 //private for mpp;

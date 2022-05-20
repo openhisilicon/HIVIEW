@@ -19,6 +19,10 @@
 
 #include "hi_resampler_api.h"
 
+#if defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
+#include "hi_vqe_register_api.h"
+#endif
+
 #ifndef __Mp3decSupport__
     static PAYLOAD_TYPE_E gs_enPayloadType = PT_AAC;
 #else
@@ -299,10 +303,13 @@ HI_S32 SAMPLE_COMM_AUDIO_DestoryTrdAiExtRes(AUDIO_DEV AiDev, AI_CHN AiChn)
     if (pstAi->bStart)
     {
         pstAi->bStart = HI_FALSE;
-        //pthread_cancel(pstAi->stAiPid);
         pthread_join(pstAi->stAiPid, 0);
     }
-    fclose(pstAi->pfd);
+
+    if (pstAi->pfd != HI_NULL) {
+        fclose(pstAi->pfd);
+        pstAi->pfd = HI_NULL;
+    }
 
     return HI_SUCCESS;
 }
@@ -331,11 +338,13 @@ static HI_VOID SAMPLE_AUDIO_AddLibPath(HI_VOID)
 ******************************************************************************/
 static HI_S32 SAMPLE_AUDIO_DeInitExtResFun(HI_VOID)
 {
+#if !defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
     if(HI_NULL != gs_stSampleResFun.pLibHandle)
     {
         Audio_Dlclose(gs_stSampleResFun.pLibHandle);
         memset(&gs_stSampleResFun, 0, sizeof(SAMPLE_RES_FUN_S));
     }
+#endif
 
     return HI_SUCCESS;
 }
@@ -358,6 +367,12 @@ static HI_S32 SAMPLE_AUDIO_InitExtResFun(HI_VOID)
 
     memset(&stSampleResFun, 0, sizeof(SAMPLE_RES_FUN_S));
 
+#if defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
+    stSampleResFun.pHI_Resampler_Create = HI_Resampler_Create;
+    stSampleResFun.pHI_Resampler_Process = HI_Resampler_Process;
+    stSampleResFun.pHI_Resampler_Destroy = HI_Resampler_Destroy;
+    stSampleResFun.pHI_Resampler_GetMaxOutputNum = HI_Resampler_GetMaxOutputNum;
+#else
     s32Ret = Audio_Dlopen(&(stSampleResFun.pLibHandle), RES_LIB_NAME);
     if(HI_SUCCESS != s32Ret)
     {
@@ -397,6 +412,7 @@ static HI_S32 SAMPLE_AUDIO_InitExtResFun(HI_VOID)
             __FUNCTION__, __LINE__, "find symbol error!\n");
         return HI_FAILURE;
     }
+#endif
 
     memcpy(&gs_stSampleResFun, &stSampleResFun, sizeof(SAMPLE_RES_FUN_S));
 
@@ -480,7 +496,7 @@ static FILE* SAMPLE_AUDIO_OpenAdecFile(ADEC_CHN AdChn, PAYLOAD_TYPE_E enType)
 /******************************************************************************
 * function : file -> Adec -> Ao
 ******************************************************************************/
-HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
+HI_S32 SAMPLE_AUDIO_AdecAo(gsf_mpp_frm_attr_t *attr)
 {
     HI_S32      s32Ret;
     AO_CHN      AoChn = 0;
@@ -502,7 +518,7 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
     stAioAttr.u32ClkSel      = 1;
     stAioAttr.enI2sType      = AIO_I2STYPE_EXTERN;
 #else
-    AUDIO_DEV   AoDev = SAMPLE_AUDIO_INNER_AO_DEV;
+    AUDIO_DEV   AoDev = SAMPLE_AUDIO_INNER_HDMI_AO_DEV;//SAMPLE_AUDIO_INNER_AO_DEV;
     stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
     stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
     stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
@@ -512,7 +528,7 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
     stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
     stAioAttr.u32ChnCnt      = 2;
     stAioAttr.u32ClkSel      = 0;
-    stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
+    stAioAttr.enI2sType      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?AIO_I2STYPE_INNERCODEC:AIO_I2STYPE_INNERHDMI;
 #endif
 
     gs_bAioReSample = HI_FALSE;
@@ -548,6 +564,11 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
         goto ADECAO_ERR1;
     }
 
+    //maohw
+    if(attr)
+      return s32Ret;
+
+
     pfd = SAMPLE_AUDIO_OpenAdecFile(AdChn, gs_enPayloadType);
     if (!pfd)
     {
@@ -557,6 +578,8 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
     s32Ret = SAMPLE_COMM_AUDIO_CreatTrdFileAdec(AdChn, pfd);
     if (s32Ret != HI_SUCCESS)
     {
+        fclose(pfd);
+        pfd = HI_NULL;
         SAMPLE_DBG(s32Ret);
         goto ADECAO_ERR0;
     }
@@ -799,6 +822,8 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
         s32Ret = SAMPLE_COMM_AUDIO_CreatTrdAencAdec(AeChn, AdChn, pfd);
         if (s32Ret != HI_SUCCESS)
         {
+            fclose(pfd);
+            pfd = HI_NULL;
             SAMPLE_DBG(s32Ret);
             goto AIAENC_ERR1;
         }
@@ -1039,7 +1064,7 @@ HI_S32 SAMPLE_AUDIO_AiToExtResample(HI_VOID)
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
-        goto AIRES_ERR4;
+        goto AIRES_ERR3;
     }
 
     /********************************************
@@ -1049,7 +1074,7 @@ HI_S32 SAMPLE_AUDIO_AiToExtResample(HI_VOID)
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
-        goto AIRES_ERR3;
+        goto AIRES_ERR2;
     }
 
     /********************************************
@@ -1059,7 +1084,7 @@ HI_S32 SAMPLE_AUDIO_AiToExtResample(HI_VOID)
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
-        goto AIRES_ERR3;
+        goto AIRES_ERR2;
     }
 
     /********************************************
@@ -1073,13 +1098,15 @@ HI_S32 SAMPLE_AUDIO_AiToExtResample(HI_VOID)
         if (!pfd)
         {
             SAMPLE_DBG(HI_FAILURE);
-            goto AIRES_ERR2;
+            goto AIRES_ERR1;
         }
 
         s32Ret = SAMPLE_COMM_AUDIO_CreatTrdAiExtRes(&stAioAttr, AiDev, AiChn, enOutSampleRate, pfd);
         if (s32Ret != HI_SUCCESS)
         {
             SAMPLE_DBG(s32Ret);
+            fclose(pfd);
+            pfd = HI_NULL;
             for (j=0; j<i; j++)
             {
                 SAMPLE_COMM_AUDIO_DestoryTrdAi(AiDev, j);
@@ -1097,7 +1124,6 @@ HI_S32 SAMPLE_AUDIO_AiToExtResample(HI_VOID)
     /********************************************
       step 5: exit the process
     ********************************************/
-AIRES_ERR1:
     for (i = 0; i < s32AiChnCnt; i++)
     {
         AiChn = i;
@@ -1109,21 +1135,21 @@ AIRES_ERR1:
         }
     }
 
-AIRES_ERR2:
+AIRES_ERR1:
     s32Ret |= SAMPLE_AUDIO_DeInitExtResFun();
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
     }
 
-AIRES_ERR3:
+AIRES_ERR2:
     s32Ret |= SAMPLE_COMM_AUDIO_StopAi(AiDev, s32AiChnCnt, gs_bAioReSample, HI_FALSE);
     if (s32Ret != HI_SUCCESS)
     {
         SAMPLE_DBG(s32Ret);
     }
 
-AIRES_ERR4:
+AIRES_ERR3:
 
     return s32Ret;
 }
@@ -1708,6 +1734,15 @@ void SAMPLE_AUDIO_HandleSig(HI_S32 signo)
 
     if (SIGINT == signo || SIGTERM == signo)
     {
+        hi_u32 dev_id, chn_id;
+        for (dev_id = 0; dev_id < AI_DEV_MAX_NUM; dev_id ++) {
+            for (chn_id = 0; chn_id < AI_MAX_CHN_NUM; chn_id ++) {
+                if (SAMPLE_COMM_AUDIO_DestoryTrdAiExtRes(dev_id, chn_id) != HI_SUCCESS) {
+                    printf("%s: SAMPLE_COMM_AUDIO_DestoryTrdAiExtRes(%d,%d) failed!\n", __FUNCTION__,
+                        dev_id, chn_id);
+                }
+            }
+        }
 
         SAMPLE_COMM_AUDIO_DestoryAllTrd();
         SAMPLE_COMM_SYS_Exit();
@@ -1716,6 +1751,38 @@ void SAMPLE_AUDIO_HandleSig(HI_S32 signo)
 
     exit(0);
 }
+
+#if defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
+/******************************************************************************
+* function : to register vqe module
+******************************************************************************/
+HI_S32 SAMPLE_AUDIO_RegisterVQEModule(HI_VOID)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    AUDIO_VQE_REGISTER_S stVqeRegCfg = {0};
+
+    /* Resample */
+    stVqeRegCfg.stResModCfg.pHandle = HI_VQE_RESAMPLE_GetHandle();
+
+    /* RecordVQE */
+    stVqeRegCfg.stRecordModCfg.pHandle = HI_VQE_RECORD_GetHandle();
+
+    /* TalkVQE */
+    stVqeRegCfg.stHpfModCfg.pHandle = HI_VQE_HPF_GetHandle();
+    stVqeRegCfg.stAecModCfg.pHandle = HI_VQE_AEC_GetHandle();
+    stVqeRegCfg.stAgcModCfg.pHandle = HI_VQE_AGC_GetHandle();
+    stVqeRegCfg.stAnrModCfg.pHandle = HI_VQE_ANR_GetHandle();
+    stVqeRegCfg.stEqModCfg.pHandle = HI_VQE_EQ_GetHandle();
+
+    s32Ret = HI_MPI_AUDIO_RegisterVQEModule(&stVqeRegCfg);
+    if (s32Ret != HI_SUCCESS) {
+        printf("%s: register vqe module fail with s32Ret = 0x%x!\n", __FUNCTION__, s32Ret);
+        return HI_FAILURE;
+    }
+
+    return HI_SUCCESS;
+}
+#endif
 
 /******************************************************************************
 * function : main
@@ -1756,6 +1823,10 @@ HI_S32 sample_audio_main(int argc, char* argv[])
     signal(SIGTERM, SAMPLE_AUDIO_HandleSig);
 #endif
 
+#if defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
+    SAMPLE_AUDIO_RegisterVQEModule();
+#endif
+
     memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
     s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
     if (HI_SUCCESS != s32Ret)
@@ -1788,7 +1859,7 @@ HI_S32 sample_audio_main(int argc, char* argv[])
         }
         case 2:
         {
-            SAMPLE_AUDIO_AdecAo();
+            SAMPLE_AUDIO_AdecAo(NULL);
             break;
         }
         case 3:
@@ -1829,6 +1900,9 @@ HI_S32 sample_audio_main(int argc, char* argv[])
 
 HI_S32 sample_audio_init()
 {
+#if defined(HI_VQE_USE_STATIC_MODULE_REGISTER)
+    SAMPLE_AUDIO_RegisterVQEModule();
+#endif
   SAMPLE_AUDIO_AddLibPath();
 
   HI_MPI_AENC_AacInit();

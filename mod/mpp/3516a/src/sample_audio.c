@@ -34,6 +34,7 @@ static HI_BOOL gs_bUserGetMode  = HI_FALSE;
 static HI_BOOL gs_bAoVolumeCtrl = HI_FALSE;
 AUDIO_SAMPLE_RATE_E enInSampleRate  = AUDIO_SAMPLE_RATE_BUTT;
 static AUDIO_SAMPLE_RATE_E enOutSampleRate = AUDIO_SAMPLE_RATE_BUTT;
+
 /* 0: close, 1: record*/
 static HI_U32 u32AiVqeType = 1;
 
@@ -495,7 +496,7 @@ static FILE* SAMPLE_AUDIO_OpenAdecFile(ADEC_CHN AdChn, PAYLOAD_TYPE_E enType)
 /******************************************************************************
 * function : file -> Adec -> Ao
 ******************************************************************************/
-HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
+HI_S32 SAMPLE_AUDIO_AdecAo(gsf_mpp_frm_attr_t *attr)
 {
     HI_S32      s32Ret;
     AO_CHN      AoChn = 0;
@@ -517,7 +518,7 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
     stAioAttr.u32ClkSel      = 1;
     stAioAttr.enI2sType      = AIO_I2STYPE_EXTERN;
 #else
-    AUDIO_DEV   AoDev = SAMPLE_AUDIO_INNER_AO_DEV;
+    AUDIO_DEV   AoDev = SAMPLE_AUDIO_INNER_HDMI_AO_DEV;//SAMPLE_AUDIO_INNER_AO_DEV;
     stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
     stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
     stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
@@ -526,8 +527,8 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
     stAioAttr.u32FrmNum      = 30;
     stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
     stAioAttr.u32ChnCnt      = 2;
-    stAioAttr.u32ClkSel      = 1;
-    stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
+    stAioAttr.u32ClkSel      = 0;
+    stAioAttr.enI2sType      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?AIO_I2STYPE_INNERCODEC:AIO_I2STYPE_INNERHDMI;
 #endif
 
     gs_bAioReSample = HI_FALSE;
@@ -562,6 +563,11 @@ HI_S32 SAMPLE_AUDIO_AdecAo(HI_VOID)
         SAMPLE_DBG(s32Ret);
         goto ADECAO_ERR1;
     }
+
+    //maohw
+    if(attr)
+      return s32Ret;
+
 
     pfd = SAMPLE_AUDIO_OpenAdecFile(AdChn, gs_enPayloadType);
     if (!pfd)
@@ -649,14 +655,14 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
 #else
     AUDIO_DEV   AiDev = SAMPLE_AUDIO_INNER_AI_DEV;
     AUDIO_DEV   AoDev = SAMPLE_AUDIO_INNER_AO_DEV;
-    stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
+    stAioAttr.enSamplerate   = aenc->sp;//AUDIO_SAMPLE_RATE_48000;
     stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
     stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
-    stAioAttr.enSoundmode    = AUDIO_SOUND_MODE_STEREO;
+    stAioAttr.enSoundmode    = aenc->stereo;//AUDIO_SOUND_MODE_STEREO;
     stAioAttr.u32EXFlag      = 0;
     stAioAttr.u32FrmNum      = 30;
-    stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
-    stAioAttr.u32ChnCnt      = 2;
+    stAioAttr.u32PtNumPerFrm = (aenc->enPayLoad==PT_AAC)?AACLC_SAMPLES_PER_FRAME:80*6;//AACLC_SAMPLES_PER_FRAME;
+    stAioAttr.u32ChnCnt      = 1<<aenc->stereo;
     stAioAttr.u32ClkSel      = 0;
     stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
 #endif
@@ -668,6 +674,10 @@ HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc)
     // for RECORDVQE;
     AI_RECORDVQE_CONFIG_S stAiVqeRecordAttr;
     HI_VOID     *pAiVqeAttr = NULL;
+    
+    //maohw;
+    gs_enPayloadType = aenc->enPayLoad;
+    u32AiVqeType = stAioAttr.enSoundmode;
     
     if (1 == u32AiVqeType)
     {
@@ -948,14 +958,14 @@ HI_S32 SAMPLE_AUDIO_AiAencStop(gsf_mpp_aenc_t *aenc)
 #else
     AUDIO_DEV   AiDev = SAMPLE_AUDIO_INNER_AI_DEV;
     AUDIO_DEV   AoDev = SAMPLE_AUDIO_INNER_AO_DEV;
-    stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
+    stAioAttr.enSamplerate   = aenc->sp;//AUDIO_SAMPLE_RATE_48000;
     stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
     stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
-    stAioAttr.enSoundmode    = AUDIO_SOUND_MODE_STEREO;
+    stAioAttr.enSoundmode    = aenc->stereo;//AUDIO_SOUND_MODE_STEREO;
     stAioAttr.u32EXFlag      = 0;
     stAioAttr.u32FrmNum      = 30;
-    stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
-    stAioAttr.u32ChnCnt      = 2;
+    stAioAttr.u32PtNumPerFrm = (aenc->enPayLoad==PT_AAC)?AACLC_SAMPLES_PER_FRAME:80*6;//AACLC_SAMPLES_PER_FRAME;
+    stAioAttr.u32ChnCnt      = 1<<aenc->stereo;
     stAioAttr.u32ClkSel      = 0;
     stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
 #endif
@@ -1040,7 +1050,7 @@ HI_S32 SAMPLE_AUDIO_AiToExtResample(HI_VOID)
     stAioAttr.u32FrmNum      = 30;
     stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
     stAioAttr.u32ChnCnt      = 1;
-    stAioAttr.u32ClkSel      = 1;
+    stAioAttr.u32ClkSel      = 0;
     stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
 #endif
     gs_bAioReSample = HI_FALSE;
@@ -1181,7 +1191,7 @@ HI_S32 SAMPLE_AUDIO_AiAo(HI_VOID)
     stAioAttr.u32FrmNum      = 30;
     stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
     stAioAttr.u32ChnCnt      = 2;
-    stAioAttr.u32ClkSel      = 1;
+    stAioAttr.u32ClkSel      = 0;
     stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
 #endif
 
@@ -1351,7 +1361,7 @@ HI_S32 SAMPLE_AUDIO_AiToAoSysChn(HI_VOID)
     stAioAttr.u32FrmNum      = 30;
     stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
     stAioAttr.u32ChnCnt      = 2;
-    stAioAttr.u32ClkSel      = 1;
+    stAioAttr.u32ClkSel      = 0;
     stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
 #endif
     gs_bAioReSample = HI_FALSE;
@@ -1475,13 +1485,13 @@ HI_S32 SAMPLE_AUDIO_AiVqeProcessAo(HI_VOID)
     stAioAttr.u32FrmNum      = 30;
     stAioAttr.u32PtNumPerFrm = SAMPLE_AUDIO_PTNUMPERFRM;
     stAioAttr.u32ChnCnt      = 2;
-    stAioAttr.u32ClkSel      = 1;
+    stAioAttr.u32ClkSel      = 0;
     stAioAttr.enI2sType      = AIO_I2STYPE_INNERCODEC;
 #endif
     gs_bAioReSample = HI_FALSE;
     enInSampleRate  = AUDIO_SAMPLE_RATE_BUTT;
     enOutSampleRate = AUDIO_SAMPLE_RATE_BUTT;
-
+    
     if (1 == u32AiVqeType)
     {
         memset(&stAiVqeRecordAttr, 0, sizeof(AI_RECORDVQE_CONFIG_S));
@@ -1489,8 +1499,8 @@ HI_S32 SAMPLE_AUDIO_AiVqeProcessAo(HI_VOID)
         stAiVqeRecordAttr.s32FrameSample       = SAMPLE_AUDIO_PTNUMPERFRM;
         stAiVqeRecordAttr.enWorkstate          = VQE_WORKSTATE_COMMON;
         stAiVqeRecordAttr.s32InChNum           = 2;
-        stAiVqeRecordAttr.s32OutChNum           = 2;
-        stAiVqeRecordAttr.enRecordType           = VQE_RECORD_NORMAL;
+        stAiVqeRecordAttr.s32OutChNum          = 2;
+        stAiVqeRecordAttr.enRecordType         = VQE_RECORD_NORMAL;
         stAiVqeRecordAttr.stDrcCfg.bUsrMode    = HI_FALSE;
         stAiVqeRecordAttr.stRnrCfg.bUsrMode    = HI_FALSE;
         stAiVqeRecordAttr.stHdrCfg.bUsrMode    = HI_FALSE;
@@ -1622,7 +1632,7 @@ HI_S32 SAMPLE_AUDIO_AiHdmiAo(HI_VOID)
     stAioAttr.u32FrmNum      = 30;
     stAioAttr.u32PtNumPerFrm = SAMPLE_AUDIO_PTNUMPERFRM;
     stAioAttr.u32ChnCnt      = 2;
-    stAioAttr.u32ClkSel      = 1;
+    stAioAttr.u32ClkSel      = 0;
 
     stHdmiAoAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
     stHdmiAoAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
@@ -1672,6 +1682,7 @@ HI_S32 SAMPLE_AUDIO_AiHdmiAo(HI_VOID)
         return HI_FAILURE;
     }
 
+    return 0;
     printf("\nplease press twice ENTER to exit this sample\n");
     getchar();
     getchar();
@@ -1848,7 +1859,7 @@ HI_S32 sample_audio_main(int argc, char* argv[])
         }
         case 2:
         {
-            SAMPLE_AUDIO_AdecAo();
+            SAMPLE_AUDIO_AdecAo(NULL);
             break;
         }
         case 3:

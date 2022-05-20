@@ -268,7 +268,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   	
   if(cfg && cfg->snscnt > 0)
     return gsf_mpp_cfg_sns(path, cfg);
-  else
+  else  
     return gsf_mpp_cfg_vdec(path, cfg);
 }
 
@@ -392,6 +392,8 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   
   mppex_hook_vpss_ee(vpss);
   
+
+  
   return s32Ret;
   
 EXIT_VPSS_STOP:
@@ -404,6 +406,8 @@ EXIT_VI_STOP:
 int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
 {
   HI_S32 s32Ret = 0;
+  
+
   
   //SAMPLE_VI_CONFIG_S stViConfig;
   //memset(&stViConfig, 0, sizeof(stViConfig));
@@ -425,16 +429,45 @@ int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
   {
     case GSF_MPP_VPSS_CTL_PAUSE:
       ret = HI_MPI_VPSS_StopGrp(VpssGrp);
-      printf("HI_MPI_VPSS_StopGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_PAUSE VpssGrp:%d, err 0x%x\n", VpssGrp, ret);    
       break;
-    case GSF_MPP_VPSS_CTL_RESUM:
+    case GSF_MPP_VPSS_CTL_RESUM:  
       ret = HI_MPI_VPSS_StartGrp(VpssGrp);
-      printf("HI_MPI_VPSS_StartGrp VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      if(ret)  
+        printf("GSF_MPP_VPSS_CTL_RESUM VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
       break;
     case GSF_MPP_VPSS_CTL_CROP:
       ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, (VPSS_CROP_INFO_S*)args);
       if(ret)
-        printf("HI_MPI_VPSS_SetGrpCrop VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+        printf("GSF_MPP_VPSS_CTL_CROP VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_ASPECT:
+      {
+        int i = 0;
+        VPSS_CHN_ATTR_S stChnAttr;
+    
+        for(i = 0; i < 2; i++)
+        {
+          if(HI_MPI_VPSS_GetChnAttr(VpssGrp, i, &stChnAttr) == HI_SUCCESS)
+          {
+            stChnAttr.stAspectRatio = *((ASPECT_RATIO_S*)args);
+            ret = HI_MPI_VPSS_SetChnAttr(VpssGrp, i, &stChnAttr);
+            if(ret)
+              printf("GSF_MPP_VPSS_CTL_ASPECT VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, i, ret);
+          }
+        }
+      }
+      break;
+    case  GSF_MPP_VPCH_CTL_ENABLE:
+      ret = HI_MPI_VPSS_EnableChn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_ENABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPCH_CTL_DISABLE:
+      ret = HI_MPI_VPSS_DisableChn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_DISABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
       break;
   }
   return ret;
@@ -501,6 +534,70 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
   SAMPLE_COMM_VENC_Stop(venc->VencChn);
   return s32Ret;
 }
+int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, gsf_mpp_venc_get_t *get)
+{
+  int ret = 0;
+  
+  if(!pstFrame)
+    return -1;
+    
+  /*
+  设置编码器属性中通道宽高属性时,需要首先停止编码通道接收输入图像;
+  通道宽高设置后通道的优先级并不会恢复默认,
+  编码通道的其它所有参数配置恢复默认值,关闭OSD,并且清空码流buffer和缓存图像队列;
+  */
+
+  VENC_CHN_ATTR_S stChnAttr;
+  
+  ret = HI_MPI_VENC_GetChnAttr(VeChn, &stChnAttr);
+  if(ret != 0)
+    return -1;
+
+  if(pstFrame->stVFrame.u32Width > stChnAttr.stVencAttr.u32MaxPicWidth
+    || pstFrame->stVFrame.u32Height > stChnAttr.stVencAttr.u32MaxPicHeight)
+    return -1;
+    
+  if(get && get->cb)
+  {
+    stChnAttr.stVencAttr.u32PicWidth = pstFrame->stVFrame.u32Width;
+    stChnAttr.stVencAttr.u32PicHeight = pstFrame->stVFrame.u32Height;
+    ret = HI_MPI_VENC_SetChnAttr(VeChn, &stChnAttr);
+    
+    VENC_RECV_PIC_PARAM_S  stRecvParam;
+    stRecvParam.s32RecvPicNum = 1;
+    ret = HI_MPI_VENC_StartRecvFrame(VeChn, &stRecvParam);
+ 
+    ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
+ 
+    VENC_STREAM_S stStream;
+    ret = HI_MPI_VENC_GetStream(VeChn, &stStream, s32MilliSec);
+    if(ret == 0)
+    {
+      get->cb(&stStream, get->u);
+    }
+    ret = HI_MPI_VENC_StopRecvFrame(VeChn);
+    return ret;
+  }
+    
+  if(pstFrame->stVFrame.u32Width != stChnAttr.stVencAttr.u32PicWidth
+    || pstFrame->stVFrame.u32Height != stChnAttr.stVencAttr.u32PicHeight)
+  {
+    ret = HI_MPI_VENC_StopRecvFrame(VeChn);
+    
+    stChnAttr.stVencAttr.u32PicWidth = pstFrame->stVFrame.u32Width;
+    stChnAttr.stVencAttr.u32PicHeight = pstFrame->stVFrame.u32Height;
+    ret = HI_MPI_VENC_SetChnAttr(VeChn, &stChnAttr);
+    
+    VENC_RECV_PIC_PARAM_S  stRecvParam;
+    stRecvParam.s32RecvPicNum = -1;
+    ret = HI_MPI_VENC_StartRecvFrame(VeChn, &stRecvParam);
+  }
+  ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
+  return ret;
+}
+
+
+
 
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
 {
@@ -1173,6 +1270,7 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   return ret;
 }
 
+static gsf_mpp_aenc_t _aenc;
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
   static int init = 0;
@@ -1193,6 +1291,8 @@ int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
   else
   {
     extern HI_S32 SAMPLE_AUDIO_AiAenc(gsf_mpp_aenc_t *aenc);
+    
+    _aenc = *aenc;
     return SAMPLE_AUDIO_AiAenc(aenc);
   }
   return 0;
@@ -1374,6 +1474,7 @@ END2:
     return s32Ret;
 }
 
+
 int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
 {
     char loadstr[64];
@@ -1511,6 +1612,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     SAMPLE_VDEC_INIT((sync==VO_OUTPUT_1080P60)?4:1);
 
     mppex_hook_vo(sync);
+    
     return s32Ret;
 }
 
@@ -1845,14 +1947,41 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 
 int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 {
-  //audio dec bind vo;
-  return 0;
+
+  HI_S32 s32Ret = 0;
+  static gsf_mpp_frm_attr_t _attr = {.etype = PT_BUTT, };
+  
+  if(_attr.etype != attr->etype)
+  {
+    //reset;
+    _attr = *attr;
+    SAMPLE_AUDIO_AdecAo(attr);
+  }
+  
+  HI_S32 adch = 0;
+  AUDIO_STREAM_S stAudioStream;
+  stAudioStream.pStream = data;
+  stAudioStream.u32Len = attr->size;
+  stAudioStream.u64TimeStamp = 0;
+  stAudioStream.u32Seq = 0;
+  
+  /* here only demo adec streaming sending mode, but pack sending mode is commended */
+  s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, 0);
+  if (HI_SUCCESS != s32Ret)
+  {
+    printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \
+           __FUNCTION__, adch, stAudioStream.u32Len);
+  }
+  else
+  {
+    //printf("%s: HI_MPI_ADEC_SendStream(%d) OK u32Len:%d, u64TimeStamp:%llu\n", \
+    //       __FUNCTION__, adch, stAudioStream.u32Len, stAudioStream.u64TimeStamp);
+  }
+
+  return s32Ret;
 }
 
 #include "audio_aac_adp.h"
-//from sample_audio.c;
-extern HI_BOOL gs_bAioReSample;
-extern AUDIO_SAMPLE_RATE_E enInSampleRate;
 
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
 {
@@ -1866,20 +1995,27 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   
   AUDIO_DEV   AiDev = aidev;//SAMPLE_AUDIO_INNER_AI_DEV;
   AUDIO_DEV   AoDev = aodev;//SAMPLE_AUDIO_INNER_AO_DEV; SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
+
+  HI_BOOL bAioReSample = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?0:
+                         (_aenc.sp != AUDIO_SAMPLE_RATE_48000)?1:0;
+  AUDIO_SAMPLE_RATE_E enInSampleRate = _aenc.sp;
   
-  stAioAttr.enSamplerate   = AUDIO_SAMPLE_RATE_48000;
+  if(bAioReSample && AoDev != SAMPLE_AUDIO_INNER_AO_DEV)
+    return 0;
+
+  stAioAttr.enSamplerate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_aenc.sp:AUDIO_SAMPLE_RATE_48000;
   stAioAttr.enBitwidth     = AUDIO_BIT_WIDTH_16;
   stAioAttr.enWorkmode     = AIO_MODE_I2S_MASTER;
-  stAioAttr.enSoundmode    = AUDIO_SOUND_MODE_STEREO;
+  stAioAttr.enSoundmode    = _aenc.stereo;//AUDIO_SOUND_MODE_STEREO;
   stAioAttr.u32EXFlag      = 0;
   stAioAttr.u32FrmNum      = 30;
-  stAioAttr.u32PtNumPerFrm = AACLC_SAMPLES_PER_FRAME;
-  stAioAttr.u32ChnCnt      = 2;
+  stAioAttr.u32PtNumPerFrm = (_aenc.enPayLoad==PT_AAC)?AACLC_SAMPLES_PER_FRAME:80*6;//AACLC_SAMPLES_PER_FRAME;
+  stAioAttr.u32ChnCnt      = 1<<_aenc.stereo;
   stAioAttr.u32ClkSel      = 0;
   stAioAttr.enI2sType      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?AIO_I2STYPE_INNERCODEC:AIO_I2STYPE_INNERHDMI;
 
   s32AoChnCnt = stAioAttr.u32ChnCnt;
-  s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, gs_bAioReSample);
+  s32Ret = SAMPLE_COMM_AUDIO_StartAo(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, bAioReSample);
   if (s32Ret != HI_SUCCESS)
   {
     printf("SAMPLE_COMM_AUDIO_StartAo err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
@@ -1896,7 +2032,7 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   return 0;
   
 __err:
-  s32Ret = SAMPLE_COMM_AUDIO_StopAo(AoDev, s32AoChnCnt, gs_bAioReSample);
+  s32Ret = SAMPLE_COMM_AUDIO_StopAo(AoDev, s32AoChnCnt, bAioReSample);
   if (s32Ret != HI_SUCCESS)
   {
     printf("SAMPLE_COMM_AUDIO_StopAo err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);

@@ -308,7 +308,8 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
 
       if(HI_TRUE == bLowDelay)
       {
-          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_ONLINE;//VI_ONLINE_VPSS_OFFLINE;//maohw VI_ONLINE_VPSS_ONLINE;
+          //Hi3516CV500 只有 VI PIPE0支持VI_ONLINE_VPSS_ONLINE 和 VI_ONLINE_VPSS_OFFLINE
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_OFFLINE;//maohw VI_ONLINE_VPSS_ONLINE;
       }
       else
       {

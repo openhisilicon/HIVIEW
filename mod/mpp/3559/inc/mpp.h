@@ -68,6 +68,9 @@ enum {
   GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
   GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(VpssGrp);
   GSF_MPP_VPSS_CTL_CROP  = 2, //HI_MPI_VPSS_SetGrpCrop(VpssGrp, VPSS_CROP_INFO_S *args);
+  GSF_MPP_VPSS_CTL_ASPECT = 3, //HI_MPI_VPSS_SetChnAttr(VpssGrp, ASPECT_RATIO_S *args);
+  GSF_MPP_VPCH_CTL_ENABLE = 4, //HI_MPI_VPSS_EnableChn(VpssGrp, VpssChn *args);
+  GSF_MPP_VPCH_CTL_DISABLE= 5, //HI_MPI_VPSS_DisableChn(VpssGrp, VpssChn *args);
 };
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
@@ -109,6 +112,12 @@ typedef struct {
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc);
 int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc);
 
+typedef struct {
+  int(*cb)(VENC_STREAM_S* pstStream, void* u);
+  void* u;
+}gsf_mpp_venc_get_t;
+//HI_MPI_VENC_SendFrame(VENC_CHN VeChn, const VIDEO_FRAME_INFO_S *pstFrame, HI_S32 s32MilliSec);
+int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, gsf_mpp_venc_get_t *get);
 
 typedef struct {
   HI_S32 s32Cnt;
@@ -237,9 +246,9 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
 typedef struct {
   int AeChn;
-  PAYLOAD_TYPE_E enPayLoad;
+  PAYLOAD_TYPE_E enPayLoad; // PT;
   int adtype; // 0:INNER, 1:I2S, 2:PCM;
-  int stereo, sp, br;//channels, sampleRate, bitRate;
+  int stereo, sp, br;//stereo, sampleRate, bitRate;
   void *uargs;
   int (*cb)(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 }gsf_mpp_aenc_t;
@@ -367,7 +376,6 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src);
 //audio ao_bind_ai;
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 
-
 //设置通道源图像裁剪区域(用于局部放大)
 int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
 
@@ -376,7 +384,6 @@ int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
 
 //设置VO通道显示区域(位置&大小);
 int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority);
-
 
 
 //private for mpp;

@@ -252,7 +252,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   	
   if(cfg && cfg->snscnt > 0)
     return gsf_mpp_cfg_sns(path, cfg);
-  else
+  else  
     return gsf_mpp_cfg_vdec(path, cfg);
 }
 
@@ -375,6 +375,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   }
   
   mppex_hook_vpss_ee(vpss);
+
   
   return s32Ret;
   
@@ -388,6 +389,8 @@ EXIT_VI_STOP:
 int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
 {
   HI_S32 s32Ret = 0;
+  
+
   
   //SAMPLE_VI_CONFIG_S stViConfig;
   //memset(&stViConfig, 0, sizeof(stViConfig));
@@ -514,6 +517,70 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
   SAMPLE_COMM_VENC_Stop(venc->VencChn);
   return s32Ret;
 }
+int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, gsf_mpp_venc_get_t *get)
+{
+  int ret = 0;
+  
+  if(!pstFrame)
+    return -1;
+    
+  /*
+  设置编码器属性中通道宽高属性时,需要首先停止编码通道接收输入图像;
+  通道宽高设置后通道的优先级并不会恢复默认,
+  编码通道的其它所有参数配置恢复默认值,关闭OSD,并且清空码流buffer和缓存图像队列;
+  */
+
+  VENC_CHN_ATTR_S stChnAttr;
+  
+  ret = HI_MPI_VENC_GetChnAttr(VeChn, &stChnAttr);
+  if(ret != 0)
+    return -1;
+
+  if(pstFrame->stVFrame.u32Width > stChnAttr.stVencAttr.u32MaxPicWidth
+    || pstFrame->stVFrame.u32Height > stChnAttr.stVencAttr.u32MaxPicHeight)
+    return -1;
+    
+  if(get && get->cb)
+  {
+    stChnAttr.stVencAttr.u32PicWidth = pstFrame->stVFrame.u32Width;
+    stChnAttr.stVencAttr.u32PicHeight = pstFrame->stVFrame.u32Height;
+    ret = HI_MPI_VENC_SetChnAttr(VeChn, &stChnAttr);
+    
+    VENC_RECV_PIC_PARAM_S  stRecvParam;
+    stRecvParam.s32RecvPicNum = 1;
+    ret = HI_MPI_VENC_StartRecvFrame(VeChn, &stRecvParam);
+ 
+    ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
+ 
+    VENC_STREAM_S stStream;
+    ret = HI_MPI_VENC_GetStream(VeChn, &stStream, s32MilliSec);
+    if(ret == 0)
+    {
+      get->cb(&stStream, get->u);
+    }
+    ret = HI_MPI_VENC_StopRecvFrame(VeChn);
+    return ret;
+  }
+    
+  if(pstFrame->stVFrame.u32Width != stChnAttr.stVencAttr.u32PicWidth
+    || pstFrame->stVFrame.u32Height != stChnAttr.stVencAttr.u32PicHeight)
+  {
+    ret = HI_MPI_VENC_StopRecvFrame(VeChn);
+    
+    stChnAttr.stVencAttr.u32PicWidth = pstFrame->stVFrame.u32Width;
+    stChnAttr.stVencAttr.u32PicHeight = pstFrame->stVFrame.u32Height;
+    ret = HI_MPI_VENC_SetChnAttr(VeChn, &stChnAttr);
+    
+    VENC_RECV_PIC_PARAM_S  stRecvParam;
+    stRecvParam.s32RecvPicNum = -1;
+    ret = HI_MPI_VENC_StartRecvFrame(VeChn, &stRecvParam);
+  }
+  ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
+  return ret;
+}
+
+
+
 
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
 {
@@ -1361,8 +1428,8 @@ static int SAMPLE_VDEC_INIT(HI_U32 u32VdecChnNum)
     for(i=0; i<u32VdecChnNum; i++)
     {
         astSampleVdec[i].enType                           = PT_H264;
-        astSampleVdec[i].u32Width                         = 1920;
-        astSampleVdec[i].u32Height                        = 1080;
+        astSampleVdec[i].u32Width                         = u32VdecChnNum>1?1920:3840;
+        astSampleVdec[i].u32Height                        = u32VdecChnNum>1?1080:2160;
         astSampleVdec[i].enMode                           = VIDEO_MODE_FRAME;
         astSampleVdec[i].stSapmleVdecVideo.enDecMode      = VIDEO_DEC_MODE_IP;//VIDEO_DEC_MODE_IPB;
         astSampleVdec[i].stSapmleVdecVideo.enBitWidth     = DATA_BITWIDTH_8;
@@ -1406,7 +1473,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
     step1:  init SYS, init common VB(for VPSS and VO)
     *************************************************/
     SIZE_S stDispSize;
-    PIC_SIZE_E enDispPicSize = PIC_1080P;
+    PIC_SIZE_E enDispPicSize = (cfg->res<=2)?PIC_1080P:PIC_3840x2160; 
     s32Ret =  SAMPLE_COMM_SYS_GetPicSize(enDispPicSize, &stDispSize);
     if(s32Ret != HI_SUCCESS)
     {
@@ -1419,7 +1486,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
     VB_CONFIG_S stVbConfig;
     memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
     stVbConfig.u32MaxPoolCnt             = 128;
-    stVbConfig.astCommPool[0].u32BlkCnt  = 10*4;
+    stVbConfig.astCommPool[0].u32BlkCnt  = (enDispPicSize == PIC_1080P)?10*4:10*1;
     stVbConfig.astCommPool[0].u64BlkSize = COMMON_GetPicBufferSize(stDispSize.u32Width, stDispSize.u32Height,
                                                 PIXEL_FORMAT_YVU_SEMIPLANAR_420, DATA_BITWIDTH_8, COMPRESS_MODE_SEG, 0);
     s32Ret = SAMPLE_COMM_SYS_Init(&stVbConfig);
@@ -1429,14 +1496,13 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
         goto END1;
     }
 
-    //move to gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
+    //moveto gsf_mpp_vo_start SAMPLE_VDEC_INIT(4);
     return 0;
   
 END1:
     SAMPLE_COMM_SYS_Exit();
   return s32Ret;
 }
-
 
 
 static int vo_csc()
@@ -1457,7 +1523,6 @@ static int vo_csc()
     }
   }
 }
-
 
 
 //启动视频输出设备;
@@ -1525,9 +1590,10 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
       }
     }
 
-    SAMPLE_VDEC_INIT(4);
+    SAMPLE_VDEC_INIT((sync==VO_OUTPUT_1080P60)?4:1);
 
     mppex_hook_vo(sync);
+    
     return s32Ret;
 }
 
@@ -1862,8 +1928,38 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 
 int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 {
-  //audio dec bind vo;
-  return 0;
+
+  HI_S32 s32Ret = 0;
+  static gsf_mpp_frm_attr_t _attr = {.etype = PT_BUTT, };
+  
+  if(_attr.etype != attr->etype)
+  {
+    //reset;
+    _attr = *attr;
+    SAMPLE_AUDIO_AdecAo(attr);
+  }
+  
+  HI_S32 adch = 0;
+  AUDIO_STREAM_S stAudioStream;
+  stAudioStream.pStream = data;
+  stAudioStream.u32Len = attr->size;
+  stAudioStream.u64TimeStamp = 0;
+  stAudioStream.u32Seq = 0;
+  
+  /* here only demo adec streaming sending mode, but pack sending mode is commended */
+  s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, 0);
+  if (HI_SUCCESS != s32Ret)
+  {
+    printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \
+           __FUNCTION__, adch, stAudioStream.u32Len);
+  }
+  else
+  {
+    //printf("%s: HI_MPI_ADEC_SendStream(%d) OK u32Len:%d, u64TimeStamp:%llu\n", \
+    //       __FUNCTION__, adch, stAudioStream.u32Len, stAudioStream.u64TimeStamp);
+  }
+
+  return s32Ret;
 }
 
 #include "audio_aac_adp.h"
@@ -1987,7 +2083,6 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
   s32Ret = SAMPLE_COMM_VPSS_Bind_VO(src->VpssGrp, src->VpssChn, volayer, ch);
   
   pthread_mutex_unlock(&vdev->lock);
-    
   return 0;
 }
 
@@ -2069,7 +2164,40 @@ int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect)
     return s32Ret;
 }
 
+int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority)
+{
+    HI_S32 s32Ret = HI_SUCCESS;
+    VO_CHN_ATTR_S stChnAttr;
+ 
+    vo_mng_t *vdev = &vo_mng[layer2vdev[volayer]];
+    
+    int l = vdev->layer[volayer].rect.s32X;
+    int t = vdev->layer[volayer].rect.s32Y;
+    int r = vdev->layer[volayer].rect.u32Width;
+    int b = vdev->layer[volayer].rect.u32Height;
+    
+    rect->s32X = (l+rect->s32X < r)?l+rect->s32X:l;
+    rect->s32Y = (t+rect->s32Y < b)?t+rect->s32Y:t;
+    rect->u32Width = (rect->s32X+rect->u32Width < r)?rect->u32Width:r-rect->s32X;
+    rect->u32Height= (rect->s32Y+rect->u32Height < b)?rect->u32Height:b-rect->s32Y;
+    
+    stChnAttr.stRect.s32X       = rect->s32X;
+    stChnAttr.stRect.s32Y       = rect->s32Y;
+    stChnAttr.stRect.u32Width   = rect->u32Width;
+    stChnAttr.stRect.u32Height  = rect->u32Height;
+    stChnAttr.u32Priority       = priority;
+    stChnAttr.bDeflicker        = HI_FALSE;
 
+    s32Ret = HI_MPI_VO_SetChnAttr(volayer, ch, &stChnAttr);
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("%s(%d):failed with %#x!\n", \
+               __FUNCTION__, __LINE__,  s32Ret);
+        return HI_FAILURE;
+    }
+    
+    return s32Ret;
+}
 
 
 static struct fb_bitfield s_r16 = {10, 5, 0};

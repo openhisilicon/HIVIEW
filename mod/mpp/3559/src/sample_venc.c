@@ -308,7 +308,8 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
 
       if(HI_TRUE == bLowDelay)
       {
-          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_ONLINE;
+          //Hi3516CV500 只有 VI PIPE0支持VI_ONLINE_VPSS_ONLINE 和 VI_ONLINE_VPSS_OFFLINE
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_OFFLINE;//maohw VI_ONLINE_VPSS_ONLINE;
       }
       else
       {
@@ -323,7 +324,7 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
       //pstViConfig->astViInfo[0].stChnInfo.enPixFormat        = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
       //pstViConfig->astViInfo[0].stChnInfo.enDynamicRange     = enDynamicRange;
       pstViConfig->astViInfo[i].stChnInfo.enVideoFormat      = VIDEO_FORMAT_LINEAR;
-      pstViConfig->astViInfo[i].stChnInfo.enCompressMode     = COMPRESS_MODE_SEG;//COMPRESS_MODE_SEG;
+      pstViConfig->astViInfo[i].stChnInfo.enCompressMode     = COMPRESS_MODE_SEG;//COMPRESS_MODE_NONE;//COMPRESS_MODE_SEG;
 	  }
 	  
     s32Ret = SAMPLE_VENC_SYS_Init(u32SupplementConfig,enSnsType);
@@ -429,7 +430,7 @@ HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RA
             stVpssChnAttr[i].u32Width                     = stSize[i].u32Width;
             stVpssChnAttr[i].u32Height                    = stSize[i].u32Height;
             stVpssChnAttr[i].enChnMode                    = VPSS_CHN_MODE_USER;
-            stVpssChnAttr[i].enCompressMode               = COMPRESS_MODE_NONE;//COMPRESS_MODE_SEG;
+            stVpssChnAttr[i].enCompressMode               = COMPRESS_MODE_NONE;//COMPRESS_MODE_SEG;//COMPRESS_MODE_NONE;
             stVpssChnAttr[i].enDynamicRange               = enDynamicRange;
             stVpssChnAttr[i].enPixelFormat                = enPixelFormat;
             stVpssChnAttr[i].stFrameRate.s32SrcFrameRate  = -1;
