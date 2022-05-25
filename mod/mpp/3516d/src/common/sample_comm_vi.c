@@ -3596,7 +3596,7 @@ HI_S32 SAMPLE_COMM_VI_StartViPipe(SAMPLE_VI_INFO_S* pstViInfo)
                 s32Ret = HI_MPI_VI_CreatePipe(ViPipe, &stPipeAttr);
                 if (s32Ret != HI_SUCCESS)
                 {
-                    SAMPLE_PRT("HI_MPI_VI_CreatePipe failed with %#x!\n", s32Ret);
+                    SAMPLE_PRT("HI_MPI_VI_CreatePipe ViPipe:%d, failed with %#x!\n", ViPipe, s32Ret);
                     goto EXIT;
                 }
             }
@@ -3605,7 +3605,7 @@ HI_S32 SAMPLE_COMM_VI_StartViPipe(SAMPLE_VI_INFO_S* pstViInfo)
                 s32Ret = HI_MPI_VI_CreatePipe(ViPipe, &stPipeAttr);
                 if (s32Ret != HI_SUCCESS)
                 {
-                    SAMPLE_PRT("HI_MPI_VI_CreatePipe failed with %#x!\n", s32Ret);
+                    SAMPLE_PRT("HI_MPI_VI_CreatePipe ViPipe:%d, failed with %#x!\n", ViPipe, s32Ret);
                     return HI_FAILURE;
                 }
 
@@ -3619,6 +3619,9 @@ HI_S32 SAMPLE_COMM_VI_StartViPipe(SAMPLE_VI_INFO_S* pstViInfo)
                         return HI_FAILURE;
                     }
                 }
+                
+                //SetPipeAttr;                
+                mppex_SetPipeAttr(ViPipe, &stPipeAttr);
 
                 s32Ret = HI_MPI_VI_StartPipe(ViPipe);
                 if (s32Ret != HI_SUCCESS)

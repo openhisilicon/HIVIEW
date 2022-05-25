@@ -283,7 +283,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
   }
 
-  mppex_hook_vi(&stViConfig);
+  mppex_hook_vi(&stViConfig, vi->bLowDelay);
 
   s32Ret = SAMPLE_VENC_VI_Init(&stViConfig, vi->bLowDelay,vi->u32SupplementConfig);
   if(s32Ret != HI_SUCCESS)
@@ -1481,7 +1481,7 @@ int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
         goto END1;
     }
 
-	  stDispSize.u32Height = (stDispSize.u32Height == 1080)?1088:stDispSize.u32Height;
+	  //stDispSize.u32Height = (stDispSize.u32Height == 1080)?1088:stDispSize.u32Height;
 
     VB_CONFIG_S stVbConfig;
     memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
@@ -1840,8 +1840,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       VPSS_CHN_ATTR_S stChnAttr = {0};
       
       /*** create vpss group ***/
-      stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  16);
-      stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 16);
+      stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  2);
+      stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 2);
       stGrpAttr.stFrameRate.s32SrcFrameRate = -1;
       stGrpAttr.stFrameRate.s32DstFrameRate = -1;
       stGrpAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -1851,8 +1851,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 
       
       /*** enable vpss chn, with frame ***/
-      stChnAttr.u32Width                    = ALIGN_UP(attr->width,  16);
-      stChnAttr.u32Height                   = ALIGN_UP(attr->height, 16);
+      stChnAttr.u32Width                    = ALIGN_UP(attr->width,  2);
+      stChnAttr.u32Height                   = ALIGN_UP(attr->height, 2);
       stChnAttr.enChnMode                   = VPSS_CHN_MODE_USER;//VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER - 1920x1088; //
       stChnAttr.enCompressMode              = COMPRESS_MODE_NONE;//; //COMPRESS_MODE_SEG // HI_MPI_VPSS_GetChnFrame;
       stChnAttr.enDynamicRange              = DYNAMIC_RANGE_SDR8;
@@ -1875,8 +1875,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       VPSS_CHN_ATTR_S stChnAttr[VPSS_MAX_PHY_CHN_NUM] = {0};
       
       /*** create vpss group ***/
-      stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  16);
-      stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 16);
+      stGrpAttr.u32MaxW = ALIGN_UP(attr->width,  2);
+      stGrpAttr.u32MaxH = ALIGN_UP(attr->height, 2);
       stGrpAttr.stFrameRate.s32SrcFrameRate = -1;
       stGrpAttr.stFrameRate.s32DstFrameRate = -1;
       stGrpAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -1887,8 +1887,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       int i;
       for(i = 0; i < 2; i++)
       {
-        stChnAttr[i].u32Width                    = ALIGN_UP((i == 0)?attr->width:640,  16);
-        stChnAttr[i].u32Height                   = ALIGN_UP((i == 0)?attr->height:480, 16);
+        stChnAttr[i].u32Width                    = ALIGN_UP((i == 0)?attr->width:640,  2);
+        stChnAttr[i].u32Height                   = ALIGN_UP((i == 0)?attr->height:480, 2);
         stChnAttr[i].enChnMode                   = VPSS_CHN_MODE_USER; //VPSS_CHN_MODE_AUTO; //VPSS_CHN_MODE_USER - 1920x1088; //
         stChnAttr[i].enCompressMode              = COMPRESS_MODE_NONE;//; //COMPRESS_MODE_SEG // HI_MPI_VPSS_GetChnFrame;
         stChnAttr[i].enDynamicRange              = DYNAMIC_RANGE_SDR8;
@@ -1904,6 +1904,18 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       
       HI_BOOL chen[VPSS_MAX_PHY_CHN_NUM] = {HI_TRUE,HI_TRUE};
       s32Ret = SAMPLE_COMM_VPSS_Start(vpss_grp, chen, &stGrpAttr, stChnAttr);
+      
+      if(1) //VPSS-LowDelay
+      {
+        VPSS_LOW_DELAY_INFO_S  stLowDelayInfo;
+        stLowDelayInfo.bEnable = HI_TRUE;//HI_FALSE;
+        stLowDelayInfo.u32LineCnt = 16*30;
+        s32Ret = HI_MPI_VPSS_SetLowDelayAttr(vpss_grp, 0, &stLowDelayInfo);
+        if(s32Ret != HI_SUCCESS)
+        {
+            SAMPLE_PRT("HI_MPI_VPSS_SetLowDelayAttr failed %#x!\n", s32Ret);
+        }
+      }
     }
     // bind  vdec && vpss && vo;
     s32Ret = SAMPLE_COMM_VDEC_Bind_VPSS(ch, vpss_grp);

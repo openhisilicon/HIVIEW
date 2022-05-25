@@ -306,15 +306,21 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
       
       pstViConfig->astViInfo[i].stDevInfo.enWDRMode = WDR_MODE_NONE;
 
+      pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = VI_OFFLINE_VPSS_OFFLINE;
+      pstViConfig->astViInfo[i].stChnInfo.enCompressMode  = COMPRESS_MODE_SEG;
+      
       if(HI_TRUE == bLowDelay)
       {
-          //Hi3516CV500 只有 VI PIPE0支持VI_ONLINE_VPSS_ONLINE 和 VI_ONLINE_VPSS_OFFLINE
-          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_ONLINE_VPSS_OFFLINE;//maohw VI_ONLINE_VPSS_ONLINE;
+        //Hi3516AV300 只有 VI PIPE0支持 VI_ONLINE_VPSS_ONLINE 和 VI_ONLINE_VPSS_OFFLINE
+        if(pstViConfig->astViInfo[i].stPipeInfo.aPipe[0] == 0)
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = VI_ONLINE_VPSS_ONLINE;
+          
+        VI_PIPE_ATTR_S stPipeAttr = {0};      
+        SAMPLE_COMM_VI_GetPipeAttrBySns(pstViConfig->astViInfo[i].stSnsInfo.enSnsType, &stPipeAttr);
+        if(VI_PIPE_BYPASS_BE != stPipeAttr.enPipeBypassMode)
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = VI_OFFLINE_VPSS_ONLINE;
       }
-      else
-      {
-          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode     = VI_OFFLINE_VPSS_OFFLINE;
-      }
+      
       //pstViConfig->astViInfo[0].stPipeInfo.aPipe[0]          = ViPipe0;
       pstViConfig->astViInfo[i].stPipeInfo.aPipe[1]          = -1;
       pstViConfig->astViInfo[i].stPipeInfo.aPipe[2]          = -1;
@@ -323,8 +329,7 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
       //pstViConfig->astViInfo[0].stChnInfo.ViChn              = ViChn;
       //pstViConfig->astViInfo[0].stChnInfo.enPixFormat        = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
       //pstViConfig->astViInfo[0].stChnInfo.enDynamicRange     = enDynamicRange;
-      pstViConfig->astViInfo[i].stChnInfo.enVideoFormat      = VIDEO_FORMAT_LINEAR;
-      pstViConfig->astViInfo[i].stChnInfo.enCompressMode     = COMPRESS_MODE_SEG;//COMPRESS_MODE_NONE;//COMPRESS_MODE_SEG;
+      pstViConfig->astViInfo[i].stChnInfo.enVideoFormat       = VIDEO_FORMAT_LINEAR;
 	  }
 	  
     s32Ret = SAMPLE_VENC_SYS_Init(u32SupplementConfig,enSnsType);

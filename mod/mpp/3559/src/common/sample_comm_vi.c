@@ -4293,6 +4293,9 @@ HI_S32 SAMPLE_COMM_VI_StartViPipe(SAMPLE_VI_INFO_S* pstViInfo)
                         return HI_FAILURE;
                     }
                 }
+                
+                //SetPipeAttr;                
+                mppex_SetPipeAttr(ViPipe, &stPipeAttr);
 
                 s32Ret = HI_MPI_VI_StartPipe(ViPipe);
                 if (s32Ret != HI_SUCCESS)
