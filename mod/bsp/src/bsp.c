@@ -17,6 +17,7 @@
 #include "upg.h"      // upgrade
 
 #include "msg_func.h"
+#include "fw/comm/inc/netcfg.h"
 
 #define SADP_ADDR "238.238.238.238"
 
@@ -89,10 +90,21 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
   
   printf("in->ver:%04X, modid:%d, msg.size:%d, peer:[%s:%d]\n"
         , in->ver, in->modid, in->msg.size, peer->ipaddr, peer->port);
-  
+
   if(!(in->ver&GSF_SADP_VER_REQ) || in->modid < 0 || in->modid >= GSF_MOD_ID_END)
   {
     printf("err, ver:%04X, modid:%d.\n", in->ver, in->modid);
+    *osize = 0;
+    return 0;
+  }
+
+  char _mac[6] = {0}; //gen devid;
+  netcfg_get_mac_addr("eth0", _mac);
+  int devid = _mac[5] << 24 | _mac[4] << 16 | _mac[3] << 8 | _mac[2] << 0;
+  
+  if(in->ver&GSF_SADP_VER_MC && in->devid && in->devid != devid)
+  {
+    printf("err, in->devid:0x%08x, myself:0x%08x\n", in->devid, devid);
     *osize = 0;
     return 0;
   }
@@ -113,6 +125,8 @@ static int sadp_recv_func(gsf_sadp_msg_t *in, gsf_msg_t* out
     
     req->ver   = 0;
     req->modid = in->modid;
+    req->devid = devid;
+
     memcpy(&req->msg, out, *osize);
     
     printf("send MC to %s:8888, modid:%d, msgid:%d\n", SADP_ADDR, in->modid, out->id);

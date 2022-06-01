@@ -18,6 +18,7 @@ typedef struct {
 typedef struct {
   short ver;      // ver GSF_SADP_VER_;
   short modid;    // gsf.h
+  int   devid;    // devid = dst when REQ = 1; devid = src when REQ = 0; devid = 0[all devices];
   gsf_user_t user;// auth;
   gsf_msg_t  msg; // msg.h;
 }gsf_sadp_msg_t;
