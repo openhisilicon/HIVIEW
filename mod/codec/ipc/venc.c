@@ -87,7 +87,7 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   rec.video.height = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;
   rec.size = 0;
   
-  if(mgr->vst/GSF_CODEC_VENC_NUM)
+  if(mgr->vst/GSF_CODEC_VENC_NUM == 1)
   {  
     gsf_sdp_t sdp;
     extern int second_sdp(int i, gsf_sdp_t *sdp);

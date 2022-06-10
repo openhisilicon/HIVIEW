@@ -18,8 +18,13 @@
 #include "venc.h"
 #include "lens.h"
 
-#define HYBRIDEN  0  // 1: 1 sensor + 1 rtsp => vo;
+// 0: disable;
+// 1: 1 sensor + 1 rtsp => vo;
+#define HYBRIDEN  0  
 
+//0: disable; 
+//1: 1 PIP-main + 1 PIP-sub;
+//2: 1 sensor + 1 thermal + 1 PIP;
 static int avs = 0; // codec_ipc.vi.avs;
 
 // if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
@@ -87,8 +92,8 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 //second sdp hook, fixed venc cfg;
 #define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:640)
-#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:512)  
-#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:PIC_512P)                               
+#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:512)
+#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:PIC_512P)
 int second_sdp(int i, gsf_sdp_t *sdp)
 {
   #if defined(GSF_CPU_3516d)
@@ -352,7 +357,11 @@ int venc_start(int start)
       .VencChn    = i*GSF_CODEC_VENC_NUM+j,
       .srcModId   = HI_ID_VPSS,
       .VpssGrp    = i,
+      #ifdef __GUIDE__
+      .VpssChn    = 0,
+      #else
       .VpssChn    = (j<p_venc_ini->st_num)?j:0,
+      #endif
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
       .enSize     = PIC_WIDTH(codec_ipc.venc[j].width, codec_ipc.venc[j].height),
       .enRcMode   = SAMPLE_RC_CBR,
@@ -390,7 +399,19 @@ int venc_start(int start)
         venc.u32FrameRate = sdp.venc.fps;
       }
     }
-    #endif
+    
+    //third-channel;
+    if(avs == 2 && i == 2)
+    {
+      venc.srcModId   = HI_ID_VO;
+      venc.VpssGrp    = -1;
+      venc.VpssChn    = -1;
+      venc.enSize     = PIC_1080P;
+      venc.u32BitRate = 4000;
+      venc.u32FrameRate = 30;
+    }
+    
+    #endif //GSF_CPU_3516d
 
     int w = 0, h = 0;
     PIC_WH(venc.enSize, w, h);
@@ -574,10 +595,10 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
           cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
           rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
           venc_ini->ch_num = 1; venc_ini->st_num = 2;
-          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+          VPSS(0, 0, 0, 0, 1, 1-1, PIC_1080P, PIC_D1_NTSC);
         }
         if(cfg->second)
-      	  VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+      	  VPSS(1, 1, 1, 0, 1, 1-1, SECOND_HIRES(cfg->second), PIC_CIF);
     }
     else if(strstr(cfg->snsname, "imx335"))
     {
@@ -616,19 +637,18 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     }
     else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378"))
     {
-      
         if(strcasestr(cfg->type, "3516a"))
         {
           cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
-          rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
-          venc_ini->ch_num = 1; venc_ini->st_num = 2;
+          rgn_ini->ch_num = 1; rgn_ini->st_num = (avs==2)?1:2;
+          venc_ini->ch_num = 1; venc_ini->st_num = (avs==2)?1:2;
           VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
         }
         else
         {
           cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
-          rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
-          venc_ini->ch_num = 1; venc_ini->st_num = 2;
+          rgn_ini->ch_num = 1; rgn_ini->st_num = (avs==2)?1:2;
+          venc_ini->ch_num = 1; venc_ini->st_num = (avs==2)?1:2;
           VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
         }
 			  if(cfg->second)
@@ -787,7 +807,7 @@ int mpp_start(gsf_bsp_def_t *def)
         printf("chipid[%s]\n", chipid);
         strcpy(cfg.type, def->board.type);
         chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
-        //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT601.GD]
+        //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT601.GD, 4:BT601.PAL, 5:USB.GD]
         cfg.second = (cfg.snscnt > 1)?0:
                      (def->board.second <= 0)?0:def->board.second;
         printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);
@@ -827,10 +847,6 @@ int mpp_start(gsf_bsp_def_t *def)
    
     gsf_mpp_cfg(home_path, &cfg);
     
-    //internal-init rgn, venc;
-    gsf_rgn_init(&rgn_ini);
-    gsf_venc_init(&venc_ini);
-    
     lens_ini.ch_num = 1;  // lens number;
     strncpy(lens_ini.sns, cfg.snsname, sizeof(lens_ini.sns)-1);
     strncpy(lens_ini.lens, "LENS-NAME", sizeof(lens_ini.lens)-1);
@@ -838,7 +854,7 @@ int mpp_start(gsf_bsp_def_t *def)
 
     // vi start;
     gsf_mpp_vi_t vi = {
-        .bLowDelay = HI_FALSE,
+        .bLowDelay = codec_ipc.vi.lowdelay,//HI_TRUE,//HI_FALSE,
         .u32SupplementConfig = 0,
         #ifdef GSF_CPU_3516e
         .vpss_en = {1, 1,},
@@ -940,6 +956,17 @@ int mpp_start(gsf_bsp_def_t *def)
       gsf_mpp_avs_start(&avs);
     }
     #endif
+    
+    //third-channel;
+    if(avs == 2)
+    {
+      rgn_ini.ch_num++;
+      venc_ini.ch_num++;
+    }
+    
+    //internal-init rgn, venc;
+    gsf_rgn_init(&rgn_ini);
+    gsf_venc_init(&venc_ini);
     
     return 0;
 }
@@ -1044,7 +1071,7 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
     {
       int sync = codec_ipc.vo.sync?VO_OUTPUT_3840x2160_30:VO_OUTPUT_1080P60;
       //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, VO_OUTPUT_1080P60, 0); // 10
-      
+
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
       
       int ly = VO_LAYOUT_1MUX;
@@ -1158,13 +1185,17 @@ int main(int argc, char *argv[])
     GSF_LOG_CONN(1, 100);
 
     mpp_start(&bsp_def);
-
+   
     venc_start(1);
 
     struct cfifo_ex* fifo = NULL;
     gsf_frm_t *frm = NULL;
     vo_start(&fifo, &frm);
 
+    #ifdef __GUIDE__
+    extern int guide_start();
+    guide_start();
+    #endif
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC
                       , NM_REP_MAX_WORKERS

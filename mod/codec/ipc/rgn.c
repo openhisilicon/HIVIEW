@@ -283,7 +283,7 @@ static unsigned short argb8888_1555(unsigned int color)
 extern int second_sdp(int i, gsf_sdp_t *sdp);
 static int codec_venc_width(int ch, int i)
 {
-  if(!ch)
+  if(ch != 1)
   {
     return codec_ipc.venc[i].width;
   }
@@ -297,7 +297,7 @@ static int codec_venc_width(int ch, int i)
 
 static int codec_venc_height(int ch, int i)
 {
-  if(!ch)
+  if(ch != 1)
   {
     return codec_ipc.venc[i].height;
   }
@@ -312,11 +312,13 @@ static int codec_venc_height(int ch, int i)
 
 //#define __RGN_CANVAS // __RGN_CANVAS is bad
 
-int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *osd)
+int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *_osd)
 {
   
   int i = 0;
   unsigned int ARG1555_RED = argb8888_1555(0x01FF0000);
+  gsf_osd_t __osd = *_osd;
+  gsf_osd_t *osd = &__osd;
   
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
