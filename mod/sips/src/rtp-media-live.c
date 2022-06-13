@@ -33,7 +33,7 @@ struct media_track_t
   unsigned int timestamp; // current frame ts;
   
   struct ps_muxer_t* ps; // ps encoder
-  int psid;
+  int psvid, psaid, audio_shmid;
   unsigned char ps_packet[FRAME_MAX_SIZE];
   
   struct cfifo_ex* m_reader;
@@ -134,7 +134,7 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
     if(cost > 30*2)
       printf("u:%p, get rec ok [delay:%d ms].\n", u, cost);
       
-    assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
+    //assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
 
     return len;
 }
@@ -148,6 +148,7 @@ static void *live_send_task(void *arg)
   unsigned char* ptr = malloc(FRAME_MAX_SIZE);
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
   
+  struct cfifo_ex* a_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, m->track[MEDIA_TRACK_VIDEO].audio_shmid);
   
   if(m->track[MEDIA_TRACK_VIDEO].m_transport)
   {
@@ -159,17 +160,14 @@ static void *live_send_task(void *arg)
   
   if(m->track[MEDIA_TRACK_VIDEO].m_reader)
   {
-    #if 1
     cfifo_newest(m->track[MEDIA_TRACK_VIDEO].m_reader, 0);
+    cfifo_newest(a_reader, 0);
+    
     GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t));
     GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, m->ch, SET, m->st
                     , 0
                     , GSF_IPC_CODEC
                     , 2000);
-    #else
-    cfifo_newest(m->track[MEDIA_TRACK_VIDEO].m_reader, 1);
-    #endif
-    
     m->track[MEDIA_TRACK_VIDEO].timestamp = 0;
   }
   
@@ -213,7 +211,10 @@ static void *live_send_task(void *arg)
           if(rec->flag & GSF_FRM_FLAG_IDR)
             m->track[MEDIA_TRACK_VIDEO].m_rtp_clock = rec->pts;
           else
+          {
+            cfifo_newest(a_reader, 0);
             continue;
+          }
         }
         //gettimeofday(&tv2, NULL);
         //u_int32_t cost = (tv2.tv_sec*1000+tv2.tv_usec/1000)-(tv1.tv_sec*1000+tv1.tv_usec/1000);
@@ -225,10 +226,11 @@ static void *live_send_task(void *arg)
         
         if(m->track[MEDIA_TRACK_VIDEO].ps)
         {
-          ps_muxer_input(m->track[MEDIA_TRACK_VIDEO].ps, m->track[MEDIA_TRACK_VIDEO].psid
+          ps_muxer_input(m->track[MEDIA_TRACK_VIDEO].ps, m->track[MEDIA_TRACK_VIDEO].psvid
                         , (rec->flag & GSF_FRM_FLAG_IDR)?0x01:0x00
                         , m->track[MEDIA_TRACK_VIDEO].timestamp * 90, m->track[MEDIA_TRACK_VIDEO].timestamp * 90
                         , rec->data, rec->size);
+          //printf("ps_muxer_input: VVV ts:%d, size:%d\n", m->track[MEDIA_TRACK_VIDEO].timestamp, rec->size);
         }
         else
         {
@@ -237,6 +239,22 @@ static void *live_send_task(void *arg)
         }
         // SendRTP() used st_writev();
         // SendRTCP(&m->track[MEDIA_TRACK_VIDEO]);
+      }while(1);
+      
+      //a_reader
+      do{
+        gsf_frm_t *rec = (gsf_frm_t*)ptr;
+        int ret = cfifo_get(a_reader, cfifo_recgut, (unsigned char*)ptr);
+        if(ret <= 0)
+          break;
+        if(m->track[MEDIA_TRACK_VIDEO].ps)
+        {
+          ps_muxer_input(m->track[MEDIA_TRACK_VIDEO].ps, m->track[MEDIA_TRACK_VIDEO].psaid
+                        , 0x00
+                        , m->track[MEDIA_TRACK_VIDEO].timestamp * 90, m->track[MEDIA_TRACK_VIDEO].timestamp * 90
+                        , rec->data + 4, rec->size - 4);
+         //printf("ps_muxer_input: AAA ts:%d, size:%d\n", m->track[MEDIA_TRACK_VIDEO].timestamp, rec->size - 4);
+        }
       }while(1);
     }
     
@@ -273,6 +291,8 @@ static void *live_send_task(void *arg)
   
 __exit:
   free(ptr);
+  if(a_reader)
+    cfifo_free(a_reader);
   m->exited = 1;
   if(m_evfd)
   {
@@ -411,7 +431,8 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
     handler.write = ps_write;
     handler.free = ps_free;
     m->track[MEDIA_TRACK_VIDEO].ps = ps_muxer_create(&handler, &m->track[MEDIA_TRACK_VIDEO]);
-    m->track[MEDIA_TRACK_VIDEO].psid = ps_muxer_add_stream(m->track[MEDIA_TRACK_VIDEO].ps, PSI_STREAM_H264, NULL, 0);
+    m->track[MEDIA_TRACK_VIDEO].psvid = ps_muxer_add_stream(m->track[MEDIA_TRACK_VIDEO].ps, PSI_STREAM_H264, NULL, 0);
+    m->track[MEDIA_TRACK_VIDEO].psaid = ps_muxer_add_stream(m->track[MEDIA_TRACK_VIDEO].ps, PSI_STREAM_AUDIO_G711A, NULL, 0);
     m->track[MEDIA_TRACK_VIDEO].m_rtppacker = 
           rtp_payload_encode_create(RTP_PAYLOAD_H264, "MP2P", (uint16_t)ssrc, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
   }
@@ -427,6 +448,7 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
   
   m->track[MEDIA_TRACK_VIDEO].m_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
   m->track[MEDIA_TRACK_VIDEO].m_evfd   = cfifo_take_fd(m->track[MEDIA_TRACK_VIDEO].m_reader);
+  m->track[MEDIA_TRACK_VIDEO].audio_shmid = gsf_sdp->audio_shmid;
   
   printf("%s => get SDP ok. ch:%d, st:%d, video_shmid:%d, m_reader:%p, m_evfd:%d\n" 
         , __func__
