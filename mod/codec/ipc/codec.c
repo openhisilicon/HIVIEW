@@ -18,10 +18,6 @@
 #include "venc.h"
 #include "lens.h"
 
-// 0: disable;
-// 1: 1 sensor + 1 rtsp => vo;
-#define HYBRIDEN  0  
-
 //0: disable; 
 //1: 1 PIP-main + 1 PIP-sub;
 //2: 1 sensor + 1 thermal + 1 PIP;
@@ -63,20 +59,6 @@ static int avs = 0; // codec_ipc.vi.avs;
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
-//cfifo;
-extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2);
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-  unsigned int len = cfifo_recsize(p1, n1, p2);
-  unsigned int l = CFIFO_MIN(len, n1);
-  char *p = (char*)u;
-  memcpy(p, p1, l);
-  memcpy(p+l, p2, len-l);
-  return len;
-}
-
 //resolution;
 static gsf_resolu_t vores;
 #define vo_res_set(_w, _h) do{vores.w = _w; vores.h = _h;}while(0)
@@ -84,7 +66,7 @@ int vo_res_get(gsf_resolu_t *res) { *res = vores; return 0;}
 
 //layout;
 static gsf_layout_t voly;
-#define vo_ly_set(ly) do{voly.layout = ly;}while(0)
+int vo_ly_set(int ly) {voly.layout = ly; return 0;}
 int vo_ly_get(gsf_layout_t *ly) { *ly = voly; return 0;}
 
 static gsf_venc_ini_t *p_venc_ini = NULL;
@@ -976,12 +958,9 @@ int mpp_start(gsf_bsp_def_t *def)
         (gsf == GSF_ENC_AAC)?PT_AAC:\
         (gsf == GSF_ENC_G711A)?PT_G711A:\
         PT_G711U
-int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
+
+int vo_start()
 {
-    // test hybrid;
-    int hybrid = HYBRIDEN;
-    gsf_shmid_t shmid = {-1, -1};
-    
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3559a)
     //aenc;
     if( codec_ipc.aenc.en)
@@ -1027,45 +1006,6 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
       //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 0, ROTATION_90);
       //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 1, ROTATION_90);
       vo_res_set(800, 1280);
-    }
-    else if(hybrid)
-    {
-      int sync = codec_ipc.vo.sync?VO_OUTPUT_3840x2160_30:VO_OUTPUT_1080P60;
-      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
-      int ly = VO_LAYOUT_2MUX;
-      
-      gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
-      vo_ly_set(ly);
-      
-      gsf_mpp_fb_start(VOFB_GUI, sync, 0);
-      gsf_mpp_vo_src_t src0 = {0, 0};
-      gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
-      
-      GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
-      rtsp_url->transp = 0;
-      strcpy(rtsp_url->url, "rtsp://admin:12345@192.168.0.166:8554/channel0");
-      int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
-                            , sizeof(gsf_rtsp_url_t)
-                            , GSF_IPC_RTSPS, 3000);
-      if(ret == 0 && __pmsg->err == 0)
-      {
-        shmid = *((gsf_shmid_t*)__pmsg->data);
-        printf("video_shmid:%d\n", shmid.video_shmid);
-      }
-
-      if(shmid.video_shmid >= 0)
-      {
-        *fifo = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
-        *frm = (gsf_frm_t*)malloc(1000*1024);
-        cfifo_newest(*fifo, 1);
-        cfifo_set_u(*fifo, (void*)1);
-        printf("fifo:%p, frm:%p\n", *fifo, *frm);
-      }  
-      
-      if(sync == VO_OUTPUT_1080P60)
-        vo_res_set(1920, 1080);
-      else
-        vo_res_set(3840, 2160);
     }
     else
     {
@@ -1123,36 +1063,6 @@ int vo_start(struct cfifo_ex** fifo, gsf_frm_t** frm)
     return 0;
 }
 
-int vo_sendfrm(struct cfifo_ex* fifo, gsf_frm_t* frm)
-{
-  if(!fifo || !frm)
-    return -1;
-  
-  // gsf_mpp_vo_vsend
-  #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-  do{
-    int ret = cfifo_get(fifo, cfifo_recgut, (void*)frm);
-    if(ret <= 0)
-    {
-      //printf("err: cfifo_get ret:%d\n", ret);
-      usleep(10*1000);
-      break;
-    }
-    int ch = (int)(cfifo_get_u(fifo));
-    char *data = frm->data;
-    gsf_mpp_frm_attr_t attr;
-    attr.size   = frm->size;          // data size;
-    attr.ftype  = frm->flag;          // frame type;
-    attr.etype  = PT_VENC(frm->video.encode);// PAYLOAD_TYPE_E;
-    attr.width  = frm->video.width;   // width;
-    attr.height = frm->video.height;  // height;
-    attr.pts    = frm->pts*1000; // pts ms*1000;
-    ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, data, &attr);
-  }while(1);
-  #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-  
-  return 0;
-}
 
 int main(int argc, char *argv[])
 {
@@ -1185,17 +1095,23 @@ int main(int argc, char *argv[])
     GSF_LOG_CONN(1, 100);
 
     mpp_start(&bsp_def);
-   
+
     venc_start(1);
 
-    struct cfifo_ex* fifo = NULL;
-    gsf_frm_t *frm = NULL;
-    vo_start(&fifo, &frm);
 
+    #ifdef __EYEM__
+    extern int eyem_start();
+    eyem_start(); 
+    #endif
+    
     #ifdef __GUIDE__
     extern int guide_start();
     guide_start();
     #endif
+    
+    extern int vdec_start();
+    vdec_start();
+    
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC
                       , NM_REP_MAX_WORKERS
@@ -1208,10 +1124,23 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-      if(vo_sendfrm(fifo, frm) < 0)
-      {
-        sleep(1);
-      }
+      sleep(1);
+      
+      #if defined(__TEST_ASPECT__)
+      ASPECT_RATIO_S aspect;
+      aspect.enMode = ASPECT_RATIO_AUTO;
+      aspect.u32BgColor = 0xff0000;
+      gsf_mpp_vpss_ctl(0, GSF_MPP_VPSS_CTL_ASPECT, &aspect);
+      printf("GSF_MPP_VPSS_CTL_ASPECT ASPECT_RATIO_AUTO\n");
+      sleep(6);
+      
+      aspect.enMode = ASPECT_RATIO_NONE;
+      aspect.u32BgColor = 0xff0000;
+      printf("GSF_MPP_VPSS_CTL_ASPECT ASPECT_RATIO_NONE\n");
+      gsf_mpp_vpss_ctl(0, GSF_MPP_VPSS_CTL_ASPECT, &aspect);
+      sleep(6);
+      #endif
+      
     }
 
     GSF_LOG_DISCONN();

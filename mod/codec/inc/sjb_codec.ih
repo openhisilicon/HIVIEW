@@ -167,6 +167,12 @@ STRUCT(gsf_img_all_t)
    FIELD(gsf_img_3dnr_t, _3dnr);
 };
 
+STRUCT(gsf_vdec_t)
+{
+  FIELD(bool, en);  // enable
+  STRING(rtsp,256); // rtsp://user:pwd@192.168.1.60:554/st1
+};
+
 STRUCT(gsf_codec_ipc_t)
 {
   //1
@@ -174,6 +180,7 @@ STRUCT(gsf_codec_ipc_t)
   FIELD(gsf_vo_t,    vo);
   FIELD(gsf_aenc_t,  aenc);
   FIELD(gsf_lenscfg_t, lenscfg);
+  FIELD(gsf_vdec_t, vdec);
   
   //2
   ARRAY(gsf_venc_t,  venc,  GSF_CODEC_VENC_NUM);
