@@ -1054,9 +1054,6 @@ int vo_start()
         vo_res_set(1920, 1080);
       else
         vo_res_set(3840, 2160);
-
-      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
-      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
     }
     #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     
@@ -1098,6 +1095,7 @@ int main(int argc, char *argv[])
 
     venc_start(1);
 
+    vo_start();
 
     #ifdef __EYEM__
     extern int eyem_start();
@@ -1110,7 +1108,11 @@ int main(int argc, char *argv[])
     #endif
     
     extern int vdec_start();
-    vdec_start();
+    if(vdec_start() < 0)
+    {
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+    }
     
     //init listen;
     void* rep = nm_rep_listen(GSF_IPC_CODEC

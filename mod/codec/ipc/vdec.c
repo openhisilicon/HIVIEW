@@ -97,8 +97,11 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
     else if(frm[i]->type == GSF_FRM_AUDIO)
     {
       //printf("audio size:%d, pts:%llu\n", attr.size, attr.pts);
-      attr.etype  = PT_AAC;
-      ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, data, &attr);
+      if(frm[i]->audio.encode == GSF_ENC_AAC)
+      {
+        attr.etype  = PT_AAC;
+        ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, data, &attr);
+      }
     }
   };
   usleep(10*1000);

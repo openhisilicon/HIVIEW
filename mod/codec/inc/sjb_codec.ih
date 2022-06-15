@@ -169,7 +169,7 @@ STRUCT(gsf_img_all_t)
 
 STRUCT(gsf_vdec_t)
 {
-  FIELD(bool, en);  // enable
+  FIELD(int, en);  // enable
   STRING(rtsp,256); // rtsp://user:pwd@192.168.1.60:554/st1
 };
 
