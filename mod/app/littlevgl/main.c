@@ -30,6 +30,8 @@ int lvgl_stop(void)
   return pthread_join(tid, NULL);
 }
 
+extern char home_path[128];
+
 int lvgl_start(int w, int h, int push_osd)
 {
   lv_w = w;
@@ -179,20 +181,68 @@ static void* lvgl_main(void* p)
     style_label.text.color = LV_COLOR_WHITE;
     style_label.text.font  = &lv_font_roboto_28;
 
+    static lv_style_t style_label_ol; // lv_style_plain_color
+    lv_style_copy(&style_label_ol, &lv_style_plain);
+    style_label_ol.text.color = LV_COLOR_WHITE;
+    style_label_ol.text.font  = &lv_font_roboto_28;
+
+    #ifdef EXTRA_FREETYPE
+    static char font_path[256];
+    sprintf(font_path, "%s/cfg/arial.ttf", home_path);
+
+    /*Create a font*/
+    static lv_ft_info_t info;
+    info.name = font_path;
+    info.weight = 48;
+    info.style = FT_FONT_STYLE_NORMAL;
+    info.mem = NULL;
+    if(!lv_ft_font_init(&info)) {
+        LV_LOG_ERROR("create failed.");
+    }
+    style_label.text.color = LV_COLOR_WHITE;
+    style_label.text.font  = info.font;
+    
+    /*Create a font*/
+    static lv_ft_info_t info2;
+    info2.name = font_path;
+    info2.weight = 48;
+    info2.style = FT_FONT_STYLE_OUTLINE;
+    info2.mem = NULL;
+    if(!lv_ft_font_init(&info2)) {
+        LV_LOG_ERROR("create failed.");
+    }
+    style_label_ol.text.color = LV_COLOR_RED;//LV_COLOR_GRAY;
+    style_label_ol.text.font  = info2.font;
+    #endif
+
     lv_obj_t *win = lv_obj_create(lv_disp_get_scr_act(NULL), NULL);
     lv_obj_set_size(win, hres, vres);
     lv_obj_set_style(win, &style_tv_body_bg);
     
     #if 1 // HDMI/LCD OUT LOGO;
     lv_obj_t *obj_note = lv_obj_create(win, NULL);
-    lv_obj_t *label_note = lv_label_create(obj_note, NULL);
-    lv_obj_set_style(label_note, &style_label);
-    lv_obj_align(label_note, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style(obj_note, &style_tv_body_fg);
     lv_obj_set_size(obj_note, hres/1, vres/4/4);
     lv_obj_set_x(obj_note, 0);
     lv_obj_set_y(obj_note, vres/1.5);
+    
+    #ifdef EXTRA_FREETYPE
+    static lv_color_t* cbuf = NULL;
+    cbuf = (lv_color_t*)malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR((hres/1-16), (vres/4/4-8)));
+    lv_obj_t * canvas = lv_canvas_create(obj_note, NULL);
+    lv_canvas_set_buffer(canvas, cbuf, hres/1-16, vres/4/4-8, LV_IMG_CF_TRUE_COLOR);
+    lv_obj_align(canvas, NULL, LV_ALIGN_IN_LEFT_MID, 8, 0);
+    lv_color_t bgcolor = LV_COLOR_RED;//LV_COLOR_SILVER;
+    LV_COLOR_SET_A(bgcolor, 0);
+    lv_canvas_fill_bg(canvas, bgcolor);
+    lv_canvas_draw_text(canvas, 0, 0, hres/1-16, &style_label_ol, "LittlevGL && FreeType && https://github.com/openhisilicon/HIVIEW", LV_LABEL_ALIGN_LEFT);
+    lv_canvas_draw_text(canvas, 0, 0, hres/1-16, &style_label, "LittlevGL && FreeType && https://github.com/openhisilicon/HIVIEW", LV_LABEL_ALIGN_LEFT);
+    #else
+    lv_obj_t *label_note = lv_label_create(obj_note, NULL);
+    lv_obj_set_style(label_note, &style_label);
+    lv_obj_align(label_note, NULL, LV_ALIGN_IN_LEFT_MID, 8, 0);
     lv_label_set_text(label_note, "LittlevGL && https://github.com/openhisilicon/HIVIEW");
+    #endif
     #endif
     
     int i = 0, cnt = 0;
@@ -210,7 +260,9 @@ static void* lvgl_main(void* p)
     }
 
     /*Create a Demo*/
-    //lv_obj_t* tv = demo_create();
+    #if 0
+    lv_obj_t* tv = demo_create();
+    #endif
     
     // GSF_PUB_SVP
     msq = msgget(111, IPC_CREAT | 0666);

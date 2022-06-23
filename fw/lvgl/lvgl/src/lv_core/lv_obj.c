@@ -19,6 +19,7 @@
 #include "../lv_misc/lv_async.h"
 #include "../lv_misc/lv_fs.h"
 #include "../lv_hal/lv_hal.h"
+#include "../extra/lv_extra.h"
 #include <stdint.h>
 #include <string.h>
 #include "../lv_misc/lv_gc.h"
@@ -116,6 +117,9 @@ void lv_init(void)
 
     lv_img_decoder_init();
     lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE);
+
+    //maohw
+    lv_extra_init();
 
     lv_initialized = true;
     LV_LOG_INFO("lv_init ready");

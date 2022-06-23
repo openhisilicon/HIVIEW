@@ -17,6 +17,11 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -Llittlevgl -llittlevgl -llvgl -lcomm -lcfifo -lrt -lnm -lcjson -lm -lpthread
 
+#FreeType
+#export EXTRA_CFLAGS = -DEXTRA_FREETYPE
+#LIBS += -lfreetype
+
+
 $(TARG): $(OBJS)
 	@$(MAKE) -C littlevgl || exit "$$?"
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)

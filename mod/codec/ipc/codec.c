@@ -126,7 +126,7 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 static int osd_recv(char *msg, int size, int err)
 {
   gsf_osd_act_t *act = ( gsf_osd_act_t *)msg;
-  gsf_rgn_canvas(0, 3, act);
+  gsf_rgn_canvas(0, 7, act);
   return 0;
 }
 

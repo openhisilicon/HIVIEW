@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #include "inc/gsf.h"
-
+#include "fw/comm/inc/proc.h"
 #include "app.h"
 #include "cfg.h"
 #include "msg_func.h"
@@ -178,8 +178,7 @@ static int voly_get(gsf_layout_t *ly)
   return 0;
 }
 
-
-
+char home_path[128] = {0};
 
 int main(int argc, char *argv[])
 {
@@ -196,6 +195,11 @@ int main(int argc, char *argv[])
       json_parm_save(app_parm_path, &app_nvr);
       json_parm_load(app_parm_path, &app_nvr);
     }
+    
+    //home_path;
+    proc_absolute_path(home_path);
+    sprintf(home_path, "%s/..", home_path);
+    printf("home_path:[%s]\n", home_path);
     
     // joint multiple mods to works;
     

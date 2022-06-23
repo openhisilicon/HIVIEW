@@ -13,7 +13,7 @@ LVGL_DIR ?= ${shell pwd}
 CFLAGS ?= -Wall -Wshadow -Wundef -Wmaybe-uninitialized -O3 -g0 -I$(LVGL_LIB)/ -I$(HOME)
 LDFLAGS ?= -lpthread
 BIN = liblittlevgl.a
-
+CFLAGS += $(EXTRA_CFLAGS)
 
 #Collect the files to compile
 MAINSRC = ./main.c ./mouse_ico.c

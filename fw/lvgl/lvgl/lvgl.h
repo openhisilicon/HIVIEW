@@ -74,6 +74,14 @@ extern "C" {
 
 #include "src/lv_draw/lv_img_cache.h"
 
+
+/*-----------------
+ * EXTRAS
+ *----------------*/
+#include "src/extra/lv_extra.h"
+#include "src/extra/libs/freetype/lv_freetype.h"
+
+
 /*********************
  *      DEFINES
  *********************/

@@ -10,7 +10,8 @@ HOME := $(shell echo ${GSF_HOME})
 
 LVGL_DIR ?= ${shell pwd}
 CFLAGS ?= -Wall -Wshadow -Wundef -Wmaybe-uninitialized -O3 -g0 -I$(LVGL_DIR)/ -I$(HOME)
-LDFLAGS ?= -lpthread
+CFLAGS += -I${GSF_HOME}/fw/freetype/inc
+LDFLAGS ?= -lpthread -lfreetype
 BIN = liblvgl.a
 
 

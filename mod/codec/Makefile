@@ -6,6 +6,7 @@ CFLAGS := $(shell echo ${GSF_CFLAGS})
 LDFLAGS := -g $(shell echo ${GSF_LDFLAGS})
 TARG := bin/codec.exe
 GSF_DEV_TYPE ?= ipc
+CFLAGS += -D__GUIDE__
 #============================================================= 
 
 INCS := -I$(HOME) -I$(GSF_DEV_TYPE) -Iinc \
