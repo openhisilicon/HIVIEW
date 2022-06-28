@@ -335,6 +335,8 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *_osd)
     float hr = codec_venc_height(ch, i);
     hr /= codec_venc_height(ch, 0);
     
+    //printf("ch:%d, idx:%d, en:%d, point[%d,%d], wr:%0.4f, hr:%0.4f\n", ch, idx, osd->en, osd->point[0], osd->point[1], wr, hr);
+    
     osd->point[0] *= wr;
     osd->point[1] *= hr;
     

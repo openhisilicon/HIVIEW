@@ -551,7 +551,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   {
     // imx335-0-0-4-30
     if(strstr(cfg->snsname, "imx327") 
-      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307"))
+      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385"))
     {
       cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx307")?50:30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
@@ -597,7 +597,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   if(cfg->snscnt < 2)
   {
     if(strstr(cfg->snsname, "imx327") 
-      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307"))
+      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385"))
     {
     	// imx327-0-0-2-30
     	#if 1
@@ -751,6 +751,19 @@ void mpp_ini_3531d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
 }
 #endif
 
+
+#if defined(GSF_CPU_3403)
+void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+  // imx485-0-0-8-30
+  cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+  rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+  venc_ini->ch_num = 1; venc_ini->st_num = 2;
+  VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+}
+#endif
+
+
 int mpp_start(gsf_bsp_def_t *def)
 {
     // init mpp;
@@ -811,6 +824,10 @@ int mpp_start(gsf_bsp_def_t *def)
       #elif defined(GSF_CPU_3531d)
       {
         mpp_ini_3531d(&cfg, &rgn_ini, &venc_ini, vpss);
+      }
+      #elif defined(GSF_CPU_3403)
+      {
+        mpp_ini_3403(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #else
       {
@@ -902,13 +919,13 @@ int mpp_start(gsf_bsp_def_t *def)
     {
       // First tested on Hi3516X;
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-      printf("scene_auto is bypass, set img(magic:0x%x) to isp.\n", codec_ipc.img.magic);
+      printf("scene_auto is bEnable=0, set img(magic:0x%x) to isp.\n", codec_ipc.img.magic);
       if(codec_ipc.img.magic == 0x55aa) 
       {
         gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, &codec_ipc.img.csc);
         gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, &codec_ipc.img.ae);
         gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, &codec_ipc.img.dehaze);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SCENE, &codec_ipc.img.scene);
+        //gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SCENE, &codec_ipc.img.scene);
         gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SHARPEN, &codec_ipc.img.sharpen);
         gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_HLC, &codec_ipc.img.hlc);
         gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_GAMMA, &codec_ipc.img.gamma);
@@ -1121,6 +1138,7 @@ int main(int argc, char *argv[])
                       , req_recv);
                       
     void* osd_pull = nm_pull_listen(GSF_IPC_OSD, osd_recv);
+    
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
 

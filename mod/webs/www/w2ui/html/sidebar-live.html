@@ -115,7 +115,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGAE",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(ae.lname, 10), 
+                  "data":{"bEnable":  parseInt(ae.lname, 10), 
                     "u8Speed": parseInt(ae.w2ui.children[0].lname, 16), 
                     "u8Compensation": parseInt(ae.w2ui.children[1].lname, 16), 
                     "SysGainRangeMax": parseInt(ae.w2ui.children[2].lname, 16), 
@@ -127,7 +127,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_AE+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_AE+1)
                   req.data.u8Speed = parseInt(event.changes[i].lname, 16);
                 if(event.changes[i].recid == RECID_AE+2)
@@ -164,7 +164,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGSHARPEN",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(sharpen.lname, 10),
+                  "data":{"bEnable":  parseInt(sharpen.lname, 10),
                     "u16TextureFreq": parseInt(sharpen.w2ui.children[0].lname, 10),
                     "u16EdgeFreq": parseInt(sharpen.w2ui.children[1].lname, 10),
                     "u8DetailCtrl": parseInt(sharpen.w2ui.children[2].lname, 10)
@@ -173,7 +173,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_Sharpen+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_Sharpen+1)
                   req.data.u16TextureFreq = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_Sharpen+2)
@@ -204,7 +204,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGHLC",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(hlc.lname, 10), 
+                  "data":{"bEnable":  parseInt(hlc.lname, 10), 
                     "u8LumaThr": parseInt(hlc.w2ui.children[0].lname, 10),
                     "u8LumaTarget": parseInt(hlc.w2ui.children[1].lname, 10)
                     }
@@ -212,7 +212,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_HLC+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_HLC+1)
                   req.data.u8LumaThr = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_HLC+2)
@@ -241,7 +241,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGGAMMA",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(gamma.lname, 10), 
+                  "data":{"bEnable":  parseInt(gamma.lname, 10), 
                     "enCurveType": parseInt(gamma.w2ui.children[0].lname, 10),
                     "TableNo": parseInt(gamma.w2ui.children[1].lname, 10)
                     }
@@ -249,7 +249,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_Gamma+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_Gamma+1)
                   req.data.enCurveType = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_Gamma+2)
@@ -278,7 +278,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGDRC",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(drc.lname, 10), 
+                  "data":{"bEnable":  parseInt(drc.lname, 10), 
                     "u16Strength": parseInt(drc.w2ui.children[0].lname, 10),
                     "u16StrengthMax": parseInt(drc.w2ui.children[1].lname, 10),
                     "u16StrengthMin": parseInt(drc.w2ui.children[2].lname, 10)
@@ -287,7 +287,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_DRC+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_DRC+1)
                   req.data.u16Strength = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_DRC+2)
@@ -318,7 +318,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGLDCI",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(ldci.lname, 10), 
+                  "data":{"bEnable":  parseInt(ldci.lname, 10), 
                     "u16BlcCtrl": parseInt(ldci.w2ui.children[0].lname, 10),
                     "stHePosWgt_u8Wgt": parseInt(ldci.w2ui.children[1].lname, 10),
                     "stHeNegWgt_u8Mean": parseInt(ldci.w2ui.children[2].lname, 10)
@@ -327,7 +327,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_LDCI+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_LDCI+1)
                   req.data.u16BlcCtrl = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_LDCI+2)
@@ -358,13 +358,13 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMG3DNR",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(_3dnr.lname, 10), 
+                  "data":{"bEnable":  parseInt(_3dnr.lname, 10), 
                     "u8strength": parseInt(_3dnr.w2ui.children[0].lname, 10)}
               }
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_3DNR+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_3DNR+1)
                   req.data.u8strength = parseInt(event.changes[i].lname, 10);
               }
@@ -391,13 +391,13 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGDEHAZE",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(dehaze.lname, 10), 
+                  "data":{"bEnable":  parseInt(dehaze.lname, 10), 
                     "u8strength": parseInt(dehaze.w2ui.children[0].lname, 10)}
               }
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_DeHaze+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_DeHaze+1)
                   req.data.u8strength = parseInt(event.changes[i].lname, 10);
               }
@@ -424,7 +424,7 @@ $(function () {
               var req = {
                   "id": "GSF_ID_CODEC_IMGCSC",
                   "args":"G1C0S0",
-                  "data":{"byPass":  parseInt(csc.lname, 10), 
+                  "data":{"bEnable":  parseInt(csc.lname, 10), 
                     "u8Hue": parseInt(csc.w2ui.children[0].lname, 10), 
                     "u8Luma": parseInt(csc.w2ui.children[1].lname, 10), 
                     "u8Contr": parseInt(csc.w2ui.children[2].lname, 10), 
@@ -433,7 +433,7 @@ $(function () {
               for(i = 0; i < event.changes.length; i++)
               {
                 if(event.changes[i].recid == RECID_CSC+0)
-                  req.data.byPass = parseInt(event.changes[i].lname, 10);
+                  req.data.bEnable = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_CSC+1)
                   req.data.u8Hue = parseInt(event.changes[i].lname, 10);
                 if(event.changes[i].recid == RECID_CSC+2)
@@ -538,11 +538,11 @@ function grid_load(grid_name)
       success: function (data) {
         console.log(data);
 
-        var rw = (data.data.scene.byPass == 0)?"(R)":"(RW)"; // When sceneAuto bypass, the following parameters are writable.
+        var rw = (data.data.scene.bEnable == 1)?"(R)":"(RW)"; // When sceneAuto bEnable==0, the following parameters are writable.
 
         records = [
-            { recid: RECID_SceneAuto, fname: 'SceneAuto', lname: data.data.scene.byPass.toString(10), nname: 'byPass' + rw },
-            { recid: RECID_AE, fname: 'AE', lname: data.data.ae.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_SceneAuto, fname: 'SceneAuto', lname: data.data.scene.bEnable.toString(10), nname: 'bEnable' + '(R)' },
+            { recid: RECID_AE, fname: 'AE', lname: data.data.ae.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [ //auto
                       { recid: RECID_AE+1, fname: 'u8Speed',          lname: data.data.ae.u8Speed.toString(16), nname: '[0x0, 0xFF]'},
@@ -554,7 +554,7 @@ function grid_load(grid_name)
                   ]
               } 
             },
-            { recid: RECID_Sharpen, fname: 'Sharpen', lname: data.data.sharpen.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_Sharpen, fname: 'Sharpen', lname: data.data.sharpen.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [ //manual
                       { recid: RECID_Sharpen+1, fname: 'u16TextureFreq', lname: data.data.sharpen.u16TextureFreq.toString(10), nname: '[0, 4095]'},
@@ -563,7 +563,7 @@ function grid_load(grid_name)
                   ]
               } 
             },     
-            { recid: RECID_HLC, fname: 'HLC', lname: data.data.hlc.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_HLC, fname: 'HLC', lname: data.data.hlc.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_HLC+1, fname: 'u8LumaThr', lname: data.data.hlc.u8LumaThr.toString(10), nname: '[0, 255]'},
@@ -571,7 +571,7 @@ function grid_load(grid_name)
                   ]
               } 
             },   
-            { recid: RECID_Gamma, fname: 'Gamma', lname: data.data.gamma.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_Gamma, fname: 'Gamma', lname: data.data.gamma.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_Gamma+1, fname: 'enCurveType', lname: data.data.gamma.enCurveType.toString(10), nname: '[0:def,1:sdr,2:hdr,3:user]'},
@@ -579,7 +579,7 @@ function grid_load(grid_name)
                   ]
               } 
             },
-            { recid: RECID_DRC, fname: 'DRC', lname: data.data.drc.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_DRC, fname: 'DRC', lname: data.data.drc.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [ //auto
                       { recid: RECID_DRC+1, fname: 'u16Strength', lname: data.data.drc.u16Strength.toString(10), nname: '[0, 1023]'},
@@ -588,7 +588,7 @@ function grid_load(grid_name)
                   ]
               } 
             },
-            { recid: RECID_LDCI, fname: 'LDCI', lname: data.data.ldci.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_LDCI, fname: 'LDCI', lname: data.data.ldci.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [ //manual
                       { recid: RECID_LDCI+1, fname: 'u16BlcCtrl', lname: data.data.ldci.u16BlcCtrl.toString(10), nname: '[0,511]'},
@@ -597,21 +597,21 @@ function grid_load(grid_name)
                   ]
               } 
             },    
-            { recid: RECID_3DNR, fname: '3DNR', lname: data.data._3dnr.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_3DNR, fname: '3DNR', lname: data.data._3dnr.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_3DNR+1, fname: 'u8strength', lname: data.data._3dnr.u8strength.toString(10), nname: '[0, 14]'}
                   ]
               } 
             },   
-            { recid: RECID_DeHaze, fname: 'DeHaze', lname: data.data.dehaze.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_DeHaze, fname: 'DeHaze', lname: data.data.dehaze.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_DeHaze+1, fname: 'u8strength', lname: data.data.dehaze.u8strength.toString(10), nname: '[0,255]'}
                   ]
               } 
             },
-            { recid: RECID_CSC, fname: 'CSC', lname: data.data.csc.byPass.toString(10), nname: 'byPass' + rw,
+            { recid: RECID_CSC, fname: 'CSC', lname: data.data.csc.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [
                       { recid: RECID_CSC+1, fname: 'u8Hue', lname: data.data.csc.u8Hue.toString(10), nname: '[0,100]'},

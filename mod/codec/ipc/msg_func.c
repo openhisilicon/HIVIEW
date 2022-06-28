@@ -251,7 +251,7 @@ static void msg_func_imgall(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
   gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IMG, all);
   rsp->err  = 0;
   rsp->size = sizeof(gsf_img_all_t);
-  printf("get all\n");
+  printf("get all->scene.bEnable:%d\n", all->scene.bEnable);
   
 }
 static void msg_func_imgcsc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
@@ -371,7 +371,7 @@ static void msg_func_imgsharpen(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *
     }
     rsp->err  = 0;
     rsp->size = 0;
-    printf("set sharpen\n");
+    printf("set sharpen[bEnable:%d, u16TextureFreq:%d]\n", sharpen->bEnable, sharpen->u16TextureFreq);
   }
   else
   {

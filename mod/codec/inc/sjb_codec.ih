@@ -73,7 +73,7 @@ STRUCT(gsf_lens_t)
 
 STRUCT(gsf_img_csc_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u8Hue);
   FIELD(int, u8Luma);
   FIELD(int, u8Contr);
@@ -82,7 +82,7 @@ STRUCT(gsf_img_csc_t)
 
 STRUCT(gsf_img_ae_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u8Speed);
   FIELD(int, u8Compensation);
   FIELD(int, SysGainRangeMax);
@@ -94,13 +94,13 @@ STRUCT(gsf_img_ae_t)
 
 STRUCT(gsf_img_dehaze_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u8strength);
 };
 
 STRUCT(gsf_img_sharpen_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u16TextureFreq);
   FIELD(int, u16EdgeFreq);
   FIELD(int, u8DetailCtrl);
@@ -109,7 +109,7 @@ STRUCT(gsf_img_sharpen_t)
 
 STRUCT(gsf_img_hlc_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u8LumaThr);
   FIELD(int, u8LumaTarget);
 };
@@ -117,7 +117,7 @@ STRUCT(gsf_img_hlc_t)
 
 STRUCT(gsf_img_gamma_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, enCurveType);
   FIELD(int, TableNo);
 };
@@ -125,7 +125,7 @@ STRUCT(gsf_img_gamma_t)
 
 STRUCT(gsf_img_drc_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u16Strength);
   FIELD(int, u16StrengthMax);
   FIELD(int, u16StrengthMin);
@@ -133,7 +133,7 @@ STRUCT(gsf_img_drc_t)
 
 STRUCT(gsf_img_ldci_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u16BlcCtrl);
   FIELD(int, stHePosWgt_u8Wgt);
   FIELD(int, stHeNegWgt_u8Mean);
@@ -142,13 +142,13 @@ STRUCT(gsf_img_ldci_t)
 
 STRUCT(gsf_img_3dnr_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
   FIELD(int, u8strength);
 };
 
 STRUCT(gsf_img_scene_t)
 {
-  FIELD(int, byPass);
+  FIELD(int, bEnable);
 };
 
 

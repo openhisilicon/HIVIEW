@@ -355,7 +355,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __dndl__Probe(struct soap*soap,
         
         d__ProbeMatches->ProbeMatch->d__Scopes->MatchBy = NULL;
         
-        if (!strcmp(d__Probe->d__Types[0], ""))
+        if (!d__Probe->d__Types || !strcmp(d__Probe->d__Types[0], ""))
             strcpy(d__ProbeMatches->ProbeMatch->d__Types[0], "dn:NetworkVideoTransmitter");// dn:NetworkVideoTransmitter
         else
         {
@@ -5927,6 +5927,7 @@ START:;
             soap_print_fault(&soap, stderr);
             count++;
         }
+        
         usleep(1000);//2013-09-28 add for cpu usage 100%.
         soap_destroy(&soap);
         soap_end(&soap);

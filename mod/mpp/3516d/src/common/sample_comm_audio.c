@@ -627,8 +627,7 @@ void* SAMPLE_COMM_AUDIO_AencProc(void* parg)
             {
                 printf("%s: HI_MPI_AENC_GetStream(%d), failed with %#x!\n", \
                        __FUNCTION__, pstAencCtl->AeChn, s32Ret);
-                pstAencCtl->bStart = HI_FALSE;
-                return NULL;
+                break;
             }
 
             /* send stream to decoder and play for testing */
@@ -639,8 +638,8 @@ void* SAMPLE_COMM_AUDIO_AencProc(void* parg)
                 {
                     printf("%s: HI_MPI_ADEC_SendStream(%d), failed with %#x!\n", \
                            __FUNCTION__, pstAencCtl->AdChn, s32Ret);
-                    pstAencCtl->bStart = HI_FALSE;
-                    return NULL;
+                    HI_MPI_AENC_ReleaseStream(pstAencCtl->AeChn, &stStream);
+                    break;
                 }
             }
             
@@ -663,13 +662,13 @@ void* SAMPLE_COMM_AUDIO_AencProc(void* parg)
             {
                 printf("%s: HI_MPI_AENC_ReleaseStream(%d), failed with %#x!\n", \
                        __FUNCTION__, pstAencCtl->AeChn, s32Ret);
-                pstAencCtl->bStart = HI_FALSE;
-                return NULL;
+                break;
             }
         }
     }
 
     if(pstAencCtl->pfd) fclose(pstAencCtl->pfd);
+    pstAencCtl->pfd = HI_NULL;
     pstAencCtl->bStart = HI_FALSE;
     return NULL;
 }
@@ -693,6 +692,8 @@ void* SAMPLE_COMM_AUDIO_AdecProc(void* parg)
     if (NULL == pu8AudioStream)
     {
         printf("%s: malloc failed!\n", __FUNCTION__);
+        fclose(pstAdecCtl->pfd);
+        pstAdecCtl->pfd = HI_NULL;
         return NULL;
     }
 
@@ -724,8 +725,9 @@ void* SAMPLE_COMM_AUDIO_AdecProc(void* parg)
     }
 
     free(pu8AudioStream);
-    pu8AudioStream = NULL;
-    fclose(pfd);
+    pu8AudioStream = HI_NULL;
+    fclose(pstAdecCtl->pfd);
+    pstAdecCtl->pfd = HI_NULL;
     pstAdecCtl->bStart = HI_FALSE;
     return NULL;
 }
@@ -932,7 +934,6 @@ HI_S32 SAMPLE_COMM_AUDIO_DestoryTrdAi(AUDIO_DEV AiDev, AI_CHN AiChn)
     if (pstAi->bStart)
     {
         pstAi->bStart = HI_FALSE;
-        //pthread_cancel(pstAi->stAiPid);
         pthread_join(pstAi->stAiPid, 0);
     }
 
@@ -951,10 +952,13 @@ HI_S32 SAMPLE_COMM_AUDIO_DestoryTrdAencAdec(AENC_CHN AeChn)
     if (pstAenc->bStart)
     {
         pstAenc->bStart = HI_FALSE;
-        //pthread_cancel(pstAenc->stAencPid);
         pthread_join(pstAenc->stAencPid, 0);
     }
 
+    if (pstAenc->pfd != HI_NULL) {
+        fclose(pstAenc->pfd);
+        pstAenc->pfd = HI_NULL;
+    }
 
     return HI_SUCCESS;
 }
@@ -970,10 +974,13 @@ HI_S32 SAMPLE_COMM_AUDIO_DestoryTrdFileAdec(ADEC_CHN AdChn)
     if (pstAdec->bStart)
     {
         pstAdec->bStart = HI_FALSE;
-        //pthread_cancel(pstAdec->stAdPid);
         pthread_join(pstAdec->stAdPid, 0);
     }
 
+    if (pstAdec->pfd != HI_NULL) {
+        fclose(pstAdec->pfd);
+        pstAdec->pfd = HI_NULL;
+    }
 
     return HI_SUCCESS;
 }

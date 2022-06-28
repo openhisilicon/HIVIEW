@@ -311,14 +311,18 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
       
       if(HI_TRUE == bLowDelay)
       {
-        //Hi3516AV300 只有 VI PIPE0支持 VI_ONLINE_VPSS_ONLINE 和 VI_ONLINE_VPSS_OFFLINE
-        if(pstViConfig->astViInfo[i].stPipeInfo.aPipe[0] == 0)
-          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = VI_ONLINE_VPSS_ONLINE;
-          
         VI_PIPE_ATTR_S stPipeAttr = {0};      
         SAMPLE_COMM_VI_GetPipeAttrBySns(pstViConfig->astViInfo[i].stSnsInfo.enSnsType, &stPipeAttr);
-        if(VI_PIPE_BYPASS_BE != stPipeAttr.enPipeBypassMode)
+        //Hi3516AV300 只有 VI PIPE0支持 VI_ONLINE_VPSS_ONLINE 和 VI_ONLINE_VPSS_OFFLINE
+        if(pstViConfig->astViInfo[i].stPipeInfo.aPipe[0] == 0)
+        {
+          pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = (stPipeAttr.u32MaxW > 2048)?VI_ONLINE_VPSS_OFFLINE:VI_ONLINE_VPSS_ONLINE;
+        }
+        else if(VI_PIPE_BYPASS_BE != stPipeAttr.enPipeBypassMode)
+        {
           pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = VI_OFFLINE_VPSS_ONLINE;
+        }
+        //printf("i:%d, aPipe[0]:%d, enMastPipeMode:%d\n", i, pstViConfig->astViInfo[i].stPipeInfo.aPipe[0], pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode);
       }
       
       //pstViConfig->astViInfo[0].stPipeInfo.aPipe[0]          = ViPipe0;

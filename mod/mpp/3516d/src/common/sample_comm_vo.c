@@ -817,6 +817,64 @@ HI_VOID SAMPLE_COMM_VO_HdmiConvertSync(VO_INTF_SYNC_E enIntfSync,
     return;
 }
 
+typedef struct
+{
+  HI_HDMI_ID_E enHdmi;
+  HI_HDMI_VIDEO_FMT_E eForceFmt;
+}HDMI_ARGS_S;
+
+HI_HDMI_CALLBACK_FUNC_S g_stCallbackFunc;
+HDMI_ARGS_S g_stHdmiArgs;
+
+
+static HI_S32 Hdmi_HotPlugProc(HI_VOID *pPrivateData)
+{
+  HI_S32 s32Ret = HI_SUCCESS;
+  HDMI_ARGS_S *pArgs = (HDMI_ARGS_S*)pPrivateData;
+  HI_HDMI_ID_E hHdmi = pArgs->enHdmi;
+  HI_HDMI_ATTR_S stHdmiAttr;
+  HI_HDMI_SINK_CAPABILITY_S stSinkCap;
+ 
+  printf("\n hotplug event handling \n");
+  s32Ret = HI_MPI_HDMI_Start(hHdmi);
+  return s32Ret;
+}
+
+static HI_S32 Hdmi_UnPlugProc(HI_VOID *pPrivateData)
+{
+  HI_S32 s32Ret = HI_SUCCESS;
+  HDMI_ARGS_S *pArgs = (HDMI_ARGS_S*)pPrivateData;
+  HI_HDMI_ID_E hHdmi = pArgs->enHdmi;
+  
+  printf("\n UnPlug event handling. \n");
+  s32Ret = HI_MPI_HDMI_Stop(hHdmi);
+  return s32Ret;
+}
+
+HI_VOID HDMI_EventProc(HI_HDMI_EVENT_TYPE_E event, HI_VOID *pPrivateData)
+{
+  printf("HDMI_EventProc event: %d\n", event);
+  switch ( event )
+  {
+    case HI_HDMI_EVENT_HOTPLUG:
+      Hdmi_HotPlugProc(pPrivateData);
+      break;
+    case HI_HDMI_EVENT_NO_PLUG:
+      Hdmi_UnPlugProc(pPrivateData);
+      break;
+    case HI_HDMI_EVENT_EDID_FAIL:
+      break;
+    case HI_HDMI_EVENT_HDCP_FAIL:
+      break;
+    case HI_HDMI_EVENT_HDCP_SUCCESS:
+      break;
+    case HI_HDMI_EVENT_HDCP_USERSETTING:
+      break;
+    default:
+      printf("unknown event:%d n",event);
+      return;
+  }
+}
 
 
 HI_S32 SAMPLE_COMM_VO_HdmiStart(VO_INTF_SYNC_E enIntfSync)
@@ -869,7 +927,18 @@ HI_S32 SAMPLE_COMM_VO_HdmiStart(VO_INTF_SYNC_E enIntfSync)
     
 
     CHECK_RET(HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr), "HI_MPI_HDMI_SetAttr");
+
+    #if 1 //HDMI-hotplug;
     CHECK_RET(HI_MPI_HDMI_Start(enHdmiId), "HI_MPI_HDMI_Start");
+    #else
+    g_stHdmiArgs.enHdmi = enHdmiId;
+    g_stHdmiArgs.eForceFmt = enVideoFmt;
+    g_stCallbackFunc.pfnHdmiEventCallback = HDMI_EventProc;
+    g_stCallbackFunc.pPrivateData = &g_stHdmiArgs;
+    HI_MPI_HDMI_RegCallbackFunc(g_stHdmiArgs.enHdmi, &g_stCallbackFunc);
+    printf("%s => HI_MPI_HDMI_RegCallbackFunc @@@@\n", __func__);
+    #endif
+    
 
     return HI_SUCCESS;
 }
@@ -878,6 +947,7 @@ HI_S32 SAMPLE_COMM_VO_HdmiStart(VO_INTF_SYNC_E enIntfSync)
 * Name : SAMPLE_COMM_VO_HdmiStartByDyRg
 * Desc : Another function to start hdmi, according to video's dynamic range.
 */
+
 HI_S32 SAMPLE_COMM_VO_HdmiStartByDyRg(VO_INTF_SYNC_E enIntfSync, DYNAMIC_RANGE_E enDyRg)
 {
     HI_HDMI_ATTR_S          stAttr;
@@ -887,7 +957,9 @@ HI_S32 SAMPLE_COMM_VO_HdmiStartByDyRg(VO_INTF_SYNC_E enIntfSync, DYNAMIC_RANGE_E
     SAMPLE_COMM_VO_HdmiConvertSync(enIntfSync, &enVideoFmt);
 
     CHECK_RET(HI_MPI_HDMI_Init(), "HI_MPI_HDMI_Init");
+    
     CHECK_RET(HI_MPI_HDMI_Open(enHdmiId), "HI_MPI_HDMI_Open");
+    
     CHECK_RET(HI_MPI_HDMI_GetAttr(enHdmiId, &stAttr), "HI_MPI_HDMI_GetAttr");
     stAttr.bEnableHdmi           = HI_TRUE;
     stAttr.bEnableVideo          = HI_TRUE;
@@ -940,8 +1012,18 @@ HI_S32 SAMPLE_COMM_VO_HdmiStartByDyRg(VO_INTF_SYNC_E enIntfSync, DYNAMIC_RANGE_E
     
 
     CHECK_RET(HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr), "HI_MPI_HDMI_SetAttr");
+    
+    #if 1//HDMI-hotplug;
     CHECK_RET(HI_MPI_HDMI_Start(enHdmiId), "HI_MPI_HDMI_Start");
-
+    #else
+    g_stHdmiArgs.enHdmi = enHdmiId;
+    g_stHdmiArgs.eForceFmt = enVideoFmt;
+    g_stCallbackFunc.pfnHdmiEventCallback = HDMI_EventProc;
+    g_stCallbackFunc.pPrivateData = &g_stHdmiArgs;
+    HI_MPI_HDMI_RegCallbackFunc(g_stHdmiArgs.enHdmi, &g_stCallbackFunc);
+    printf("%s => HI_MPI_HDMI_RegCallbackFunc @@@@\n", __func__);
+    #endif
+    
     return HI_SUCCESS;
 }
 
@@ -951,6 +1033,11 @@ HI_S32 SAMPLE_COMM_VO_HdmiStop(HI_VOID)
     HI_HDMI_ID_E enHdmiId = HI_HDMI_ID_0;
 
     HI_MPI_HDMI_Stop(enHdmiId);
+    
+    g_stCallbackFunc.pfnHdmiEventCallback = HDMI_EventProc;
+    g_stCallbackFunc.pPrivateData = &g_stHdmiArgs;
+    HI_MPI_HDMI_UnRegCallbackFunc(enHdmiId, &g_stCallbackFunc);
+    printf("HI_MPI_HDMI_UnRegCallbackFunc @@@@\n");
     HI_MPI_HDMI_Close(enHdmiId);
     HI_MPI_HDMI_DeInit();
 

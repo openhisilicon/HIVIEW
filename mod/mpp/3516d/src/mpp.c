@@ -111,6 +111,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
+    {SONY_IMX385_MIPI_2M_30FPS_12BIT,           "imx385-0-0-2-30", "libsns_imx385.so", "stSnsImx385Obj"},
   };
 
 
@@ -199,8 +200,10 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT:
-                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT:BT601GD_YUV_0M_60FPS_8BIT;
+    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT: //PAL
+                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT://NTSC
+                   (cfg->second == 3)?BT601GD_YUV_0M_60FPS_8BIT://GD
+                                      BT601_YUV_0M_60FPS_8BIT;//PAL
   }
   
   if(dl)
@@ -600,7 +603,8 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
   return SAMPLE_COMM_VENC_SnapProcessCB(VencChn, SnapCnt, cb, u);
 }
 
-static int g_sceneByPass = 1;
+static int g_scenebEnable = 0;
+
 int gsf_mpp_scene_start(char *path, int scenemode)
 {
     HI_S32 s32ret = HI_SUCCESS;
@@ -627,7 +631,7 @@ int gsf_mpp_scene_start(char *path, int scenemode)
         return HI_FAILURE;
     }
     printf("The sceneauto is started.\n");
-    g_sceneByPass = 0;
+    g_scenebEnable = 1;
     return s32ret;
 }
 int gsf_mpp_scene_stop()
@@ -705,12 +709,11 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       {
         gsf_mpp_img_all_t *all = (gsf_mpp_img_all_t*)args;
         
-        all->scene.byPass = g_sceneByPass;
+        all->scene.bEnable = g_scenebEnable;
         
         ISP_CSC_ATTR_S stCSCFAttr;
         ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
         
-        all->csc.byPass = !stCSCFAttr.bEnable;
         all->csc.u8Hue  =  stCSCFAttr.u8Hue;
         all->csc.u8Luma =  stCSCFAttr.u8Luma;
         all->csc.u8Contr =  stCSCFAttr.u8Contr;
@@ -719,7 +722,6 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ISP_EXPOSURE_ATTR_S stExpAttr;
         HI_MPI_ISP_GetExposureAttr(ViPipe, &stExpAttr);
 
-        all->ae.byPass = stExpAttr.bByPass;
         all->ae.u8Speed = stExpAttr.stAuto.u8Speed;
         all->ae.u8Compensation = stExpAttr.stAuto.u8Compensation;
         all->ae.SysGainRangeMax = stExpAttr.stAuto.stSysGainRange.u32Max;
@@ -731,14 +733,11 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ISP_DEHAZE_ATTR_S stDehazeAttr;
         HI_MPI_ISP_GetDehazeAttr(ViPipe, &stDehazeAttr);
         
-        all->dehaze.byPass = !stDehazeAttr.bEnable;
         all->dehaze.u8strength = stDehazeAttr.stAuto.u8strength;
         
-
         ISP_SHARPEN_ATTR_S stIspShpAttr;
         ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
         
-        all->sharpen.byPass = !stIspShpAttr.bEnable;
         all->sharpen.u16TextureFreq = stIspShpAttr.stManual.u16TextureFreq;
         all->sharpen.u16EdgeFreq = stIspShpAttr.stManual.u16EdgeFreq;
         all->sharpen.u8DetailCtrl = stIspShpAttr.stManual.u8DetailCtrl;
@@ -746,20 +745,17 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ISP_HLC_ATTR_S stIspHlcAttr;
         ret = HI_MPI_ISP_GetIspHlcAttr(ViPipe, &stIspHlcAttr);
         
-        all->hlc.byPass = !stIspHlcAttr.bEnable;
         all->hlc.u8LumaThr= stIspHlcAttr.u8LumaThr;
         all->hlc.u8LumaTarget = stIspHlcAttr.u8LumaTarget;
         
         ISP_GAMMA_ATTR_S stGammaAttr;
         ret = HI_MPI_ISP_GetGammaAttr(ViPipe, &stGammaAttr);
         
-        all->gamma.byPass = !stGammaAttr.bEnable;
         all->gamma.enCurveType = stGammaAttr.enCurveType;
         
         ISP_DRC_ATTR_S stDRC;
         ret = HI_MPI_ISP_GetDRCAttr(ViPipe, &stDRC);
         
-        all->drc.byPass = !stDRC.bEnable;
         all->drc.u16Strength = stDRC.stAuto.u16Strength;
         all->drc.u16StrengthMax = stDRC.stAuto.u16StrengthMax;
         all->drc.u16StrengthMin = stDRC.stAuto.u16StrengthMin;
@@ -767,7 +763,6 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ISP_LDCI_ATTR_S stLDCIAttr;
         ret = HI_MPI_ISP_GetLDCIAttr(ViPipe, &stLDCIAttr);
         
-        all->ldci.byPass = !stLDCIAttr.bEnable;
         all->ldci.u16BlcCtrl = stLDCIAttr.stManual.u16BlcCtrl;
         all->ldci.stHePosWgt_u8Wgt = stLDCIAttr.stManual.stHeWgt.stHePosWgt.u8Wgt;
         all->ldci.stHeNegWgt_u8Mean = stLDCIAttr.stManual.stHeWgt.stHeNegWgt.u8Mean;
@@ -775,18 +770,21 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         VPSS_GRP VpssGrp = 0;        
         VPSS_GRP_ATTR_S stGrpAttr = {0};
         ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
-        all->_3dnr.byPass = (stGrpAttr.bNrEn == HI_FALSE)?1:0;
 
       }
       break;
     case GSF_MPP_ISP_CTL_CSC:
       {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_csc_t *csc = (gsf_mpp_img_csc_t*)args;
+        if(!csc->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
         ISP_CSC_ATTR_S stCSCFAttr;
         ret = HI_MPI_ISP_GetCSCAttr(ViPipe, &stCSCFAttr);
         
-        stCSCFAttr.bEnable = !csc->byPass;
+        stCSCFAttr.bEnable = 1;
         stCSCFAttr.u8Hue =    csc->u8Hue;
         stCSCFAttr.u8Luma =   csc->u8Luma;
         stCSCFAttr.u8Contr =  csc->u8Contr;
@@ -796,13 +794,17 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_ISP_CTL_AE:
       {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_ae_t *ae = (gsf_mpp_img_ae_t*)args;
-        
+        if(!ae->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+
         ISP_EXPOSURE_ATTR_S stExpAttr;
         ret = HI_MPI_ISP_GetExposureAttr(ViPipe, &stExpAttr);
 
-        stExpAttr.bByPass =  ae->byPass;
+        stExpAttr.bByPass = 0;
         stExpAttr.stAuto.u8Speed = ae->u8Speed;
         stExpAttr.stAuto.u8Compensation        = ae->u8Compensation;
         stExpAttr.stAuto.stSysGainRange.u32Max = ae->SysGainRangeMax;
@@ -815,13 +817,17 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;
       case GSF_MPP_ISP_CTL_DEHAZE:
       {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_dehaze_t *dehaze = (gsf_mpp_img_dehaze_t*)args;
-
+        if(!dehaze->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+          
         ISP_DEHAZE_ATTR_S stDehazeAttr;
         ret = HI_MPI_ISP_GetDehazeAttr(ViPipe, &stDehazeAttr);
         
-        stDehazeAttr.bEnable = !dehaze->byPass;
+        stDehazeAttr.bEnable = 1;
         stDehazeAttr.stAuto.u8strength = dehaze->u8strength;
         
         ret = HI_MPI_ISP_SetDehazeAttr(ViPipe, &stDehazeAttr);
@@ -831,8 +837,8 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      case GSF_MPP_ISP_CTL_SCENE:
      {
         gsf_mpp_img_scene_t *scene = (gsf_mpp_img_scene_t*)args;
-        g_sceneByPass = scene->byPass;
-        if(scene->byPass)
+        g_scenebEnable = scene->bEnable;
+        if(!scene->bEnable)
           ret = HI_SCENE_Pause(HI_TRUE);
         else 
           ret = HI_SCENE_Pause(HI_FAILURE);
@@ -840,32 +846,40 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      break;
      
      case GSF_MPP_ISP_CTL_SHARPEN:
-     {
-        HI_SCENE_Pause(HI_TRUE);
+     {   
         gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
-
+        if(!sharpen->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+          
+        printf("sharpen->bEnable:%d,u16TextureFreq:%d\n", sharpen->bEnable, sharpen->u16TextureFreq);  
         ISP_SHARPEN_ATTR_S stIspShpAttr;
         ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
         
-        stIspShpAttr.bEnable = !sharpen->byPass;
+        stIspShpAttr.bEnable = 1;
         stIspShpAttr.enOpType= OP_TYPE_MANUAL;
         stIspShpAttr.stManual.u16TextureFreq = sharpen->u16TextureFreq;
         stIspShpAttr.stManual.u16EdgeFreq = sharpen->u16EdgeFreq;
         stIspShpAttr.stManual.u8DetailCtrl = sharpen->u8DetailCtrl;
-        
         ret = HI_MPI_ISP_SetIspSharpenAttr(ViPipe, &stIspShpAttr);
      }
      break; 
 
      case GSF_MPP_ISP_CTL_HLC:
      {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_hlc_t *hlc = (gsf_mpp_img_hlc_t*)args;
-
+        if(!hlc->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+          
         ISP_HLC_ATTR_S stIspHlcAttr;
         ret = HI_MPI_ISP_GetIspHlcAttr(ViPipe, &stIspHlcAttr);
         
-        stIspHlcAttr.bEnable = !hlc->byPass;
+        stIspHlcAttr.bEnable = 1;
         stIspHlcAttr.u8LumaThr = hlc->u8LumaThr;
         stIspHlcAttr.u8LumaTarget = hlc->u8LumaTarget;
         
@@ -874,13 +888,17 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      break;
      case GSF_MPP_ISP_CTL_GAMMA:
      {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_gamma_t *gamma = (gsf_mpp_img_gamma_t*)args;
-
+        if(!gamma->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+          
         ISP_GAMMA_ATTR_S stGammaAttr;
         ret = HI_MPI_ISP_GetGammaAttr(ViPipe, &stGammaAttr);
         
-        stGammaAttr.bEnable = !gamma->byPass;
+        stGammaAttr.bEnable = 1;
         stGammaAttr.enCurveType = gamma->enCurveType;
         if(gamma->TableNo >= 0 && gamma->TableNo < GAMMATAB_MAX)
           memcpy(stGammaAttr.u16Table, gammaTab[gamma->TableNo], sizeof(stGammaAttr.u16Table));
@@ -889,13 +907,17 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      break;
      case GSF_MPP_ISP_CTL_DRC:
      {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_drc_t *drc = (gsf_mpp_img_drc_t*)args;
-
+        if(!drc->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+          
         ISP_DRC_ATTR_S stDRC;
         ret = HI_MPI_ISP_GetDRCAttr(ViPipe, &stDRC);
         
-        stDRC.bEnable = !drc->byPass;
+        stDRC.bEnable = 1;
         stDRC.enCurveSelect = DRC_CURVE_ASYMMETRY;
         stDRC.enOpType = OP_TYPE_AUTO;
         stDRC.stAuto.u16Strength = drc->u16Strength;
@@ -906,20 +928,24 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      break;
      case GSF_MPP_ISP_CTL_LDCI:
      {
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_ldci_t *ldci = (gsf_mpp_img_ldci_t*)args;
-
+        if(!ldci->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+          
         ISP_LDCI_ATTR_S stLDCIAttr;
         ret = HI_MPI_ISP_GetLDCIAttr(ViPipe, &stLDCIAttr);
         
-        stLDCIAttr.bEnable = !ldci->byPass;
+        stLDCIAttr.bEnable = 1;
         stLDCIAttr.enOpType = OP_TYPE_MANUAL;
         stLDCIAttr.stManual.u16BlcCtrl = ldci->u16BlcCtrl;
         stLDCIAttr.stManual.stHeWgt.stHePosWgt.u8Wgt = ldci->stHePosWgt_u8Wgt;
         stLDCIAttr.stManual.stHeWgt.stHeNegWgt.u8Mean = ldci->stHeNegWgt_u8Mean;        
         ret = HI_MPI_ISP_SetLDCIAttr(ViPipe, &stLDCIAttr);
      }
-     break; 
+     break;
      case GSF_MPP_ISP_CTL_3DNR:
      {
         /* 3DNR */
@@ -936,8 +962,12 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         //HI_S32 HI_MPI_VI_SetPipeAttr(ViPipe, &stViPipeAttr); //stViPipeAttr.bNrEn = HI_TRUE;
         //HI_S32 HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr ); //stGrpAttr.bNrEn = HI_TRUE;
         
-        HI_SCENE_Pause(HI_TRUE);
         gsf_mpp_img_3dnr_t *_3dnr = (gsf_mpp_img_3dnr_t*)args;
+        if(!_3dnr->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
 
         VI_PIPE ViPipe = 0;
         VI_PIPE_ATTR_S stViPipeAttr = {0};
@@ -1240,7 +1270,7 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ret = HI_MPI_VPSS_SetGrpNRXParam(VpssGrp, &stVPSSNRXParam);
 
         ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
-        stGrpAttr.bNrEn = _3dnr->byPass?HI_FALSE:HI_TRUE;
+        stGrpAttr.bNrEn = HI_TRUE;
         ret = HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr);
      }
      break; 
@@ -2315,13 +2345,15 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         default:
             break;
     }
-#if 0
+#if 0 //maohw;
+    #warning "FB_COLOR_DEPTH == 32"
     var.transp= s_a32;
     var.red   = s_r32;
     var.green = s_g32;
     var.blue  = s_b32;
     var.bits_per_pixel = 32;
 #else
+    #warning "FB_COLOR_DEPTH == 16"
     var.transp= s_a16;
     var.red   = s_r16;
     var.green = s_g16;
