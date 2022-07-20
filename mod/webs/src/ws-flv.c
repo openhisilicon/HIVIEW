@@ -16,9 +16,7 @@
 #include "fw/libwebsockets/inc/libwebsockets.h"
 #include "fw/libwebsockets/inc/lws-sub.h"
 
-extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u);
+#include "inc/frm.h"
 
 #define FLV_TYPE_AUDIO 8
 #define FLV_TYPE_VDIEO 9
@@ -209,7 +207,7 @@ static int callback_movie(struct lws *wsi,
               else if (ret > 0 )
               {
                 //printf("cfifo frame ret:%d\n", ret);
-                if(rec->video.nal[0] /*&& rec->video.encode == 0*/)
+                if(rec->video.encode == GSF_ENC_H264)
                 {
                   if(!sess->pts)
                   {

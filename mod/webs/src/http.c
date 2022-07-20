@@ -21,78 +21,17 @@
 #include "webrtc.h"
 #include "http.h"
 
-unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
+#include "inc/frm.h"
 
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return (rec->flag & GSF_FRM_FLAG_IDR)?rec->utc:0;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return (rec.flag & GSF_FRM_FLAG_IDR)?rec.utc:0;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-    unsigned int len = cfifo_recsize(p1, n1, p2);
-    unsigned int l = CFIFO_MIN(len, n1);
-    
-    //printf("len:%d, l1:%d\n", len, l);
-    
-    char *p = (char*)u;
-    memcpy(p, p1, l);
-    memcpy(p+l, p2, len-l);
-
-    gsf_frm_t *rec = (gsf_frm_t *)u;
-  	struct timespec _ts;  
-    clock_gettime(CLOCK_MONOTONIC, &_ts);
-    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
-    if(cost > 33)
-      printf("get rec->type:%d ok [delay:%d ms].\n", rec->type, cost);
-
-    return len;
-}
 
 #define FLV_TYPE_AUDIO 8
 #define FLV_TYPE_VDIEO 9
 #define FLV_TYPE_SCRIPT 18
 
-#define MAX_FRAME_SIZE (1000*1024)
 typedef struct {
   char flag[32];  //session flag;
   struct cfifo_ex* video;
-  struct cfifo_ex* audio;
+  struct cfifo_ex* audio;  
   unsigned char* data;
   flv_muxer_t* flv;
   unsigned int vpts, apts;
@@ -369,7 +308,11 @@ static void *send_thread_func(void *param) {
     if(sess->data)
     {
       printf("sess:%p, free data:%p\n", sess, sess->data);
+      #ifdef __DMA_COPY__
+      venc_viraddr_free(sess->data);
+      #else
       free(sess->data);
+      #endif
     }    
     for(i = 0; i < 2; i++)
     { 
@@ -549,14 +492,22 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
         }
 
         session_cnt++;
-        
+                 
         lws_session_t *sess = (lws_session_t*)calloc(1, sizeof(lws_session_t));
         strcpy(sess->flag, "flv");
-        sess->data     = malloc(MAX_FRAME_SIZE);
-        sess->wsbuf[0] = malloc(MAX_FRAME_SIZE);
-        sess->wsbuf[1] = malloc(MAX_FRAME_SIZE);
+        #ifdef __DMA_COPY__ 
+        sess->data = venc_viraddr_alloc(GSF_FRM_MAX_SIZE);
+        #else
+        sess->data     = malloc(GSF_FRM_MAX_SIZE);
+        #endif
+        sess->wsbuf[0] = malloc(GSF_FRM_MAX_SIZE);
+        sess->wsbuf[1] = malloc(GSF_FRM_MAX_SIZE);
+
         printf("sess:%p, malloc:%p\n", sess, sess->wsbuf[0]);
         printf("sess:%p, malloc:%p\n", sess, sess->wsbuf[1]);
+        assert(sess->wsbuf[0]);
+        assert(sess->wsbuf[1]);
+        
         sess->chn = channel;
         sess->sid = sid;
         sess->mgr = nc->mgr;

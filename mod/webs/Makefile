@@ -15,7 +15,9 @@ RTC_LIBS := -lkvsWebrtcClient -lkvspic -lsrtp2 -lusrsctp
 INCS := -I$(HOME) -Isrc -Iinc \
         -I$(HOME)/fw/openssl/openssl-1.1.0l \
         -DMG_ENABLE_HTTP_STREAMING_MULTIPART \
-        -I$(HOME)/fw/kvs/inc $(RTC_INCS)
+        -I$(HOME)/fw/kvs/inc $(RTC_INCS) \
+        -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/hisisdk
+        
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
@@ -23,6 +25,12 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) $(RTC_LIBS) \
         -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lcomm -lssl -lcrypto -lm
+
+#__FRM_PHY__
+#CFLAGS += -D__FRM_PHY__
+#CFLAGS += -D__DMA_COPY__
+#LIBS += $(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/libmppex.a -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -ltde -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lsecurec
+
 
 $(TARG): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)

@@ -2,10 +2,10 @@
 #include "rtp.h"
 #include "time64.h"
 
-
 #include "inc/gsf.h"
 #include "mod/codec/inc/codec.h"
 
+#include "inc/frm.h"
 
 #include <stddef.h> // container_of
 #define CONTAINER_OF(ptr, struct_type, member) \
@@ -19,7 +19,6 @@ enum {
 };
 
 #define MAX_UDP_PACKET (1450-16)
-#define FRAME_MAX_SIZE (1000*1024)
 
 struct media_track_t
 {
@@ -44,6 +43,8 @@ struct rtp_media_live_t
   int loop, exited;
   st_thread_t tid;
   struct media_track_t track[MEDIA_TRACK_BUTT];
+  int cur_track;
+  unsigned char *cur_frm;
 };
 
 int SendRTCP(struct media_track_t *t)
@@ -65,81 +66,136 @@ int SendRTCP(struct media_track_t *t)
 	return 0;
 }
 
-
-
-static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
+static int live_sendto(struct rtp_media_live_t* m)
 {
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
+  int j = m->cur_track;
+  gsf_frm_t *rec = (gsf_frm_t*)m->cur_frm;
+  
+  int sp = (rec->type == GSF_FRM_VIDEO)?90:
+            (rec->type == GSF_FRM_AUDIO)?rec->audio.sp:
+            1;
+            
+  //sync video;
+  if(rec->type != GSF_FRM_VIDEO)
+  {
+    if(m->track[MEDIA_TRACK_VIDEO].m_rtp_clock == 0)
+      return 0;  
+  }
+  
+  if(m->track[j].m_rtp_clock == 0)
+  {
+    if(rec->flag & GSF_FRM_FLAG_IDR)
+      m->track[j].m_rtp_clock = rec->pts;
     else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
+      return 0;
+  }
+  
+  m->track[j].sendcnt = 0;
+  
+  //if(rec->type == GSF_FRM_VIDEO)
+  //  printf("rec->seq:%u, rec->utc:%u\n", rec->seq, rec->utc);
     
-    return 0;
+  uint32_t timestamp = rec->pts - m->track[j].m_rtp_clock;
+    
+  int skip = 0;
+  if(rec->type == GSF_FRM_AUDIO 
+    && (rec->audio.encode == GSF_ENC_G711A || rec->audio.encode == GSF_ENC_G711U))
+  {
+    skip = 4;
+  }
+ 
+  if(rec->flag & GSF_FRM_FLAG_PHY)
+  {
+    #ifdef __FRM_PHY__
+    int i = 0;
+    venc_phyaddr_t* phyaddr = (venc_phyaddr_t*)rec->data;
+    
+    venc_phyaddr_mmap(phyaddr);
+    
+    #if 1
+    gsf_frm_t *rec = (gsf_frm_t *)m->cur_frm;
+  	struct timespec _ts;  
+    clock_gettime(CLOCK_MONOTONIC, &_ts);
+    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
+    if(cost > 10)
+      printf("m:%p, get rec phy size:%d, [delay:%d ms].\n", m, phyaddr->u32FrameSize, cost);
+    #endif
+
+    for(i = 0; i < phyaddr->u32PackCount; i++)
+    {
+      int nals = 0;
+      unsigned char *nalu = NULL;
+      
+      if(phyaddr->stPack[i].u8Addr2)
+      {
+        nalu = rec->data + sizeof(venc_phyaddr_t);
+        
+        memcpy(nalu, phyaddr->stPack[i].u8Addr, phyaddr->stPack[i].u32Len);
+        nals += phyaddr->stPack[i].u32Len;
+        
+        memcpy(nalu + nals, phyaddr->stPack[i].u8Addr2, phyaddr->stPack[i].u32Len2);
+        nals += phyaddr->stPack[i].u32Len2;
+        //printf("i:%d, u64PhyAddr2:%llx, nalu:[%02x %02x %02x %02x %02x], nals:%d\n", i, phyaddr->stPack[i].u64PhyAddr2, nalu[0], nalu[1], nalu[2], nalu[3], nalu[4], nals);
+        rtp_payload_encode_input(m->track[j].m_rtppacker, nalu + 4, nals - 4, timestamp * sp /*kHz*/);  
+      }
+      else 
+      {
+        nals = phyaddr->stPack[i].u32Len;
+        nalu = phyaddr->stPack[i].u8Addr;
+        //printf("i:%d, u64PhyAddr:%llx, nalu:[%02x %02x %02x %02x %02x], nals:%d\n", i, phyaddr->stPack[i].u64PhyAddr, nalu[0], nalu[1], nalu[2], nalu[3], nalu[4], nals);
+        rtp_payload_encode_input(m->track[j].m_rtppacker, nalu + 4, nals - 4, timestamp * sp /*kHz*/);  
+      }
+    }
+    venc_phyaddr_munmap(phyaddr);
+    #else
+    printf("%s => error unknow GSF_FRM_FLAG_PHY\n", __func__);
+    #endif
+  }
+  else   
+  {
+    #if 1  
+    gsf_frm_t *rec = (gsf_frm_t *)m->cur_frm;
+  	struct timespec _ts;  
+    clock_gettime(CLOCK_MONOTONIC, &_ts);
+    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
+    if(cost > 10)
+      printf("m:%p, get rec data size:%d, [delay:%d ms].\n", m, rec->size, cost);
+    #endif 
+ 
+    rtp_payload_encode_input(m->track[j].m_rtppacker, rec->data+skip, rec->size-skip, timestamp * sp /*kHz*/); 
+    // SendRTP() used st_writev();
+    // SendRTCP(&m->track[j]); 
+  }
+  return 0;
 }
 
-static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
-
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+static unsigned int cfifo_recgut_me(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
 {
     unsigned int len = cfifo_recsize(p1, n1, p2);
     unsigned int l = CFIFO_MIN(len, n1);
     
-    char *p = (char*)u;
+    struct rtp_media_live_t* m = (struct rtp_media_live_t*)u;
+    
+    char *p = (char*)m->cur_frm;
     memcpy(p, p1, l);
     memcpy(p+l, p2, len-l);
-
-    gsf_frm_t *rec = (gsf_frm_t *)u;
     
-    #if 0
-  	struct timespec _ts;  
-    clock_gettime(CLOCK_MONOTONIC, &_ts);
-    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
+    //noblock;
+    live_sendto(m);
     
-    if(cost > 30*2)
-      printf("u:%p, get rec ok [delay:%d ms].\n", u, cost);
-    #endif
-
     return len;
 }
+
 
 
 
 static void *live_send_task(void *arg)
 {
   int i = 0, j = 0, ret = 0;
-  unsigned char* ptr = malloc(FRAME_MAX_SIZE);
-  uint32_t timestamp = 0;
+
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
+  
+  m->cur_frm = malloc(GSF_FRM_MAX_SIZE);
   
   struct pollfd fds[MEDIA_TRACK_BUTT] = {0};
   st_netfd_t m_evfd[MEDIA_TRACK_BUTT] = {NULL};
@@ -176,9 +232,7 @@ static void *live_send_task(void *arg)
     fds[MEDIA_TRACK_VIDEO].revents = 0;
     fds[MEDIA_TRACK_AUDIO].revents = 0;
     fds[MEDIA_TRACK_META].revents  = 0;
-    
-    struct timeval tv1, tv2;
-    
+
     if (st_poll(fds, fdcnt, 1000*1000) <= 0)
     {
       printf("%s => st_poll err.\n", __func__);
@@ -197,51 +251,11 @@ static void *live_send_task(void *arg)
         }
         
         // get data;
+        m->cur_track = j;
         do{
-          
-          //gettimeofday(&tv1, NULL);
-          gsf_frm_t *rec = (gsf_frm_t*)ptr;
-          int ret = cfifo_get(m->track[j].m_reader, cfifo_recgut, (unsigned char*)ptr);
+          int ret = cfifo_get(m->track[j].m_reader, cfifo_recgut_me, (void*)m);
           if(ret <= 0)
             break;
-
-          int sp = (rec->type == GSF_FRM_VIDEO)?90:
-                    (rec->type == GSF_FRM_AUDIO)?rec->audio.sp:
-                    1;
-                    
-          //sync video;
-          if(rec->type != GSF_FRM_VIDEO)
-          {
-            if(m->track[MEDIA_TRACK_VIDEO].m_rtp_clock == 0)
-              continue;  
-          }
-          
-          if(m->track[j].m_rtp_clock == 0)
-          {
-            if(rec->flag & GSF_FRM_FLAG_IDR)
-              m->track[j].m_rtp_clock = rec->pts;
-            else
-              continue;
-          }
-          //gettimeofday(&tv2, NULL);
-          
-          m->track[j].sendcnt = 0;
-          timestamp = rec->pts - m->track[j].m_rtp_clock;
-          
-          if(0)//if(rec->type != GSF_FRM_VIDEO)
-          printf("track %d ts:%u ms, size:%d, [%02X %02X %02X %02X]\n", j, timestamp, rec->size
-                , rec->data[0], rec->data[1], rec->data[2], rec->data[3]);
-          
-          int skip = 0;
-          if(rec->type == GSF_FRM_AUDIO 
-            && (rec->audio.encode == GSF_ENC_G711A || rec->audio.encode == GSF_ENC_G711U))
-          {
-            skip = 4;
-          }
-          
-          rtp_payload_encode_input(m->track[j].m_rtppacker, rec->data+skip, rec->size-skip, timestamp * sp /*kHz*/);
-          // SendRTP() used st_writev();
-          // SendRTCP(&m->track[j]);
         }while(1);
       }
     }
@@ -249,9 +263,7 @@ static void *live_send_task(void *arg)
     i++;
   }
   
-  
-  
-  free(ptr);
+  free(m->cur_frm);
   m->exited = 1;
   
   for(j = 0; j < MEDIA_TRACK_BUTT; j++)

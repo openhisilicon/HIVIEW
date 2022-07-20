@@ -28,70 +28,7 @@ static void* live_task(void *parm);
             PT_H264
 
 
-#define FRAME_MAX_SIZE (1000*1024)
-
-static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
-
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-    unsigned int len = cfifo_recsize(p1, n1, p2);
-    unsigned int l = CFIFO_MIN(len, n1);
-    
-    char *p = (char*)u;
-    memcpy(p, p1, l);
-    memcpy(p+l, p2, len-l);
-
-    gsf_frm_t *rec = (gsf_frm_t *)u;
-  	struct timespec _ts;  
-    clock_gettime(CLOCK_MONOTONIC, &_ts);
-    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
-    if(cost > 30*2)
-      printf("u:%p, get rec ok [delay:%d ms].\n", u, cost);
-      
-    assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
-
-    return len;
-}
+#include "inc/frm.h"
 
 
 int live_mon()
@@ -124,7 +61,7 @@ static void* live_task(void *parm)
 {
   int i = 0, ret = 0;
   int ep = cfifo_ep_alloc(1);
-  gsf_frm_t *frm = (gsf_frm_t*)malloc(FRAME_MAX_SIZE);
+  gsf_frm_t *frm = (gsf_frm_t*)malloc(GSF_FRM_MAX_SIZE);
   
   while(1)
   {

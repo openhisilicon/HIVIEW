@@ -2,6 +2,7 @@
 #define _FILE_OFFSET_BITS 64
 #include "file.h"
 
+#include "inc/frm.h"
 
 extern const struct mov_buffer_t* mov_file_buffer(void);
 

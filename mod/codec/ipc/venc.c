@@ -4,73 +4,65 @@
 
 #include "venc.h"
 
-#define VFRAME_MAX_SIZE (1000*1024)
-#define AFRAME_MAX_SIZE (2*1024)
+#include "inc/frm.h"
 
+#define AFRAME_MAX_SIZE (2*1024)
+ 
 static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
 venc_mgr_t venc_mgr[GSF_CODEC_IPC_CHN*GSF_CODEC_VENC_NUM];
 int audio_shmid = -1;
 struct cfifo_ex* audio_fifo = NULL;
 
-unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        //printf("%s => 1 rec->type:%d, seq:%d, utc:%u\n", __FILE__, rec->type, rec->seq, rec->utc);
-        return (rec->flag & GSF_FRM_FLAG_IDR)?rec->utc:0;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        //printf("%s => 2 rec->type:%d, seq:%d, utc:%u\n", __FILE__, rec.type, rec.type, rec.utc);
-        return (rec.flag & GSF_FRM_FLAG_IDR)?rec.utc:0;
-    }
-    
-    return 0;
-}
-
+ 
 unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
+  
+#ifdef __FRM_PHY__ 
+  unsigned int size = sizeof(gsf_frm_t) + sizeof(venc_phyaddr_t);
+  if(n1 >= size)
+  {
+      gsf_frm_t *rec = (gsf_frm_t*)p1;
+      venc_phyaddr_t *phyaddr = (venc_phyaddr_t*)(p1+sizeof(gsf_frm_t));
+      assert(rec->flag & GSF_FRM_FLAG_PHY);
+          
+      int VeChn = *((int*)phyaddr->opaque);
+      VENC_STREAM_S* pstStream = (VENC_STREAM_S*)(phyaddr->opaque + sizeof(int));
+      int ret = HI_MPI_VENC_ReleaseStream(VeChn, pstStream);
+      free(pstStream->pstPack);
+      //printf("HI_MPI_VENC_ReleaseStream VeChn:%d, ret:%d\n", VeChn, ret);
+      return 0;
+  
+  }
+  else
+  {
+      char buf[sizeof(gsf_frm_t) + sizeof(venc_phyaddr_t)];
+      char *p = buf;
+      memcpy(p, p1, n1);
+      memcpy(p+n1, p2, size-n1);
+      
+      gsf_frm_t *rec = (gsf_frm_t*)buf;
+      venc_phyaddr_t *phyaddr = (venc_phyaddr_t*)(buf+sizeof(gsf_frm_t));
+      assert(rec->flag & GSF_FRM_FLAG_PHY);
+      
+      int VeChn = *((int*)phyaddr->opaque);
+      VENC_STREAM_S* pstStream = (VENC_STREAM_S*)(phyaddr->opaque + sizeof(int));
+      int ret = HI_MPI_VENC_ReleaseStream(VeChn, pstStream);
+      free(pstStream->pstPack);
+      //printf("HI_MPI_VENC_ReleaseStream VeChn:%d, ret:%d\n", VeChn, ret);
+      return 0;
+  }
+#endif
     return 0;
 }
 
-
-
-
-
-unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+unsigned int cfifo_recput_v(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
 {
   int i = 0, a = 0, l = 0, _n1 = n1;
   unsigned char *p = NULL, *_p1 = p1, *_p2 = p2;
   venc_mgr_t *mgr = (venc_mgr_t*)u;
   VENC_STREAM_S* pstStream = (VENC_STREAM_S*)mgr->pstStream;
+  VENC_STREAM_BUF_INFO_S* pstStreamBufInfo = (VENC_STREAM_BUF_INFO_S*)mgr->pstStreamBufInfo;
+  
   
   //printf("\n------------------\n");
 	struct timespec _ts;  
@@ -97,13 +89,60 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
       rec.video.height = sdp.venc.height;
     }
   }
+  
+
+#ifdef __FRM_PHY__
+
+  rec.flag |= GSF_FRM_FLAG_PHY;
+  rec.size = sizeof(venc_phyaddr_t);
+  
+  venc_phyaddr_t phyaddr = {0};
+  phyaddr.u32FrameSize = mgr->frameSize;
+  assert(sizeof(VENC_STREAM_S) + sizeof(int) < sizeof(phyaddr.opaque));
+  *((int*)phyaddr.opaque) = mgr->vst;
+  memcpy(phyaddr.opaque + sizeof(int), pstStream, sizeof(VENC_STREAM_S));
+  
+  //USEI
+  if(mgr->usei_len)
+  {
+    phyaddr.ulen = mgr->usei_len;
+    memcpy(phyaddr.usei, mgr->usei, phyaddr.ulen);
+  }
+  
+  //if(mgr->vst == 1)
+  //  printf("vst:%d, rec.seq:%u, utc:%u\n", mgr->vst, rec.seq, rec.utc);
+  assert(pstStreamBufInfo && pstStream);
+  venc_phyaddr_init(&phyaddr, pstStreamBufInfo, pstStream);
+
+  p = (unsigned char*)(&rec);
+  a = sizeof(gsf_frm_t);
+  
+  l = CFIFO_MIN(a, _n1);
+  memcpy(_p1, p, l);
+  memcpy(_p2, p+l, a-l);
+  _n1-=l;_p1+=l;_p2+=a-l;
+  
+  
+  p = (unsigned char*)(&phyaddr);
+  a = sizeof(venc_phyaddr_t);
+  
+  l = CFIFO_MIN(a, _n1);
+  memcpy(_p1, p, l);
+  memcpy(_p2, p+l, a-l);
+  _n1-=l;_p1+=l;_p2+=a-l;
+
+#else
+
   for (i = 0; i < venc_pack_count && i < GSF_FRM_NAL_NUM; i++)
   {
     rec.video.nal[i] = venc_pack_len - venc_pack_off;
     rec.size += rec.video.nal[i];
   }
-  
+  assert(i < GSF_FRM_NAL_NUM);
   if(i < GSF_FRM_NAL_NUM) rec.video.nal[i] = 0;
+  
+  //USEI SIZE;
+  rec.size += mgr->usei_len;
   
   //printf("rec[flag:%d, seq:%d, pts:%d, size:%d]\n"
   //      , rec.flag, rec.seq, rec.pts, rec.size);
@@ -117,6 +156,17 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   _n1-=l;_p1+=l;_p2+=a-l;
   //printf("a:%d, _n1:%d, _p1+:%d, _p2+:%d\n", a, _n1, l, a-l);
 
+  //USEI
+  if(mgr->usei_len)
+  {
+    p = (unsigned char*)(mgr->usei);
+    a = mgr->usei_len;
+    
+    l = CFIFO_MIN(a, _n1);
+    memcpy(_p1, p, l);
+    memcpy(_p2, p+l, a-l);
+    _n1-=l;_p1+=l;_p2+=a-l;
+  }
 
   for (i = 0; i < venc_pack_count; i++)
   {
@@ -130,6 +180,7 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
     //printf("a:%d, _n1:%d, _p1+:%d, _p2+:%d\n", a, _n1, l, a-l);
   }
   
+#endif
   //printf("\n------------------\n");
   return 0;
 }
@@ -188,7 +239,10 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
       _venc_sdp_fill(VeChn, PT, &venc_pack, pack_size);
   }
   
-  if(len+sizeof(gsf_frm_t) > VFRAME_MAX_SIZE)
+  //USEI SIZE;
+  venc_mgr[VeChn].usei_len = 0;
+  
+  if(len+sizeof(gsf_frm_t) > GSF_FRM_MAX_SIZE)
   {
     printf("drop VeChn:%d, bigframe size:%d \n", VeChn, len+sizeof(gsf_frm_t));
     goto __err;
@@ -198,13 +252,22 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
   clock_gettime(CLOCK_MONOTONIC, &ts1);
  
   venc_mgr[VeChn].pstStream = (void*)pstStream;
-  int ret = cfifo_put(venc_mgr[VeChn].video_fifo,  len+sizeof(gsf_frm_t), cfifo_recput, (unsigned char*)&venc_mgr[VeChn]);
-  
+  venc_mgr[VeChn].pstStreamBufInfo = uargs;
+  venc_mgr[VeChn].frameSize = len;
+ 
+  #ifdef __FRM_PHY__
+  int ret = cfifo_put(venc_mgr[VeChn].video_fifo,  sizeof(venc_phyaddr_t)+sizeof(gsf_frm_t)
+                    , cfifo_recput_v, (unsigned char*)&venc_mgr[VeChn]);
+  #else
+  int ret = cfifo_put(venc_mgr[VeChn].video_fifo,  len+sizeof(gsf_frm_t)
+                    , cfifo_recput_v, (unsigned char*)&venc_mgr[VeChn]);
+  #endif
+   
   clock_gettime(CLOCK_MONOTONIC, &ts2);
   int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
-  if(cost > 8)
+  if(cost > 10)
     printf("cfifo_put VeChn:%d, frame size:%d put cost:%d ms\n", VeChn, len+sizeof(gsf_frm_t), cost);
-  
+
   if(ret < 0)
   {
     printf("cfifo VeChn:%d, err ret:%d\n", VeChn, ret);
@@ -215,6 +278,10 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
     printf("cfifo VeChn:%d, is full, framesize:%d\n", VeChn, len+sizeof(gsf_frm_t));
     assert(0);
   }
+  
+  #ifdef __FRM_PHY__
+  return 1;
+  #endif
 
 __err:
   return 0;
@@ -222,7 +289,7 @@ __err:
 
 
 
-unsigned int cfifo_recput_au(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
+unsigned int cfifo_recput_a(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
 {
   int i = 0, a = 0, l = 0, _n1 = n1;
   unsigned char *p = NULL, *_p1 = p1, *_p2 = p2;
@@ -295,7 +362,7 @@ int gsf_aenc_recv(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void*
   struct timespec ts1, ts2;  
   clock_gettime(CLOCK_MONOTONIC, &ts1);
  
-  int ret = cfifo_put(audio_fifo,  len+sizeof(gsf_frm_t), cfifo_recput_au, (unsigned char*)pstStream);
+  int ret = cfifo_put(audio_fifo,  len+sizeof(gsf_frm_t), cfifo_recput_a, (unsigned char*)pstStream);
   
   clock_gettime(CLOCK_MONOTONIC, &ts2);
   int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
@@ -338,14 +405,16 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
   {
     venc_mgr[i*GSF_CODEC_VENC_NUM+j].vst = i*GSF_CODEC_VENC_NUM+j;
     
-    #ifdef GSF_CPU_3516e
-    int size = (j == 0)? 2*VFRAME_MAX_SIZE:
-               (j == 1)? 1*VFRAME_MAX_SIZE:
-               (j == 2)? 0.5*VFRAME_MAX_SIZE: 0;
+    #ifdef __FRM_PHY__
+    // The physical address of video frame is in CFIFO 
+    int size = (j == 0)? 32*(sizeof(gsf_frm_t)+sizeof(venc_phyaddr_t)):
+               (j == 1)? 32*(sizeof(gsf_frm_t)+sizeof(venc_phyaddr_t)):
+               (j == 2)? 32*(sizeof(gsf_frm_t)+sizeof(venc_phyaddr_t)): 0;
     #else
-    int size = (j == 0)? 3*VFRAME_MAX_SIZE:
-               (j == 1)? 2*VFRAME_MAX_SIZE:
-               (j == 2)? 1*VFRAME_MAX_SIZE: 0;
+    // The Video frame data is in CIFO
+    int size = (j == 0)? 6*GSF_FRM_MAX_SIZE:
+               (j == 1)? 3*GSF_FRM_MAX_SIZE:
+               (j == 2)? 1*GSF_FRM_MAX_SIZE: 0;
     #endif
     
     if(size > 0)
@@ -363,7 +432,7 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
   audio_fifo = cfifo_alloc(16*AFRAME_MAX_SIZE,
                   cfifo_recsize, 
                   cfifo_rectag, 
-                  cfifo_recrel, 
+                  NULL, 
                   &audio_shmid,
                   0);
   return 0;

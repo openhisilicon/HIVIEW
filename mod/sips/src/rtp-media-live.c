@@ -9,6 +9,7 @@
 #include "inc/gsf.h"
 #include "mod/codec/inc/codec.h"
 
+#include "inc/frm.h"
 
 #include <stddef.h> // container_of
 #define CONTAINER_OF(ptr, struct_type, member) \
@@ -22,7 +23,6 @@ enum {
 };
 
 #define MAX_UDP_PACKET (1450-16)
-#define FRAME_MAX_SIZE (1000*1024)
 
 struct media_track_t
 {
@@ -34,7 +34,7 @@ struct media_track_t
   
   struct ps_muxer_t* ps; // ps encoder
   int psvid, psaid, audio_shmid;
-  unsigned char ps_packet[FRAME_MAX_SIZE];
+  unsigned char ps_packet[GSF_FRM_MAX_SIZE];
   
   struct cfifo_ex* m_reader;
   int m_evfd;
@@ -75,77 +75,11 @@ int SendRTCP(struct media_track_t *t)
 }
 
 
-
-static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
-
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-    unsigned int len = cfifo_recsize(p1, n1, p2);
-    unsigned int l = CFIFO_MIN(len, n1);
-    
-    char *p = (char*)u;
-    memcpy(p, p1, l);
-    memcpy(p+l, p2, len-l);
-
-    gsf_frm_t *rec = (gsf_frm_t *)u;
-  	struct timespec _ts;  
-    clock_gettime(CLOCK_MONOTONIC, &_ts);
-    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
-    if(cost > 30*2)
-      printf("u:%p, get rec ok [delay:%d ms].\n", u, cost);
-      
-    //assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
-
-    return len;
-}
-
-
-
 static void *live_send_task(void *arg)
 {
   int i = 0, ret = 0;
   st_netfd_t m_evfd = NULL;
-  unsigned char* ptr = malloc(FRAME_MAX_SIZE);
+  unsigned char* ptr = malloc(GSF_FRM_MAX_SIZE);
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
   
   struct cfifo_ex* a_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, m->track[MEDIA_TRACK_VIDEO].audio_shmid);
@@ -161,7 +95,8 @@ static void *live_send_task(void *arg)
   if(m->track[MEDIA_TRACK_VIDEO].m_reader)
   {
     cfifo_newest(m->track[MEDIA_TRACK_VIDEO].m_reader, 0);
-    cfifo_newest(a_reader, 0);
+    if(a_reader)
+      cfifo_newest(a_reader, 0);
     
     GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t));
     GSF_MSG_SENDTO(GSF_ID_CODEC_IDR, m->ch, SET, m->st
@@ -199,7 +134,8 @@ static void *live_send_task(void *arg)
         //  printf("pid:%d, m:%p => st_netfd_poll ret:%d, cost:%d\n", getpid(), m, ret, (tv2.tv_sec*1000+tv2.tv_usec/1000)-(tv1.tv_sec*1000+tv1.tv_usec/1000));
       }
       // get data;
-      do{	
+      if(m->track[MEDIA_TRACK_VIDEO].m_reader)
+      do{
         //gettimeofday(&tv1, NULL);
       
         gsf_frm_t *rec = (gsf_frm_t*)ptr;
@@ -212,7 +148,8 @@ static void *live_send_task(void *arg)
             m->track[MEDIA_TRACK_VIDEO].m_rtp_clock = rec->pts;
           else
           {
-            cfifo_newest(a_reader, 0);
+            if(a_reader)
+              cfifo_newest(a_reader, 0);
             continue;
           }
         }
@@ -242,6 +179,7 @@ static void *live_send_task(void *arg)
       }while(1);
       
       //a_reader
+      if(a_reader)
       do{
         gsf_frm_t *rec = (gsf_frm_t*)ptr;
         int ret = cfifo_get(a_reader, cfifo_recgut, (unsigned char*)ptr);

@@ -12,19 +12,8 @@
             (t == GSF_ENC_JPEG)? PT_JPEG:\
             (t == GSF_ENC_MJPEG)? PT_MJPEG:\
             PT_H264  
-//cfifo;
-extern unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
-extern unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2);
-static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-  unsigned int len = cfifo_recsize(p1, n1, p2);
-  unsigned int l = CFIFO_MIN(len, n1);
-  char *p = (char*)u;
-  memcpy(p, p1, l);
-  memcpy(p+l, p2, len-l);
-  return len;
-}  
+
+#include "inc/frm.h"
   
 int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
@@ -46,7 +35,7 @@ int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
   if(shmid.video_shmid >= 0)
   {
     fifo[0] = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
-    frm[0] = (gsf_frm_t*)malloc(1000*1024);
+    frm[0] = (gsf_frm_t*)malloc(GSF_FRM_MAX_SIZE);
     cfifo_newest(fifo[0], 1);
     cfifo_set_u(fifo[0], (void*)1);
     printf("video fifo:%p, frm:%p\n", fifo[0], frm[0]);

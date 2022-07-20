@@ -8,7 +8,11 @@ typedef struct {
   struct cfifo_ex* video_fifo;
   gsf_sdp_val_t val[4];
   int vst;
-  void* pstStream;
+  void* pstStream;  //VENC_STREAM_S*
+  void* pstStreamBufInfo; //VENC_STREAM_BUF_INFO_S*
+  char usei[256];
+  int  usei_len;
+  int frameSize;
 }venc_mgr_t;
 
 extern int audio_shmid;

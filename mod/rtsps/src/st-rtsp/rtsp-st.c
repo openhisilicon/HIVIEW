@@ -5,8 +5,11 @@
 #include "rtsp-client-st.h"
 
 #include "h26xbits.h"
+//#include "fw/h26xbits/src/h264_stream.h"
 
-#define FRAME_MAX_SIZE (1000*1024)
+#include "inc/frm.h"
+
+#define AFRAME_MAX_SIZE (2*1024)
 
 static pthread_t rtsp_st_pid;
 static void* st_rtsp_ctl_listen(char *ip, unsigned short port);
@@ -20,6 +23,7 @@ struct rtsp_conn_ctx_t
   int video_shmid;
   int audio_shmid;
   struct cfifo_ex *video_fifo;
+  struct cfifo_ex *audio_fifo;
   gsf_frm_t *video_frm; // gsf_frm_t + __data_size__;
   int packet_cnt;
   int last_time;
@@ -40,47 +44,6 @@ struct rtsp_push_ctx_t
 static struct rtsp_conn_ctx_t *conn_ctxs;
 static struct rtsp_push_ctx_t *push_ctxs;
 
-static unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-static unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
 
 static unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
@@ -125,7 +88,7 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 
 		if(!ctx->video_frm)
 		{
-		  ctx->video_frm = (gsf_frm_t*)malloc(sizeof(gsf_frm_t)+FRAME_MAX_SIZE);
+		  ctx->video_frm = (gsf_frm_t*)malloc(sizeof(gsf_frm_t)+GSF_FRM_MAX_SIZE);
 		  memset(ctx->video_frm, 0, sizeof(gsf_frm_t));
 		  ctx->packet_cnt = 0;
 		}
@@ -138,8 +101,21 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
           , &ctx->video_frm->video.width
           , &ctx->video_frm->video.height);
 		}
-
-    if(ctx->video_frm->size + 4 + bytes <= FRAME_MAX_SIZE)
+	#if 0 //"fw/h26xbits/src/h264_stream.h"
+    if(0)//if (type == 7)
+    {
+      h264_stream_t* h = h264_new();
+      read_nal_unit(h, packet, bytes);
+     
+      h->sps->vui.bitstream_restriction_flag = 0;
+      h->sps->vui.timing_info_present_flag = 0;
+      printf("rebuild nal_type:%d, vui.bitstream_restriction_flag:%d\n", type, h->sps->vui.bitstream_restriction_flag);
+      write_nal_unit(h, packet, bytes);
+      h264_free(h);
+    }
+	#endif
+	
+    if(ctx->video_frm->size + 4 + bytes <= GSF_FRM_MAX_SIZE)
     {
       ctx->video_frm->data[ctx->video_frm->size+0] = 00;
       ctx->video_frm->data[ctx->video_frm->size+1] = 00;
@@ -189,7 +165,53 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 			printf("%s => encoding:%s, time:%08u, flags:%08d, bytes:%d\n", ctx->name, encoding, time, flags, bytes);
 		}
 	}
-  
+  else if (0 == strcmp("mpeg4-generic", encoding))
+  {
+    char audio_buf[AFRAME_MAX_SIZE];
+    gsf_frm_t *audio_frm = (gsf_frm_t *)audio_buf;
+    if(bytes + 7 + sizeof(gsf_frm_t) <= sizeof(audio_buf))
+    {
+      uint8_t ADTS[] = {0xFF, 0xF1, 0x00, 0x00, 0x00, 0x00, 0xFC}; 
+      int audioSamprate = 32000;//音频采样
+      int audioChannel = 2;     //音频声道
+      int audioBit = 16;        //固定
+      switch(audioSamprate)
+      {
+        case  16000: ADTS[2] = 0x60; break;
+        case  32000: ADTS[2] = 0x54; break;
+        case  44100: ADTS[2] = 0x50; break;
+        case  48000: ADTS[2] = 0x4C; break;
+        case  96000: ADTS[2] = 0x40; break;
+        default: break;
+      }
+      ADTS[3] = (audioChannel==2)?0x80:0x40;
+
+      int len = bytes + 7;
+      len <<= 5;//8bit * 2 - 11 = 5(headerSize 11bit)
+      len |= 0x1F;//5 bit    1            
+      ADTS[4] = len>>8;
+      ADTS[5] = len & 0xFF;
+      memcpy(audio_frm->data, ADTS, sizeof(ADTS));
+      
+      audio_frm->type = GSF_FRM_AUDIO;
+      audio_frm->flag = GSF_FRM_FLAG_IDR;
+      audio_frm->seq  = 0;
+      audio_frm->utc  = 0;
+      audio_frm->pts  = audio_frm->utc;
+      audio_frm->size = bytes + 7;
+      audio_frm->audio.encode = GSF_ENC_AAC;
+      
+      memcpy(audio_frm->data + 7, packet, bytes);
+      int ret = cfifo_put(ctx->audio_fifo,
+                      audio_frm->size+sizeof(gsf_frm_t),
+                      cfifo_recput, 
+                      (unsigned char*)audio_frm);
+      if(0)
+      printf("%s=>encoding:%s,time:%08u,bytes:%d,packet[%02X %02X %02X %02X]\n"
+        , ctx->name, encoding, time, bytes
+        , *((uint8_t*)packet+0), *((uint8_t*)packet+1), *((uint8_t*)packet+2), *((uint8_t*)packet+3));
+    }
+  }  
   return 0;
 }
 
@@ -386,14 +408,22 @@ static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
   ctx = calloc(1, sizeof(*ctx));
   ctx->refcnt++;
   ctx->audio_shmid = -1;
-  ctx->video_fifo = cfifo_alloc(2*FRAME_MAX_SIZE,
+  ctx->video_fifo = cfifo_alloc(2*GSF_FRM_MAX_SIZE,
                   cfifo_recsize, 
                   cfifo_rectag, 
                   cfifo_recrel, 
                   &ctx->video_shmid,
                   0);
+  ctx->audio_fifo = cfifo_alloc(16*AFRAME_MAX_SIZE,
+                  cfifo_recsize, 
+                  cfifo_rectag, 
+                  cfifo_recrel, 
+                  &ctx->audio_shmid,
+                  0);
+                  
   strncpy(ctx->name, name, sizeof(ctx->name)-1);          
-  printf("id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d\n", name, ctx->video_shmid);
+  printf("id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d, audio_shmid:%d\n"
+        , name, ctx->video_shmid, ctx->audio_shmid);
   
   struct timespec _ts;  
   clock_gettime(CLOCK_MONOTONIC, &_ts);
@@ -408,7 +438,7 @@ static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
   
   gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
   shmid->video_shmid = ctx->video_shmid;
-  shmid->audio_shmid = ctx->audio_shmid;;
+  shmid->audio_shmid = ctx->audio_shmid;
   ctl->size = sizeof(gsf_shmid_t);
   ctl->err = 0;
   return;
@@ -441,7 +471,7 @@ static void conn_ctx_close(struct rtsp_st_ctl_t *ctl)
     }
     if(ctx->audio_shmid != -1)
     {
-      ;
+      cfifo_free(ctx->audio_fifo);
     }
     free(ctx);
   }
@@ -485,7 +515,7 @@ static void conn_ctx_clear(struct rtsp_st_ctl_t *ctl)
     }
     if(ctx->audio_shmid != -1)
     {
-      ;
+      cfifo_free(ctx->audio_fifo);
     }
     free(ctx);
   }

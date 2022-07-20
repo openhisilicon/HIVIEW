@@ -23,9 +23,6 @@
 
 GSF_LOG_GLOBAL_INIT("RTMPS", 8*1024);
 
-
-#define MAX_FRAME_SIZE (1000*1024)
-
 typedef struct {
   int idr;
   struct cfifo_ex* video;
@@ -54,72 +51,7 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
-
-unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-    unsigned int len = cfifo_recsize(p1, n1, p2);
-    unsigned int l = CFIFO_MIN(len, n1);
-    
-    //printf("len:%d, l1:%d\n", len, l);
-    
-    char *p = (char*)u;
-    memcpy(p, p1, l);
-    memcpy(p+l, p2, len-l);
-
-    gsf_frm_t *rec = (gsf_frm_t *)u;
-  	struct timespec _ts;  
-    clock_gettime(CLOCK_MONOTONIC, &_ts);
-    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
-    if(cost > 33)
-      printf("get rec ok [delay:%d ms].\n", cost);
-      
-    assert(rec->data[0] == 00 && rec->data[1] == 00 && rec->data[2] == 00 && rec->data[3] == 01);
-
-    return len;
-}
-
+#include "inc/frm.h"
 
 static int flv_muxer_meta(sess_t *sess)
 {
@@ -279,7 +211,7 @@ int rtmp_push_start(rtmp_push_t *p)
     
     sess_t _sess;
     sess_t *sess = &_sess;
-    sess->data = malloc(MAX_FRAME_SIZE);
+    sess->data = malloc(GSF_FRM_MAX_SIZE);
     sess->idr  = 0;
     sess->pts  = 0;
     
@@ -321,7 +253,7 @@ int rtmp_push_start(rtmp_push_t *p)
       else if (ret > 0 && sess->idr)
       {
         //printf("cfifo frame ret:%d\n", ret);
-        if(rec->video.nal[0] /*&& rec->video.encode == 0*/)
+        if(rec->video.encode == GSF_ENC_H264)
         {
           if(!sess->pts)
           {

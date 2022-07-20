@@ -4,52 +4,10 @@
 
 #include "venc.h"
 
-#define FRAME_MAX_SIZE (1000*1024)
-
 static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
 venc_mgr_t venc_mgr[GSF_CODEC_NVR_CHN*GSF_CODEC_VENC_NUM];
 
-unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
+#include "inc/frm.h"
 
 unsigned int cfifo_recrel(unsigned char *p1, unsigned int n1, unsigned char *p2)
 {
@@ -159,7 +117,7 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
       _venc_sdp_fill(VeChn, PT, &pstStream->pstPack[i], pack_size);
   }
   
-  if(len+sizeof(gsf_frm_t) > FRAME_MAX_SIZE)
+  if(len+sizeof(gsf_frm_t) > GSF_FRM_MAX_SIZE)
   {
     printf("drop VeChn:%d, bigframe size:%d \n", VeChn, len+sizeof(gsf_frm_t));
     goto __err;
@@ -212,13 +170,13 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
     venc_mgr[i*GSF_CODEC_VENC_NUM+j].vst = i*GSF_CODEC_VENC_NUM+j;
     
     #ifdef GSF_CPU_3516e
-    int size = (j == 0)? 2*FRAME_MAX_SIZE:
-               (j == 1)? 1*FRAME_MAX_SIZE:
-               (j == 2)? 0.5*FRAME_MAX_SIZE: 0;
+    int size = (j == 0)? 2*GSF_FRM_MAX_SIZE:
+               (j == 1)? 1*GSF_FRM_MAX_SIZE:
+               (j == 2)? 0.5*GSF_FRM_MAX_SIZE: 0;
     #else
-    int size = (j == 0)? 3*FRAME_MAX_SIZE:
-               (j == 1)? 2*FRAME_MAX_SIZE:
-               (j == 2)? 1*FRAME_MAX_SIZE: 0;
+    int size = (j == 0)? 3*GSF_FRM_MAX_SIZE:
+               (j == 1)? 2*GSF_FRM_MAX_SIZE:
+               (j == 2)? 1*GSF_FRM_MAX_SIZE: 0;
     #endif
     if(size > 0)
     {

@@ -18,10 +18,8 @@
 #include "mod/bsp/inc/bsp.h"
 #include "mod/codec/inc/codec.h"
 
+
 GSF_LOG_GLOBAL_INIT("SRTS", 8*1024);
-
-#define MAX_FRAME_SIZE (1000*1024)
-
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -41,71 +39,7 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
     return 0;
 }
 
-
-unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return  sizeof(gsf_frm_t) + rec->size;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return  sizeof(gsf_frm_t) + rec.size;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2)
-{
-    unsigned int size = sizeof(gsf_frm_t);
-
-    if(n1 >= size)
-    {
-        gsf_frm_t *rec = (gsf_frm_t*)p1;
-        return rec->flag & GSF_FRM_FLAG_IDR;
-    }
-    else
-    {
-        gsf_frm_t rec;
-        char *p = (char*)(&rec);
-        memcpy(p, p1, n1);
-        memcpy(p+n1, p2, size-n1);
-        return rec.flag & GSF_FRM_FLAG_IDR;
-    }
-    
-    return 0;
-}
-
-unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u)
-{
-    unsigned int len = cfifo_recsize(p1, n1, p2);
-    unsigned int l = CFIFO_MIN(len, n1);
-    
-    //printf("len:%d, l1:%d\n", len, l);
-    
-    char *p = (char*)u;
-    memcpy(p, p1, l);
-    memcpy(p+l, p2, len-l);
-
-    gsf_frm_t *rec = (gsf_frm_t *)u;
-  	struct timespec _ts;  
-    clock_gettime(CLOCK_MONOTONIC, &_ts);
-    int cost = (_ts.tv_sec*1000 + _ts.tv_nsec/1000000) - rec->utc;
-    #if 1
-    if(cost > 33)
-      printf("get rec ok [delay:%d ms].\n", cost);
-    #endif
-    return len;
-}
-
+#include "inc/frm.h"
 
 #include "mpeg-ps.h"
 #include "mpeg-ts.h"
@@ -113,8 +47,6 @@ unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2,
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-
-#define MAX_FRAME_SIZE (1000*1024)
 
 static pthread_t gpid;
 static int sendflag = 0;
@@ -251,7 +183,7 @@ void* udp_send_task(void *parm)
   struct cfifo_ex* video_fifo = NULL;
   struct cfifo_ex* audio_fifo = NULL;
   int ep = cfifo_ep_alloc(1);
-  unsigned char buf[sizeof(gsf_frm_t)+MAX_FRAME_SIZE];
+  unsigned char buf[sizeof(gsf_frm_t)+GSF_FRM_MAX_SIZE];
   
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   int reuse = 1;

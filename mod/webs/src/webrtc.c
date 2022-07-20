@@ -4,9 +4,6 @@
 #include "mongoose.h" // src/mongoose.h:2644:0: warning: "LIST_HEAD" redefined
 #include "webrtc.h"
 
-#define MAX_FRAME_SIZE (1000*1024)
-
-
 #ifndef WEBRTC_ENABLE
 
 #warning "!!! WEBRTC_ENABLE"
@@ -24,12 +21,11 @@ char* rtc_getCandidate(rtc_sess_t *rtc_sess){return 0;}
 #else
 
 #warning "___ WEBRTC_ENABLE"
-unsigned int cfifo_recsize(unsigned char *p1, unsigned int n1, unsigned char *p2);
-unsigned int cfifo_rectag(unsigned char *p1, unsigned int n1, unsigned char *p2);
-unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned char *p2, void *u);
+
+#include "inc/frm.h"
 
 #define SESS_MAX_CNT 5
-int sess_free_cnt = 0;
+int sess_cnt = 0;
 struct list_head sess_list;
 pthread_mutex_t sess_list_lock;
 pthread_t once = PTHREAD_ONCE_INIT;
@@ -47,7 +43,6 @@ void* once_run(void* parm)
     
     pthread_mutex_lock(&sess_list_lock);
     list_add(&rtc_sess->list, &sess_list);
-    sess_free_cnt++;
     pthread_mutex_unlock(&sess_list_lock);
   }
   return NULL;
@@ -89,8 +84,20 @@ int rtc_sess_free(rtc_sess_t *rtc_sess)
 {
   if(!rtc_sess)
     return -1;
-  
+  sess_cnt--;
   __rtc_sess_free(rtc_sess);
+  
+  #if 1
+  GSF_MSG_DEF(gsf_osd_t, osd, sizeof(gsf_msg_t)+sizeof(gsf_osd_t));
+  __pmsg->nsave = 1; //nsave;
+  osd->en = 1;
+  osd->fontsize = 1;
+  osd->point[0] = 10;
+  osd->point[1] = 10;
+  sprintf(osd->text, "current sess cnt: %d", sess_cnt);
+  warn("%s\n", osd->text);
+  GSF_MSG_SENDTO(GSF_ID_CODEC_OSD, 0, SET, 0, sizeof(gsf_osd_t), GSF_IPC_CODEC, 2000);
+  #endif
   
   return pthread_create(&once, NULL, once_run, (void*)1);
 }
@@ -180,9 +187,13 @@ rtc_sess_t *__rtc_sess_new()
   //conf_.kvsRtcConfiguration.generatedCertificateBits = 2048;
   conf_.kvsRtcConfiguration.generateRSACertificate = 1;
   
-  //strcpy(conf_.iceServers[0].urls, "stun:77.72.169.213:3478");
-  strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.us-west-2.amazonaws.com:443");
-
+  strcpy(conf_.iceServers[0].urls, "stun:openrelay.metered.ca:80");
+  strcpy(conf_.iceServers[1].urls, "turn:openrelay.metered.ca:80");
+  strcpy(conf_.iceServers[1].username, "openrelayproject");
+  strcpy(conf_.iceServers[1].credential, "openrelayproject");
+  //https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
+  //strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.us-west-2.amazonaws.com:443");
+  //strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.ap-east-1.amazonaws.com:443");
 
   ret = createPeerConnection(&conf_, &rtc_sess->peer_);
   printf("createPeerConnection ret:%x\n", ret);
@@ -224,10 +235,22 @@ rtc_sess_t *rtc_sess_new()
   {
     rtc_sess = list_entry(sess_list.next, rtc_sess_t, list); 
     list_del(&rtc_sess->list);
-    sess_free_cnt--;
+    sess_cnt++;
   }
   pthread_mutex_unlock(&sess_list_lock);
-  warn("current sess cnt:%d\n", (SESS_MAX_CNT - sess_free_cnt));
+  
+  #if 1
+  GSF_MSG_DEF(gsf_osd_t, osd, sizeof(gsf_msg_t)+sizeof(gsf_osd_t));
+  __pmsg->nsave = 1; //nsave;
+  osd->en = 1;
+  osd->fontsize = 1;
+  osd->point[0] = 10;
+  osd->point[1] = 10;
+  sprintf(osd->text, "current sess cnt: %d", sess_cnt);
+  warn("%s\n", osd->text);
+  GSF_MSG_SENDTO(GSF_ID_CODEC_OSD, 0, SET, 0, sizeof(gsf_osd_t), GSF_IPC_CODEC, 2000);
+  #endif
+  
   return rtc_sess;
 }
 
@@ -301,7 +324,7 @@ void* rtc_video_send_task(void *parm)
   struct cfifo_ex* video_fifo = NULL;
   struct cfifo_ex* audio_fifo = NULL;
   int ep = cfifo_ep_alloc(1);
-  unsigned char buf[sizeof(gsf_frm_t)+MAX_FRAME_SIZE];
+  unsigned char buf[sizeof(gsf_frm_t)+GSF_FRM_MAX_SIZE];
 
   rtc_sess_t *rtc_sess = (rtc_sess_t*)parm;
   
@@ -332,7 +355,6 @@ void* rtc_video_send_task(void *parm)
   
   Frame frame_v = {0};
   Frame frame_a = {0};
-  unsigned int  pts_v = 0, pts_a = 0;
   
   while(!rtc_sess->terminated)
   {
@@ -374,22 +396,18 @@ void* rtc_video_send_task(void *parm)
             frame_v.frameData = (PBYTE)rec->data;
             frame_v.size = rec->size;
 
-            //frame_v.presentationTs += (((10LL * 1000LL) * 1000LL) / 30);
-            frame_v.presentationTs += (pts_v?(rec->pts - pts_v):0)*10000;
-            pts_v = rec->pts;
+            frame_v.presentationTs += (((10LL * 1000LL) * 1000LL) / 30);
             ret = writeFrame(rtc_sess->videoTransceiver_, &frame_v);
             if(ret != 0)
-              printf("writeFrame(video) ret:0x%x\n", ret);
+              printf("writeFrame(video) size:%d, ret:0x%x\n", frame_v.size, ret);
           }
           else if(transceiver == rtc_sess->audioTransceiver_
             && rec->audio.encode == GSF_ENC_G711A)
           {
             frame_a.frameData = (PBYTE)(rec->data + 4);
             frame_a.size = rec->size - 4;
-    
-            //frame_a.presentationTs += (((10LL * 1000LL) * 1000LL) / 16.66);
-            frame_a.presentationTs += (pts_a?(rec->pts - pts_a):0)*10000;
-            pts_a = rec->pts; 
+
+            frame_a.presentationTs += (((10LL * 1000LL) * 1000LL)/16.666);
             ret = writeFrame(rtc_sess->audioTransceiver_, &frame_a);
             if(ret != 0)
               printf("writeFrame(audio) size:%d, ret:0x%x\n", frame_a.size, ret);
