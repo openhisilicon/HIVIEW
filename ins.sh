@@ -15,6 +15,7 @@ arm-himix200-linux-strip $INST/lib/*;
 arm-himix200-linux-strip $INST/bin/*;
 
 cp mod/mpp/3516d/ko/* $INST/ko/ -arfv;
+chmod +x $INST/ko/load3516*;
 
 cp mod/svp/3516d/model/*.wk $INST/model/ -arfv;
 
@@ -52,6 +53,7 @@ arm-himix200-linux-strip $INST/lib/*;
 arm-himix200-linux-strip $INST/bin/*;
 
 cp mod/mpp/3516a/ko/* $INST/ko/ -arfv;
+chmod +x $INST/ko/load3516*;
 
 cp mod/svp/3516a/model/*.wk $INST/model/ -arfv;
 
@@ -88,6 +90,7 @@ arm-himix200-linux-strip $INST/lib/*;
 arm-himix200-linux-strip $INST/bin/*;
 
 cp mod/mpp/3559/ko/* $INST/ko/ -arfv;
+chmod +x $INST/ko/load3559*;
 
 cp mod/svp/3559/model/*.wk $INST/model/ -arfv;
 
@@ -128,6 +131,8 @@ arm-hisiv500-linux-strip $INST/lib/*;
 arm-hisiv500-linux-strip $INST/bin/*;
 
 cp mod/mpp/3519/ko/* $INST/ko/ -arfv;
+chmod +x $INST/ko/load3519*;
+
 cp mod/mpp/3519/lib/hisisdk/*.so $INST/lib -arfv;
 arm-hisiv500-linux-strip $INST/lib/*;
 
