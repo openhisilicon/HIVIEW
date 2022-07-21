@@ -181,18 +181,20 @@ static unsigned int cfifo_recgut(unsigned char *p1, unsigned int n1, unsigned ch
     
     for(i = 0; i < phyaddr->u32PackCount; i++)
     {
-      int done = 0; 
-      #ifdef __DMA_COPY__
-      done = venc_viraddr_copy(rec->data, rec->size, phyaddr->stPack[i].u8Addr, 0, phyaddr->stPack[i].u32Len);
-      done = (done >= 0)?done:0;
-      #endif 
+      int done = 0;
+      if(phyaddr->stPack[i].u8Addr)
+      {
+        #ifdef __DMA_COPY__
+        done = venc_viraddr_copy(rec->data, rec->size, phyaddr->stPack[i].u8Addr, 0, phyaddr->stPack[i].u32Len);
+        done = (done >= 0)?done:0;
+        #endif
+        memcpy(rec->data + rec->size + done, phyaddr->stPack[i].u8Addr + done, phyaddr->stPack[i].u32Len - done);
+        rec->size += phyaddr->stPack[i].u32Len;
+      }
       
-      memcpy(rec->data + rec->size + done, phyaddr->stPack[i].u8Addr + done, phyaddr->stPack[i].u32Len - done);
-      rec->size += phyaddr->stPack[i].u32Len;
-
       done = 0; 
       if(phyaddr->stPack[i].u8Addr2)
-      { 
+      {
         #ifdef __DMA_COPY__
         done = venc_viraddr_copy(rec->data, rec->size, phyaddr->stPack[i].u8Addr2, 0, phyaddr->stPack[i].u32Len2);
         done = (done >= 0)?done:0;
