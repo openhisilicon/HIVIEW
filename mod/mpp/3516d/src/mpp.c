@@ -112,6 +112,8 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
     {SONY_IMX385_MIPI_2M_30FPS_12BIT,           "imx385-0-0-2-30", "libsns_imx385.so", "stSnsImx385Obj"},
+    {SONY_IMX482_MIPI_2M_30FPS_12BIT,           "imx482-0-0-2-30", "libsns_imx482.so", "stSnsImx482Obj"},
+    {OV426_OV6946_DC_0M_30FPS_12BIT,            "ov426-0-0-0-30", "libsns_ov426.so", "stSnsOv426Obj"},
   };
 
 
@@ -180,6 +182,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[256];
   if(strstr(cfg->snsname, "bt1120"))
     sprintf(loadstr, "%s/ko/load3516dv300 -i -yuv0 1", path);
+  else if(strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482")) // 37.125Mclk && i2c;
+    sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, "imx327");
   else
     sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, cfg->snsname);
 

@@ -551,7 +551,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   {
     // imx335-0-0-4-30
     if(strstr(cfg->snsname, "imx327") 
-      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385"))
+      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482"))
     {
       cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx307")?50:30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
@@ -597,7 +597,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   if(cfg->snscnt < 2)
   {
     if(strstr(cfg->snsname, "imx327") 
-      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385"))
+      || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482"))
     {
     	// imx327-0-0-2-30
     	#if 1

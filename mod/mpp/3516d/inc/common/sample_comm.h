@@ -141,6 +141,7 @@ typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
     PIC_360P,      /* 640 * 360 */
+    PIC_400P,      /* 400 * 400 */
     PIC_512P,      /* 640 * 512 */    
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
@@ -212,6 +213,8 @@ typedef enum hiSAMPLE_SNS_TYPE_E
     BT656N_YUV_0M_60FPS_8BIT,  // BT656 NTSC;
     BT601GD_YUV_0M_60FPS_8BIT, // BT601 GD;
     SONY_IMX385_MIPI_2M_30FPS_12BIT,
+    SONY_IMX482_MIPI_2M_30FPS_12BIT,
+    OV426_OV6946_DC_0M_30FPS_12BIT,
     SAMPLE_SNS_TYPE_BUTT,
 } SAMPLE_SNS_TYPE_E;
 
