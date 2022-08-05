@@ -24,18 +24,41 @@
 static int avs = 0; // codec_ipc.vi.avs;
 
 // if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
+#ifndef HAVE_PIC_400P
+#warning "PIC_400P => PIC_CIF"
+#define PIC_400P PIC_CIF
+#endif
+
 #define PIC_WIDTH(w, h) \
-            (w >= 7680)?PIC_7680x4320:\
-            (w >= 3840)?PIC_3840x2160:\
-            (w >= 2592 && h >= 1944)?PIC_2592x1944:\
-            (w >= 2592 && h >= 1536)?PIC_2592x1536:\
-            (w >= 1920)?PIC_1080P:\
-            (w >= 1280)?PIC_720P: \
-            (w >= 720 && h >= 576)?PIC_D1_PAL: \
-            (w >= 720 && h >= 480)?PIC_D1_NTSC: \
-            (w >= 640 && h >= 512)?PIC_512P: \
-            PIC_CIF
-            
+          (w >= 7680)?PIC_7680x4320:\
+          (w >= 3840)?PIC_3840x2160:\
+          (w >= 2592 && h >= 1944)?PIC_2592x1944:\
+          (w >= 2592 && h >= 1536)?PIC_2592x1536:\
+          (w >= 1920)?PIC_1080P:\
+          (w >= 1280)?PIC_720P: \
+          (w >= 720 && h >= 576)?PIC_D1_PAL: \
+          (w >= 720 && h >= 480)?PIC_D1_NTSC: \
+          (w >= 640 && h >= 512)?PIC_512P: \
+          (w >= 400 && h >= 400)?PIC_400P: \
+          PIC_CIF
+
+static gsf_resolu_t __pic_wh[PIC_BUTT] = {
+      [PIC_7680x4320] = {0, 7680, 4320},
+      [PIC_3840x2160] = {0, 3840, 2160},
+      [PIC_2592x1944] = {0, 2592, 1944},
+      [PIC_2592x1536] = {0, 2592, 1536},
+      [PIC_1080P]     = {0, 1920, 1080},
+      [PIC_720P]      = {0, 1280, 720},
+      [PIC_D1_PAL]    = {0, 720, 576},
+      [PIC_D1_NTSC]   = {0, 720, 480},
+      [PIC_512P]      = {0, 640, 512},
+      [PIC_400P]      = {0, 400, 400},
+      [PIC_CIF]       = {0, 352, 288},
+};          
+#define PIC_WH(e,_w,_h) do {\
+  _w = __pic_wh[e].w; _h = __pic_wh[e].h;\
+  }while(0)
+
 #define PT_VENC(t) \
             (t == GSF_ENC_H264)? PT_H264:\
             (t == GSF_ENC_H265)? PT_H265:\
@@ -43,18 +66,6 @@ static int avs = 0; // codec_ipc.vi.avs;
             (t == GSF_ENC_MJPEG)? PT_MJPEG:\
             PT_H264
 
-#define PIC_WH(e,w,h) \
-            if(e == PIC_7680x4320){ w = 7680; h = 4320;}\
-            else if(e == PIC_3840x2160){ w = 3840; h = 2160;}\
-            else if (e == PIC_3840x2160){ w = 3840; h = 2160;}\
-            else if (e == PIC_2592x1944){ w = 2592; h = 1944;}\
-            else if (e == PIC_2592x1536){ w = 2592; h = 1536;}\
-            else if (e == PIC_1080P){ w = 1920; h = 1080;}\
-            else if (e == PIC_720P){ w = 1280; h = 720;}\
-            else if (e == PIC_D1_PAL){ w = 720; h = 576;}\
-            else if (e == PIC_D1_NTSC){ w = 720; h = 480;}\
-            else if (e == PIC_512P){ w = 640; h = 512;}\
-            else { w = 352; h = 288;}
 //////////////////////////////////////////////////////////////////
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
