@@ -468,16 +468,16 @@ HI_S32 SAMPLE_COMM_VENC_SaveStream(FILE* pFd, VENC_STREAM_S* pstStream)
 }
 
 //maohw
-HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VENC_GETSTREAM_PARA_S* pstPara, VENC_STREAM_S* pstStream)
+HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VENC_GETSTREAM_PARA_S* pstPara, VENC_STREAM_S* pstStream, VENC_STREAM_BUF_INFO_S* pstStreamBufInfo)
 {
     if(pstPara->cb)
     {
-      pstPara->cb(VencChn, PT, pstStream, pstPara->uargs);
+      //printf("%s => VencChn:%d, pstStream:%p, pstPara->cb:%p\n", __func__, VencChn, pstStream, pstPara->cb);
+      return pstPara->cb(VencChn, PT, pstStream, /*pstPara->uargs*/pstStreamBufInfo);
     }
 
     return HI_SUCCESS;
 }
-
 
 /******************************************************************************
 * funciton : the process of physical address retrace
@@ -638,6 +638,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
         return HI_FAILURE;
     }
 
+    //maohw  warning only used SENSOR0 fps;
     SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
     if(SAMPLE_SNS_TYPE_BUTT == stViConfig.astViInfo[0].stSnsInfo.enSnsType)
     {
@@ -659,7 +660,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
     stVencChnAttr.stVencAttr.u32MaxPicHeight = stPicSize.u32Height;
     stVencChnAttr.stVencAttr.u32PicWidth     = stPicSize.u32Width;/*the picture width*/
     stVencChnAttr.stVencAttr.u32PicHeight    = stPicSize.u32Height;/*the picture height*/
-    stVencChnAttr.stVencAttr.u32BufSize      = stPicSize.u32Width * stPicSize.u32Height * 2;/*stream buffer size*/
+    stVencChnAttr.stVencAttr.u32BufSize      = stPicSize.u32Width * stPicSize.u32Height * 2 * 2;/*stream buffer size*/
     stVencChnAttr.stVencAttr.u32Profile      = u32Profile;
     stVencChnAttr.stVencAttr.bByFrame        = HI_TRUE;/*get stream mode is slice mode or frame mode?*/
 
@@ -2122,7 +2123,7 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
         s32Ret = HI_MPI_VENC_GetStreamBufInfo (VencChn/*i*/, &stStreamBufInfo[i]);
         if (HI_SUCCESS != s32Ret)
         {
-            SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo failed with %#x!\n", s32Ret);
+            SAMPLE_PRT("HI_MPI_VENC_GetStreamBufInfo VencChn:%d, failed with %#x!\n", VencChn, s32Ret);
             return (void *)HI_FAILURE;
         }
     }
@@ -2223,34 +2224,34 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
 #ifndef __HuaweiLite__
                     //maohw
                     //s32Ret = SAMPLE_COMM_VENC_SaveStream(pFile[i], &stStream);
-                    s32Ret = SAMPLE_COMM_VENC_CbStream(pstPara->VeChn[i], enPayLoadType[i], pstPara, &stStream);
+                    s32Ret = SAMPLE_COMM_VENC_CbStream(pstPara->VeChn[i], enPayLoadType[i], pstPara, &stStream, &stStreamBufInfo[i]);
 #else
                     s32Ret = SAMPLE_COMM_VENC_SaveStream_PhyAddr(pFile[i], &stStreamBufInfo[i], &stStream);
 #endif
-                    if (HI_SUCCESS != s32Ret)
+                    if(s32Ret <= 0)
                     {
-                        free(stStream.pstPack);
-                        stStream.pstPack = NULL;
-                        SAMPLE_PRT("save stream failed!\n");
-                        break;
+                      /*******************************************************
+                       step 2.6 : release stream
+                       *******************************************************/
+                      s32Ret = HI_MPI_VENC_ReleaseStream(pstPara->VeChn[i]/*i*/, &stStream);
+                      if (HI_SUCCESS != s32Ret)
+                      {
+                          SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed!\n");
+                          free(stStream.pstPack);
+                          stStream.pstPack = NULL;
+                          break;
+                      }
+                      /*******************************************************
+                       step 2.7 : free pack nodes
+                      *******************************************************/
+                      free(stStream.pstPack);
+                      stStream.pstPack = NULL;
                     }
-                    /*******************************************************
-                     step 2.6 : release stream
-                     *******************************************************/
-                    s32Ret = HI_MPI_VENC_ReleaseStream(/*i*/pstPara->VeChn[i], &stStream);
-                    if (HI_SUCCESS != s32Ret)
+                    else 
                     {
-                        SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed!\n");
-                        free(stStream.pstPack);
-                        stStream.pstPack = NULL;
-                        break;
+                      //SAMPLE_PRT("VeChn:%d, KEEP stStream\n", pstPara->VeChn[i]);
                     }
 
-                    /*******************************************************
-                     step 2.7 : free pack nodes
-                    *******************************************************/
-                    free(stStream.pstPack);
-                    stStream.pstPack = NULL;
                     u32PictureCnt[i]++;
                     if(0)//maohw if(PT_JPEG == enPayLoadType[i])
                     {
