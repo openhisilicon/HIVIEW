@@ -3,9 +3,11 @@ HOME := $(shell echo ${GSF_HOME})
 CC := $(shell echo ${GSF_CC})
 AR := $(shell echo ${GSF_AR})
 CFLAGS := $(shell echo ${GSF_CFLAGS})
-LDFLAGS := -g $(shell echo ${GSF_LDFLAGS})
+LDFLAGS := -g $(shell echo ${GSF_LDFLAGS}) $(shell echo ${GSF_EXECFLAGS})
 TARG := bin/codec.exe
 GSF_DEV_TYPE ?= ipc
+
+#CFLAGS += -D__EYEM__
 #CFLAGS += -D__GUIDE__
 #CFLAGS += -D__FRM_PHY__
 #============================================================= 
@@ -51,6 +53,10 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiir_auto -l_hiac
 else ifeq ($(GSF_CPU_ARCH), 3531d)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -lhive_RES -laacenc -laacdec -laaccomm -ltde -lstdc++ 
+else ifeq ($(GSF_CPU_ARCH), 3403)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \
+        -lisp -lot_isp -l_hiae -l_hiawb -l_hidehaze -l_hiextend_stats -l_hidrc -l_hildci -l_hibnr -l_hicalcflicker -l_hiir_auto -l_hiacs -l_hicrb \
+        -live -lmpi -live -lmd -ltde -lVoiceEngine -ldnvqe -lupvqe -laac_enc -laac_dec -laac_comm -lpqp -lhnr -lmcf -l_mcf_vi -lstdc++ 
 endif
 
 $(TARG): $(OBJS)

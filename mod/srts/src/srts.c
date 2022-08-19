@@ -133,8 +133,10 @@ static int raw_send(void *raw, gsf_frm_t *rec)
 #include "rtp-payload.h"
 #include "rtp.h"
 
+#ifdef SRTP_ENABLE
 #include "srtp.h"
 srtp_t srtp;
+#endif
 
 enum {PROTOL_UDP  // udp://239.0.0.1:6666
     , PROTOL_SRT  // srt://:6666
@@ -165,10 +167,13 @@ void RTPPacket(void* param, const void *packet, int bytes, uint32_t timestamp, i
 	
 	int len = bytes;
 	
+#ifdef SRTP_ENABLE
 	if(protol == PROTOL_SRTP)
 	{
     srtp_protect(srtp, (void*)packet, &len);
   }
+#endif
+
 	int ret = sendto(dest->sockfd, packet, len, 0, (struct sockaddr *)dest->pdest_addr, sizeof(struct sockaddr_in));
 	assert(ret == len);
 	// r <= 0 when peer close; assert(r == (int)len);
@@ -238,6 +243,7 @@ void* udp_send_task(void *parm)
   
   void* rtp = rtp_payload_encode_create(RTP_PAYLOAD_H264, "H264", (uint16_t)ssrc, ssrc, &s_rtpfunc, &dest);
   
+#ifdef SRTP_ENABLE  
   // 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D
   // AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd
   uint8_t key[30] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -270,6 +276,7 @@ void* udp_send_task(void *parm)
   policy.rtcp.sec_serv = sec_serv_none; /* we don't do RTCP anyway */
 
   srtp_create(&srtp, &policy);
+#endif
 
   GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
   do
@@ -373,10 +380,12 @@ void* udp_send_task(void *parm)
   if(rtp)
     rtp_payload_encode_destroy(rtp);
     
+#ifdef SRTP_ENABLE
   if(srtp)  
     srtp_dealloc(srtp);
     
   srtp_shutdown();
+#endif
   
   if(video_fifo)
     cfifo_free(video_fifo);

@@ -6,7 +6,7 @@
 #include "fw/libfont/inc/gsf_character_conv.h"
 
 
-#if defined(GSF_CPU_3531d)
+#if defined(GSF_CPU_3531d) || defined(GSF_CPU_3403)
 
 #define rgn_type        rgn_obj[handle].rgn.stRegion.type
 #define rgn_attr_fmt    rgn_obj[handle].rgn.stRegion.attr.overlay.pixel_format

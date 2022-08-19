@@ -6,7 +6,7 @@
 #include "cfg.h"
 #include "msg_func.h"
 
-#if defined(GSF_CPU_3531d)
+#if defined(GSF_CPU_3531d) || defined(GSF_CPU_3403)
 #define venc_seq        pstStream->seq
 #define venc_pts        pstStream->pack[0].pts
 #define venc_pack_count pstStream->pack_cnt

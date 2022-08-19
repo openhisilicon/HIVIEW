@@ -48,6 +48,7 @@ STRUCT(gsf_vi_t)
   FIELD(int, res);
   FIELD(int, avs);
   FIELD(int, lowdelay);
+  FIELD(int, hnr);
 };
 
 STRUCT(gsf_vo_t)

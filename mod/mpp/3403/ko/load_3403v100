@@ -1,0 +1,356 @@
+#!/bin/sh
+# Usage: ./load_3403v100 [ -r|-i|-a ] [ -sensor0~3 ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#         -a : rmmod all moules and then insmod them
+# e.g: ./load_3403v100 -i -sensor0 os08a20 -sensor1 os08a20 -sensor2 os08a20 -sensor3 os08a20
+
+####### select sensor type for your test ########################
+####      os08a20             ####
+####      os05a10_slave       ####
+####      imx347_slave        ####
+####      imx485              ####
+####      os04a10             ####
+####      os08b10             ####
+####################Variables Definition##########################
+#maohw
+basepath=$(cd `dirname $0`; pwd)
+cd $basepath
+
+SNS_TYPE0=os08a20;               # sensor type
+SNS_TYPE1=os08a20;               # sensor type
+SNS_TYPE2=os08a20;               # sensor type
+SNS_TYPE3=os08a20;               # sensor type
+
+#DDR start:0x40000000, IPCM(2M); DSP(62M); MCU(192M); kernel start:0x50000000,  OS(512M); MMZ start:0x70000000
+mem_total=4096                # 4096M, total mem
+mem_start=0x40000000          # phy mem start
+ipcm_mem_size=2               # 2M, ipcm mem
+dsp_mem_size=62               # 62M, dsp mem
+mcu_mem_size=192              # 192M, mcu mem
+os_mem_size=512               # 512M, os mem
+
+mmz_start=0x70000000;         # mmz start addr
+mmz_size=3328M;               # 3328M, mmz size
+
+reserve_mem_size=0            # 0M, reserve mmz size
+##################################################################
+
+function report_error()
+{
+    echo "******* Error: There's something wrong, please check! *****"
+    exit 1
+}
+
+function insert_audio()
+{
+    insmod ot_aio.ko
+    insmod ot_ai.ko
+    insmod ot_ao.ko
+    insmod ot_aenc.ko
+    insmod ot_adec.ko
+    insmod ot_acodec.ko
+}
+
+function remove_audio()
+{
+    rmmod ot_acodec
+    rmmod ot_adec
+    rmmod ot_aenc
+    rmmod ot_ao
+    rmmod ot_ai
+    rmmod ot_aio
+
+}
+
+function insert_gyro()
+{
+    insmod extdrv/ot_spi.ko
+    insmod ot_gyrodis.ko
+    insmod ot_motionfusion.ko
+    insmod extdrv/motionsensor_mng.ko
+    insmod extdrv/motionsensor_chip.ko
+}
+
+function remove_gyro()
+{
+    rmmod motionsensor_chip
+    rmmod motionsensor_mng
+    rmmod ot_motionfusion
+    rmmod ot_gyrodis
+    rmmod ot_spi
+}
+
+function insert_npu()
+{
+    insmod ot_npu_device.ko
+    insmod ot_npu_aicpu.ko
+    insmod ot_npu_dfx.ko
+    insmod ot_npu_tsfw.ko
+}
+
+function remove_npu()
+{
+    rmmod ot_npu_tsfw.ko
+    rmmod ot_npu_dfx.ko
+    rmmod ot_npu_aicpu.ko
+    rmmod ot_npu_device.ko
+}
+
+function insert_ko()
+{
+    # sys config
+    insmod sys_config.ko sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1,sns2=$SNS_TYPE2,sns3=$SNS_TYPE3
+
+    # driver load
+    insmod ot_osal.ko anony=1 mmz_allocator=ot mmz=anonymous,0,$mmz_start,$mmz_size$1 || report_error
+    insmod ot_base.ko
+    insmod ot_sys.ko
+    insmod ot_tde.ko
+    insmod ot_rgn.ko
+    insmod ot_gdc.ko
+    insmod ot_vpp.ko
+    insmod ot_vgs.ko
+    insmod ot_dis.ko
+    insmod ot_vi.ko
+    insmod ot_isp.ko
+    insmod ot_pqp.ko
+    insmod ot_vpss.ko
+    insmod ot_mcf.ko
+    insmod ot_avs.ko
+    insmod ot_vo.ko
+    # gfbg: default fb0:argb1555,3840x2160,2buf;fb1:argb8888,1920x1080,2buf;fb2:clut4,3840x2160,1buf
+    insmod gfbg.ko video="gfbg:vram0_size:32400,vram1_size:16200,vram3_size:4052"
+    insmod ot_chnl.ko
+    insmod ot_vedu.ko
+    insmod ot_rc.ko
+    insmod ot_venc.ko
+    insmod ot_h264e.ko
+    insmod ot_h265e.ko
+    insmod ot_jpege.ko
+    insmod ot_jpegd.ko
+    insmod ot_vfmw.ko
+    insmod ot_vdec.ko
+
+    insmod ot_ive.ko save_power=1
+    insmod ot_dpu_rect.ko
+    insmod ot_dpu_match.ko
+    insmod ot_mau.ko mau_max_mem_info_num=32
+    insert_npu
+    insmod ipcm.ko
+    insmod ot_dsp.ko
+    insmod extdrv/ot_pwm.ko
+    insmod extdrv/ot_piris.ko
+    insmod extdrv/ot_sensor_i2c.ko
+    insmod extdrv/ot_sensor_spi.ko
+
+    insmod ot_hdmi.ko
+    insmod ot_mipi_tx.ko g_smooth=0
+    insert_audio
+    insmod ot_mipi_rx.ko
+    insmod ot_user.ko
+    insmod ot_photo.ko
+
+    #insert_gyro
+}
+
+function remove_ko()
+{
+    #remove_gyro
+
+    rmmod ot_photo
+    rmmod ot_user
+    rmmod ot_mipi_rx
+
+    remove_audio
+    rmmod ot_mipi_tx
+    rmmod ot_hdmi
+    rmmod ot_sensor_spi &> /dev/null
+    rmmod ot_sensor_i2c &> /dev/null
+    rmmod ot_piris
+    rmmod ot_pwm
+    rmmod ot_dsp
+    rmmod ipcm
+    remove_npu
+    rmmod ot_mau
+    rmmod ot_dpu_match
+    rmmod ot_dpu_rect
+    rmmod ot_ive
+
+    rmmod ot_vdec
+    rmmod ot_vfmw
+    rmmod ot_jpegd
+    rmmod ot_jpege
+    rmmod ot_h265e
+    rmmod ot_h264e
+    rmmod ot_venc
+    rmmod ot_rc
+    rmmod ot_vedu
+    rmmod ot_chnl
+    rmmod gfbg
+    rmmod ot_vo
+    rmmod ot_avs
+    rmmod ot_mcf
+    rmmod ot_vpss
+    rmmod ot_pqp
+    rmmod ot_isp
+    rmmod ot_vi
+    rmmod ot_dis
+    rmmod ot_vgs
+    rmmod ot_vpp
+    rmmod ot_gdc
+    rmmod ot_rgn
+    rmmod ot_tde
+    rmmod ot_sys
+    rmmod ot_base
+    rmmod ot_osal
+
+    rmmod sys_config
+}
+
+load_usage()
+{
+    echo "Usage:  $0 [-option] [-sensor0~3] "
+    echo "options:"
+    echo "    -i                       insert modules"
+    echo "    -r                       remove modules"
+    echo "    -a                       remove modules first, then insert modules"
+    echo "    -sensor0~3 sensor_name   config sensor type [default: os08a20]"
+    echo "    -total mem_size          config total mem size [unit: M, default: 4096]"
+    echo "    -osmem os_mem_size       config os mem size [unit: M, default: 512]"
+    echo "    -h                       help information"
+    echo -e "Available sensors: os08a20 os05a10_slave imx347_slave"
+    echo -e "for example: $0 -i -sensor0 os08a20 -sensor1 os08a20 -sensor2 os08a20 -sensor3 os08a20 -total 4096 -osmem 512\n"
+}
+
+function calc_mmz_info()
+{
+    mmz_start=`echo "$mem_start $os_mem_size $mcu_mem_size $dsp_mem_size $ipcm_mem_size" |
+    awk 'BEGIN { temp = 0; }
+    {
+            temp = $1/1024/1024 + $2 + $3 + $4 + $5;
+    }
+    END { printf("0x%x00000\n", temp); }'`
+
+    mmz_size=`echo "$mem_total $os_mem_size $mcu_mem_size $dsp_mem_size $ipcm_mem_size $reserve_mem_size" |
+    awk 'BEGIN { temp = 0; }
+    {
+            temp = $1 - $2 - $3 - $4 - $5 - $6;
+    }
+    END { printf("%dM\n", temp); }'`
+    echo "mmz_start: $mmz_start, mmz_size: $mmz_size"
+}
+
+b_arg_insmod=0
+b_arg_remove=0
+function parse_arg()
+{
+    ######################parse arg###################################
+    b_arg_sensor0=0
+    b_arg_sensor1=0
+    b_arg_sensor2=0
+    b_arg_sensor3=0
+    b_arg_total_mem=0
+    b_arg_os_mem=0
+
+    for arg in $@
+    do
+        if [ $b_arg_sensor0 -eq 1 ] ; then
+            b_arg_sensor0=0;
+            SNS_TYPE0=$arg;
+        fi
+        if [ $b_arg_sensor1 -eq 1 ] ; then
+            b_arg_sensor1=0;
+            SNS_TYPE1=$arg;
+        fi
+        if [ $b_arg_sensor2 -eq 1 ] ; then
+            b_arg_sensor2=0;
+            SNS_TYPE2=$arg;
+        fi
+        if [ $b_arg_sensor3 -eq 1 ] ; then
+            b_arg_sensor3=0;
+            SNS_TYPE3=$arg;
+        fi
+
+        if [ $b_arg_total_mem -eq 1 ]; then
+            b_arg_total_mem=0;
+            mem_total=$arg;
+
+            if [ -z $mem_total ]; then
+                echo "[error] mem_total is null"
+                exit;
+            fi
+        fi
+
+        if [ $b_arg_os_mem -eq 1 ] ; then
+            b_arg_os_mem=0;
+            os_mem_size=$arg;
+
+            if [ -z $os_mem_size ]; then
+                echo "[error] os_mem_size is null"
+                exit;
+            fi
+        fi
+
+        case $arg in
+            "-i")
+                b_arg_insmod=1;
+                ;;
+            "-r")
+                b_arg_remove=1;
+                ;;
+            "-a")
+                b_arg_insmod=1;
+                b_arg_remove=1;
+                ;;
+            "-h")
+                load_usage;
+                ;;
+            "-sensor0")
+                b_arg_sensor0=1;
+                ;;
+            "-sensor")
+                b_arg_sensor0=1;
+                ;;
+            "-sensor1")
+                b_arg_sensor1=1;
+                ;;
+            "-sensor2")
+                b_arg_sensor2=1;
+                ;;
+            "-sensor3")
+                b_arg_sensor3=1;
+                ;;
+            "-osmem")
+                b_arg_os_mem=1;
+                ;;
+            "-total")
+                b_arg_total_mem=1;
+                ;;
+        esac
+    done
+
+    if [ $os_mem_size -ge $((mem_total - dsp_mem_size - reserve_mem_size)) ] ; then
+        echo "[err] os_mem[$os_mem_size], over total_mem[$mem_total] - dsp_mem[$dsp_mem_size] - reserve_mem[$reserve_mem_size]"
+        exit;
+    fi
+    #######################parse arg end########################
+}
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+parse_arg $@
+
+calc_mmz_info;
+
+#######################Action###############################
+if [ $b_arg_remove -eq 1 ]; then
+    remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+    insert_ko;
+fi

@@ -147,27 +147,34 @@ static int ser_disk_check()
     
   ser.check_disk_sec = tv.tv_sec;
 
-  int cnt = 10;
+  int cnt = 10, ret = 0;
   do{
   
     int percent = disk_percent(ser.curr->disk.mnt_dir);
     if(percent < 0)
-        return -1;
-    
+    {
+      printf("err percent:%d\n", percent);
+      return -1;
+    }
     if(percent >= SER_USED_PER)
     {
       ti_file_info_t _info;
       ti_file_info_t *info = &_info;
-      if(ti_oldset_get(ser.curr->ti, info, NULL) < 0)
+      if((ret = ti_oldset_get(ser.curr->ti, info, NULL)) < 0)
+      {
+        printf("err ti_oldset_get ret:%d\n", ret);  
         return -1;
-
+      }
       char filename[256];
       SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
       printf("fd_rm filename[%s]\n", filename);
       fd_rm(filename);
       
-      if(ti_oldset_rm(ser.curr->ti, 1) < 0)
+      if((ret = ti_oldset_rm(ser.curr->ti, 1)) < 0)
+      {
+        printf("err ti_oldset_rm ret:%d\n", ret); 
         return -1;
+      }
     }
     else 
     {

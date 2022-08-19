@@ -45,6 +45,9 @@ int gsf_lens_init(gsf_lens_ini_t *ini)
   //#11-1 IRlamp out 0: open,  1: close;
   system("himm 0x112F00AC 0x0601;echo 89 > /sys/class/gpio/export;echo out > /sys/class/gpio/gpio89/direction;");
   system("echo 1 > /sys/class/gpio/gpio89/value;");
+  
+  system("himm 0x112F00B0 0x0601;echo 90 > /sys/class/gpio/export;echo out > /sys/class/gpio/gpio90/direction;");
+  system("echo 1 > /sys/class/gpio/gpio90/value;");
 
   //#6-7 CDS in   0: night,  1: day;
   system("himm 0x111F0028 0x0600;echo 55 > /sys/class/gpio/export;echo in > /sys/class/gpio/gpio55/direction");
@@ -80,10 +83,15 @@ static int ir_cb(int ViPipe, int dayNight, void* uargs)
   printf("IR Lamp night:%d\n", dayNight);
   
   if(dayNight)
+  {  
     system("echo 0 > /sys/class/gpio/gpio89/value;");
-  else 
+    system("echo 0 > /sys/class/gpio/gpio90/value;");
+  }
+  else
+  {   
     system("echo 1 > /sys/class/gpio/gpio89/value;");
-  
+    system("echo 1 > /sys/class/gpio/gpio90/value;");
+  }
   return 0;
 }
 

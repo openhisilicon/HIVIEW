@@ -3,7 +3,7 @@ HOME := $(shell echo ${GSF_HOME})
 CC := $(shell echo ${GSF_CC})
 AR := $(shell echo ${GSF_AR})
 CFLAGS := $(shell echo ${GSF_CFLAGS})
-LDFLAGS := -g $(shell echo ${GSF_LDFLAGS})
+LDFLAGS := -g $(shell echo ${GSF_LDFLAGS}) $(shell echo ${GSF_EXECFLAGS})
 TARG := bin/rtmps.exe
 
 #============================================================= 

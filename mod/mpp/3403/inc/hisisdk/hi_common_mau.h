@@ -1,0 +1,63 @@
+/*
+  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef __HI_COMMON_MAU_H__
+#define __HI_COMMON_MAU_H__
+
+#include "hi_common_svp.h"
+#include "hi_common.h"
+#include "ot_common_mau.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HI_SVP_MAU_ERR_SYS_TIMEOUT OT_SVP_MAU_ERR_SYS_TIMEOUT
+#define HI_SVP_MAU_ERR_QUERY_TIMEOUT OT_SVP_MAU_ERR_QUERY_TIMEOUT
+#define HI_SVP_MAU_ERR_CFG_ERR OT_SVP_MAU_ERR_CFG_ERR
+#define HI_SVP_MAU_ERR_BUS_ERR OT_SVP_MAU_ERR_BUS_ERR
+#define HI_SVP_MAU_ERR_OPEN_FILE OT_SVP_MAU_ERR_OPEN_FILE
+#define HI_SVP_MAU_ERR_READ_FILE OT_SVP_MAU_ERR_READ_FILE
+#define HI_SVP_MAU_ERR_BUTT OT_SVP_MAU_ERR_BUTT
+typedef ot_svp_mau_err_code hi_svp_mau_err_code;
+#define HI_ERR_SVP_MAU_INVALID_DEV_ID OT_ERR_SVP_MAU_INVALID_DEV_ID
+#define HI_ERR_SVP_MAU_INVALID_CHN_ID OT_ERR_SVP_MAU_INVALID_CHN_ID
+#define HI_ERR_SVP_MAU_ILLEGAL_PARAM OT_ERR_SVP_MAU_ILLEGAL_PARAM
+#define HI_ERR_SVP_MAU_EXIST OT_ERR_SVP_MAU_EXIST
+#define HI_ERR_SVP_MAU_UNEXIST OT_ERR_SVP_MAU_UNEXIST
+#define HI_ERR_SVP_MAU_NULL_PTR OT_ERR_SVP_MAU_NULL_PTR
+#define HI_ERR_SVP_MAU_NOT_CFG OT_ERR_SVP_MAU_NOT_CFG
+#define HI_ERR_SVP_MAU_NOT_SUPPORT OT_ERR_SVP_MAU_NOT_SUPPORT
+#define HI_ERR_SVP_MAU_NOT_PERM OT_ERR_SVP_MAU_NOT_PERM
+#define HI_ERR_SVP_MAU_NO_MEM OT_ERR_SVP_MAU_NO_MEM
+#define HI_ERR_SVP_MAU_NO_BUF OT_ERR_SVP_MAU_NO_BUF
+#define HI_ERR_SVP_MAU_BUF_EMPTY OT_ERR_SVP_MAU_BUF_EMPTY
+#define HI_ERR_SVP_MAU_BUF_FULL OT_ERR_SVP_MAU_BUF_FULL
+#define HI_ERR_SVP_MAU_NOT_READY OT_ERR_SVP_MAU_NOT_READY
+#define HI_ERR_SVP_MAU_BAD_ADDR OT_ERR_SVP_MAU_BAD_ADDR
+#define HI_ERR_SVP_MAU_BUSY OT_ERR_SVP_MAU_BUSY
+#define HI_ERR_SVP_MAU_SYS_TIMEOUT OT_ERR_SVP_MAU_SYS_TIMEOUT
+#define HI_ERR_SVP_MAU_QUERY_TIMEOUT OT_ERR_SVP_MAU_QUERY_TIMEOUT
+#define HI_ERR_SVP_MAU_CFG_ERR OT_ERR_SVP_MAU_CFG_ERR
+#define HI_ERR_SVP_MAU_BUS_ERR OT_ERR_SVP_MAU_BUS_ERR
+#define HI_ERR_SVP_MAU_OPEN_FILE OT_ERR_SVP_MAU_OPEN_FILE
+#define HI_ERR_SVP_MAU_READ_FILE OT_ERR_SVP_MAU_READ_FILE
+typedef ot_svp_mau_double_matrix hi_svp_mau_double_matrix;
+typedef ot_svp_mau_dist_result hi_svp_mau_dist_result;
+typedef ot_svp_mau_src_double_matrix hi_svp_mau_src_double_matrix;
+#define HI_SVP_MAU_OUT_OP_RESULT OT_SVP_MAU_OUT_OP_RESULT
+#define HI_SVP_MAU_OUT_TOP_N OT_SVP_MAU_OUT_TOP_N
+#define HI_SVP_MAU_OUT_BOTH OT_SVP_MAU_OUT_BOTH
+#define HI_SVP_MAU_OUT_BUTT OT_SVP_MAU_OUT_BUTT
+typedef ot_svp_mau_out_type hi_svp_mau_out_type;
+#define HI_SVP_MAU_ID_0 OT_SVP_MAU_ID_0
+#define HI_SVP_MAU_ID_BUTT OT_SVP_MAU_ID_BUTT
+typedef ot_svp_mau_id hi_svp_mau_id;
+typedef ot_svp_mau_ctrl hi_svp_mau_ctrl;
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* __HI_COMMON_MAU_H__ */

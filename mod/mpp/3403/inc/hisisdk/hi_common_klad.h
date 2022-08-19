@@ -1,0 +1,67 @@
+/*
+  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef __HI_COMMON_KLAD_H__
+#define __HI_COMMON_KLAD_H__
+
+#include "hi_type.h"
+#include "ot_common_klad.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HI_ERR_KLAD_NOT_INIT OT_ERR_KLAD_NOT_INIT
+#define HI_ERR_KLAD_FAILED_INIT OT_ERR_KLAD_FAILED_INIT
+#define HI_ERR_KLAD_NULL_PTR OT_ERR_KLAD_NULL_PTR
+#define HI_ERR_KLAD_INVALID_PARAM OT_ERR_KLAD_INVALID_PARAM
+#define HI_ERR_KLAD_FAILED_CREATE_DEV OT_ERR_KLAD_FAILED_CREATE_DEV
+#define HI_ERR_KLAD_DEVICE_BUSY OT_ERR_KLAD_DEVICE_BUSY
+#define HI_ERR_KLAD_FAILED_SEC_FUNC OT_ERR_KLAD_FAILED_SEC_FUNC
+#define HI_ERR_KLAD_TIMEOUT OT_ERR_KLAD_TIMEOUT
+#define HI_ERR_KLAD_FAILED_MEM OT_ERR_KLAD_FAILED_MEM
+#define HI_ERR_KLAD_FAILED_OPERATE OT_ERR_KLAD_FAILED_OPERATE
+#define HI_ERR_KLAD_INVALID_OWNER OT_ERR_KLAD_INVALID_OWNER
+#define HI_ERR_KLAD_INVALID_HANDLE OT_ERR_KLAD_INVALID_HANDLE
+#define HI_KLAD_MAX_KEY_LEN OT_KLAD_MAX_KEY_LEN
+#define HI_KLAD_ROOTKEY_SEL_OEM0 OT_KLAD_ROOTKEY_SEL_OEM0
+#define HI_KLAD_ROOTKEY_SEL_OEM1 OT_KLAD_ROOTKEY_SEL_OEM1
+#define HI_KLAD_ROOTKEY_SEL_OEM2 OT_KLAD_ROOTKEY_SEL_OEM2
+#define HI_KLAD_ROOTKEY_SEL_OEM3 OT_KLAD_ROOTKEY_SEL_OEM3
+#define HI_KLAD_ROOTKEY_SEL_VENDOR OT_KLAD_ROOTKEY_SEL_VENDOR
+#define HI_KLAD_ROOTKEY_SEL_BUTT OT_KLAD_ROOTKEY_SEL_BUTT
+typedef ot_klad_rootkey_sel hi_klad_rootkey_sel;
+#define HI_KLAD_ROOTKEY_SEC_REE OT_KLAD_ROOTKEY_SEC_REE
+#define HI_KLAD_ROOTKEY_SEC_TEE OT_KLAD_ROOTKEY_SEC_TEE
+#define HI_KLAD_ROOTKEY_SEC_BUTT OT_KLAD_ROOTKEY_SEC_BUTT
+typedef ot_klad_rootkey_secure hi_klad_rootkey_secure;
+typedef ot_klad_rootkey_attr hi_klad_rootkey_attr;
+#define HI_KLAD_TYPE_CLEARCW OT_KLAD_TYPE_CLEARCW
+#define HI_KLAD_TYPE_COMMON OT_KLAD_TYPE_COMMON
+#define HI_KLAD_TYPE_BUTT OT_KLAD_TYPE_BUTT
+typedef ot_klad_type hi_klad_type;
+typedef ot_klad_cfg hi_klad_cfg;
+#define HI_KLAD_CRYPTO_ALG_AES OT_KLAD_CRYPTO_ALG_AES
+#define HI_KLAD_CRYPTO_ALG_SM4 OT_KLAD_CRYPTO_ALG_SM4
+#define HI_KLAD_CRYPTO_ALG_BUTT OT_KLAD_CRYPTO_ALG_BUTT
+typedef ot_klad_crypto_alg hi_klad_crypto_alg;
+typedef ot_klad_attr hi_klad_attr;
+#define HI_KLAD_ALG_TYPE_AES OT_KLAD_ALG_TYPE_AES
+#define HI_KLAD_ALG_TYPE_SM4 OT_KLAD_ALG_TYPE_SM4
+#define HI_KLAD_ALG_TYPE_BUTT OT_KLAD_ALG_TYPE_BUTT
+typedef ot_klad_alg_type hi_klad_alg_type;
+#define HI_KLAD_LEVEL1 OT_KLAD_LEVEL1
+#define HI_KLAD_LEVEL2 OT_KLAD_LEVEL2
+#define HI_KLAD_LEVEL3 OT_KLAD_LEVEL3
+#define HI_KLAD_LEVEL_BUTT OT_KLAD_LEVEL_BUTT
+typedef ot_klad_level hi_klad_level;
+typedef ot_klad_session_key hi_klad_session_key;
+typedef ot_klad_content_key hi_klad_content_key;
+typedef ot_klad_clear_key hi_klad_clear_key;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __HI_COMMON_KLAD_H__ */

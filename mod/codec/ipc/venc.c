@@ -7,7 +7,7 @@
 #include "inc/frm.h"
 
 #define AFRAME_MAX_SIZE (2*1024)
- 
+  
 static gsf_venc_ini_t venc_ini = {.ch_num = 1, .st_num = 2};
 venc_mgr_t venc_mgr[GSF_CODEC_IPC_CHN*GSF_CODEC_VENC_NUM];
 int audio_shmid = -1;

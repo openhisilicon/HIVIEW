@@ -663,6 +663,13 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }
+    else if(strstr(cfg->snsname, "ov426"))
+    {
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 0; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 1;
+      venc_ini->ch_num = 1; venc_ini->st_num = 1;
+      VPSS(0, 0, 0, 0, 1, 0, PIC_400P, PIC_400P);
+    }
     else if(strstr(cfg->snsname, "yuv422"))
     {
       if(codec_ipc.vi.res == 8)
@@ -766,7 +773,7 @@ void mpp_ini_3531d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
 #if defined(GSF_CPU_3403)
 void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
 {
-  // imx485-0-0-8-30
+  // os08a20-0-0-8-30
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
@@ -838,6 +845,7 @@ int mpp_start(gsf_bsp_def_t *def)
       }
       #elif defined(GSF_CPU_3403)
       {
+        cfg.hnr = codec_ipc.vi.hnr;
         mpp_ini_3403(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #else
@@ -854,7 +862,7 @@ int mpp_start(gsf_bsp_def_t *def)
     proc_absolute_path(home_path);
     sprintf(home_path, "%s/../", home_path);
     printf("home_path:[%s]\n", home_path);
-   
+    
     gsf_mpp_cfg(home_path, &cfg);
     
     lens_ini.ch_num = 1;  // lens number;
@@ -863,12 +871,15 @@ int mpp_start(gsf_bsp_def_t *def)
     gsf_lens_init(&lens_ini);
 
     // vi start;
+    printf("vi.lowdelay:%d\n", codec_ipc.vi.lowdelay);
     gsf_mpp_vi_t vi = {
         .bLowDelay = codec_ipc.vi.lowdelay,//HI_TRUE,//HI_FALSE,
         .u32SupplementConfig = 0,
-        #ifdef GSF_CPU_3516e
+        #if defined(GSF_CPU_3516e)
         .vpss_en = {1, 1,},
         .vpss_sz = {PIC_1080P, PIC_720P,},
+        #elif defined(GSF_CPU_3403)
+        .venc_pic_size = {PIC_3840x2160, PIC_1080P},
         #endif
     };
     
@@ -919,12 +930,21 @@ int mpp_start(gsf_bsp_def_t *def)
     // scene start;
     char scene_ini[128] = {0};
     proc_absolute_path(scene_ini);
-    sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
-    
+
     #if defined(GSF_CPU_3559a)
-    if(avs == 1)
-      sprintf(scene_ini, "%s/../cfg/%savs.ini", scene_ini, cfg.snsname);
+      if(avs == 1)
+        sprintf(scene_ini, "%s/../cfg/%savs.ini", scene_ini, cfg.snsname);
+      else 
+        sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
+    #elif defined(GSF_CPU_3403)
+      if(cfg.hnr)
+        sprintf(scene_ini, "%s/../cfg/%s_hnr.ini", scene_ini, cfg.snsname);
+      else 
+        sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
+    #else
+      sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
     #endif
+    
    
     if(gsf_mpp_scene_start(scene_ini, 0) < 0)
     {
@@ -989,7 +1009,7 @@ int mpp_start(gsf_bsp_def_t *def)
 
 int vo_start()
 {
-    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3559a)
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
     //aenc;
     if( codec_ipc.aenc.en)
     {
@@ -1058,6 +1078,12 @@ int vo_start()
       
       gsf_mpp_vo_src_t src0 = {0, 0};
       gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+      //ov426 aspect;
+      if(strstr(p_cfg->snsname, "ov426"))
+      {
+        RECT_S rect = {(1920-800)/2, (1080-800)/2, 800, 800};
+        gsf_mpp_vo_aspect(VOLAYER_HD0, 0, &rect);
+      }
       
       #if defined(GSF_CPU_3516d)
       if(ly == VO_LAYOUT_2MUX)
