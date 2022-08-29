@@ -28,6 +28,9 @@ enum {
     GSF_SVP_ERR = -1,
 };
 
+
+////////////////////////
+
 enum {
   GSF_EV_SVP_MD  = 1, // gsf_svp_mds_t;
   GSF_EV_SVP_LPR = 2, // gsf_svp_lprs_t;
@@ -35,19 +38,10 @@ enum {
   GSF_EV_SVP_CFACE=4, // gsf_svp_cfaces_t;
 };
 
-
-typedef struct {
-  int vpssgrp;  // grp
-  int vpssch;   // ch
-  int level;
-  int rect[4];
-}gsf_svp_md_t;
-
 typedef struct {
   int thr;        //thr 
   int rect[4];    //区域位置
 }gsf_md_result_t;
-
 
 typedef struct {
   int pts;   // u64PTS/1000
@@ -55,13 +49,6 @@ typedef struct {
   int w, h;
   gsf_md_result_t result[20];
 }gsf_svp_mds_t;
-
-
-typedef struct {
-  int thr;        //thr 
-  int rect[4];    //区域位置
-}gsf_svp_lpr_t;
-
 
 typedef struct {
 	char 	  number[16];         //车牌号码
@@ -74,20 +61,12 @@ typedef struct {
 	float   horzangle;          //水平角度
 }gsf_lpr_result_t;
 
-
 typedef struct {
   int pts;   // u64PTS/1000
   int cnt;
   int w, h;
   gsf_lpr_result_t result[20];
 }gsf_svp_lprs_t;
-
-
-typedef struct {
-  int thr;        //thr 
-  int rect[4];    //区域位置
-}gsf_svp_yolo_t;
-
 
 typedef struct {
   float score;
@@ -103,13 +82,6 @@ typedef struct {
 }gsf_svp_yolos_t;
 
 
-
-typedef struct {
-  int thr;        //thr 
-  int rect[4];    //区域位置
-}gsf_svp_cface_t;
-
-
 typedef struct {
   int id;
   int confidence;
@@ -123,8 +95,7 @@ typedef struct {
   gsf_cface_box_t box[64];
 }gsf_svp_cfaces_t;
 
-
-
+////////////////////////
 
 #ifdef __cplusplus
 }

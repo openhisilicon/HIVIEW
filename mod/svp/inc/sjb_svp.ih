@@ -7,4 +7,65 @@ STRUCT(gsf_svp_t)
   FIELD(int, yolo_alg);
 };
 
+STRUCT(gsf_point_t)
+{
+  FIELD(float, x);
+  FIELD(float, y);
+};
+
+STRUCT(gsf_polygon_t)
+{
+  FIELD(int, point_num);
+  ARRAY(gsf_point_t, points, 10);
+};
+
+STRUCT(gsf_polygons_t)
+{
+  FIELD(int, polygon_num);
+  ARRAY(gsf_polygon_t, polygons, 4);
+};
+
+//=== svp alg config ===//
+
+STRUCT(gsf_svp_md_t)
+{
+  FIELD(float, thr);
+  FIELD(gsf_polygons_t, det_polygon);   // detect
+  //FIELD(gsf_polygons_t, inv_polygon); // invalid 
+};
+
+STRUCT(gsf_svp_lpr_t)
+{
+  FIELD(float, thr);
+  FIELD(gsf_polygons_t, det_polygon);   // detect
+  //FIELD(gsf_polygons_t, inv_polygon); // invalid 
+};
+
+STRUCT(gsf_svp_yolo_t)
+{
+  FIELD(float, thr);
+  FIELD(gsf_polygons_t, det_polygon);   // detect
+  //FIELD(gsf_polygons_t, inv_polygon); // invalid 
+};
+
+STRUCT(gsf_svp_cface_t)
+{
+  FIELD(float, thr);
+  FIELD(gsf_polygons_t, det_polygon);   // detect
+  //FIELD(gsf_polygons_t, inv_polygon); // invalid 
+};
+
+
+// svp_parm.json;
+
+STRUCT(gsf_svp_parm_t)
+{
+  FIELD(gsf_svp_t, svp);
+  FIELD(gsf_svp_md_t, md);
+  FIELD(gsf_svp_lpr_t, lpr);
+  FIELD(gsf_svp_yolo_t, yolo);
+  FIELD(gsf_svp_cface_t, cface);
+};
+
+
 #pragma pack(pop)

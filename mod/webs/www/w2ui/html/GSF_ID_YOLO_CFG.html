@@ -1,0 +1,626 @@
+<div id="main_view"></div>
+<div id="main_code"></div>
+
+<!--CODE-->
+
+<div class="content">
+  <div id="example_title" style="display: flex;">
+
+    <!-- 播放器 -->
+    <div id="video" style="width: 960px; height: 540px; margin-left: 2px;" onclick="videoLeftClick(event)"
+      onmousemove="videoMouseMove(event)">
+
+      <video id="videoElement" style="float: left; width: 100%; height: 100%; object-fit: fill;" autoplay>
+        Your browser is too old which doesn't support HTML5 video.
+      </video>
+
+      <!-- 这里要区分画布的宽高和实际渲染出来的宽高 -->
+      <canvas id="lineCanvas" width="960" height="540"
+        style="float: left; width: 100%; height: 100%; object-fit: fill; margin-top: -540px;">
+        Your browser is too old which doesn't support canvas.
+      </canvas>
+
+    </div>
+
+    <!-- 配置 -->
+    <!-- <div id="cfg" style="width: 300px; height: 230px; border: 1px dotted red; margin-left: 30px;"> -->
+    <fieldset style="margin-left: 30px; border: 1px dotted red;">
+      <legend>YOLO Object Detect</legend>
+      <div style="height: 5px"></div>
+
+      <select id="rectSelect" style="margin-left: 2px;" onchange="rectSelectChange(event)">
+        <option value="" style="display: none">Please select</option>
+        <option value="rect1">DrawArea1</option>
+        <option value="rect2">DrawArea2</option>
+        <option value="rect3">DrawArea3</option>
+        <option value="rect4">DrawArea4</option>
+      </select>
+
+      <input type="radio" name="radioArr" id="radioArr" style="margin-left: 2px;" checked flag="0"
+        onchange="rectRadioChange(event)">
+      <label>Detect Area</label>
+
+      <div style="height: 10px"></div>
+
+      <button id="drawStatusBtn" onclick="rectDrawStatus()" style="margin-left: 2px;">Begin</button>
+
+      <button id="drawClearBtn" onclick="rectDrawClear()" style="margin-left: 5px;">Clear</button>
+      <div style="height: 10px"></div>
+
+      <label style="margin-left: 2px;">Channel</label>
+      <input type="number" min="0" max="1" step="1" value="0" id="video_chn"> <br>
+
+ 
+
+      <label style="margin-left: 2px;">DetectThr</label>
+      <input type="range" id="rangeFdConf" min="0" max="1" step="0.05" value="0.5"
+        oninput="outFdConf.value=this.value" />
+      <output id="outFdConf" for="outFdConf" style="border: 1px dotted red;">0.5</output>
+      <div style="height: 5px"></div>
+
+      <button id="getConfigBtn" onclick="getConfig()" style="margin-left: 2px;"> GET </button>
+      <button id="sendConfigBtn" onclick="confirmSendConfig()" style="margin-left: 5px;"> SET </button>
+
+      <div style="height: 10px"></div>
+      <hr style="border: 1px dotted red;">
+
+    </fieldset>
+
+  </div>
+</div>
+
+
+<!--CODE-->
+<script>
+
+  // 是否允许在video窗口操作
+  var g_is_enable_draw = false;
+
+  // 判断鼠标是否移动到起始点处
+  var g_is_start_point = false;
+
+  // 当前操作的区域
+  var g_cur_polygon_idx = -1;
+
+  // 当前操作的检测(0)还是屏蔽(1)区域
+  var g_cur_polygon_arr = 0;
+
+  // 存放多边形区域 这里支持4个
+  var g_det_polygon_arr = [];
+  for (let i = 0; i < document.getElementById("rectSelect").length - 1; i++) {
+    g_det_polygon_arr.push([]);
+  }
+
+  // 存放多边形区域 这里支持4个
+  var g_inv_polygon_arr = [];
+  for (let i = 0; i < document.getElementById("rectSelect").length - 1; i++) {
+    g_inv_polygon_arr.push([]);
+  }
+
+  // 存放当前在操作的区域
+  var g_cur_arr = [];
+
+  /***********************************************************************************/
+
+  // 从设备获取有效的区域
+  function getConfig() {
+
+    const req_init = {
+      "id": "GSF_ID_SVP_YOLO",
+      "args": "G0C0S0",
+      "data": {}
+    }
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url: '/config?id=' + req_init.id + '&' + 'args=' + req_init.args,
+      data: JSON.stringify(req_init.data),
+      contentType: 'application/json',
+      dataType: "json",
+      success: function (data) {
+        // console.log("get config:", JSON.stringify(data.data));
+        dojson(data.data, true);
+        drawAllCanvas(true);
+      },
+      error: function () {
+      }
+    });
+  }
+
+  // 确认是否需要发送数据
+  function confirmSendConfig()
+  {
+    w2confirm('Are you sure configuration ?', "Confirm", function (btn) 
+    {
+      if (btn == 'Yes') {
+        sendConfig()
+      }
+    });
+  }
+  // 发送绘制的区域给设备
+  function sendConfig() {
+    
+    const req_init = {
+      "id": "GSF_ID_SVP_YOLO",
+      "args": "G0C0S0",
+      "data": {}
+    }
+
+    req_init.data = dojson(req_init.data, false);
+    // console.log("set info:", req_init.data);
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url: '/config?id=' + req_init.id + '&' + 'args=' + req_init.args.replace("G0", "G1"),
+      data: JSON.stringify(req_init.data),
+      contentType: 'application/json',
+      dataType: "json",
+      success: function (data) {
+        drawAllCanvas(true);
+        console.log("end send config");
+      },
+      error: function () {
+      }
+    });
+  }
+
+  // 序列化或者反序列化
+  function dojson(yolo_config, b_set) {
+    // 不知道的时候通过get先获取一个默认值
+    default_json = { "thr": 0,
+    "det_polygon": { "polygon_num": 0, 
+    "polygons": [
+    { "point_num": 0, "points": [{ "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }] }, 
+    { "point_num": 0, "points": [{ "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }] }, 
+    { "point_num": 0, "points": [{ "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }] }, 
+    { "point_num": 0, "points": [{ "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }, { "x": 0, "y": 0 }] }] } }
+
+    var can = document.getElementById("lineCanvas");
+
+    var rchn = document.getElementById("video_chn");
+
+    var rfdcon = document.getElementById("rangeFdConf");
+
+    var objS = document.getElementById("rectSelect");
+
+    if (b_set) {
+      console.log("do json get config:", yolo_config);
+
+      rchn.value = 0; // for ch;
+
+      rfdcon.value = yolo_config.thr;
+      document.getElementById("outFdConf").value = yolo_config.thr;
+
+
+      objS.options.selectedIndex = 0;
+
+      // 检测区域
+      let det_valid_num = yolo_config.det_polygon.polygon_num;
+      for (let i = 0; i < g_det_polygon_arr.length; i++) {
+        let cur_arr = g_det_polygon_arr[i];
+
+        // 获取上来的先清空一下本地的数据
+        cur_arr.length = 0;
+
+        for (let k = 0; k < yolo_config.det_polygon.polygons[i].point_num; k++) {
+          cur_arr.push({
+            x: yolo_config.det_polygon.polygons[i].points[k].x * can.width,
+            y: yolo_config.det_polygon.polygons[i].points[k].y * can.height
+          });
+        }
+        // console.log("get:", i, cur_arr.length, cur_arr);
+      }
+    }
+    else {
+      // console.log("do json set config default:", default_json);
+      
+      //default_json.ch = parseInt(rchn.value); // for ch;
+
+      default_json.thr = parseFloat(rfdcon.value);
+
+      objS.options.selectedIndex = 0;
+
+      // 检测区域
+      let det_valid_num = 0;
+      for (let i = 0; i < g_det_polygon_arr.length; i++) {
+        let cur_arr = g_det_polygon_arr[i];
+        if (cur_arr.length > 0) {
+          // console.log(i, cur_arr.length, cur_arr);
+          det_valid_num += 1
+          for (let k = 0; k < cur_arr.length; k++) {
+            let point = cur_arr[k];
+            default_json.det_polygon.polygons[i].points[k].x = parseFloat((point.x / can.width).toFixed(3));
+            default_json.det_polygon.polygons[i].points[k].y = parseFloat((point.y / can.height).toFixed(3));
+          }
+          default_json.det_polygon.polygons[i].point_num = cur_arr.length;
+        }
+        default_json.det_polygon.polygon_num = det_valid_num;
+      }
+
+      console.log("do json set config modify:", default_json);
+
+      return default_json;
+    }
+
+  }
+
+  // 选择需要绘制的区域
+  function rectSelectChange(event) {
+    var objS = document.getElementById("rectSelect");
+    g_cur_polygon_idx = objS.selectedIndex - 1;
+    if (g_cur_polygon_arr == 0) {
+      g_cur_arr = g_det_polygon_arr[g_cur_polygon_idx];
+    }
+    else if (g_cur_polygon_arr == 1) {
+      g_cur_arr = g_inv_polygon_arr[g_cur_polygon_idx];
+    }
+  }
+
+  // 选择需要操作的情况 检测还是屏蔽
+  function rectRadioChange(event) {
+    var radio = document.getElementsByName("radioArr");
+    for (i = 0; i < radio.length; i++) {
+      if (radio[i].checked) {
+        g_cur_polygon_arr = i;
+        // console.log("radio check ", g_cur_polygon_arr);
+
+        // 将选择区域按钮回退
+        var objS = document.getElementById("rectSelect");
+        objS.options.selectedIndex = 0;
+      }
+    }
+  }
+
+  // 左键单击视频窗口 获取相对大小和位置
+  function videoLeftClick(event) {
+    if (g_is_enable_draw) {
+      var div = document.getElementById('video');
+      // console.log('x:' + event.offsetX + "  y:" + event.offsetY + ' w:' + div.offsetWidth + "  h:" + div.offsetHeight);
+
+      var can = document.getElementById("lineCanvas");
+      var ctx = can.getContext("2d");
+
+      if (event.offsetX || event.layerX) {
+        let pointX = event.offsetX == undefined ? event.layerX : event.offsetX;
+        let pointY = event.offsetY == undefined ? event.layerY : event.offsetY;
+
+        // 真实画布是960 * 540 我们需要设置的是在画布的位置，所以这里要归一化然后乘以画布结果
+        pointX = pointX / div.offsetWidth * can.width
+        pointY = pointY / div.offsetHeight * can.height
+
+        // 如果是闭合起始点了->退出当前结果；否则->显示画的点并push到队列中
+        if (g_is_start_point) {
+          endDrawStatus();
+          g_is_start_point = false;
+        } else if (g_cur_arr.length < 10) {
+          makearc(ctx, pointX, pointY, 3, 0, 180, 'rgba(0, 255, 0, 1)');
+          g_cur_arr.push({ x: pointX, y: pointY });
+        }
+      }
+    }
+  }
+
+  // 鼠标移动
+  function videoMouseMove(event) {
+    if (g_is_enable_draw) {
+      var div = document.getElementById('video');
+
+      var can = document.getElementById("lineCanvas");
+      var ctx = can.getContext("2d");
+
+      if (event.offsetX || event.layerX) {
+        let pointX = event.offsetX == undefined ? event.layerX : event.offsetX;
+        let pointY = event.offsetY == undefined ? event.layerY : event.offsetY;
+
+        // 真实画布是960 * 540 我们需要设置的是在画布的位置，所以这里要归一化然后乘以画布结果
+        pointX = pointX / div.offsetWidth * can.width
+        pointY = pointY / div.offsetHeight * can.height
+
+        var piX, piY;
+
+        // 清空画布
+        ctx.clearRect(0, 0, can.width, can.height);
+
+        if (g_cur_arr.length > 0) {
+          if ((g_cur_arr.length > 2) &&
+            (pointX > g_cur_arr[0].x - 15 && pointX < g_cur_arr[0].x + 15) &&
+            (pointY > g_cur_arr[0].y - 15 && pointY < g_cur_arr[0].y + 15)) {
+            piX = g_cur_arr[0].x;
+            piY = g_cur_arr[0].y;
+            g_is_start_point = true;
+          }
+          else {
+            piX = pointX;
+            piY = pointY;
+            g_is_start_point = false;
+          }
+
+          // 开始绘制
+          ctx.strokeStyle = 'rgba(102,168,255,1)';//线条颜色
+          if (g_cur_polygon_arr == 1) {
+            ctx.strokeStyle = 'rgba(255, 168, 102, 1)';//线条颜色
+          }
+          ctx.lineWidth = 1;//线条粗细
+
+          ctx.beginPath();
+          ctx.moveTo(g_cur_arr[0].x, g_cur_arr[0].y);
+          if (g_cur_arr.length > 1) {
+            for (var i = 1; i < g_cur_arr.length; i++) {
+              ctx.lineTo(g_cur_arr[i].x, g_cur_arr[i].y);
+            }
+          }
+          ctx.lineTo(piX, piY);
+          ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';//填充颜色
+          if (g_cur_polygon_arr == 1) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';//填充颜色
+          }
+
+          ctx.fill();//填充
+          ctx.stroke();//绘制
+
+          // 显示顶点
+          for (var i = 0; i < g_cur_arr.length; i++) {
+            makearc(ctx, g_cur_arr[i].x, g_cur_arr[i].y, 3, 0, 180, 'rgba(0, 255, 0, 1)');
+          }
+        }
+      }
+
+      // 更新所有显示区域
+      drawAllCanvas(false);
+
+    }
+  }
+
+  // 绘制所有的区域
+  function drawAllCanvas(flag) {
+    var can = document.getElementById("lineCanvas");
+    var ctx = can.getContext("2d");
+
+    if (flag) {
+      ctx.clearRect(0, 0, can.width, can.height);
+    }
+
+    // 绘制检测信息
+    ctx.strokeStyle = 'rgba(102,168,255,1)';//线条颜色
+    ctx.lineWidth = 1;//线条粗细
+
+    for (let i = 0; i < g_det_polygon_arr.length; i++) {
+      let cur_arr = g_det_polygon_arr[i];
+      if (cur_arr.length < 1) {
+        continue
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(cur_arr[0].x, cur_arr[0].y);
+
+      for (let k = 1; k < cur_arr.length; k++) {
+        ctx.lineTo(cur_arr[k].x, cur_arr[k].y);
+      }
+      if (g_is_enable_draw == false || g_cur_polygon_arr == 1 || g_cur_polygon_idx != i) {
+        ctx.lineTo(cur_arr[0].x, cur_arr[0].y);
+      }
+
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';//填充颜色
+      ctx.fill();//填充
+      ctx.stroke();//绘制
+
+      // 显示顶点
+      var all_x = 0;
+      var all_y = 0;
+      for (let k = 0; k < cur_arr.length; k++) {
+        makearc(ctx, cur_arr[k].x, cur_arr[k].y, 3, 0, 180, 'rgba(0, 255, 0, 1)');
+        all_x += cur_arr[k].x;
+        all_y += cur_arr[k].y;
+      }
+
+      ctx.font = "25px Georgia";
+      ctx.fillText(i + 1, all_x / cur_arr.length, all_y / cur_arr.length);
+    }
+
+    // 绘制屏蔽信息
+    ctx.strokeStyle = 'rgba(255, 168, 102, 1)';//线条颜色
+    ctx.lineWidth = 1;//线条粗细
+
+    for (let i = 0; i < g_inv_polygon_arr.length; i++) {
+      let cur_arr = g_inv_polygon_arr[i];
+      if (cur_arr.length < 1) {
+        continue
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(cur_arr[0].x, cur_arr[0].y);
+
+      for (let k = 1; k < cur_arr.length; k++) {
+        ctx.lineTo(cur_arr[k].x, cur_arr[k].y);
+      }
+      if (g_is_enable_draw == false || g_cur_polygon_arr == 0 || g_cur_polygon_idx != i) {
+        ctx.lineTo(cur_arr[0].x, cur_arr[0].y);
+      }
+
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';//填充颜色
+      ctx.fill();//填充
+      ctx.stroke();//绘制
+
+      // 显示顶点
+      var all_x = 0;
+      var all_y = 0;
+      for (let k = 0; k < cur_arr.length; k++) {
+        makearc(ctx, cur_arr[k].x, cur_arr[k].y, 3, 0, 180, 'rgba(255, 0, 0, 1)');
+        all_x += cur_arr[k].x;
+        all_y += cur_arr[k].y;
+      }
+
+      ctx.font = "25px Georgia";
+      ctx.fillText(i + 1, all_x / cur_arr.length, all_y / cur_arr.length);
+    }
+  }
+
+  // 生成画布 结束绘画
+  function clearCanvas(ctx) {
+    ctx.clearRect(0, 0, can.width, can.height);
+    g_cur_arr = [];
+  }
+
+  // 绘制实心圆点
+  function makearc(ctx, x, y, r, s, e, color) {
+    // ctx.clearRect(0, 0, 199, 202);//清空画布
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(x, y, r, s, e);
+    ctx.fill();
+  }
+
+  // 区域闭合操作
+  function endDrawStatus() {
+    var stBtn = document.getElementById("drawStatusBtn");
+    if (stBtn.innerText == "Begin") {
+      stBtn.innerText = "End";
+      g_is_enable_draw = true;
+    }
+    else {
+      stBtn.innerText = "Begin";
+      g_is_enable_draw = false;
+    }
+
+    g_cur_arr = [];
+    g_cur_polygon_idx = -1;
+
+    var objS = document.getElementById("rectSelect");
+    objS.options.selectedIndex = 0;
+  }
+
+  // 切换绘制选择的状态
+  function rectDrawStatus() {
+    if (g_cur_polygon_idx < 0) {
+      alert("Please select the Area ?");
+      return;
+    }
+
+    if (g_cur_arr.length > 0) {
+      alert("The current Area is not empty, Clear this Area first.");
+      return;
+    }
+
+    var stBtn = document.getElementById("drawStatusBtn");
+    if (stBtn.innerText == "Begin") {
+      stBtn.innerText = "End";
+      g_is_enable_draw = true;
+    }
+    else {
+      stBtn.innerText = "Begin";
+      g_is_enable_draw = false;
+    }
+  }
+
+  // 清空被选择的区域 
+  function rectDrawClear() {
+    if (g_cur_polygon_idx < 0 || g_cur_arr.length < 1) {
+      alert("No Area is selected or the current Area is empty.");
+      return;
+    }
+
+    g_cur_arr.length = 0;
+
+    drawAllCanvas(true);
+  }
+
+  // 画线
+  function drawLine(ctx, a, b) {
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+
+  // 加载视频流
+  function flv_load() {
+    console.log('cfg flv isSupported: ' + flvjs.isSupported());
+
+    var ishttps = ('https:' == document.location.protocol) ? true : false
+
+    var mediaDataSource = {
+      type: "flv",
+      isLive: true,
+      //cors: true,
+      hasAudio: audio,
+      autoCleanupSourceBuffer: true,
+      url: (ishttps == true ? 'wss://' : 'ws://') + window.location.hostname + (ishttps == true ? ':443/flv' : ':80/flv') + streamx,
+    }
+    console.log('cfg MediaDataSource', mediaDataSource);
+    var element = document.getElementById('videoElement');
+
+
+    element.width = w2ui['main_layout'].get('main').width - 0;
+    element.height = w2ui['main_layout'].get('main').height - $('#toolbar').outerHeight();
+
+
+    if (typeof player !== "undefined") {
+      if (player != null) {
+        player.unload();
+        player.detachMediaElement();
+        player.destroy();
+        player = null;
+        console.log("cfg flv_load => destroy player!");
+      }
+    }
+    player = flvjs.createPlayer(mediaDataSource, {
+      // enableWorker: false,
+      // lazyLoadMaxDuration: 3 * 60,
+      // seekType: 'range',
+      isLive: true,
+      enableWorker: true,
+      enableStashBuffer: false,
+      stashInitialSize: 128,
+    });
+    player.attachMediaElement(element);
+    player.load();
+
+  }
+
+  // 销毁视频流
+  function flv_destroy() {
+    if (player != null) {
+      player.pause();
+      player.unload();
+      player.detachMediaElement();
+      player.destroy();
+      player = null;
+      console.log("cfg flv_destroy => destroy player!");
+    }
+  }
+
+  // 视频定位到末尾 刷新
+  function flv_seektoend() {
+    // console.log("cfg seek to end", player.buffered.end(0));
+    // player.currentTime = player.buffered.end(0) - 0.01;
+
+    if (player.buffered.length) {
+      let end = player.buffered.end(0);//获取当前buffered值
+      let diff = end - player.currentTime;//获取buffered与currentTime的差值
+      if (diff >= 0.5) {//如果差值大于等于0.5 手动跳帧 这里可根据自身需求来定
+        player.currentTime = player.buffered.end(0) - 0.01;//手动跳帧 不减的话，会卡死
+        // console.log("cfg seek to end", player.currentTime);
+      }
+    }
+  }
+
+ 
+  // main func
+  $(function () {
+    console.log('into config')
+
+    //加载视频
+    flv_load();
+
+    //定时刷新视频
+    setInterval(() => { flv_seektoend() }, 5000);
+
+    //禁用右键
+    $('#video').bind('contextmenu', function () { return false; });
+
+    // 获取默认参数
+    getConfig();
+  });
+
+</script>

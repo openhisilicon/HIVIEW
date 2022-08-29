@@ -64,7 +64,11 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   {GSF_ID_RTSPS_CFG,  "GSF_ID_RTSPS_CFG", GSF_IPC_RTSPS,(sjb_cb*)sjb_bind_gsf_rtsps_t,    (sjb_cb*)sjb_bind_gsf_rtsps_t,sizeof(gsf_rtsps_t), sizeof(gsf_rtsps_t),0},
   {GSF_ID_RTMPS_CFG,  "GSF_ID_RTMPS_CFG", GSF_IPC_RTMPS,(sjb_cb*)sjb_bind_gsf_rtmps_t,    (sjb_cb*)sjb_bind_gsf_rtmps_t,sizeof(gsf_rtmps_t), sizeof(gsf_rtmps_t),0},
   {GSF_ID_ONVIF_CFG,  "GSF_ID_ONVIF_CFG", GSF_IPC_ONVIF,(sjb_cb*)sjb_bind_gsf_onvif_cfg_t,(sjb_cb*)sjb_bind_gsf_onvif_cfg_t,sizeof(gsf_onvif_cfg_t), sizeof(gsf_onvif_cfg_t),0},
+  
+//svp;
+  {GSF_ID_SVP_YOLO,    "GSF_ID_SVP_YOLO", GSF_IPC_SVP,(sjb_cb*)sjb_bind_gsf_svp_yolo_t,   (sjb_cb*)sjb_bind_gsf_svp_yolo_t,sizeof(gsf_svp_yolo_t), sizeof(gsf_svp_yolo_t),0},
   {GSF_ID_SVP_CFG,    "GSF_ID_SVP_CFG",   GSF_IPC_SVP,(sjb_cb*)sjb_bind_gsf_svp_t,        (sjb_cb*)sjb_bind_gsf_svp_t,sizeof(gsf_svp_t), sizeof(gsf_svp_t),0},
+  
   {GSF_ID_WEBS_CFG,   "GSF_ID_WEBS_CFG",  GSF_IPC_WEBS,(sjb_cb*)sjb_bind_gsf_webs_cfg_t,  (sjb_cb*)sjb_bind_gsf_webs_cfg_t,sizeof(gsf_webs_cfg_t), sizeof(gsf_webs_cfg_t),0},
   {GSF_ID_APP_CHSRC,  "GSF_ID_APP_CHSRC", GSF_IPC_APP,(sjb_cb*)sjb_bind_gsf_chsrc_t,      (sjb_cb*)sjb_bind_gsf_chsrc_t,sizeof(gsf_chsrc_t),sizeof(gsf_chsrc_t),1},
   {GSF_ID_SIPS_CFG,   "GSF_ID_SIPS_CFG",  GSF_IPC_SIPS,(sjb_cb*)sjb_bind_gsf_sips_t,      (sjb_cb*)sjb_bind_gsf_sips_t,sizeof(gsf_sips_t), sizeof(gsf_sips_t),0},

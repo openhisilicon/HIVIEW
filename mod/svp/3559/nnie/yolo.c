@@ -11,6 +11,8 @@
 #include "sample_comm_ive.h"
 #include "ivs_md.h"
 #include "svp.h"
+#include "cfg.h"
+#include "polyiou.h"
 extern void* svp_pub;
 
 static pthread_t s_hMdThread = 0;
@@ -63,27 +65,78 @@ static pub_send(yolo_boxs_t *boxs)
   yolos->pts = 0;
   yolos->w = boxs->w;
   yolos->h = boxs->h;
-  
-  yolos->cnt = boxs->size;
-  yolos->cnt = (yolos->cnt > sizeof(yolos->box)/sizeof(yolos->box[0]))?sizeof(yolos->box)/sizeof(yolos->box[0]):yolos->cnt;
-    
-  for(i=0;i<yolos->cnt;i++)
+  yolos->cnt = 0;
+
+  for(i=0;i<boxs->size;i++)
 	{
-	  yolos->box[i].score   = boxs->box[i].score;
-		yolos->box[i].rect[0] = (boxs->box[i].x > 0.0)?boxs->box[i].x:0;
-		yolos->box[i].rect[1] = (boxs->box[i].y > 0.0)?boxs->box[i].y:0;
-		yolos->box[i].rect[2] = (boxs->box[i].w < yolos->w)?boxs->box[i].w:yolos->w;
-		yolos->box[i].rect[3] = (boxs->box[i].h < yolos->h)?boxs->box[i].h:yolos->h;
-		strncpy(yolos->box[i].label, boxs->box[i].label, sizeof(yolos->box[i].label)-1);
-	#if 0
-	  printf("i: %d w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
-	        , i, yolos->w, yolos->h
-	        , yolos->box[i].rect[0]
-	        , yolos->box[i].rect[1]
-	        , yolos->box[i].rect[2]
-	        , yolos->box[i].rect[3]
-	        , yolos->box[i].label, yolos->box[i].score);
-	#endif
+	  if(yolos->cnt >= sizeof(yolos->box)/sizeof(yolos->box[0]))
+	  {  
+	    break;
+	  }
+	  
+	  boxs->box[i].x = (boxs->box[i].x > 0.0)?boxs->box[i].x:0;
+	  boxs->box[i].y = (boxs->box[i].y > 0.0)?boxs->box[i].y:0;
+	  boxs->box[i].w = (boxs->box[i].w < yolos->w)?boxs->box[i].w:yolos->w;
+	  boxs->box[i].h = (boxs->box[i].h < yolos->h)?boxs->box[i].h:yolos->h;
+	  
+	  //only used polygons[0];
+    double iou = 0.1;
+	  if(svp_parm.yolo.det_polygon.polygon_num && svp_parm.yolo.det_polygon.polygons[0].point_num)
+	  {
+	    int pn = svp_parm.yolo.det_polygon.polygons[0].point_num;
+	    
+	    double P[10*2] = {0};
+	    double Q[4*2] = {0};
+	    
+	    for(int p = 0; p < pn; p++)
+	    {
+	      P[p*2+0] = svp_parm.yolo.det_polygon.polygons[0].points[p].x * yolos->w;
+	      P[p*2+1] = svp_parm.yolo.det_polygon.polygons[0].points[p].y * yolos->h;
+	    }
+	    
+	    Q[0] = boxs->box[i].x;
+	    Q[1] = boxs->box[i].y;
+	    
+	    Q[2] = (boxs->box[i].x + boxs->box[i].w);
+	    Q[3] = boxs->box[i].y;
+	    
+	    Q[4] = (boxs->box[i].x + boxs->box[i].w);
+	    Q[5] = (boxs->box[i].y + boxs->box[i].h);
+	    
+	    Q[6] = boxs->box[i].x;
+	    Q[7] = (boxs->box[i].y + boxs->box[i].h);
+
+	    #if 0
+	    printf("P(%d)[%.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f]\n"           
+	           , pn, P[0],P[1], P[2],P[3], P[4],P[5], P[6],P[7], P[8],P[9], P[10],P[11], P[12],P[13], P[14],P[15]);
+	    printf("Q(%d)[ %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f]\n"
+	          , 4, Q[0],Q[1], Q[2],Q[3], Q[4],Q[5], Q[6],Q[7]);
+      #endif
+      
+	    iou = poly_iou(P, pn*2, Q, 4*2);
+	    
+	    if(iou < 0.001)
+	      continue;
+	  }
+	  
+	  yolos->box[yolos->cnt].score   = boxs->box[i].score;
+		yolos->box[yolos->cnt].rect[0] = boxs->box[i].x;
+		yolos->box[yolos->cnt].rect[1] = boxs->box[i].y;
+		yolos->box[yolos->cnt].rect[2] = boxs->box[i].w;
+		yolos->box[yolos->cnt].rect[3] = boxs->box[i].h;
+		strncpy(yolos->box[yolos->cnt].label, boxs->box[i].label, sizeof(yolos->box[yolos->cnt].label)-1);
+
+  	#if 0
+	  printf("iou: %.4f, w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
+	        , iou, yolos->w, yolos->h
+	        , yolos->box[yolos->cnt].rect[0]
+	        , yolos->box[yolos->cnt].rect[1]
+	        , yolos->box[yolos->cnt].rect[2]
+	        , yolos->box[yolos->cnt].rect[3]
+	        , yolos->box[yolos->cnt].label, yolos->box[i].score);
+  	#endif
+  	
+  	yolos->cnt++;
 	}
   nm_pub_send(svp_pub, (char*)msg, sizeof(*msg)+msg->size);
 }

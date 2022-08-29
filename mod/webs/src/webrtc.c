@@ -320,7 +320,9 @@ char* rtc_getCandidate(rtc_sess_t *rtc_sess)
 void* rtc_video_send_task(void *parm)
 {
   printf("start.\n");
-  int i = 0, ret = 0;
+  
+  int i = 0, ch = 0, st = 1, ret = 0;
+  
   struct cfifo_ex* video_fifo = NULL;
   struct cfifo_ex* audio_fifo = NULL;
   int ep = cfifo_ep_alloc(1);
@@ -330,10 +332,11 @@ void* rtc_video_send_task(void *parm)
   
   GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
   sdp->video_shmid = sdp->audio_shmid = -1;
-  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, 0, GET, 0
+  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, ch, GET, st
                         , sizeof(gsf_sdp_t)
                         , GSF_IPC_CODEC
                         , 2000);
+  printf("GSF_ID_CODEC_SDP ch:%d, st:%d\n", ch, st);                      
 
   if(ret == 0)
   {

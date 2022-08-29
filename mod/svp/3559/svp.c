@@ -81,10 +81,10 @@ int main(int argc, char *argv[])
     
     strncpy(svp_parm_path, argv[1], sizeof(svp_parm_path)-1);
     
-    if(json_parm_load(svp_parm_path, &svp_cfg) < 0)
+    if(json_parm_load(svp_parm_path, &svp_parm) < 0)
     {
-      json_parm_save(svp_parm_path, &svp_cfg);
-      json_parm_load(svp_parm_path, &svp_cfg);
+      json_parm_save(svp_parm_path, &svp_parm);
+      json_parm_load(svp_parm_path, &svp_parm);
     }
     
     svp_pub = nm_pub_listen(GSF_PUB_SVP);
@@ -106,21 +106,21 @@ int main(int argc, char *argv[])
                     , NM_REP_OSIZE_MAX
                     , req_recv);
     reg2bsp();
-
+        
     int yolo_alg = 0;
     while(1)
     {
-      if(yolo_alg != svp_cfg.yolo_alg)
+      if(yolo_alg != svp_parm.svp.yolo_alg)
       {
-        if(yolo_alg == 0 && svp_cfg.yolo_alg > 0)
+        if(yolo_alg == 0 && svp_parm.svp.yolo_alg > 0)
         {
           yolo_start(home_path);
         }
-        else if(yolo_alg > 0 && svp_cfg.yolo_alg == 0)
+        else if(yolo_alg > 0 && svp_parm.svp.yolo_alg == 0)
         {
           yolo_stop();
         }
-        yolo_alg = svp_cfg.yolo_alg;  
+        yolo_alg = svp_parm.svp.yolo_alg;
       }
       sleep(1);
     }

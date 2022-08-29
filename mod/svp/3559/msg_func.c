@@ -1,5 +1,8 @@
 ﻿//os
-
+#include <errno.h>
+#include <stdio.h>
+#include <libgen.h>
+ 
 //top
 #include "inc/gsf.h"
 
@@ -14,24 +17,24 @@ static void msg_func_cfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   if(req->set)
   {
-    gsf_svp_t *cfg = (gsf_svp_t*)req->data;
+    gsf_svp_t *svp = (gsf_svp_t*)req->data;
     
-    svp_cfg = *cfg;
+    svp_parm.svp = *svp;
     
     // change alg;
-    json_parm_save(svp_parm_path, &svp_cfg);
+    json_parm_save(svp_parm_path, &svp_parm);
       
     rsp->err  = 0;
     rsp->size = 0;
   }
   else
   {
-    gsf_svp_t *cfg = (gsf_svp_t*)rsp->data;
+    gsf_svp_t *svp = (gsf_svp_t*)rsp->data;
     
-    memcpy(cfg, &svp_cfg, sizeof(svp_cfg));
+    memcpy(svp, &svp_parm.svp, sizeof(svp_parm.svp));
     
     rsp->err  = 0;
-    rsp->size = sizeof(svp_cfg);
+    rsp->size = sizeof(svp_parm.svp);
   }
 }
 
@@ -78,11 +81,38 @@ static void msg_func_lpr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   }
 }
 
+static void msg_func_yolo(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_svp_yolo_t *yolocfg = (gsf_svp_yolo_t*)req->data;
+    
+    // start/stop yolo_alg(ch);  
+
+    svp_parm.yolo = *yolocfg;
+    json_parm_save(svp_parm_path, &svp_parm);
+    
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else
+  {
+    gsf_svp_yolo_t *yolocfg = (gsf_svp_yolo_t*)rsp->data;
+    
+
+    memcpy(yolocfg, &svp_parm.yolo, sizeof(svp_parm.yolo));
+    //get yolocfg(ch);
+    
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_svp_yolo_t);
+  }
+}
 
 static msg_func_t *msg_func[GSF_ID_SVP_END] = {
     [GSF_ID_SVP_CFG]    = msg_func_cfg,
     [GSF_ID_SVP_MD]     = msg_func_md,
     [GSF_ID_SVP_LPR]    = msg_func_lpr,
+    [GSF_ID_SVP_YOLO]   = msg_func_yolo,
  };
 
 

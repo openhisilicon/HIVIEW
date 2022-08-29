@@ -470,7 +470,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
       if(!nc->user_data && !strncmp(hm->uri.p, "/flv", strlen("/flv")))
       {
         int ret = 0;
-        int channel = 0, sid = 0;
+        int channel = 0, sid = 1; //st;
         sscanf(hm->uri.p, "/flv%d", &channel);
         channel = (channel-1 > 0)?(channel-1):0;
           
