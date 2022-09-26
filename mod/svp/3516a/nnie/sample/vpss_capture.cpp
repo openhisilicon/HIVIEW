@@ -153,7 +153,6 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 
 	if(img.cols != pVBuf->u32Width || img.rows != pVBuf->u32Height || !stDst.au64VirAddr[0])
 	{
-		img.create(pVBuf->u32Height, pVBuf->u32Width, CV_8UC3);
 		ret = HI_MPI_SYS_MmzAlloc_Cached(&stDst.au64PhyAddr[0],
 				(HI_VOID **)&stDst.au64VirAddr[0],
 				NULL,HI_NULL,
@@ -163,7 +162,9 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 			printf("MmzAlloc_Cached failed!\n");
 			return HI_FAILURE;
 		}
-		printf("MmzAlloc_Cached OK!\n");
+		printf("cv_mat refto MmzAlloc_Cached OK!\n");
+		dst_mat = cv::Mat(pVBuf->u32Height, pVBuf->u32Width, CV_8UC3, (void*)stDst.au64VirAddr[0]);
+		img = cv::Mat(dst_mat);
 	}
 
 	stDst.au64PhyAddr[1] = stDst.au64PhyAddr[0] + stDst.au32Stride[0];
@@ -185,8 +186,7 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 		printf( "stDst.au64VirAddr[0] is null!\n");
 		return HI_FAILURE;    
 	}
-	memcpy(img.data, (HI_VOID *)stDst.au64VirAddr[0], stDst.u32Height * stDst.u32Width * 3);
-
+	
 	return 0;
 }
 

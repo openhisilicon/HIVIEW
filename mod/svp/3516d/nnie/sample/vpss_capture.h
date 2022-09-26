@@ -59,6 +59,7 @@ private:
 	
 	unsigned int frame_id = 0;
 	unsigned int frame_lock = 0;
+	cv::Mat dst_mat;
 };
 
 

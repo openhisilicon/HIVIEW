@@ -91,6 +91,7 @@ private:
 	static HI_CHAR* pUserPageAddr[2];
 	
 	static unsigned int frame_id;
+	cv::Mat dst_mat;
 #endif
 };
 
