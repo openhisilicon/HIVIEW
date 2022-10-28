@@ -10,10 +10,12 @@ STRUCT(gsf_venc_t)
   FIELD(int, gop);
   FIELD(int, flow);
   FIELD(int, bitrate);
-  FIELD(int, profile);
+  FIELD(int, profile);//0: BL; 1:MP; 2:HP
   FIELD(int, qp);
   FIELD(int, lowdelay);
+  FIELD(int, rcmode); // 0: CBR, 1: VBR, 2: AVBR, 3: QVBR, 4: CVBR, 5: QPMAP, 6: FIXQP
 };
+
 
 STRUCT(gsf_aenc_t)
 {
@@ -167,6 +169,12 @@ STRUCT(gsf_img_all_t)
    FIELD(gsf_img_ldci_t, ldci);
    FIELD(gsf_img_3dnr_t, _3dnr);
 };
+
+STRUCT(gsf_scene_ae_t)
+{
+  FIELD(float, compensation_mul); // 0.5 - 1.5;
+};
+
 
 STRUCT(gsf_vdec_t)
 {

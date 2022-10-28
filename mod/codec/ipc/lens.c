@@ -63,14 +63,14 @@ static int ir_cb(int ViPipe, int dayNight, void* uargs)
       system("echo 0 > /sys/class/gpio/gpio83/value;echo 1 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio84/value");
     else
       system("echo 1 > /sys/class/gpio/gpio83/value;echo 0 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio83/value");
-  } 
-  else if(strstr(_ini.sns, "imx334"))
-  {
-    if(dayNight)
-      system("echo 0 > /sys/class/gpio/gpio27/value;echo 0 > /sys/class/gpio/gpio28/value;");
-    else
-      system("echo 1 > /sys/class/gpio/gpio27/value;echo 1 > /sys/class/gpio/gpio28/value;");
   }
+//  else if(strstr(_ini.sns, "imx334"))
+//  {
+//    if(dayNight)
+//      system("echo 0 > /sys/class/gpio/gpio27/value;echo 0 > /sys/class/gpio/gpio28/value;");
+//    else
+//      system("echo 1 > /sys/class/gpio/gpio27/value;echo 1 > /sys/class/gpio/gpio28/value;");
+//  }
   else
   {
     if(dayNight)

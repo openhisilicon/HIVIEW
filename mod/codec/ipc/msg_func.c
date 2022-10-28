@@ -212,7 +212,7 @@ static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 
-
+extern int zoom_plus;
 static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   rsp->err  = 0;
@@ -227,9 +227,11 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
       rsp->err = gsf_lens_ircut(req->ch, lens->arg1);
       break;
     case GSF_LENS_STOP:
+      zoom_plus = 0;
       rsp->err = gsf_lens_stop(req->ch);
       break;
     case GSF_LENS_ZOOM:
+      zoom_plus = (lens->arg1)?1:-1;
       rsp->err = gsf_lens_zoom(req->ch, lens->arg1, lens->arg2);
       break;
     case GSF_LENS_FOCUS:
@@ -501,6 +503,20 @@ static void msg_func_img3dnr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
     printf("get _3dnr\n");
   } 
 }
+
+
+static void msg_func_sceneae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  {
+    gsf_scene_ae_t *ae = (gsf_scene_ae_t*)req->data;
+    int ret = gsf_mpp_scene_ctl(0, GSF_MPP_SCENE_CTL_AE, ae);
+    rsp->err  = ret;
+    rsp->size = 0;
+    printf("gsf_mpp_scene_ctl scene_ae\n");
+  }
+}
+
+
 #endif
 
 static void msg_func_lenscfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
@@ -552,6 +568,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_IMGDRC]= msg_func_imgdrc,
     [GSF_ID_CODEC_IMGLDCI]= msg_func_imgldci,
     [GSF_ID_CODEC_IMG3DNR]= msg_func_img3dnr,
+    [GSF_ID_CODEC_SCENEAE]= msg_func_sceneae,    
 #endif    
  };
 

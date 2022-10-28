@@ -45,6 +45,8 @@
 #define pbitmap_fmt  bitMap->pixel_format  
 #define pbitmap_data bitMap->data
 
+#define rect_w rect.width
+#define rect_h rect.height
 
 #else
 
@@ -84,6 +86,9 @@
 #define pbitmap_h    bitMap->u32Height
 #define pbitmap_fmt  bitMap->enPixelFormat  
 #define pbitmap_data bitMap->pData
+
+#define rect_w rect.u32Width
+#define rect_h rect.u32Height
 
 #endif
 

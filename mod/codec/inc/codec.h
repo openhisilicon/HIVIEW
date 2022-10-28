@@ -37,6 +37,7 @@ enum {
     GSF_ID_CODEC_IMGDRC    = 21, // ch, sid, gsf_img_drc_t;
     GSF_ID_CODEC_IMGLDCI   = 22, // ch, sid, gsf_img_ldci_t;
     GSF_ID_CODEC_IMG3DNR   = 23, // ch, sid, gsf_img_3dnr_t;
+    GSF_ID_CODEC_SCENEAE   = 24, // ch, sid, gsf_scene_ae_t;
     
     GSF_ID_CODEC_END
 };

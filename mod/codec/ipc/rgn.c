@@ -893,7 +893,7 @@ int gsf_rgn_canvas(int ch, int idx, gsf_osd_act_t *act)
   
   if(act->w != codec_ipc.venc[sub].width)
   {
-     //warn("act->w:%d, codec_ipc width:%d\n", act->w, codec_ipc.venc[sub].width);
+    //warn("act->w:%d, codec_ipc width:%d\n", act->w, codec_ipc.venc[sub].width);
     return -1;
   }
   
