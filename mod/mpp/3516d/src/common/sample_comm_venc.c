@@ -479,7 +479,6 @@ HI_S32 SAMPLE_COMM_VENC_CbStream(VENC_CHN VencChn, PAYLOAD_TYPE_E PT, SAMPLE_VEN
     return HI_SUCCESS;
 }
 
-
 /******************************************************************************
 * funciton : the process of physical address retrace
 ******************************************************************************/
@@ -738,25 +737,25 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
-                        stH265Vbr.u32MaxBitRate = 1024 * 2 + 1024*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH265Vbr.u32MaxBitRate = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH265Vbr.u32MaxBitRate = 1024 * 3 + 3072*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3 + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH265Vbr.u32MaxBitRate = 1024 * 5  + 5120*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5  + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH265Vbr.u32MaxBitRate = 1024 * 10 + 5120*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH265Vbr.u32MaxBitRate = 1024 * 20 + 5120*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH265Vbr.u32MaxBitRate    = 1024 * 15 + 2048*u32FrameRate/30;
+                        stH265Vbr.u32MaxBitRate    = venc_attr[VencChn].u32BitRate?:1024 * 15 + 2048*u32FrameRate/30;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH265Vbr, &stH265Vbr, sizeof(VENC_H265_VBR_S));
@@ -773,25 +772,25 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
-                        stH265AVbr.u32MaxBitRate = 1024 * 2 + 1024*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH265AVbr.u32MaxBitRate = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH265AVbr.u32MaxBitRate = 1024 * 3 + 3072*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3 + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH265AVbr.u32MaxBitRate = 1024 * 5  + 5120*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5  + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH265AVbr.u32MaxBitRate = 1024 * 10 + 5120*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH265AVbr.u32MaxBitRate = 1024 * 20 + 5120*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH265AVbr.u32MaxBitRate    = 1024 * 15 + 2048*u32FrameRate/30;
+                        stH265AVbr.u32MaxBitRate    = venc_attr[VencChn].u32BitRate?:1024 * 15 + 2048*u32FrameRate/30;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH265AVbr, &stH265AVbr, sizeof(VENC_H265_AVBR_S));
@@ -808,25 +807,25 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
-                        stH265QVbr.u32TargetBitRate= 1024 * 2 + 1024*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate= venc_attr[VencChn].u32BitRate?:1024 * 2 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH265QVbr.u32TargetBitRate = 1024 * 2 + 2048*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH265QVbr.u32TargetBitRate = 1024 * 3 + 3072*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3 + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH265QVbr.u32TargetBitRate = 1024 * 5  + 5120*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5  + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH265QVbr.u32TargetBitRate = 1024 * 10 + 5120*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 10 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH265QVbr.u32TargetBitRate = 1024 * 20 + 5120*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH265QVbr.u32TargetBitRate    = 1024 * 15 + 2048*u32FrameRate/30;
+                        stH265QVbr.u32TargetBitRate    = venc_attr[VencChn].u32BitRate?:1024 * 15 + 2048*u32FrameRate/30;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH265QVbr, &stH265QVbr, sizeof(VENC_H265_QVBR_S));
@@ -845,39 +844,39 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
-                        stH265CVbr.u32MaxBitRate         = 1024 * 3 + 1024*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 2 + 1024*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 512;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 3 + 1024*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 1024*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:512;
                         break;
                     case PIC_1080P:
-                        stH265CVbr.u32MaxBitRate         = 1024 * 2 + 2048*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 2 + 2048*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 1024;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024;
                         break;
                     case PIC_2592x1944:
-                        stH265CVbr.u32MaxBitRate         = 1024 * 4 + 3072*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 3 + 3072*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 1024*2;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 4 + 3072*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 3 + 3072*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*2;
                         break;
                     case PIC_3840x2160:
-                        stH265CVbr.u32MaxBitRate         = 1024 * 8  + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 5  + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 1024*3;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 8  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 5  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*3;
                         break;
                     case PIC_4000x3000:
-                        stH265CVbr.u32MaxBitRate         = 1024 * 12  + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 10 + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 1024*4;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 12  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 10 + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*4;
                         break;
                     case PIC_7680x4320:
-                        stH265CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 20 + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 1024*6;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 24  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*6;
                         break;
                     default :
-                        stH265CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMaxBitrate = 1024 * 15 + 2048*u32FrameRate/30;
-                        stH265CVbr.u32LongTermMinBitrate = 1024*5;
+                        stH265CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 24  + 5120*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 15 + 2048*u32FrameRate/30;
+                        stH265CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*5;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH265CVbr, &stH265CVbr, sizeof(VENC_H265_CVBR_S));
@@ -948,9 +947,9 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 stH264FixQp.u32Gop           = 30;
                 stH264FixQp.u32SrcFrameRate  = u32FrameRate;
                 stH264FixQp.fr32DstFrameRate = venc_attr[VencChn].u32FrameRate?:u32FrameRate;
-                stH264FixQp.u32IQp           = 25;
-                stH264FixQp.u32PQp           = 30;
-                stH264FixQp.u32BQp           = 32;
+                stH264FixQp.u32IQp           = 25-5; //maohw
+                stH264FixQp.u32PQp           = 30-5;
+                stH264FixQp.u32BQp           = 32-5;
                 memcpy(&stVencChnAttr.stRcAttr.stH264FixQp, &stH264FixQp, sizeof(VENC_H264_FIXQP_S));
             }
             else if (SAMPLE_RC_VBR == enRcMode)
@@ -965,28 +964,28 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_360P:
-                        stH264Vbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_720P:
-                        stH264Vbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH264Vbr.u32MaxBitRate = 1024 * 2   + 2048*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH264Vbr.u32MaxBitRate = 1024 * 3   + 3072*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3   + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH264Vbr.u32MaxBitRate = 1024 * 5   + 5120*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5   + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH264Vbr.u32MaxBitRate = 1024 * 10  + 5120*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 10  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH264Vbr.u32MaxBitRate = 1024 * 20  + 5120*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20  + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH264Vbr.u32MaxBitRate = 1024 * 15  + 2048*u32FrameRate/30;
+                        stH264Vbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 15  + 2048*u32FrameRate/30;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH264Vbr, &stH264Vbr, sizeof(VENC_H264_VBR_S));
@@ -1003,28 +1002,28 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_360P:
-                        stH264AVbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_720P:
-                        stH264AVbr.u32MaxBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH264AVbr.u32MaxBitRate = 1024 * 2   + 2048*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH264AVbr.u32MaxBitRate = 1024 * 3   + 3072*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3   + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH264AVbr.u32MaxBitRate = 1024 * 5   + 5120*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5   + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH264AVbr.u32MaxBitRate = 1024 * 10  + 5120*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 10  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH264AVbr.u32MaxBitRate = 1024 * 20  + 5120*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20  + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH264AVbr.u32MaxBitRate = 1024 * 15  + 2048*u32FrameRate/30;
+                        stH264AVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 15  + 2048*u32FrameRate/30;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH264AVbr, &stH264AVbr, sizeof(VENC_H264_AVBR_S));
@@ -1041,28 +1040,28 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_360P:
-                        stH264QVbr.u32TargetBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_720P:
-                        stH264QVbr.u32TargetBitRate = 1024 * 2   + 1024*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stH264QVbr.u32TargetBitRate = 1024 * 2   + 2048*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 2   + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stH264QVbr.u32TargetBitRate = 1024 * 3   + 3072*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3   + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stH264QVbr.u32TargetBitRate = 1024 * 5   + 5120*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5   + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stH264QVbr.u32TargetBitRate = 1024 * 10  + 5120*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 10  + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stH264QVbr.u32TargetBitRate = 1024 * 20  + 5120*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20  + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stH264QVbr.u32TargetBitRate = 1024 * 15  + 2048*u32FrameRate/30;
+                        stH264QVbr.u32TargetBitRate = venc_attr[VencChn].u32BitRate?:1024 * 15  + 2048*u32FrameRate/30;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH264QVbr, &stH264QVbr, sizeof(VENC_H264_QVBR_S));
@@ -1081,39 +1080,39 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_720P:
-                        stH264CVbr.u32MaxBitRate         = 1024 * 3 + 1024*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 2 + 1024*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 512;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 3 + 1024*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 1024*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:512;
                         break;
                     case PIC_1080P:
-                        stH264CVbr.u32MaxBitRate         = 1024 * 2 + 2048*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 2 + 2048*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 1024;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 2 + 2048*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024;
                         break;
                     case PIC_2592x1944:
-                        stH264CVbr.u32MaxBitRate         = 1024 * 4 + 3072*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 3 + 3072*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 1024*2;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 4 + 3072*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 3 + 3072*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*2;
                         break;
                     case PIC_3840x2160:
-                        stH264CVbr.u32MaxBitRate         = 1024 * 8  + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 5  + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 1024*3;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 8  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 5  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*3;
                         break;
                     case PIC_4000x3000:
-                        stH264CVbr.u32MaxBitRate         = 1024 * 12  + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 10 + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 1024*4;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 12  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 10 + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*4;
                         break;
                     case PIC_7680x4320:
-                        stH264CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 20 + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 1024*6;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 24  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*6;
                         break;
                     default :
-                        stH264CVbr.u32MaxBitRate         = 1024 * 24  + 5120*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMaxBitrate = 1024 * 15 + 2048*u32FrameRate/30;
-                        stH264CVbr.u32LongTermMinBitrate = 1024*5;
+                        stH264CVbr.u32MaxBitRate         = venc_attr[VencChn].u32BitRate?:1024 * 24  + 5120*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMaxBitrate = venc_attr[VencChn].u32BitRate?:1024 * 15 + 2048*u32FrameRate/30;
+                        stH264CVbr.u32LongTermMinBitrate = venc_attr[VencChn].u32BitRate?:1024*5;
                         break;
                 }
                 memcpy(&stVencChnAttr.stRcAttr.stH264CVbr, &stH264CVbr, sizeof(VENC_H264_CVBR_S));
@@ -1144,7 +1143,7 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 VENC_MJPEG_FIXQP_S stMjpegeFixQp;
 
                 stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_MJPEGFIXQP;
-                stMjpegeFixQp.u32Qfactor        = 95;
+                stMjpegeFixQp.u32Qfactor        = 95 - 15; //maohw
                 stMjpegeFixQp.u32SrcFrameRate    = u32FrameRate;
                 stMjpegeFixQp.fr32DstFrameRate   = venc_attr[VencChn].u32FrameRate?:u32FrameRate;
 
@@ -1206,28 +1205,28 @@ HI_S32 SAMPLE_COMM_VENC_Creat(VENC_CHN VencChn, PAYLOAD_TYPE_E enType,  PIC_SIZE
                 switch (enSize)
                 {
                     case PIC_360P:
-                        stMjpegVbr.u32MaxBitRate = 1024 * 3 + 1024*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 3 + 1024*u32FrameRate/30;
                         break;
                     case PIC_720P:
-                        stMjpegVbr.u32MaxBitRate = 1024 * 5 + 1024*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 5 + 1024*u32FrameRate/30;
                         break;
                     case PIC_1080P:
-                        stMjpegVbr.u32MaxBitRate = 1024 * 8 + 2048*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 8 + 2048*u32FrameRate/30;
                         break;
                     case PIC_2592x1944:
-                        stMjpegVbr.u32MaxBitRate = 1024 * 20 + 3072*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 3072*u32FrameRate/30;
                         break;
                     case PIC_3840x2160:
-                        stMjpegVbr.u32MaxBitRate = 1024 * 25 + 5120*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 25 + 5120*u32FrameRate/30;
                         break;
                     case PIC_4000x3000:
-                        stMjpegVbr.u32MaxBitRate    = 1024 * 30 + 5120*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate    = venc_attr[VencChn].u32BitRate?:1024 * 30 + 5120*u32FrameRate/30;
                         break;
                     case PIC_7680x4320:
-                        stMjpegVbr.u32MaxBitRate = 1024 * 40 + 5120*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 40 + 5120*u32FrameRate/30;
                         break;
                     default :
-                        stMjpegVbr.u32MaxBitRate = 1024 * 20 + 2048*u32FrameRate/30;
+                        stMjpegVbr.u32MaxBitRate = venc_attr[VencChn].u32BitRate?:1024 * 20 + 2048*u32FrameRate/30;
                         break;
                 }
 

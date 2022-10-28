@@ -539,6 +539,12 @@ typedef struct hiSCENE_PIPE_PARAM_S
     HI_SCENE_MODULE_STATE_S stModuleState;
 } HI_SCENE_PIPE_PARAM_S;
 
+//maohw;
+typedef struct {
+  float compensation_mul; // 0.5 - 1.5;
+}HI_SCENE_CTL_AE_S;
+
+
 HI_S32 HI_SCENE_SetStaticAE_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index);
 
 HI_S32 HI_SCENE_SetStaticAERouteEX_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index);

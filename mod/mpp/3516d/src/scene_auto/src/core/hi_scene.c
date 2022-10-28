@@ -409,6 +409,7 @@ static HI_S32 SCENE_SetPipeDynamicParam(HI_VOID)
 
     for (i = 0; i < s_stSceneState.u32MainPipeNum; i++)
     {
+        //printf("%s => u32MainPipe:%d, u32SubPipeNum:%d\n", __func__, i, s_stSceneState.astMainPipe[i].u32SubPipeNum);
         for (j = 0; j < s_stSceneState.astMainPipe[i].u32SubPipeNum; j++)
         {
             HI_U32 u32Iso = 0;
@@ -499,7 +500,7 @@ static HI_S32 SCENE_SetVIPipeParam(HI_VOID)
         s32Ret = SCENE_CalculateExp(ViPipe, &(s_stSceneState.astMainPipe[i].u32Iso), &(s_stSceneState.astMainPipe[i].u64Exposure));
         HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
     }
-
+    
     s32Ret = SCENE_SetPipeStaticParam();
     HI_SCENECOMM_CHECK_RETURN(s32Ret, HI_SCENE_EINTER);
 
@@ -539,6 +540,7 @@ HI_VOID *SCENE_NormalAutoThread(HI_VOID *pVoid)
 
             s32Ret = SCENE_CalculateExp(ViPipe, &(s_stSceneState.astMainPipe[i].u32Iso), &(s_stSceneState.astMainPipe[i].u64Exposure));
             HI_SCENECOMM_CHECK(s32Ret, HI_SCENE_EINTER);
+            //printf("MainPipe:%d, u32Iso:%u, u64Exposure:%llu\n", ViPipe, s_stSceneState.astMainPipe[i].u32Iso, s_stSceneState.astMainPipe[i].u64Exposure);
         }
 
         s32Ret = SCENE_SetPipeDynamicParam();

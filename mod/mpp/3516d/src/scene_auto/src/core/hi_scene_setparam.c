@@ -207,7 +207,11 @@ HI_S32 HI_SCENE_SetStaticAE_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index)
 
     s32Ret = HI_MPI_ISP_GetExposureAttr(ViPipe, &stExposureAttr);
     CHECK_SCENE_RET(s32Ret);
-
+    #if 0
+    printf("HI_MPI_ISP_GetExposureAttr: bAERouteExValid:%d, u8AERunInterval:%d, stExpTimeRange.u32Max:%d, stSysGainRange.u32Max:%d, u8Speed:%d, u8Tolerance:%d\n"
+          , stExposureAttr.bAERouteExValid, stExposureAttr.u8AERunInterval, stExposureAttr.stAuto.stExpTimeRange.u32Max
+          , stExposureAttr.stAuto.stSysGainRange.u32Max, stExposureAttr.stAuto.u8Speed, stExposureAttr.stAuto.u8Tolerance);
+    #endif
     stExposureAttr.bAERouteExValid = g_astScenePipeParam[u8Index].stStaticAe.bAERouteExValid;
     stExposureAttr.u8AERunInterval = g_astScenePipeParam[u8Index].stStaticAe.u8AERunInterval;
     stExposureAttr.stAuto.stExpTimeRange.u32Max = g_astScenePipeParam[u8Index].stStaticAe.u32AutoExpTimeMax;
@@ -1480,18 +1484,30 @@ HI_S32 HI_SCENE_SetDynamicThreeDNR_AutoGenerate(VI_PIPE ViPipe, VPSS_GRP VpssGrp
     return HI_SUCCESS;
 }
 
+
+HI_SCENE_CTL_AE_S g_scene_ctl_ae[4] = {
+  {.compensation_mul = 1},
+  {.compensation_mul = 1},
+  {.compensation_mul = 1},
+  {.compensation_mul = 1},
+  };
+
 HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI_U64 u64LastExposure, HI_U8 u8Index)
 {
-	if(HI_TRUE != g_astScenePipeParam[u8Index].stModuleState.bDynamicAE)
-	{
-		return HI_SUCCESS;
-	}
+  	if(HI_TRUE != g_astScenePipeParam[u8Index].stModuleState.bDynamicAE)
+  	{
+  		return HI_SUCCESS;
+  	}
+
+    static HI_SCENE_CTL_AE_S _scene_ctl_ae[4];
 
     HI_U32 u32ExpLevel = 0;
     HI_S32 s32Ret = HI_SUCCESS;
-
-    if (u64Exposure != u64LastExposure)
+    //printf("%s => check u64Exposure:%lld, u64LastExposure:%lld\n", __func__, u64Exposure, u64LastExposure);
+    if (u64Exposure != u64LastExposure || memcmp(&_scene_ctl_ae[ViPipe], &g_scene_ctl_ae[ViPipe], sizeof(HI_SCENE_CTL_AE_S)))
     {
+        _scene_ctl_ae[ViPipe] = g_scene_ctl_ae[ViPipe];
+        
         ISP_EXPOSURE_ATTR_S stExposureAttr;
         ISP_WDR_EXPOSURE_ATTR_S stWdrExposureAttr;
         CHECK_SCENE_PAUSE();
@@ -1540,6 +1556,9 @@ HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI
         }
 
         CHECK_SCENE_PAUSE();
+        
+        stExposureAttr.stAuto.u8Compensation *= _scene_ctl_ae[ViPipe].compensation_mul;
+        printf("%s => set ViPipe:%d, u8Compensation:%d, u8MaxHistOffset:%d\n", __func__, ViPipe, stExposureAttr.stAuto.u8Compensation, stExposureAttr.stAuto.u8MaxHistOffset);
         s32Ret = HI_MPI_ISP_SetExposureAttr(ViPipe, &stExposureAttr);
         CHECK_SCENE_RET(s32Ret);
 

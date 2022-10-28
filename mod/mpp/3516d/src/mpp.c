@@ -114,6 +114,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {SONY_IMX385_MIPI_2M_30FPS_12BIT,           "imx385-0-0-2-30", "libsns_imx385.so", "stSnsImx385Obj"},
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,           "imx482-0-0-2-30", "libsns_imx482.so", "stSnsImx482Obj"},
     {OV426_OV6946_DC_0M_30FPS_12BIT,            "ov426-0-0-0-30", "libsns_ov426.so", "stSnsOv426Obj"},
+    {SONY_IMX585_MIPI_2M_30FPS_12BIT,           "imx585-0-0-2-30", "libsns_imx585.so", "stSnsImx585Obj"},
   };
 
 
@@ -141,7 +142,7 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
 }
 
 static void * dl = NULL;
-static int snscnt = 0;
+static int snscnt = 0, wdr_mode = 0;
 
 #include <signal.h>
 void SAMPLE_VENC_HandleSig2(HI_S32 signo)
@@ -179,10 +180,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   } 
   
   snscnt = cfg->snscnt;
+  wdr_mode = cfg->wdr;
   char loadstr[256];
-  if(strstr(cfg->snsname, "bt1120"))
-    sprintf(loadstr, "%s/ko/load3516dv300 -i -yuv0 1", path);
-  else if(strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482")) // 37.125Mclk && i2c;
+  if(strstr(cfg->snsname, "bt1120") || strstr(cfg->snsname, "ov426"))
+    sprintf(loadstr, "%s/ko/load3516dv300 -i -yuv0 1", path); 
+  else if(strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482") || strstr(cfg->snsname, "imx585")) // 37.125Mclk && i2c;
     sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, "imx327");
   else
     sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, cfg->snsname);
@@ -287,7 +289,8 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     stViConfig.astViInfo[i].stPipeInfo.aPipe[0] = i;//ViPipe 0, 1, 2, 3;
     stViConfig.astViInfo[i].stChnInfo.ViChn     = 0;//ViChn  0, 0, 0, 0;
     stViConfig.astViInfo[i].stChnInfo.enDynamicRange = DYNAMIC_RANGE_SDR8;
-    stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+    stViConfig.astViInfo[i].stChnInfo.enPixFormat    = PIXEL_FORMAT_YVU_SEMIPLANAR_420;//422
+    stViConfig.astViInfo[i].stDevInfo.enWDRMode = wdr_mode?WDR_MODE_2To1_LINE:0;
   }
 
   mppex_hook_vi(&stViConfig, vi->bLowDelay);
@@ -333,7 +336,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   SAMPLE_COMM_VI_GetSensorInfo(&stViConfig);
  
   mppex_hook_vpss_bb(vpss);
-
+  
   for(i = 0; i < VPSS_MAX_PHY_CHN_NUM; i++)
   {
       if(!vpss->enable[i])
@@ -458,6 +461,11 @@ int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
       ret = HI_MPI_VPSS_DisableChn(VpssGrp, (int)args);
       if(ret)
         printf("GSF_MPP_VPCH_CTL_DISABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPSS_CTL_ATTR:
+      ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, (VPSS_GRP_ATTR_S*)args);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_ATTR VpssGrp:%d, err 0x%x\n", VpssGrp, ret); 
       break;
   }
   return ret;
@@ -648,6 +656,20 @@ int gsf_mpp_scene_stop()
       return HI_FAILURE;
   }
   return s32ret;
+}
+
+int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
+{
+  switch(id)
+  {
+    case GSF_MPP_SCENE_CTL_AE:
+      { 
+        extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
+        g_scene_ctl_ae[0] = *((HI_SCENE_CTL_AE_S*)args);
+      }
+      break;
+  }
+  return 0;
 }
 
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
@@ -1586,7 +1608,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.u32DisBufLen          = 3;
     stVoConfig.enDstDynamicRange     = DYNAMIC_RANGE_SDR8;
     stVoConfig.enVoMode              = VO_MODE_1MUX;
-    stVoConfig.enPixFormat           = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+    stVoConfig.enPixFormat           = PIXEL_FORMAT_YVU_SEMIPLANAR_420; //422
     stVoConfig.stDispRect.s32X       = 0;
     stVoConfig.stDispRect.s32Y       = 0;
     stVoConfig.stDispRect.u32Width   = stDispSize.u32Width;

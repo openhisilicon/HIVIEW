@@ -357,7 +357,8 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
         case SONY_IMX327_MIPI_2M_30FPS_12BIT:
         case SONY_IMX327_2L_MIPI_2M_30FPS_12BIT:
         case SONY_IMX385_MIPI_2M_30FPS_12BIT:
-        case SONY_IMX482_MIPI_2M_30FPS_12BIT:    
+        case SONY_IMX482_MIPI_2M_30FPS_12BIT:
+        case SONY_IMX585_MIPI_2M_30FPS_12BIT:  
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX327_2M_30FPS, sizeof(ISP_PUB_ATTR_S));
             break;
 
@@ -504,6 +505,8 @@ ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId)
             return &stSnsImx385Obj;
         case SONY_IMX482_MIPI_2M_30FPS_12BIT:
             return &stSnsImx482Obj;
+        case SONY_IMX585_MIPI_2M_30FPS_12BIT:
+            return &stSnsImx585Obj;
         case SONY_IMX327_2L_MIPI_2M_30FPS_12BIT:
         case SONY_IMX327_2L_MIPI_2M_30FPS_12BIT_WDR2TO1:
             return &stSnsImx327_2l_Obj;

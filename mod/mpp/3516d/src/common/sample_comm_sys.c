@@ -24,10 +24,6 @@ extern "C" {
 
 #include "sample_comm.h"
 
-
-
-
-
 static HI_S32 s_s32SampleMemDev = -1;
 #define SAMPLE_MEM_DEV_OPEN if (s_s32SampleMemDev <= 0)\
 {\
@@ -177,6 +173,11 @@ HI_S32 SAMPLE_COMM_SYS_GetPicSize(PIC_SIZE_E enPicSize, SIZE_S* pstSize)
         case PIC_1080P:  /* 1920 * 1080 */
             pstSize->u32Width  = 1920;
             pstSize->u32Height = 1080;
+            break;
+
+        case PIC_1280x800:
+            pstSize->u32Width  = 1280;
+            pstSize->u32Height = 800;
             break;
 
         case PIC_2592x1520:
