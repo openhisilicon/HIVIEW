@@ -8,7 +8,7 @@
     <div style="height: 15px"></div>
     <button class="w2ui-btn" onclick="lensCalClick()">LensCal</button>
     <div style="height: 15px"></div>
-    <input id="range" type="range" min="1" max="10" value="5"/>
+    <input id="range" type="range" min="0.2" max="1.8" value="1" step="0.1" onchange="sceneAE()"/>
     </div>
     <div id="example_view"></div>
     <div id="example_code"></div>
@@ -807,5 +807,31 @@ function lensCalClick() {
        }
     })
 }
+
+function sceneAE() {
+    const req = {
+        "id": "GSF_ID_CODEC_SCENEAE",
+        "args":"G0C0S0",
+        "data":{"compensation_mul": parseFloat(document.getElementById("range").value)}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+
+
 
 </script>

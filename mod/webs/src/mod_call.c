@@ -43,6 +43,9 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   //warn: id with the same prefix
   {GSF_ID_CODEC_LENSCFG,"GSF_ID_CODEC_LENSCFG", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_lenscfg_t, (sjb_cb*)sjb_bind_gsf_lenscfg_t,sizeof(gsf_lenscfg_t), sizeof(gsf_lenscfg_t),0},
   {GSF_ID_CODEC_LENS,  "GSF_ID_CODEC_LENS", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_lens_t,   (sjb_cb*)sjb_bind_gsf_lens_t,sizeof(gsf_lens_t), sizeof(gsf_lens_t),0},
+  //scene;
+  {GSF_ID_CODEC_SCENEAE, "GSF_ID_CODEC_SCENEAE", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_scene_ae_t,   (sjb_cb*)sjb_bind_gsf_scene_ae_t,sizeof(gsf_scene_ae_t), sizeof(gsf_scene_ae_t),0},
+  
   //img;
   {GSF_ID_CODEC_IMGALL, "GSF_ID_CODEC_IMGALL", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_all_t, (sjb_cb*)sjb_bind_gsf_img_all_t,sizeof(gsf_img_all_t), sizeof(gsf_img_all_t),0},
   {GSF_ID_CODEC_IMGCSC, "GSF_ID_CODEC_IMGCSC", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_csc_t, (sjb_cb*)sjb_bind_gsf_img_csc_t,sizeof(gsf_img_csc_t), sizeof(gsf_img_csc_t),0},

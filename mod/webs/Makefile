@@ -9,8 +9,17 @@ TARG := bin/webs.exe
 #============================================================= 
 
 #WEBRTC
-#RTC_INCS :=  -DWEBRTC_ENABLE
-#RTC_LIBS := -lkvsWebrtcClient -lkvspic -lsrtp2 -lusrsctp
+RTC_INCS :=
+RTC_LIBS :=
+
+ifeq ($(GSF_CPU_ARCH), 3516a)
+RTC_INCS +=  -DWEBRTC_ENABLE
+RTC_LIBS += -lkvsWebrtcClient -lkvspic -lsrtp2 -lusrsctp
+else ifeq ($(GSF_CPU_ARCH), 3516d)
+RTC_INCS +=  -DWEBRTC_ENABLE
+RTC_LIBS += -lkvsWebrtcClient -lkvspic -lsrtp2 -lusrsctp
+endif
+
 
 INCS := -I$(HOME) -Isrc -Iinc \
         -I$(HOME)/fw/openssl/openssl-1.1.0l \

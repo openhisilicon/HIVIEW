@@ -321,7 +321,7 @@ void* rtc_video_send_task(void *parm)
 {
   printf("start.\n");
   
-  int i = 0, ch = 0, st = 1, ret = 0;
+  int i = 0, ch = 0, st = 0, ret = 0;
   
   struct cfifo_ex* video_fifo = NULL;
   struct cfifo_ex* audio_fifo = NULL;
@@ -331,12 +331,23 @@ void* rtc_video_send_task(void *parm)
   rtc_sess_t *rtc_sess = (rtc_sess_t*)parm;
   
   GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
+
+  //The main stream is preferred;
   sdp->video_shmid = sdp->audio_shmid = -1;
-  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, ch, GET, st
+  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, ch, GET, st = 0
                         , sizeof(gsf_sdp_t)
                         , GSF_IPC_CODEC
                         , 2000);
-  printf("GSF_ID_CODEC_SDP ch:%d, st:%d\n", ch, st);                      
+  //When the width of the main stream is greater than 2592, the second stream is used;
+  if(sdp->venc.width > 2592)
+  {
+    sdp->video_shmid = sdp->audio_shmid = -1;
+    ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, ch, GET, st = 1
+                          , sizeof(gsf_sdp_t)
+                          , GSF_IPC_CODEC
+                          , 2000);
+  }
+  printf("GSF_ID_CODEC_SDP ch:%d, st:%d\n", ch, st);
 
   if(ret == 0)
   {

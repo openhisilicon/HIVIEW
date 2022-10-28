@@ -186,7 +186,7 @@ static int on_flv_packet(void* sess, int type, const void* data, size_t bytes, u
   char *_data = (char*)data;
 	printf("FLV type:%d, bytes:%d [%02X,%02X,%02X,%02X,%02X,%02X]\n"
 	      , type, bytes, _data[0], _data[1], _data[2], _data[3], _data[4], _data[5]);
-	#endif      
+	#endif
 	return flv_send_tag(sess, type, data, bytes, timestamp);
 }
 
@@ -470,21 +470,28 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
       if(!nc->user_data && !strncmp(hm->uri.p, "/flv", strlen("/flv")))
       {
         int ret = 0;
-        int channel = 0, sid = 1; //st;
+        int channel = 0, sid = 0;
         sscanf(hm->uri.p, "/flv%d", &channel);
         channel = (channel-1 > 0)?(channel-1):0;
-          
-          
+                   
         GSF_MSG_DEF(gsf_sdp_t, sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
+        
+        //The main stream is preferred;
         sdp->video_shmid = sdp->audio_shmid = -1;
-        #if 1
-        ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, channel, GET, sid
+        ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, channel, GET, sid = 0
                               , sizeof(gsf_sdp_t)
                               , GSF_IPC_CODEC
                               , 2000);
-        #else
-        ret = -1;
-        #endif
+        //When the width of the main stream is greater than 2592, the second stream is used;
+        if(sdp->venc.width > 2592)
+        {
+          sdp->video_shmid = sdp->audio_shmid = -1;
+          ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, channel, GET, sid = 1
+                                , sizeof(gsf_sdp_t)
+                                , GSF_IPC_CODEC
+                                , 2000);
+        }
+
         if(ret != 0)
         {
           printf("open err uri:%.*s, channel:%d\n",(int) hm->uri.len, hm->uri.p, channel);
