@@ -9,6 +9,7 @@ extern "C" {
 
 //for json cfg;
 #include "mod/codec/inc/sjb_codec.h"
+#include "mod/svp/inc/sjb_svp.h"
 #include "mod/app/inc/sjb_app.h"
 
 #define GSF_IPC_APP      "ipc:///tmp/app_rep"
@@ -16,6 +17,7 @@ extern "C" {
 enum {
     GSF_ID_APP_CHSRC  = 1,  // [ gsf_chsrc_t, gsf_chsrc_t .... N]
     GSF_ID_APP_GUI    = 2,  // gsf_gui_t
+    GSF_ID_APP_LINES  = 3,  // gsf_polygons_t
     GSF_ID_APP_END
 };
 

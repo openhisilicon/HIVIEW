@@ -14,7 +14,16 @@
 #include <sys/select.h>
 
 #include "mod/svp/inc/svp.h"
+#include "mod/app/inc/app.h"
 #include "mod/codec/inc/codec.h"
+
+#define __UI_LINES__  0
+
+#define __UI_LOGO__   1
+
+#define __UI_MOUSE__  0
+#define __UI_ZOOM__   0
+#define __UI_STAT__   0
 
 #define DISP_BUF_SIZE (80*LV_HOR_RES_MAX/*1280*/)
 
@@ -111,9 +120,150 @@ static void fb_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * c
     memcpy(act->data, color_p, act_size);
     nm_push_send_wait(osd_push, (char*)act, sizeof(gsf_osd_act_t)+act_size);
     //printf("nm_push_send_wait act_size:%d\n", act_size);
-
   }
   return fbdev_flush(drv, area, color_p);
+}
+
+#if __UI_STAT__
+static int stat_draw(lv_coord_t hres, lv_coord_t vres)
+{
+  
+    static lv_obj_t *wifi_img = NULL;
+    static lv_obj_t *wifi_l = NULL;
+    static lv_obj_t *eth_img = NULL;
+    static lv_obj_t *eth_l = NULL;
+    static struct timeval last_time;
+    
+    struct timeval tv_now;
+    gettimeofday(&tv_now, NULL);
+    
+    if(tv_now.tv_sec - last_time.tv_sec < 3)
+      return -1;
+    last_time = tv_now;
+     
+    if(!wifi_img)
+    {  
+      wifi_img = lv_img_create(lv_scr_act(), NULL);
+      lv_obj_set_click(wifi_img, false);
+      lv_img_set_src(wifi_img, LV_SYMBOL_WIFI);
+      lv_obj_set_x(wifi_img, hres-230);
+      lv_obj_set_y(wifi_img, vres-60);
+    }
+    
+    if(!wifi_l)
+    {  
+      wifi_l = lv_label_create(lv_scr_act(), NULL);
+      lv_obj_set_x(wifi_l, hres-210);
+      lv_obj_set_y(wifi_l, vres-60);
+    }
+    
+    if(!eth_img)
+    {  
+      eth_img = lv_img_create(lv_scr_act(), NULL);
+      lv_obj_set_click(eth_img, false);
+      lv_img_set_src(eth_img, LV_SYMBOL_SHUFFLE);
+      lv_obj_set_x(eth_img, hres-230);
+      lv_obj_set_y(eth_img, vres-30);
+    }
+    if(!eth_l)
+    {  
+      eth_l = lv_label_create(lv_scr_act(), NULL);
+      lv_obj_set_x(eth_l, hres-210);
+      lv_obj_set_y(eth_l, vres-30);
+      
+    }
+ 
+    char lable_str[256];
+    int wifi_en = 0, wifi_ap = 0;
+    {
+      GSF_MSG_DEF(gsf_wifi_t, wifi, 4*1024);
+      GSF_MSG_SENDTO(GSF_ID_BSP_WIFI, 0, GET, 0
+                        , sizeof(gsf_wifi_t)
+                        , GSF_IPC_BSP, 2000);                
+      
+      wifi_en = wifi->en;
+      wifi_ap = wifi->ap;
+    }
+    
+    {
+      GSF_MSG_DEF(gsf_eth_t, eth, 4*1024);  
+      GSF_MSG_SENDTO(GSF_ID_BSP_ETH, 0, GET, 0
+                        , sizeof(gsf_eth_t)
+                        , GSF_IPC_BSP, 2000);
+                        
+      sprintf(lable_str, "[%s][%s][%s]", (!wifi_en)?"CLOSE":(wifi_ap)?"AP":"STA"
+                                   , (eth->dhcp)?"AUTO":"MANU"
+                                   , (!wifi_en)?"":(wifi_ap)?"192.168.1.2":eth->ipaddr);
+      lv_label_set_text(wifi_l, lable_str);
+
+      sprintf(lable_str, "[%s][%s][%s]", "ETH"
+                                   , (eth->dhcp)?"AUTO":"MANU"
+                                   , (wifi_en && !wifi_ap)?"192.168.1.2":eth->ipaddr);
+      lv_label_set_text(eth_l, lable_str);
+    }
+}
+#endif
+
+static void zoomplus_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    (void) btn; /*Unused*/
+    GSF_MSG_DEF(gsf_lens_t, lens, 2*1024);
+    if(event == LV_EVENT_PRESSED)
+    {
+      printf("%s => LV_EVENT_PRESSED\n", __func__);
+      printf("%s => LV_EVENT_PRESSED\n", __func__);
+      lens->cmd = GSF_LENS_ZOOM;
+      lens->arg1 = 1; //++
+      lens->arg2 = 0;
+      GSF_MSG_SENDTO(GSF_ID_CODEC_LENS, 0, GET, 0
+                        , sizeof(gsf_lens_t)
+                        , GSF_IPC_CODEC, 2000);
+    }
+    else if(event == LV_EVENT_RELEASED)
+    {
+      printf("%s => LV_EVENT_RELEASED\n", __func__);
+      lens->cmd = GSF_LENS_STOP;
+      GSF_MSG_SENDTO(GSF_ID_CODEC_LENS, 0, GET, 0
+                        , sizeof(gsf_lens_t)
+                        , GSF_IPC_CODEC, 2000);
+    }
+}
+
+static void zoomminus_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    (void) btn; /*Unused*/
+    GSF_MSG_DEF(gsf_lens_t, lens, 2*1024);
+    if(event == LV_EVENT_PRESSED)
+    {
+      printf("%s => LV_EVENT_RELEASED\n", __func__);
+      lens->cmd = GSF_LENS_ZOOM;
+      lens->arg1 = 0; //--
+      lens->arg2 = 0;
+      GSF_MSG_SENDTO(GSF_ID_CODEC_LENS, 0, GET, 0
+                        , sizeof(gsf_lens_t)
+                        , GSF_IPC_CODEC, 2000);
+    }
+    else if(event == LV_EVENT_RELEASED)
+    {
+      printf("%s => LV_EVENT_RELEASED\n", __func__);
+      lens->cmd = GSF_LENS_STOP;
+      GSF_MSG_SENDTO(GSF_ID_CODEC_LENS, 0, GET, 0
+                        , sizeof(gsf_lens_t)
+                        , GSF_IPC_CODEC, 2000);
+    }
+}
+
+static void sceneae_event_handler(lv_obj_t * slider, lv_event_t event)
+{
+    GSF_MSG_DEF(gsf_scene_ae_t, ae, 2*1024);
+    if(event == LV_EVENT_VALUE_CHANGED) {
+        int16_t v = lv_slider_get_value(slider);
+        printf("%s => LV_EVENT_VALUE_CHANGED v:%d\n", __func__, v);
+        ae->compensation_mul = v*0.1;
+        GSF_MSG_SENDTO(GSF_ID_CODEC_SCENEAE, 0, GET, 0
+                          , sizeof(gsf_scene_ae_t)
+                          , GSF_IPC_CODEC, 2000);
+    }
 }
 
 static void* lvgl_main(void* p)
@@ -141,7 +291,8 @@ static void* lvgl_main(void* p)
     disp_drv.buffer = &disp_buf;
     disp_drv.flush_cb = lv_push_osd?fb_flush:fbdev_flush;
     lv_disp_drv_register(&disp_drv);
-     
+    
+    #if __UI_MOUSE__
     mouse_hid_init();
     lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);          /*Basic initialization*/
@@ -154,6 +305,7 @@ static void* lvgl_main(void* p)
     lv_img_set_src(cursor_obj, &mouse_ico);
     //lv_img_set_src(cursor_obj, LV_SYMBOL_CALL);
     lv_indev_set_cursor(mouse_indev, cursor_obj);
+    #endif
     
     lv_coord_t hres = lv_disp_get_hor_res(NULL);
     lv_coord_t vres = lv_disp_get_ver_res(NULL);
@@ -169,9 +321,9 @@ static void* lvgl_main(void* p)
     static lv_style_t style_tv_body_fg;
     lv_style_copy(&style_tv_body_fg, &lv_style_plain);
     style_tv_body_fg.body.main_color = LV_COLOR_RED;
-    LV_COLOR_SET_A(style_tv_body_fg.body.main_color, 0);
+    LV_COLOR_SET_A(style_tv_body_fg.body.main_color, sizeof(lv_color_t)==4?30:0);
     style_tv_body_fg.body.grad_color = LV_COLOR_RED;
-    LV_COLOR_SET_A(style_tv_body_fg.body.grad_color, 0);
+    LV_COLOR_SET_A(style_tv_body_fg.body.grad_color, sizeof(lv_color_t)==4?30:0);
     style_tv_body_fg.body.padding.top = 0;
     style_tv_body_fg.body.border.color = LV_COLOR_RED;
     style_tv_body_fg.body.border.width = 4;
@@ -187,63 +339,91 @@ static void* lvgl_main(void* p)
     style_label_ol.text.font  = &lv_font_roboto_28;
 
     #ifdef EXTRA_FREETYPE
-    static char font_path[256];
-    sprintf(font_path, "%s/cfg/arial.ttf", home_path);
+      static char font_path[256];
+      sprintf(font_path, "%s/cfg/arial.ttf", home_path);
 
-    /*Create a font*/
-    static lv_ft_info_t info;
-    info.name = font_path;
-    info.weight = 48;
-    info.style = FT_FONT_STYLE_NORMAL;
-    info.mem = NULL;
-    if(!lv_ft_font_init(&info)) {
-        LV_LOG_ERROR("create failed.");
-    }
-    style_label.text.color = LV_COLOR_WHITE;
-    style_label.text.font  = info.font;
-    
-    /*Create a font*/
-    static lv_ft_info_t info2;
-    info2.name = font_path;
-    info2.weight = 48;
-    info2.style = FT_FONT_STYLE_OUTLINE;
-    info2.mem = NULL;
-    if(!lv_ft_font_init(&info2)) {
-        LV_LOG_ERROR("create failed.");
-    }
-    style_label_ol.text.color = LV_COLOR_RED;//LV_COLOR_GRAY;
-    style_label_ol.text.font  = info2.font;
+      /*Create a font*/
+      static lv_ft_info_t info;
+      info.name = font_path;
+      info.weight = 48;
+      info.style = FT_FONT_STYLE_NORMAL;
+      info.mem = NULL;
+      if(!lv_ft_font_init(&info)) {
+          LV_LOG_ERROR("create failed.");
+      }
+      style_label.text.color = LV_COLOR_WHITE;
+      style_label.text.font  = info.font;
+      
+      /*Create a font*/
+      static lv_ft_info_t info2;
+      info2.name = font_path;
+      info2.weight = 48;
+      info2.style = FT_FONT_STYLE_OUTLINE;
+      info2.mem = NULL;
+      if(!lv_ft_font_init(&info2)) {
+          LV_LOG_ERROR("create failed.");
+      }
+      style_label_ol.text.color = LV_COLOR_RED;//LV_COLOR_GRAY;
+      style_label_ol.text.font  = info2.font;
     #endif
 
     lv_obj_t *win = lv_obj_create(lv_disp_get_scr_act(NULL), NULL);
     lv_obj_set_size(win, hres, vres);
     lv_obj_set_style(win, &style_tv_body_bg);
     
-    #if 1 // HDMI/LCD OUT LOGO;
-    lv_obj_t *obj_note = lv_obj_create(win, NULL);
-    lv_obj_set_style(obj_note, &style_tv_body_fg);
-    lv_obj_set_size(obj_note, hres/1, vres/4/4);
-    lv_obj_set_x(obj_note, 0);
-    lv_obj_set_y(obj_note, vres/1.5);
+    #if __UI_LOGO__ // HDMI/LCD OUT LOGO;
+      lv_obj_t *obj_note = lv_obj_create(win, NULL);
+      lv_obj_set_style(obj_note, &style_tv_body_fg);
+      lv_obj_set_size(obj_note, hres/1, vres/4/4);
+      lv_obj_set_x(obj_note, 0);
+      lv_obj_set_y(obj_note, vres/1.5);
+      
+      #ifdef EXTRA_FREETYPE
+        static lv_color_t* cbuf = NULL;
+        cbuf = (lv_color_t*)malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR((hres/1-16), (vres/4/4-8)));
+        lv_obj_t * canvas = lv_canvas_create(obj_note, NULL);
+        lv_canvas_set_buffer(canvas, cbuf, hres/1-16, vres/4/4-8, LV_IMG_CF_TRUE_COLOR);
+        lv_obj_align(canvas, NULL, LV_ALIGN_IN_LEFT_MID, 8, 0);
+        lv_color_t bgcolor = LV_COLOR_RED;//LV_COLOR_SILVER;
+        LV_COLOR_SET_A(bgcolor, 0);
+        lv_canvas_fill_bg(canvas, bgcolor);
+        lv_canvas_draw_text(canvas, 0, 0, hres/1-16, &style_label_ol, "LittlevGL && FreeType && https://github.com/openhisilicon/HIVIEW", LV_LABEL_ALIGN_LEFT);
+        lv_canvas_draw_text(canvas, 0, 0, hres/1-16, &style_label, "LittlevGL && FreeType && https://github.com/openhisilicon/HIVIEW", LV_LABEL_ALIGN_LEFT);
+      #else
+        lv_obj_t *label_note = lv_label_create(obj_note, NULL);
+        lv_obj_set_style(label_note, &style_label);
+        lv_obj_align(label_note, NULL, LV_ALIGN_IN_LEFT_MID, 8, 0);
+        lv_label_set_text(label_note, "LittlevGL && https://github.com/openhisilicon/HIVIEW");
+      #endif
+    #endif
     
-    #ifdef EXTRA_FREETYPE
-    static lv_color_t* cbuf = NULL;
-    cbuf = (lv_color_t*)malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR((hres/1-16), (vres/4/4-8)));
-    lv_obj_t * canvas = lv_canvas_create(obj_note, NULL);
-    lv_canvas_set_buffer(canvas, cbuf, hres/1-16, vres/4/4-8, LV_IMG_CF_TRUE_COLOR);
-    lv_obj_align(canvas, NULL, LV_ALIGN_IN_LEFT_MID, 8, 0);
-    lv_color_t bgcolor = LV_COLOR_RED;//LV_COLOR_SILVER;
-    LV_COLOR_SET_A(bgcolor, 0);
-    lv_canvas_fill_bg(canvas, bgcolor);
-    lv_canvas_draw_text(canvas, 0, 0, hres/1-16, &style_label_ol, "LittlevGL && FreeType && https://github.com/openhisilicon/HIVIEW", LV_LABEL_ALIGN_LEFT);
-    lv_canvas_draw_text(canvas, 0, 0, hres/1-16, &style_label, "LittlevGL && FreeType && https://github.com/openhisilicon/HIVIEW", LV_LABEL_ALIGN_LEFT);
-    #else
-    lv_obj_t *label_note = lv_label_create(obj_note, NULL);
-    lv_obj_set_style(label_note, &style_label);
-    lv_obj_align(label_note, NULL, LV_ALIGN_IN_LEFT_MID, 8, 0);
-    lv_label_set_text(label_note, "LittlevGL && https://github.com/openhisilicon/HIVIEW");
+    #if __UI_ZOOM__ //button;
+
+    lv_obj_t *btn_zoomplus = lv_btn_create(lv_scr_act(), NULL);
+    lv_btn_set_fit(btn_zoomplus, LV_FIT_TIGHT);
+    lv_obj_set_event_cb(btn_zoomplus, zoomplus_event_cb);
+    lv_obj_set_x(btn_zoomplus, 55);
+    lv_obj_set_y(btn_zoomplus, vres-100);
+    lv_obj_t * btn_l = lv_label_create(btn_zoomplus, NULL);
+    lv_label_set_text(btn_l, "ZOOM++");
+    
+    lv_obj_t *btn_zoomminus = lv_btn_create(lv_scr_act(), NULL);
+    lv_btn_set_fit(btn_zoomminus, LV_FIT_TIGHT);
+    lv_obj_set_event_cb(btn_zoomminus, zoomminus_event_cb);
+    lv_obj_set_x(btn_zoomminus, 200);
+    lv_obj_set_y(btn_zoomminus, vres-100);
+    btn_l = lv_label_create(btn_zoomminus, btn_l);
+    lv_label_set_text(btn_l, "ZOOM--");
+    
+    lv_obj_t * slider = lv_slider_create(lv_scr_act(), NULL);
+    lv_obj_set_event_cb(slider, sceneae_event_handler);
+    lv_slider_set_range(slider, 2, 18);
+    lv_slider_set_value(slider, 10, false);
+    lv_obj_set_size(slider, 280, 30);
+    lv_obj_set_x(slider, 40);
+    lv_obj_set_y(slider, vres-40);
     #endif
-    #endif
+
     
     int i = 0, cnt = 0;
     lv_obj_t *obj[64];
@@ -276,6 +456,14 @@ static void* lvgl_main(void* p)
         msgbuf *mbuf = (msgbuf*)_buf;
         
         lv_task_handler();
+
+        #if __UI_LINES__
+        lines_draw(hres, vres);
+        #endif
+        
+        #if __UI_STAT__
+        stat_draw(hres, vres);
+        #endif
         
         if((ret = msgrcv(msq, _buf, sizeof(_buf), 0, IPC_NOWAIT)) > 0)
         {

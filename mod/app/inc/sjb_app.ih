@@ -34,9 +34,10 @@ STRUCT(gsf_gui_t)
 STRUCT(gsf_app_nvr_t)
 {
   FIELD(gsf_gui_t, gui);
+  FIELD(gsf_polygons_t, lines);
   ARRAY(gsf_chsrc_t, chsrc, GSF_CODEC_NVR_CHN);
-  ARRAY(gsf_md_t   , mdcfg, GSF_CODEC_NVR_CHN);
-  ARRAY(gsf_lpr_t  , lprcfg, GSF_CODEC_NVR_CHN);
+  //ARRAY(gsf_md_t   , mdcfg, GSF_CODEC_NVR_CHN);
+  //ARRAY(gsf_lpr_t  , lprcfg, GSF_CODEC_NVR_CHN);
   
 };
 
