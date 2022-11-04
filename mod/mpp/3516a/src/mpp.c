@@ -207,7 +207,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[256];
   if(strstr(cfg->snsname, "bt1120"))
     sprintf(loadstr, "%s/ko/%s -i -yuv0 1", path, SCRIPT_NAME(cfg->type));
-  else if(strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378")) // 24Mclk && i2c;
+  else if(strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") || (strstr(cfg->snsname, "imx415") && wdr_mode)) // 24Mclk && i2c;
     sprintf(loadstr, "%s/ko/%s -i -sensor0 %s", path, SCRIPT_NAME(cfg->type), "imx458");
   else if(strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482") || strstr(cfg->snsname, "imx585")) // 37.125Mclk && i2c;  
     sprintf(loadstr, "%s/ko/%s -i -sensor0 %s", path, SCRIPT_NAME(cfg->type), "imx327");

@@ -4504,7 +4504,9 @@ HI_S32 SAMPLE_COMM_VI_StartViPipe(SAMPLE_VI_INFO_S* pstViInfo)
             {
                 stPipeAttr.enCompressMode = COMPRESS_MODE_NONE;
             }
-
+            if (pstViInfo->stSnsInfo.enSnsType == SONY_IMX415_MIPI_8M_20FPS_12BIT_WDR2TO1) {
+                stPipeAttr.enCompressMode = COMPRESS_MODE_NONE;
+            }
             if ((pstViInfo->stSnapInfo.bSnap) && (pstViInfo->stSnapInfo.bDoublePipe) && (ViPipe == pstViInfo->stSnapInfo.SnapPipe))
             {
                 s32Ret = HI_MPI_VI_CreatePipe(ViPipe, &stPipeAttr);
