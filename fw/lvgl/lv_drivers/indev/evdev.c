@@ -100,6 +100,9 @@ bool evdev_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
     struct input_event in;
 
     while(read(evdev_fd, &in, sizeof(struct input_event)) > 0) {
+      
+    //printf("%s => type:%d, value:%d\n", __func__, in.type, in.value);
+      
         if(in.type == EV_REL) {
             if(in.code == REL_X)
 				#if EVDEV_SWAP_AXES
@@ -208,7 +211,7 @@ bool evdev_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
     if(data->point.y >= lv_disp_get_ver_res(drv->disp))
       data->point.y = lv_disp_get_ver_res(drv->disp) - 1;
     
-    printf("x:%d, y:%d, state:%d\n", data->point.x, data->point.y, data->state);
+    //printf("%s => x:%d, y:%d, state:%d\n", __func__, data->point.x, data->point.y, data->state);
     
     return false;
 }

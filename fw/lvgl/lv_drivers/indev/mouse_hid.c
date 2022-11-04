@@ -60,6 +60,12 @@ void mouse_hid_init(void)
     mouse_hid_button = LV_INDEV_STATE_REL;
 }
 
+static void(*_hid_cb)(struct input_event* in);
+int mouse_hid_cb_set(void(*cb)(struct input_event* in))
+{
+  _hid_cb = cb;
+}
+
 /**
  * Get the current position and state of the mouse
  * @param data store the mouse data here
@@ -81,6 +87,11 @@ bool mouse_hid_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
                     mouse_hid_button = LV_INDEV_STATE_REL;
                 if (in.value == 1)
                     mouse_hid_button = LV_INDEV_STATE_PR;
+            }
+            
+            if(_hid_cb)
+            {
+              _hid_cb(&in);
             }
         }
     }

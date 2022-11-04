@@ -50,6 +50,11 @@ void mouse_hid_init(void);
  * @param data store the mouse data here
  * @return false: because the points are not buffered, so no more data to be read
  */
+
+//maohw 
+#include <linux/input.h>
+int mouse_hid_cb_set(void(*cb)(struct input_event* in));
+ 
 bool mouse_hid_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
 
 

@@ -204,6 +204,44 @@ static int stat_draw(lv_coord_t hres, lv_coord_t vres)
 }
 #endif
 
+
+static lv_obj_t *btn_zoomplus, *btn_zoomminus, *slider_ae;
+
+static void zoom_hid_cb(struct input_event* in)
+{
+   //printf("%s => type:%d, code:%d, value:%d\n", __func__, in->type, in->code, in->value);
+   
+   switch(in->code)
+   {
+    case 103:
+      {
+        int ev = (in->value)?LV_EVENT_PRESSED:LV_EVENT_RELEASED;
+        //printf("%s => btn_zoomplus ev:%s\n", __func__, (ev==LV_EVENT_PRESSED)?"LV_EVENT_PRESSED":"LV_EVENT_RELEASED");
+        lv_btn_set_state(btn_zoomplus, (ev==LV_EVENT_PRESSED)?LV_BTN_STYLE_PR:LV_BTN_STYLE_REL);
+        lv_event_send(btn_zoomplus, ev, NULL);
+      }
+      break;
+    case 108:
+      {
+        int ev = (in->value)?LV_EVENT_PRESSED:LV_EVENT_RELEASED;
+        //printf("%s => btn_zoomminus ev:%s\n", __func__, (ev==LV_EVENT_PRESSED)?"LV_EVENT_PRESSED":"LV_EVENT_RELEASED");
+        lv_btn_set_state(btn_zoomminus, (ev==LV_EVENT_PRESSED)?LV_BTN_STYLE_PR:LV_BTN_STYLE_REL);
+        lv_event_send(btn_zoomminus, ev, NULL);
+      }
+      break;
+    case 105:
+    case 106:
+      if(in->value)
+      { 
+        int val = lv_slider_get_value(slider_ae)+((in->code==105)?-1:1);
+        printf("%s => lv_slider_set_value val:%d\n", __func__, val);
+        lv_slider_set_value(slider_ae, val, true);
+        lv_event_send(slider_ae,LV_EVENT_VALUE_CHANGED, NULL);
+      }
+      break;
+   }
+}
+
 static void zoomplus_event_cb(lv_obj_t * btn, lv_event_t event)
 {
     (void) btn; /*Unused*/
@@ -265,6 +303,7 @@ static void sceneae_event_handler(lv_obj_t * slider, lv_event_t event)
                           , GSF_IPC_CODEC, 2000);
     }
 }
+
 
 static void* lvgl_main(void* p)
 {
@@ -399,7 +438,7 @@ static void* lvgl_main(void* p)
     
     #if __UI_ZOOM__ //button;
 
-    lv_obj_t *btn_zoomplus = lv_btn_create(lv_scr_act(), NULL);
+    btn_zoomplus = lv_btn_create(lv_scr_act(), NULL);
     lv_btn_set_fit(btn_zoomplus, LV_FIT_TIGHT);
     lv_obj_set_event_cb(btn_zoomplus, zoomplus_event_cb);
     lv_obj_set_x(btn_zoomplus, 55);
@@ -407,7 +446,7 @@ static void* lvgl_main(void* p)
     lv_obj_t * btn_l = lv_label_create(btn_zoomplus, NULL);
     lv_label_set_text(btn_l, "ZOOM++");
     
-    lv_obj_t *btn_zoomminus = lv_btn_create(lv_scr_act(), NULL);
+    btn_zoomminus = lv_btn_create(lv_scr_act(), NULL);
     lv_btn_set_fit(btn_zoomminus, LV_FIT_TIGHT);
     lv_obj_set_event_cb(btn_zoomminus, zoomminus_event_cb);
     lv_obj_set_x(btn_zoomminus, 200);
@@ -415,13 +454,15 @@ static void* lvgl_main(void* p)
     btn_l = lv_label_create(btn_zoomminus, btn_l);
     lv_label_set_text(btn_l, "ZOOM--");
     
-    lv_obj_t * slider = lv_slider_create(lv_scr_act(), NULL);
-    lv_obj_set_event_cb(slider, sceneae_event_handler);
-    lv_slider_set_range(slider, 2, 18);
-    lv_slider_set_value(slider, 10, false);
-    lv_obj_set_size(slider, 280, 30);
-    lv_obj_set_x(slider, 40);
-    lv_obj_set_y(slider, vres-40);
+    slider_ae = lv_slider_create(lv_scr_act(), NULL);
+    lv_obj_set_event_cb(slider_ae, sceneae_event_handler);
+    lv_slider_set_range(slider_ae, 2, 18);
+    lv_slider_set_value(slider_ae, 10, false);
+    lv_obj_set_size(slider_ae, 280, 30);
+    lv_obj_set_x(slider_ae, 40);
+    lv_obj_set_y(slider_ae, vres-40);
+ 
+    mouse_hid_cb_set(zoom_hid_cb);
     #endif
 
     

@@ -487,7 +487,7 @@ typedef void * lv_obj_user_data_t;
  *==================*/
 
 /*FreeType library*/
-#define LV_USE_FREETYPE 1
+#define LV_USE_FREETYPE 0
 #if LV_USE_FREETYPE
     /*Memory used by FreeType to cache characters [bytes] (-1: no caching)*/
     #define LV_FREETYPE_CACHE_SIZE (16 * 1024)
