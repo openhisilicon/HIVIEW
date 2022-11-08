@@ -16,6 +16,7 @@
 #include "mod/svp/inc/svp.h"
 #include "mod/app/inc/app.h"
 #include "mod/codec/inc/codec.h"
+#include "mod/rec/inc/rec.h"
 
 #define __UI_LINES__  0
 
@@ -125,13 +126,15 @@ static void fb_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * c
 }
 
 #if __UI_STAT__
+
+static lv_style_t note_s;
+static lv_obj_t *note_l = NULL;
+
 static int stat_draw(lv_coord_t hres, lv_coord_t vres)
 {
-  
-    static lv_obj_t *wifi_img = NULL;
     static lv_obj_t *wifi_l = NULL;
-    static lv_obj_t *eth_img = NULL;
     static lv_obj_t *eth_l = NULL;
+
     static struct timeval last_time;
     
     struct timeval tv_now;
@@ -141,38 +144,32 @@ static int stat_draw(lv_coord_t hres, lv_coord_t vres)
       return -1;
     last_time = tv_now;
      
-    if(!wifi_img)
-    {  
-      wifi_img = lv_img_create(lv_scr_act(), NULL);
-      lv_obj_set_click(wifi_img, false);
-      lv_img_set_src(wifi_img, LV_SYMBOL_WIFI);
-      lv_obj_set_x(wifi_img, hres-230);
-      lv_obj_set_y(wifi_img, vres-60);
-    }
-    
     if(!wifi_l)
-    {  
+    {
       wifi_l = lv_label_create(lv_scr_act(), NULL);
-      lv_obj_set_x(wifi_l, hres-210);
+      lv_obj_set_x(wifi_l, hres-230);
       lv_obj_set_y(wifi_l, vres-60);
     }
-    
-    if(!eth_img)
-    {  
-      eth_img = lv_img_create(lv_scr_act(), NULL);
-      lv_obj_set_click(eth_img, false);
-      lv_img_set_src(eth_img, LV_SYMBOL_SHUFFLE);
-      lv_obj_set_x(eth_img, hres-230);
-      lv_obj_set_y(eth_img, vres-30);
-    }
     if(!eth_l)
-    {  
+    {
       eth_l = lv_label_create(lv_scr_act(), NULL);
-      lv_obj_set_x(eth_l, hres-210);
+      lv_obj_set_x(eth_l, hres-230);
       lv_obj_set_y(eth_l, vres-30);
       
     }
- 
+    if(!note_l)
+    {
+      lv_style_copy(&note_s, &lv_style_plain);
+      note_s.text.color = LV_COLOR_RED;
+      note_s.text.font  = &lv_font_roboto_28;
+
+      note_l = lv_label_create(lv_scr_act(), NULL);
+      lv_obj_set_style(note_l, &note_s);
+      lv_obj_set_x(note_l, 320);
+      lv_obj_set_y(note_l, vres-60);
+    }
+    lv_label_set_text(note_l, "");
+
     char lable_str[256];
     int wifi_en = 0, wifi_ap = 0;
     {
@@ -191,12 +188,12 @@ static int stat_draw(lv_coord_t hres, lv_coord_t vres)
                         , sizeof(gsf_eth_t)
                         , GSF_IPC_BSP, 2000);
                         
-      sprintf(lable_str, "[%s][%s][%s]", (!wifi_en)?"CLOSE":(wifi_ap)?"AP":"STA"
+      sprintf(lable_str, LV_SYMBOL_WIFI " [%s][%s][%s]", (!wifi_en)?"CLOSE":(wifi_ap)?"AP":"STA"
                                    , (eth->dhcp)?"AUTO":"MANU"
                                    , (!wifi_en)?"":(wifi_ap)?"192.168.1.2":eth->ipaddr);
       lv_label_set_text(wifi_l, lable_str);
 
-      sprintf(lable_str, "[%s][%s][%s]", "ETH"
+      sprintf(lable_str, LV_SYMBOL_SHUFFLE " [%s][%s][%s]", "ETH"
                                    , (eth->dhcp)?"AUTO":"MANU"
                                    , (wifi_en && !wifi_ap)?"192.168.1.2":eth->ipaddr);
       lv_label_set_text(eth_l, lable_str);
@@ -205,7 +202,7 @@ static int stat_draw(lv_coord_t hres, lv_coord_t vres)
 #endif
 
 
-static lv_obj_t *btn_zoomplus, *btn_zoomminus, *slider_ae;
+static lv_obj_t *btn_zoomplus, *btn_zoomminus, *btn_snap, *slider_ae;
 
 static void zoom_hid_cb(struct input_event* in)
 {
@@ -234,11 +231,21 @@ static void zoom_hid_cb(struct input_event* in)
       if(in->value)
       { 
         int val = lv_slider_get_value(slider_ae)+((in->code==105)?-1:1);
-        printf("%s => lv_slider_set_value val:%d\n", __func__, val);
+        //printf("%s => lv_slider_set_value val:%d\n", __func__, val);
         lv_slider_set_value(slider_ae, val, true);
         lv_event_send(slider_ae,LV_EVENT_VALUE_CHANGED, NULL);
       }
       break;
+    case 582:
+      if(in->value)
+      {
+        lv_btn_set_state(btn_snap, LV_BTN_STYLE_PR);
+      }
+      else 
+      {
+        lv_btn_set_state(btn_snap, LV_BTN_STYLE_REL);
+        lv_event_send(btn_snap, LV_EVENT_RELEASED, NULL);
+      }
    }
 }
 
@@ -303,6 +310,34 @@ static void sceneae_event_handler(lv_obj_t * slider, lv_event_t event)
                           , GSF_IPC_CODEC, 2000);
     }
 }
+
+
+static void snap_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    (void) btn; /*Unused*/
+    
+    if(event == LV_EVENT_RELEASED)
+    {
+      printf("%s => LV_EVENT_RELEASED\n", __func__);
+
+      GSF_MSG_DEF(char, filename, 2*1024);
+      int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SNAP, 0, GET, 0
+                        , 0
+                        , GSF_IPC_CODEC, 2000);
+      
+      if(ret == 0 && __pmsg->size > 0)
+      {
+        GSF_MSG_DEF(char, image, 2*1024);
+        strcpy(image, filename);
+        ret = GSF_MSG_SENDTO(GSF_ID_REC_IMAGE, 0, SET, 0
+                          , strlen(filename)+1
+                          , GSF_IPC_REC, 2000);
+        printf("ret:%d, err:%d\n", ret, __pmsg->err);
+        lv_label_set_text(note_l, (ret || __pmsg->err)?"snap fail":"snap success");
+      }
+    }
+}
+
 
 
 static void* lvgl_main(void* p)
@@ -438,30 +473,49 @@ static void* lvgl_main(void* p)
     
     #if __UI_ZOOM__ //button;
 
+
+    static lv_style_t zoom_s; // lv_style_plain_color
+    lv_style_copy(&zoom_s, &lv_style_plain);
+    zoom_s.text.color = LV_COLOR_WHITE;
+    zoom_s.text.font  = &lv_font_roboto_16;
+    
     btn_zoomplus = lv_btn_create(lv_scr_act(), NULL);
     lv_btn_set_fit(btn_zoomplus, LV_FIT_TIGHT);
     lv_obj_set_event_cb(btn_zoomplus, zoomplus_event_cb);
-    lv_obj_set_x(btn_zoomplus, 55);
+    //lv_obj_set_size(btn_zoomplus, 60, 40);
+    lv_obj_set_x(btn_zoomplus, 25);
     lv_obj_set_y(btn_zoomplus, vres-100);
     lv_obj_t * btn_l = lv_label_create(btn_zoomplus, NULL);
-    lv_label_set_text(btn_l, "ZOOM++");
+    lv_obj_set_style(btn_l, &zoom_s);
+    lv_label_set_text(btn_l, LV_SYMBOL_EYE_OPEN " " LV_SYMBOL_PLUS);
     
     btn_zoomminus = lv_btn_create(lv_scr_act(), NULL);
     lv_btn_set_fit(btn_zoomminus, LV_FIT_TIGHT);
     lv_obj_set_event_cb(btn_zoomminus, zoomminus_event_cb);
-    lv_obj_set_x(btn_zoomminus, 200);
+    //lv_obj_set_size(btn_zoomminus, 60, 40);
+    lv_obj_set_x(btn_zoomminus, 125);
     lv_obj_set_y(btn_zoomminus, vres-100);
     btn_l = lv_label_create(btn_zoomminus, btn_l);
-    lv_label_set_text(btn_l, "ZOOM--");
+    lv_label_set_text(btn_l, LV_SYMBOL_EYE_OPEN " " LV_SYMBOL_MINUS);
+    
+    btn_snap = lv_btn_create(lv_scr_act(), NULL);
+    lv_btn_set_fit(btn_zoomminus, LV_FIT_TIGHT);
+    lv_obj_set_event_cb(btn_snap, snap_event_cb);
+    lv_obj_set_size(btn_snap, 65, 70);
+    lv_obj_set_x(btn_snap, 230);
+    lv_obj_set_y(btn_snap, vres-92);
+    btn_l = lv_label_create(btn_snap, btn_l);
+    lv_obj_set_style(btn_l, &style_label);
+    lv_label_set_text(btn_l, LV_SYMBOL_IMAGE);    
     
     slider_ae = lv_slider_create(lv_scr_act(), NULL);
     lv_obj_set_event_cb(slider_ae, sceneae_event_handler);
     lv_slider_set_range(slider_ae, 2, 18);
     lv_slider_set_value(slider_ae, 10, false);
-    lv_obj_set_size(slider_ae, 280, 30);
-    lv_obj_set_x(slider_ae, 40);
+    lv_obj_set_size(slider_ae, 200, 25);
+    lv_obj_set_x(slider_ae, 25);
     lv_obj_set_y(slider_ae, vres-40);
- 
+    
     mouse_hid_cb_set(zoom_hid_cb);
     #endif
 

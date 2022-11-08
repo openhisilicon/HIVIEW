@@ -562,7 +562,7 @@ int fd_size(file_t *fd)
   return ret;
 }
 
-int fd_stat(char* filename, uint32_t *size, uint32_t *mtime)
+int fd_stat(char* filename, uint32_t *size, uint32_t *mtime, uint16_t *mtime_ms)
 {
   struct stat st;
   int ret = stat(filename, &st);
@@ -570,6 +570,7 @@ int fd_stat(char* filename, uint32_t *size, uint32_t *mtime)
   {
     *size  = st.st_size;
     *mtime = st.st_mtime;
+    if(mtime_ms) *mtime_ms = st.st_mtim.tv_nsec/1000000;
   }
   return ret;
 }

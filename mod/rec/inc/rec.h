@@ -26,6 +26,7 @@ enum {
   GSF_ID_REC_QREC     = 2,  // [gsf_rec_q_t, gsf_file_t .... N];
   GSF_ID_REC_CFG      = 3,  // [gsf_rec_cfg_t];
   GSF_ID_REC_PATTERN  = 4,  // ["pattern"]; // eg. "/dev/mmcblk0p%[2-9]", "/dev/sd%[a-z]%[1-9]"
+  GSF_ID_REC_IMAGE    = 5,  // ["filename"]
   GSF_ID_REC_END
 };
 
@@ -34,14 +35,14 @@ enum {
 };
 
 enum {
-  GSF_FILE_TAGS_PIC     = (1<<0),  // bit-mask picture;
-  GSF_FILE_TAGS_TIMER   = (1<<1),  // bit-mask timer ;
-	GSF_FILE_TAGS_MANUAL  = (1<<2),  // bit-mask manual; 
-  GSF_FILE_TAGS_MD      = (1<<3),  // bit-mask motion;
-	GSF_FILE_TAGS_IO      = (1<<4),  // bit-mask gpio
-	GSF_FILE_TAGS_PIR     = (1<<5),  // bit-mask pir;
+  GSF_FILE_TAGS_TIMER   = (1<<0),  // bit-mask timer;
+  GSF_FILE_TAGS_PIC     = (1<<1),  // bit-mask picture;
+  GSF_FILE_TAGS_THUMB   = (1<<2),  // bit-mask thumbnail;
+	GSF_FILE_TAGS_MANU    = (1<<3),  // bit-mask manual; 
+  GSF_FILE_TAGS_MD      = (1<<4),  // bit-mask motion;
+	GSF_FILE_TAGS_IO      = (1<<5),  // bit-mask gpio
+	GSF_FILE_TAGS_PIR     = (1<<6),  // bit-mask pir;
 };
-
 
 #ifdef __cplusplus
 }

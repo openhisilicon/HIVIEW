@@ -17,8 +17,9 @@
 
 
 #define SER_FILENAME(mnt, info, name) \
-        sprintf(name, "%s/data/%08d_%03d_%03d.%s", mnt, \
-        (info)->btime, (info)->btime_ms, (info)->channel, ((info)->tags&GSF_FILE_TAGS_PIC)?"jpg":"mp4")
+        sprintf(name, "%s/%s/%08d_%03d_%03d.%s", mnt, ((info)->tags&GSF_FILE_TAGS_PIC)?"image":"data",\
+        (info)->btime, (info)->btime_ms, (info)->channel, \
+        (((info)->tags&GSF_FILE_TAGS_PIC)||((info)->tags&GSF_FILE_TAGS_THUMB))?"jpg":"mp4")
 enum {
   SER_STAT_ERR  = -1,
   SER_STAT_NONE = 0,
@@ -66,7 +67,7 @@ static int unclosed_cb(void *_ti, ti_file_info_t *info)
   // commit TI_CLOSE;
   char filename[256];
   SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
-  fd_stat(filename, &info->size, &info->etime);
+  fd_stat(filename, &info->size, &info->etime, NULL);
   int err = ti_sync(_ti, TI_CLOSE, info, 1);
   return 0;
 }
@@ -129,7 +130,7 @@ static int scan_cb(struct gsf_disk_q_s *owner, gsf_disk_t *disk)
   if(ret == 0)
   {
     char cmd[256] = {0};
-    sprintf(cmd, "mkdir -p %s/data", mnt_dir);
+    sprintf(cmd, "mkdir -p %s/data %s/image", mnt_dir, mnt_dir);
     system(cmd);
   }
 
@@ -185,6 +186,44 @@ static int ser_disk_check()
   return 0;
 }
 
+#define IMAGE_CHN_BASE 8 //image channel base;
+
+int ser_image_writer(int ch, int tags, char *filename)
+{
+  int err = 0;
+  if(ser.stat < SER_STAT_INIT)
+    return -1;  
+  
+  ti_file_info_t _info;
+  ti_file_info_t *info = &_info;
+  fd_stat(filename, &info->size, &info->btime, &info->btime_ms);
+  info->channel  = IMAGE_CHN_BASE + ch;
+  info->etime    = info->btime;
+  info->tags     = GSF_FILE_TAGS_PIC;
+
+  pthread_mutex_lock(&ser.lock);
+  err = ti_sync(ser.curr->ti, TI_OPEN, info, 1);
+  pthread_mutex_unlock(&ser.lock);
+  
+  char dst[256];
+  SER_FILENAME(ser.curr->disk.mnt_dir, info, dst);
+  
+  char cmd[256];
+  sprintf(cmd, "cp %s %s", filename, dst);
+  printf("%s => %s\n", __func__, cmd);
+  system(cmd);
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL); 
+  info->etime = tv.tv_sec;
+  pthread_mutex_lock(&ser.lock);
+  err = ti_sync(ser.curr->ti, TI_CLOSE, info, 1);
+  pthread_mutex_unlock(&ser.lock);
+  
+  return err;
+}
+
+
 static int ser_file_writer(int ch, gsf_frm_t *frm)
 {
   int idr = 0, err = 0;
@@ -210,7 +249,7 @@ __open:
     info->btime_ms = tv.tv_usec/1000;
     info->channel  = ch;
     info->etime    = info->btime;
-    info->tags     = 0;
+    info->tags     = GSF_FILE_TAGS_TIMER;
     info->size     = 0;
     
     pthread_mutex_lock(&ser.lock);
@@ -236,8 +275,9 @@ __open:
     clock_gettime(CLOCK_MONOTONIC, &ts1);
     SER_FILENAME(ser.curr->disk.mnt_dir, info, filename);
     info->etime = tv.tv_sec;
-    info->tags  = 0;
+    info->tags  = GSF_FILE_TAGS_TIMER;
     info->size  = fd_av_size(*fd);
+    
     pthread_mutex_lock(&ser.lock);
     err = ti_sync(ser.curr->ti, TI_CLOSE, info, 1);
     pthread_mutex_unlock(&ser.lock);
@@ -291,8 +331,9 @@ __open:
   *sync_file_sec = tv.tv_sec;
   
   info->etime = tv.tv_sec;
-  info->tags = 0;
+  info->tags = GSF_FILE_TAGS_TIMER;
   info->size = fd_av_size(*fd);
+  
   pthread_mutex_lock(&ser.lock);
   err = ti_sync(ser.curr->ti, TI_UPDATE, info, 1);
   pthread_mutex_unlock(&ser.lock);
@@ -302,7 +343,6 @@ __open:
   
   return 0;
 }
-
 
 static void* ser_thread(void *param)
 {
@@ -523,8 +563,10 @@ static int ti_q_cb(struct ti_query_cond_t *cond, ti_file_info_t *info)
         , uargs->c, info->channel, info->btime, info->btime_ms, info->etime, info->size);
   #endif
   
-  if(info->channel == uargs->q->channel)
+  if((info->channel == uargs->q->channel) && (info->tags & uargs->q->tags))
+  {  
     uargs->files[uargs->c++] = *((gsf_file_t*)info);
+  }
   return 0;
 }
 

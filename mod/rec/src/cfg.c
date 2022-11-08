@@ -5,9 +5,13 @@
 char rec_parm_path[128] = {0};
 
 gsf_rec_parm_t rec_parm = {
+  #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
   .pattern = "/dev/mmcblk%[0-9]", // allowed disk;
+  #else
+  .pattern = "", // allowed disk;
+  #endif
   .cfg = {
-    [0] = {1, 300},   // enable channel;
+    [0] = {1, 180},   // enable channel;
   },
 };
 

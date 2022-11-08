@@ -94,12 +94,29 @@ static void msg_func_pattern(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
   }
 }
 
+static void msg_func_image(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  // ser_image_writer;
+  if(req->set && req->size && strlen(req->data))
+  { 
+    rsp->err = ser_image_writer(req->ch, 0, req->data);
+    rsp->size = 0;
+  }
+  else 
+  {
+    rsp->err = -1;
+    rsp->size = 0;
+  }
+}
+
+
 static msg_func_t *msg_func[GSF_ID_REC_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
     [GSF_ID_REC_QDISK]    = msg_func_qdisk,
     [GSF_ID_REC_QREC]     = msg_func_qfile,
     [GSF_ID_REC_CFG]      = msg_func_cfg,
     [GSF_ID_REC_PATTERN]  = msg_func_pattern,
+    [GSF_ID_REC_IMAGE]    = msg_func_image,
  };
 
 

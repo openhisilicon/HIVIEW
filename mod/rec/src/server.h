@@ -12,5 +12,6 @@ int ser_query_disk(gsf_disk_t disks[8]);
 int ser_query_file(gsf_rec_q_t *q, gsf_file_t files[1024]);
 int ser_cfg_update(gsf_rec_cfg_t *cfg);
 int ser_pattern_update(char *pattern);
+int ser_image_writer(int ch, int tags, char *filename);
 
 #endif //!__server_h__
