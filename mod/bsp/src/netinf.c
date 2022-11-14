@@ -24,9 +24,11 @@ int netinf_eth_set(gsf_eth_t *eth)
 {
   dhcpc_stop("eth0");
   
+  netcfg_active("eth0", "down");
   int ret = netcfg_set_mac_addr("eth0", eth->mac);
+  netcfg_active("eth0", "up");
   printf("ret:%d, eth->mac:[%s]\n", ret, eth->mac);
-  
+
   if(!eth->dhcp)
   {
     netcfg_set_ip_addr("eth0", eth->ipaddr);
@@ -53,7 +55,7 @@ int netinf_eth_get(gsf_eth_t *eth)
   netcfg_get_gw_addr(name,   eth->gateway);
   netcfg_get_mask_addr(name, eth->netmask);
   netcfg_get_dns("/etc/resolv.conf", eth->dns1, eth->dns2);
-  char _mac[6] = {0};
+  unsigned char _mac[6] = {0};
   netcfg_get_mac_addr(name, _mac);
   sprintf(eth->mac, "%02X:%02X:%02X:%02X:%02X:%02X", _mac[0], _mac[1], _mac[2], _mac[3], _mac[4], _mac[5]);
   printf("eth->mac:[%s]\n", eth->mac);

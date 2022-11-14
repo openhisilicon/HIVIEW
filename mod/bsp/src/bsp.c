@@ -194,15 +194,24 @@ int main(int argc, char *argv[])
       json_parm_save(bsp_parm_path, &bsp_parm);
       json_parm_load(bsp_parm_path, &bsp_parm);
     }
-    info("parm.ipaddr:%s\n", bsp_parm.eth.ipaddr);
+    info("init ipaddr:%s\n", bsp_parm.eth.ipaddr);
 
     //home_path;
     proc_absolute_path(home_path);
     sprintf(home_path, "%s/..", home_path);
     printf("home_path:[%s]\n", home_path);
 
-    // maohw wdg_open();
+    //wdg_open();
+    
     netinf_init();
+    //save random mac addr when the device is first powered on;
+    if(!strlen(bsp_parm.eth.mac))
+    {
+      netinf_eth_get(&bsp_parm.eth);
+      json_parm_save(bsp_parm_path, &bsp_parm);
+      info("save random mac:[%s]\n", bsp_parm.eth.mac);
+    }
+    
     rtc_init();
     zone_set(bsp_parm.base.zone);
     ntp_set(&bsp_parm.ntp);

@@ -113,15 +113,17 @@ static void msg_func_eth(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   if(req->set)
   {
     rsp->size = 0;
-    rsp->err = netinf_eth_set((gsf_eth_t*)req->data);
-    if(rsp->err == 0)
-    {
+    printf("SET req->size:%d\n", req->size);
+    rsp->err = netinf_eth_set(req->size?(gsf_eth_t*)req->data:&bsp_parm.eth);
+    if(rsp->err == 0 && req->size)
+    { 
       bsp_parm.eth = *((gsf_eth_t*)req->data);
       json_parm_save(bsp_parm_path, &bsp_parm);
     }
   }
   else
   {
+    printf("GET req->size:%d\n", req->size);
     rsp->size = sizeof(gsf_eth_t);
     rsp->err = netinf_eth_get((gsf_eth_t *)rsp->data);
   }
