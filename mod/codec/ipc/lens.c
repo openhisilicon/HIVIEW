@@ -22,8 +22,7 @@ int gsf_lens_init(gsf_lens_ini_t *ini)
   
   if(!_sensor_flag)
     return -1;
-  
-    
+
   //#10-3, 10-4; IRCUT1
   system("himm 0x111F0030 0x401;himm 0x111F0034 0x401;echo 83 > /sys/class/gpio/export;echo 84 > /sys/class/gpio/export;");
   system("echo low > /sys/class/gpio/gpio83/direction;echo low > /sys/class/gpio/gpio84/direction");
@@ -42,7 +41,9 @@ int gsf_lens_init(gsf_lens_ini_t *ini)
   //day
   system("echo 0 > /sys/class/gpio/gpio85/value;echo 1 > /sys/class/gpio/gpio54/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio54/value");
   
-  //#11-1 IRlamp out 0: open,  1: close;
+  //#11-1, 11-2 IRlamp out 0: open,  1: close;
+  system("himm 0x12090000 0x00100be2;"); //gpio11_xxx;
+  
   system("himm 0x112F00AC 0x0601;echo 89 > /sys/class/gpio/export;echo out > /sys/class/gpio/gpio89/direction;");
   system("echo 1 > /sys/class/gpio/gpio89/value;");
   
