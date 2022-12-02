@@ -125,10 +125,11 @@ static void fb_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * c
   return fbdev_flush(drv, area, color_p);
 }
 
-#if __UI_STAT__
 
 static lv_style_t note_s;
-static lv_obj_t *note_l = NULL;
+static lv_obj_t *note_l = NULL; // ref by snap_event_cb
+
+#if __UI_STAT__
 
 static int stat_draw(lv_coord_t hres, lv_coord_t vres)
 {
@@ -201,6 +202,7 @@ static int stat_draw(lv_coord_t hres, lv_coord_t vres)
 }
 #endif
 
+#if __UI_ZOOM__
 
 static lv_obj_t *btn_zoomplus, *btn_zoomminus, *btn_snap, *slider_ae;
 
@@ -311,7 +313,6 @@ static void sceneae_event_handler(lv_obj_t * slider, lv_event_t event)
     }
 }
 
-
 static void snap_event_cb(lv_obj_t * btn, lv_event_t event)
 {
     (void) btn; /*Unused*/
@@ -333,12 +334,15 @@ static void snap_event_cb(lv_obj_t * btn, lv_event_t event)
                           , strlen(filename)+1
                           , GSF_IPC_REC, 2000);
         printf("ret:%d, err:%d\n", ret, __pmsg->err);
-        lv_label_set_text(note_l, (ret || __pmsg->err)?"snap fail":"snap success");
+        if(note_l)
+        {  
+          lv_label_set_text(note_l, (ret || __pmsg->err)?"snap fail":"snap success");
+        }    
       }
     }
 }
 
-
+#endif
 
 static void* lvgl_main(void* p)
 {
@@ -472,8 +476,7 @@ static void* lvgl_main(void* p)
     #endif
     
     #if __UI_ZOOM__ //button;
-
-
+    
     static lv_style_t zoom_s; // lv_style_plain_color
     lv_style_copy(&zoom_s, &lv_style_plain);
     zoom_s.text.color = LV_COLOR_WHITE;
