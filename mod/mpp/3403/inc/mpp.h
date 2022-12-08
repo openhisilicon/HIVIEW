@@ -46,7 +46,8 @@ typedef hi_vdec_chn VDEC_CHN;
 #define VO_OUTPUT_USER HI_VO_OUT_USER
 #define VO_OUTPUT_1080P60 HI_VO_OUT_1080P60
 #define VO_OUTPUT_3840x2160_30 HI_VO_OUT_3840x2160_30
-
+#define VO_OUTPUT_3840x2160_60 HI_VO_OUT_3840x2160_60
+#define VO_OUTPUT_7680x4320_30 HI_VO_OUT_7680x4320_30
 
 #define H264E_NALU_SPS HI_VENC_H264_NALU_SPS
 #define H264E_NALU_PPS HI_VENC_H264_NALU_PPS
@@ -472,6 +473,9 @@ extern int SENSOR_TYPE;
 extern int SENSOR0_TYPE;
 extern int SENSOR1_TYPE;
 extern hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type);
+
+#define OT_ACODEC_TYPE_INNER //for audio;
+
 ///////////////////
 
 #endif

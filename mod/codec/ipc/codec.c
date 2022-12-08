@@ -84,12 +84,19 @@ static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 //second sdp hook, fixed venc cfg;
+#if defined(GSF_CPU_3403)
+#define SECOND_WIDTH(second) ((second) == 1?1920:(second) == 2?720:640)
+#define SECOND_HEIGHT(second) ((second) == 1?1080:(second) == 2?480:512)
+#define SECOND_HIRES(second) ((second) == 1?PIC_1080P:(second) == 2?PIC_D1_NTSC:PIC_512P)
+#else
 #define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:640)
 #define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:512)
 #define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:PIC_512P)
+#endif  
+
 int second_sdp(int i, gsf_sdp_t *sdp)
 {
-  #if defined(GSF_CPU_3516d)
+  #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
   if(p_cfg->second)
   {
     sdp->audio_shmid = -1;
@@ -97,14 +104,14 @@ int second_sdp(int i, gsf_sdp_t *sdp)
     {
       sdp->venc.width = SECOND_WIDTH(p_cfg->second);
       sdp->venc.height = SECOND_HEIGHT(p_cfg->second);
-      sdp->venc.bitrate = 2000;
+      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>720)?8000:2000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
     else // sub
     {
-      sdp->venc.width = 352;
-      sdp->venc.height = 288;
-      sdp->venc.bitrate = 1000;
+      sdp->venc.width = (SECOND_WIDTH(p_cfg->second)>720)?720:352;
+      sdp->venc.height = (SECOND_WIDTH(p_cfg->second)>720)?480:288;
+      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>720)?2000:1000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
     return 0; 
@@ -387,7 +394,7 @@ int venc_start(int start)
     }
     
     //only 3516D supported 
-    #if defined(GSF_CPU_3516d)
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
     if(p_cfg->second && i == 1)
     {
       gsf_sdp_t sdp;
@@ -791,6 +798,28 @@ void mpp_ini_3531d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
 #if defined(GSF_CPU_3403)
 void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
 {
+   if(strstr(cfg->snsname, "imx482"))
+   {
+    // imx482-0-0-2-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_1080P);
+    if(cfg->snscnt > 1)
+    {
+        // imx482-0-0-2-30
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_1080P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    } 
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    }
+    return;
+   }
+  
   // os08a20-0-0-8-30
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
@@ -802,6 +831,12 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
       VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_1080P);
       rgn_ini->ch_num++;
       venc_ini->ch_num++;
+  }
+  else if(cfg->second)
+  {
+      rgn_ini->ch_num = venc_ini->ch_num = 2;
+      rgn_ini->st_num = venc_ini->st_num = 2;
+      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
   }
 }
 #endif
@@ -870,6 +905,7 @@ int mpp_start(gsf_bsp_def_t *def)
       }
       #elif defined(GSF_CPU_3403)
       {
+        cfg.second = def->board.second;
         cfg.hnr = codec_ipc.vi.hnr;
         mpp_ini_3403(&cfg, &rgn_ini, &venc_ini, vpss);
       }
@@ -1048,8 +1084,12 @@ int vo_start()
         .uargs = NULL,
         .cb = gsf_aenc_recv,
       };
+      
+      #if defined(GSF_CPU_3403)
+      gsf_mpp_audio_start(NULL);
+      #else
       gsf_mpp_audio_start(&aenc);
-      //gsf_mpp_audio_start(NULL);
+      #endif
     }
 
     if(codec_ipc.vo.intf < 0)
