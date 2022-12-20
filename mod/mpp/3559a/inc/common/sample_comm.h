@@ -141,6 +141,8 @@ typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
     PIC_360P,      /* 640 * 360 */
+    #define HAVE_PIC_512P
+    PIC_512P,      /* 640 * 512 */
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
     PIC_720P,	   /* 1280 * 720  */
@@ -182,17 +184,17 @@ typedef enum hiSAMPLE_SNS_TYPE_E
 
 typedef enum hiSAMPLE_VO_MODE_E
 {
-    VO_MODE_1MUX  ,
-    VO_MODE_2MUX  ,
-    VO_MODE_4MUX  ,
-    VO_MODE_8MUX  ,
-    VO_MODE_9MUX  ,
-    VO_MODE_16MUX ,
-    VO_MODE_25MUX ,
-    VO_MODE_36MUX ,
-    VO_MODE_49MUX ,
-    VO_MODE_64MUX ,
-    VO_MODE_2X4   ,
+    VO_MODE_1MUX  = 1, // maohw = mpp.h:VO_LAYOUT_E;
+    VO_MODE_2MUX  = 2,
+    VO_MODE_4MUX  = 4,
+    VO_MODE_8MUX  = 8,
+    VO_MODE_9MUX  = 9,
+    VO_MODE_16MUX = 16,
+    VO_MODE_25MUX = 25,
+    VO_MODE_36MUX = 36,
+    VO_MODE_49MUX = 49,
+    VO_MODE_64MUX = 64,
+    VO_MODE_2X4   = 65,
     VO_MODE_BUTT
 } SAMPLE_VO_MODE_E;
 

@@ -710,11 +710,20 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
-int gsf_mpp_isp_ctl(int ch, int id, void *args)
+int gsf_mpp_isp_ctl(int ViPipe, int id, gsf_mpp_isp_t *isp)
 {
   return 0;
 }
 
+int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
+{
+  return -1;
+}
+
+int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
+{
+  return -1;
+}
 
 //HI_S32 HI_MPI_RGN_Create(RGN_HANDLE Handle,const RGN_ATTR_S *pstRegion);
 //HI_S32 HI_MPI_RGN_Destroy(RGN_HANDLE Handle);
@@ -1083,6 +1092,11 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   return err;
 }
 
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
+{
+  return -1;
+}
+
 //Çå³ý½âÂëÏÔÊ¾BUFF
 int gsf_mpp_vo_clear(int volayer, int ch)
 {
@@ -1110,11 +1124,15 @@ int gsf_mpp_vo_clear(int volayer, int ch)
 }
 
 // VO-BIND-VPSS;
-int gsf_mpp_vo_bind(int volayer, gsf_mpp_vo_bind_t *bind)
+int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
 {
-  return 0;
+  return -1;
 }
 
+int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect)
+{
+  return -1;
+}
 
 
 static struct fb_bitfield s_r16 = {10, 5, 0};

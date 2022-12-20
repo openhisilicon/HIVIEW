@@ -11,6 +11,9 @@ typedef struct {
   int   wdr;          // wdr mode
   int   res;          // resolution
   int   fps;          // frame rate
+  int   slave;        // slave mode
+  int   second;       // second channel;
+  char  type[32];     // cpu type;
 }gsf_mpp_cfg_t;
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
@@ -29,6 +32,15 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+
+
+typedef struct {
+  void *uargs;
+  int (*cb)(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs);
+}gsf_mpp_af_t;
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af);
+
 
 //vpss;
 typedef struct {
@@ -51,6 +63,15 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss);
 int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 //HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
+
+enum {
+  GSF_MPP_VPSS_CTL_PAUSE = 0,
+  GSF_MPP_VPSS_CTL_RESUM = 1,
+  GSF_MPP_VPSS_CTL_SETCROP = 2,
+  GSF_MPP_VPSS_CTL_GETCROP = 3,  
+};
+
+int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
 
 //avs;
 typedef struct {
@@ -95,6 +116,7 @@ typedef struct {
   HI_U32          u32FrameRate;
   HI_U32          u32Gop;
   HI_U32          u32BitRate;
+  HI_U32          u32LowDelay;
 }gsf_mpp_venc_t;
 
 //SAMPLE_COMM_VPSS_Bind_VENC
@@ -125,11 +147,79 @@ enum {
 };
 
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
-int gsf_mpp_isp_ctl(int ch, int id, void *args);
+
+typedef struct {
+  int filp;
+  int a;
+}gsf_mpp_img_attr;
+
+
+typedef struct {
+  void *uargs;
+  int (*cb)(int ViPipe, int night, void* uargs);
+}gsf_mpp_ir_t;
+
+
+enum {
+  GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
+  GSF_MPP_ISP_CTL_IMG = 1,    // gsf_mpp_img_attr;
+};
+
+enum{
+    GSF_MPP_ISP_CTL_LUMA = 0,  
+    GSF_MPP_ISP_CTL_CONTRAST = 1, 
+    GSF_MPP_ISP_CTL_SATURATION = 2, 
+    GSF_MPP_ISP_CTL_SHARPEN = 3, 
+    GSF_MPP_ISP_CTL_EXPOSURE = 4, 
+    GSF_MPP_ISP_CTL_FLIP = 5, 
+};
+
+enum{
+    GSF_MPP_VI_CTL_NORMAL = 0,  
+    GSF_MPP_VI_CTL_FLIP = 1, 
+    GSF_MPP_VI_CTL_MIRROR = 2, 
+    GSF_MPP_VI_CTL_FLIP_AND_MIRROR = 3, 
+};
+
+//ISP image attr;
+typedef struct {
+    HI_U8 u8Luma; //range: 0~100
+    HI_U8 u8Contrast; //range: 0~100
+    HI_U8 u8Saturation; //range: 0~100
+    HI_U8 u8Sharpen; //range: 0~100
+    HI_BOOL bAutoExp;
+    HI_U8 u8Exposure;//range: 1~28
+    HI_U8 u8Flip; //range: 0~3; 0: normal; 1: flip; 2: mirror; 3:flip+mirror
+}gsf_mpp_isp_t;
+
+int gsf_mpp_isp_ctl(int ViPipe, int id, gsf_mpp_isp_t *isp);
+
+//hdmi attr;
+typedef struct {
+    int enhdmi; 
+    int resolution; 
+    int colorbit; 
+    int colorfmt;
+    int enaudio;
+}gsf_mpp_hdmi_att_t;
+
+int gsf_mpp_hdmi_ctl(gsf_mpp_hdmi_att_t *hdmi_att);
+
+//audio attr;
+typedef struct {
+    int en; 
+    int type; 
+    int sprate; 
+    int vol;
+    int xlr;
+}gsf_mpp_audio_att_t;
 
 typedef struct {
   int AeChn;
   PAYLOAD_TYPE_E enPayLoad;
+  int adtype; // 0:INNER, 1:I2S, 2:PCM;
+  int stereo, sp, br;//channels, sampleRate, bitRate;
+  int vol;
   void *uargs;
   int (*cb)(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 }gsf_mpp_aenc_t;
@@ -159,6 +249,9 @@ typedef struct {
 
 int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn);
 int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap);
+
+int gsf_mpp_rgn_canvas_get(RGN_HANDLE Handle, RGN_CANVAS_INFO_S *pstRgnCanvasInfo);
+int gsf_mpp_rgn_canvas_update(RGN_HANDLE Handle);
 
 
 
@@ -196,6 +289,7 @@ enum {
 typedef enum {
   VO_LAYOUT_NONE  = 0, VO_LAYOUT_10MUX = 10,
   VO_LAYOUT_1MUX  = 1, VO_LAYOUT_12MUX = 12,
+  VO_LAYOUT_2MUX  = 2,
   VO_LAYOUT_4MUX  = 4, VO_LAYOUT_16MUX = 16,
   VO_LAYOUT_6MUX  = 6, VO_LAYOUT_25MUX = 25,
   VO_LAYOUT_8MUX  = 8, VO_LAYOUT_36MUX = 36,
@@ -222,6 +316,9 @@ typedef struct {
 //发送视频数据到显示通道(创建VDEC通道)
 int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
 
+//发送音频数据到 audio 解码输出;
+int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+
 //解码状态;
 typedef struct {
     int left_byte;    // vdec
@@ -237,15 +334,27 @@ int gsf_mpp_vo_setfps(int volayer, int ch, int fps);
 //清除解码显示BUFF
 int gsf_mpp_vo_clear(int volayer, int ch);
 
-// VO-BIND-VPSS;
+//VO-BIND-VPSS for DVR;
 typedef struct {
-  struct {
-    VPSS_GRP  VpssGrp; 
-    VPSS_CHN  VpssChn;
-  }src[VO_LAYOUT_64MUX];
-}gsf_mpp_vo_bind_t;
+  VPSS_GRP  VpssGrp;
+  VPSS_CHN  VpssChn;
+}gsf_mpp_vo_src_t;
 
-int gsf_mpp_vo_bind(int volayer, gsf_mpp_vo_bind_t *bind);
+int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src);
+
+//audio ao_bind_ai;
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
+
+
+//设置通道源图像裁剪区域(用于局部放大)
+int gsf_mpp_vo_crop(int volayer, int ch, RECT_S *rect);
+
+//设置VO通道显示区域比例(rect返回调整后的位置)
+int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect);
+
+//设置VO通道显示区域(位置&大小);
+int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority);
+
 
 
 //private for mpp;
@@ -262,5 +371,7 @@ extern int SENSOR7_TYPE;
 extern SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM];
 extern ISP_SNS_OBJ_S* g_pstSnsObj[MAX_SENSOR_NUM];
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
+
+#define HI_ACODEC_TYPE_INNER //for audio;
 
 #endif
