@@ -662,6 +662,11 @@ int gsf_mpp_scene_stop()
   return s32ret;
 }
 
+int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
+{
+  return -1;
+}
+
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
 {
   int ret = -1;

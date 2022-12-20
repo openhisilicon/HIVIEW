@@ -451,3 +451,8 @@ int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap)
 {
   return HI_MPI_RGN_SetBitMap(Handle, bitmap);
 }
+
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
+{
+  return -1;
+}

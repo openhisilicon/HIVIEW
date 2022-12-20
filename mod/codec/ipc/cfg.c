@@ -70,7 +70,7 @@ gsf_codec_ipc_t codec_ipc = {
   },
   
   .lenscfg = {
-    .lens = 0,         //0: fixed lens,  1: ldm lens;
+    .lens = 0,         //0: ldm lens,  1: sony lens;
     .uart = "ttyAMA2", //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
   },
   

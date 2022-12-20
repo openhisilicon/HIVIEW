@@ -71,6 +71,7 @@ enum {
   GSF_MPP_VPSS_CTL_ASPECT = 3, //HI_MPI_VPSS_SetChnAttr(VpssGrp, ASPECT_RATIO_S *args);
   GSF_MPP_VPCH_CTL_ENABLE = 4, //HI_MPI_VPSS_EnableChn(VpssGrp, VpssChn *args);
   GSF_MPP_VPCH_CTL_DISABLE= 5, //HI_MPI_VPSS_DisableChn(VpssGrp, VpssChn *args);
+  GSF_MPP_VPSS_CTL_ATTR   = 6, //HI_MPI_VPSS_GetGrpAttr(VpssGrp, VPSS_GRP_ATTR_S *args);
 };
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
@@ -135,6 +136,11 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 //isp;
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
+
+enum {
+  GSF_MPP_SCENE_CTL_AE = 0, // gsf_scene_ae_t==HI_SCENE_CTL_AE_S
+};
+int gsf_mpp_scene_ctl(int ViPipe, int id, void *args);
 
 enum {
   GSF_MPP_VENC_CTL_IDR = 0,

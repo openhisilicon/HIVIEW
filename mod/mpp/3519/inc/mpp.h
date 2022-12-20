@@ -50,6 +50,7 @@ typedef struct {
   HI_U32          u32FrameRate;
   HI_U32          u32Gop;
   HI_U32          u32BitRate;
+  HI_U32          u32LowDelay;
 }gsf_mpp_venc_t;
 
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc);
@@ -111,6 +112,8 @@ int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn);
 int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap);
 
 
+//audio ao_bind_ai;
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
 
 //private for mpp;
 extern int SENSOR_TYPE;

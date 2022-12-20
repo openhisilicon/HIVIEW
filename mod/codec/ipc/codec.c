@@ -29,6 +29,12 @@ static int avs = 0; // codec_ipc.vi.avs;
 #define PIC_400P PIC_CIF
 #endif
 
+#ifndef HAVE_PIC_512P
+#warning "PIC_512P => PIC_D1_PAL"
+#define PIC_512P PIC_D1_PAL
+#endif
+
+
 #define PIC_WIDTH(w, h) \
           (w >= 7680)?PIC_7680x4320:\
           (w >= 3840)?PIC_3840x2160:\

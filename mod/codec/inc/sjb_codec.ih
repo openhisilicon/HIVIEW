@@ -62,7 +62,7 @@ STRUCT(gsf_vo_t)
 
 STRUCT(gsf_lenscfg_t)
 {
-  FIELD(int, lens); // lens-type 0: fixed lens, 1: ldm lens;
+  FIELD(int, lens); // lens-type 0: ldm lens, 1: sony lens, 2: computar;
   STRING(uart, 32); // uart-name "ttyAMA2" or "ttyAMA4";
   FIELD(int, ircut);// 0: manual, 1: auto, 2: cds;
 };
