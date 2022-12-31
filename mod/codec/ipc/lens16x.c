@@ -387,5 +387,5 @@ int (*gsf_lens_stop)(int ch) = lens16x_lens_stop;
 int (*gsf_lens_cal)(int ch) = lens16x_lens_cal;
 int (*gsf_uart_open)(char *ttyAMA, int baudrate) = lens16x_uart_open;
 int (*gsf_uart_write)(char *buf, int size) = lens16x_uart_write;
-
+int (*gsf_lens_init)(gsf_lens_ini_t *ini) = lens16x_lens_init;
 #endif

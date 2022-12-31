@@ -583,7 +583,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     if(strstr(cfg->snsname, "imx327") 
       || strstr(cfg->snsname, "imx290") || strstr(cfg->snsname, "imx307") || strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482"))
     {
-      cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx307")?50:30;
+      cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
       VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
@@ -631,7 +631,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     {
     	// imx327-0-0-2-30
     	#if 1
-      cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx307")?50:30;
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
       VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
