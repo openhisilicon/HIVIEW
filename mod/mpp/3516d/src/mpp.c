@@ -115,6 +115,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,           "imx482-0-0-2-30", "libsns_imx482.so", "stSnsImx482Obj"},
     {OV426_OV6946_DC_0M_30FPS_12BIT,            "ov426-0-0-0-30", "libsns_ov426.so", "stSnsOv426Obj"},
     {SONY_IMX585_MIPI_2M_30FPS_12BIT,           "imx585-0-0-2-30", "libsns_imx585.so", "stSnsImx585Obj"},
+    {SONY_IMX327_MIPI_2M_60FPS_12BIT,           "imx327-0-0-2-60", "libsns_imx327.so", "stSnsImx327Obj"},
   };
 
 

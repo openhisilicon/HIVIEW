@@ -52,6 +52,24 @@ combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_NOWDR_ATTR =
     }
 };
 
+
+combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_60FPS_ATTR =
+{
+    .devno = 0,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 12, 1920, 1080},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {0, 1, 2, 3}
+        }
+    }
+};
+
 combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_WDR2to1_ATTR =
 {
     .devno = 0,
@@ -2549,8 +2567,12 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
             break;
 
         case SONY_IMX307_MIPI_2M_30FPS_12BIT:
-        case SONY_IMX307_MIPI_2M_60FPS_12BIT:  
+        case SONY_IMX307_MIPI_2M_60FPS_12BIT:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX307_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            break;
+            
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:  
+            memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_60FPS_ATTR, sizeof(combo_dev_attr_t));
             break;
 
         case SONY_IMX307_MIPI_2M_30FPS_12BIT_WDR2TO1:
@@ -3015,7 +3037,8 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_DEV_ATTR_S
             break;
 
         case SONY_IMX307_MIPI_2M_30FPS_12BIT:
-        case SONY_IMX307_MIPI_2M_60FPS_12BIT:  
+        case SONY_IMX307_MIPI_2M_60FPS_12BIT:
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:  
         case SONY_IMX307_2L_MIPI_2M_30FPS_12BIT:
             memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX307_2M_BASE, sizeof(VI_DEV_ATTR_S));
             break;
@@ -3152,6 +3175,7 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
             break;
         case SONY_IMX307_MIPI_2M_30FPS_12BIT:
         case SONY_IMX307_MIPI_2M_60FPS_12BIT:
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:   
         case SONY_IMX307_2L_MIPI_2M_30FPS_12BIT:
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_1920x1080_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             break;
@@ -3275,7 +3299,8 @@ HI_S32 SAMPLE_COMM_VI_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S
             break;
 
         case SONY_IMX307_MIPI_2M_30FPS_12BIT:
-        case SONY_IMX307_MIPI_2M_60FPS_12BIT:  
+        case SONY_IMX307_MIPI_2M_60FPS_12BIT:
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:  
         case SONY_IMX307_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case SONY_IMX307_2L_MIPI_2M_30FPS_12BIT:
         case SONY_IMX307_2L_MIPI_2M_30FPS_12BIT_WDR2TO1: 
@@ -4706,7 +4731,8 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E* penS
             break;
 
         case SONY_IMX307_MIPI_2M_30FPS_12BIT:
-        case SONY_IMX307_MIPI_2M_60FPS_12BIT:  
+        case SONY_IMX307_MIPI_2M_60FPS_12BIT:
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:    
         case SONY_IMX307_MIPI_2M_30FPS_12BIT_WDR2TO1:
             *penSize = PIC_1080P;
             break;
@@ -4813,6 +4839,9 @@ HI_S32 SAMPLE_COMM_VI_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu3
         case SONY_IMX307_MIPI_2M_60FPS_12BIT:
             *pu32FrameRate = 50;//60;
             break;
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:
+            *pu32FrameRate = 60;
+            break;
         case SONY_IMX458_MIPI_8M_30FPS_10BIT:
         case SONY_IMX415_MIPI_8M_30FPS_12BIT:
             *pu32FrameRate = 30;
@@ -4884,7 +4913,8 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
         case SONY_IMX327_MIPI_2M_30FPS_12BIT_WDR2TO1:
         case SONY_IMX385_MIPI_2M_30FPS_12BIT:
         case SONY_IMX482_MIPI_2M_30FPS_12BIT:
-        case SONY_IMX585_MIPI_2M_30FPS_12BIT:  
+        case SONY_IMX585_MIPI_2M_30FPS_12BIT:
+        case SONY_IMX327_MIPI_2M_60FPS_12BIT:    
         case SONY_IMX307_MIPI_2M_30FPS_12BIT:
         case SONY_IMX307_MIPI_2M_60FPS_12BIT:
         case SONY_IMX307_MIPI_2M_30FPS_12BIT_WDR2TO1:
