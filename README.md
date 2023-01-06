@@ -6,7 +6,7 @@
 ### 1. Design products in the form of core board + base board (customizable);
 <img src=/res/16dv300-c.jpg width=200 height=200 /><img src=/res/59v200-c.jpg width=200 height=200 /><img src=/res/16av300-c.jpg width=200 height=200 />
 
-<img src=/res/31dv200-c.jpg width=200 height=200 /><img src=/res/38base-1.jpg width=200 height=200 /><img src=/res/38base-2.jpg width=200 height=200 />
+<img src=/res/31dv200-c.jpg width=200 height=200 /><img src=/res/38base-1.jpg width=200 height=200 /><img src=/res/hv3403-c.jpg width=200 height=200 />
 
 <img src=/res/16dv300-b2.jpg width=41% /><img src=/res/16dv300-b3.jpg width=45% /><img src=/res/16dv300-b.jpg width=43% /><img src=/res/16dv300-b1.jpg width=43% /><img src=/res/16dv300-b4.jpg width=43% /><img src=/res/16dv300-b5.jpg width=43% />
 
