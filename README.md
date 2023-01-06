@@ -11,8 +11,8 @@
 <img src=/res/16dv300-b2.jpg width=41% /><img src=/res/16dv300-b3.jpg width=45% /><img src=/res/16dv300-b.jpg width=43% /><img src=/res/16dv300-b1.jpg width=43% /><img src=/res/16dv300-b5.jpg width=44% /><img src=/res/hv3403-b.jpg width=44% />
 
 ### 2. Support users to develop their own products based on OpenHisilicon;
-<img src=/res/p1.jpg width=360 height=250 /> <img src=/res/p2.jpg width=360 height=250 />
-### 3. https://github.com/openhisilicon/PRODUCT
+<img src=/res/p1.jpg width=300 height=200 /> <img src=/res/p2.jpg width=300 height=200 />
+### 3. More products: https://github.com/openhisilicon/PRODUCT
 ## Features:
 
 ##### 1, BSP:   Eth/WiFi/Vpn/Upgrade/Sadp
