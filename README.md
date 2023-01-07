@@ -1,34 +1,24 @@
-# SHENZHEN HIVIEW SCIENCE AND TECHNOLOGY CO., LTD.  
-## This shows a program structure that can be compiled and run. See README.TXT 
-## We provide hisilicon chip solutions with hardware customization and software services to support customers' rapid product development.  
-## Business cooperation, contact Email: thomas@hiview-tech.cn  
-## RoadMap:
-### 1. Design products in the form of core board + base board (customizable);
-<img src=/res/16dv300-c.jpg width=200 height=200 /><img src=/res/59v200-c.jpg width=200 height=200 /><img src=/res/16av300-c.jpg width=200 height=200 />
 
-<img src=/res/31dv200-c.jpg width=200 height=200 /><img src=/res/38base-1.jpg width=200 height=200 /><img src=/res/38base-2.jpg width=200 height=200 />
+# 编译
+## make
+1. 配置环境`. ./build/3516d`
+2. 根目录下`make`全部编译
+3. 单独编译使用`make -C ./mod/bsp/`
 
-<img src=/res/16dv300-b2.jpg width=41% /><img src=/res/16dv300-b3.jpg width=45% /><img src=/res/16dv300-b.jpg width=43% /><img src=/res/16dv300-b1.jpg width=43% /><img src=/res/16dv300-b4.jpg width=43% /><img src=/res/16dv300-b5.jpg width=43% />
+## 更新应用
+1. 使用`./tools/update-dev.sh`, 不带参数会有帮助
+2. 公网ip服务器编译, `python3 -m http.server 8001`简单的http传输
 
-### 2. Support users to develop their own products based on OpenHisilicon;
-<img src=/res/p1.jpg width=360 height=250 /> <img src=/res/p2.jpg width=360 height=250 />
-### 3. https://github.com/openhisilicon/PRODUCT
-## Features:
+# 调试
+## 查看日志
+```
+tail -F /tmp/log
+```
 
-##### 1, BSP:   Eth/WiFi/Vpn/Upgrade/Sadp
-##### 2, MPP:   Hi3516x/Hi3519x/Hi3559x/Hi3536x
-##### 3, CODEC: H264/H265/JPEG/AAC/PCMA/PCMU
-##### 4, RTSPS: Server/Client/Push
-##### 5, WEBS:  Http/Https/Websocket/Webrtc
-##### 6, APP:   NVR/GUI
-##### 7, REC:   fMP4
-##### 8, RTMPS: Push
-##### 9, SIPS:  UAS/GB28181
-##### 10, ONVIF: NVT/NVC
-##### 11, SRTS: SRT/UDP/RTP/SRTP
-##### 12, SVP:  YOLO/LPR
-##### 13, UVC:  H264
+# 疑难问题记录
 
-<img src=/res/diagram.jpg width=88% />
-<img src=/res/webrtc.png width=82% />
-
+## 64位系统编译32位程序
+```
+sudo apt-get install gcc-multilib g++-multilib
+sudo apt-get install build-essential module-assistant
+```
