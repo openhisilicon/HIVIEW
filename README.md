@@ -17,7 +17,7 @@
 
 ##### 1, BSP:   Eth/WiFi/Vpn/Upgrade/Sadp
 ##### 2, MPP:   Hi3516x/Hi3519x/Hi3559x/Hi3536x
-##### 3, CODEC: H264/H265/JPEG/AAC/PCMA/PCMU
+##### 3, CODEC: H264/H265/MJPEG/AAC/PCMA/PCMU
 ##### 4, RTSPS: Server/Client/Push
 ##### 5, WEBS:  Http/Https/Websocket/Webrtc
 ##### 6, APP:   NVR/GUI
