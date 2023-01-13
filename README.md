@@ -27,7 +27,7 @@
 ##### 10, ONVIF: NVT/NVC
 ##### 11, SRTS: SRT/UDP/RTP/SRTP
 ##### 12, SVP:  YOLO/LPR
-##### 13, UVC:  H264
+##### 13, UVC:  H264/MJPEG
 
 <img src=/res/diagram.jpg width=88% />
 <img src=/res/webrtc.png width=82% />
