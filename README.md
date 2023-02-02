@@ -1,6 +1,6 @@
 # SHENZHEN HIVIEW SCIENCE AND TECHNOLOGY CO., LTD.  
-## This shows a program structure that can be compiled and run. See README.TXT 
-## We provide hisilicon chip solutions with hardware customization and software services to support customers' rapid product development.  
+## HIVIEW-TECH is a professional product designer
+## Provide services: Hardware customization/System building/AI algorithm/ISP tuning 
 ## Business cooperation, contact Email: thomas@hiview-tech.cn  
 ## RoadMap:
 ### 1. Design products in the form of core board + base board (customizable);
