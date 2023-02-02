@@ -1,7 +1,7 @@
 # SHENZHEN HIVIEW SCIENCE AND TECHNOLOGY CO., LTD.  
-## HIVIEW-TECH is a professional product designer
-## Provide services: Hardware customization/System building/AI algorithm/ISP tuning 
-## Business cooperation, contact Email: thomas@hiview-tech.cn  
+### HIVIEW-TECH is a professional product designer
+### Provide services: Hardware customization/System building/AI algorithm/ISP tuning 
+### Business cooperation, contact Email: thomas@hiview-tech.cn  
 ## RoadMap:
 ### 1. Design products in the form of core board + base board (customizable);
 <img src=/res/16dv300-c.jpg width=200 height=200 /><img src=/res/59v200-c.jpg width=200 height=200 /><img src=/res/16av300-c.jpg width=200 height=200 />
