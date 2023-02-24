@@ -1301,8 +1301,71 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ret = HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr);
      }
      break; 
+     case GSF_MPP_ISP_CTL_FLIP:
+     {
+      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+      
+      VI_CHN_ATTR_S stChnAttr;
+      ret = HI_MPI_VI_GetChnAttr(ViPipe, 0, &stChnAttr);
+      printf("GET ret:0x%x, bFlip:%d, bMirror:%d\n", ret, stChnAttr.bFlip, stChnAttr.bMirror);
+      
+      stChnAttr.bFlip = flip->bFlip;
+      stChnAttr.bMirror = flip->bMirror;
+      
+      ret = HI_MPI_VI_SetChnAttr(ViPipe, 0, &stChnAttr);
+      printf("SET ret:0x%x, bFlip:%d, bMirror:%d\n", ret, stChnAttr.bFlip, stChnAttr.bMirror);  
+      
+     }
+     break;
+     case GSF_MPP_ISP_CTL_DIS:
+     {
+      gsf_mpp_img_dis_t *dis = (gsf_mpp_img_dis_t*)args;
 
-    default:
+      DIS_CONFIG_S stDISConfig     = {0};
+      DIS_ATTR_S stDISAttr         = {0};
+      
+      HI_MPI_VI_GetChnDISAttr(ViPipe, 0, &stDISAttr);
+      if(stDISAttr.bEnable)
+      {
+        stDISAttr.bEnable = HI_FALSE;
+        HI_MPI_VI_SetChnDISAttr(ViPipe, 0, &stDISAttr);
+      }      
+
+      stDISConfig.enMode              = dis->enMode;//DIS_MODE_4_DOF_GME;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+      stDISConfig.enMotionLevel       = DIS_MOTION_LEVEL_NORMAL;
+      stDISConfig.u32CropRatio        = 80;
+      stDISConfig.u32BufNum           = 5;
+      stDISConfig.u32FrameRate        = 30;
+      stDISConfig.enPdtType           = dis->enPdtType;//DIS_PDT_TYPE_DV;//DIS_PDT_TYPE_IPC; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+      stDISConfig.u32GyroOutputRange  = 0;
+      stDISConfig.bScale              = HI_TRUE; //HI_FALSE;
+      stDISConfig.bCameraSteady       = HI_FALSE;
+      stDISConfig.u32GyroDataBitWidth = 0;
+
+      stDISAttr.bEnable               = dis->bEnable; //HI_TRUE;
+      stDISAttr.u32MovingSubjectLevel = 0;
+      stDISAttr.s32RollingShutterCoef = 0;
+      stDISAttr.s32Timelag            = 0;
+      stDISAttr.u32ViewAngle          = 1000;
+      stDISAttr.bStillCrop            = HI_FALSE;
+      stDISAttr.u32HorizontalLimit    = 512;
+      stDISAttr.u32VerticalLimit      = 512;
+      stDISAttr.bGdcBypass            = HI_FALSE;
+      stDISAttr.u32Strength           = 1024;
+          
+      stDISConfig.u32FrameRate        = 30;
+      stDISAttr.s32Timelag            = 33333;
+
+      ret = HI_MPI_VI_SetChnDISConfig(ViPipe, 0, &stDISConfig);
+      printf("SET dis config ret:0x%x, enMode:%d, enPdtType:%d\n", ret, stDISConfig.enMode, stDISConfig.enPdtType);
+
+      ret = HI_MPI_VI_SetChnDISAttr(ViPipe, 0, &stDISAttr);
+      printf("SET dis attr ret:0x%x, bEnable:%d\n", ret, stDISAttr.bEnable);
+      
+     }
+     break;
+     
+     default:
       break;
   }
   printf("ViPipe:%d, id:%d, ret:%d\n", ViPipe, id, ret);

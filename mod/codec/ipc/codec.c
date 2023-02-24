@@ -1272,6 +1272,38 @@ int main(int argc, char *argv[])
       gsf_mpp_vpss_ctl(0, GSF_MPP_VPSS_CTL_ASPECT, &aspect);
       sleep(6);
       #endif
+
+      //#define __TEST_FLIP__
+      #if defined(__TEST_FLIP__)
+      gsf_mpp_img_flip_t flip;
+      
+      flip.bFlip = 0;
+      flip.bMirror = 0;
+      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
+      sleep(6);
+      
+      flip.bFlip = 1;
+      flip.bMirror = 1;
+      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
+      sleep(6);
+      #endif
+      
+      //#define __TEST_DIS__
+      #if defined(__TEST_DIS__)
+      gsf_mpp_img_dis_t dis;
+      
+      dis.bEnable = 0;
+      dis.enMode = 0;
+      dis.enPdtType = 0;
+      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
+      sleep(6);
+      
+      dis.bEnable = 1;
+      dis.enMode = 0;
+      dis.enPdtType = 1;
+      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
+      sleep(6);
+      #endif
       
       #if defined(GSF_CPU_3516d)
       if(strstr(p_cfg->snsname, "imx482") || strstr(p_cfg->snsname, "imx585"))

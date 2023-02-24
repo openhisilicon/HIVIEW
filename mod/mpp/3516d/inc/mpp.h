@@ -234,6 +234,17 @@ typedef struct {
   gsf_mpp_img_3dnr_t  _3dnr;
 }gsf_mpp_img_all_t;
 
+typedef struct {
+  int bFlip;
+  int bMirror;
+}gsf_mpp_img_flip_t;
+    
+typedef struct {
+  int bEnable;
+  int enMode;    //DIS_MODE_4_DOF_GME = 0 ;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+  int enPdtType; //DIS_PDT_TYPE_IPC = 0; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+}gsf_mpp_img_dis_t;
+
 enum {
   GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
   GSF_MPP_ISP_CTL_IMG = 1,    // get gsf_mpp_img_all_t;
@@ -247,6 +258,8 @@ enum {
   GSF_MPP_ISP_CTL_DRC    = 9, // set gsf_mpp_img_drc_t;
   GSF_MPP_ISP_CTL_LDCI   = 10,// set gsf_mpp_img_ldci_t;  
   GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
+  GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
+  GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
