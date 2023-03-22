@@ -452,10 +452,15 @@ int venc_start(int start)
     
     // refresh rgn for st_num+1(JPEG);
     for(k = 0; k < GSF_CODEC_OSD_NUM; k++)
+    {
       gsf_rgn_osd_set(i, k, &codec_ipc.osd[k]);
-      
+      if(codec_ipc.osd[k].en && codec_ipc.osd[k].type == 1)
+        gsf_venc_set_osd_time_idx(i, k);
+    }  
     for(k = 0; k < GSF_CODEC_VMASK_NUM; k++)
+    {
       gsf_rgn_vmask_set(i, k, &codec_ipc.vmask[k]);
+    }  
   }
   
   if(!start)

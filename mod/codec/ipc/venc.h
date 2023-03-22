@@ -56,8 +56,8 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
 
 int gsf_aenc_recv(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void* uargs);
 
+int gsf_venc_usei(int (*sei_fill)(char *buf, int size));
 
-
-
+int gsf_venc_set_osd_time_idx(int ch, int idx);
 
 #endif // __venc_h__

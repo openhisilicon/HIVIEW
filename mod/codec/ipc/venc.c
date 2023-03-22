@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <time.h>
 
 #include "venc.h"
 
@@ -63,7 +64,6 @@ unsigned int cfifo_recput_v(unsigned char *p1, unsigned int n1, unsigned char *p
   VENC_STREAM_S* pstStream = (VENC_STREAM_S*)mgr->pstStream;
   VENC_STREAM_BUF_INFO_S* pstStreamBufInfo = (VENC_STREAM_BUF_INFO_S*)mgr->pstStreamBufInfo;
   
-  
   //printf("\n------------------\n");
 	struct timespec _ts;  
   clock_gettime(CLOCK_MONOTONIC, &_ts);
@@ -89,7 +89,6 @@ unsigned int cfifo_recput_v(unsigned char *p1, unsigned int n1, unsigned char *p
       rec.video.height = sdp.venc.height;
     }
   }
-  
 
 #ifdef __FRM_PHY__
 
@@ -225,10 +224,26 @@ static inline int _venc_sdp_fill(VENC_CHN VeChn, PAYLOAD_TYPE_E pt, VENC_PACK_S*
   return 0;
 }
 
+static int (*_sei_fill)(char *buf, int size);
+
+int gsf_venc_usei(int (*sei_fill)(char *buf, int size))
+{
+  _sei_fill = sei_fill;
+}
+
+static int osd_time_idx[GSF_CODEC_IPC_CHN] = {-1, -1, -1, -1};
+static int osd_time_sec[GSF_CODEC_IPC_CHN] = {0};
+
+int gsf_venc_set_osd_time_idx(int ch, int idx)
+{
+  osd_time_idx[ch] = idx;
+  return 0;
+}
+
 int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs)
 {
   HI_S32 i = 0, len = 0;
-  
+    
   for (i = 0; i < venc_pack_count; i++)
   {
     int pack_size = venc_pack_len - venc_pack_off;
@@ -241,6 +256,15 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
   
   //USEI SIZE;
   venc_mgr[VeChn].usei_len = 0;
+  if(PT == PT_H264 && _sei_fill)
+  {
+    int ret = _sei_fill(venc_mgr[VeChn].usei, sizeof(venc_mgr[VeChn].usei));
+    if(ret > 0)
+    {
+      venc_mgr[VeChn].usei_len = ret;  
+      len += venc_mgr[VeChn].usei_len;
+    }
+  }
   
   if(len+sizeof(gsf_frm_t) > GSF_FRM_MAX_SIZE)
   {
@@ -278,6 +302,34 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
     printf("cfifo VeChn:%d, is full, framesize:%d\n", VeChn, len+sizeof(gsf_frm_t));
     assert(0);
   }
+
+  //osd_time;
+  if(osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM] >= 0 
+    &&  venc_mgr[VeChn].vst%GSF_CODEC_VENC_NUM == 0 
+    && ts1.tv_sec != osd_time_sec[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM])
+  {
+    osd_time_sec[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM] = ts1.tv_sec;
+    
+    time_t _time = time(NULL);
+    struct tm _tm;
+    localtime_r(&_time, &_tm);
+   
+    gsf_osd_t _osd;
+    _osd.en = 1;
+    _osd.type = 0;
+    _osd.fontsize = 0;
+    _osd.point[0] = 10;
+    _osd.point[1] = 10;
+    _osd.wh[0] = 0;
+    _osd.wh[1] = 0;
+    
+    sprintf(_osd.text, "%04d-%02d-%02d %02d:%02d:%02d" 
+        , _tm.tm_year+1900, _tm.tm_mon+1, _tm.tm_mday
+		    , _tm.tm_hour, _tm.tm_min, _tm.tm_sec);
+  
+    gsf_rgn_osd_set(venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM], &_osd);
+  }
+
   
   #ifdef __FRM_PHY__
   return 1;
