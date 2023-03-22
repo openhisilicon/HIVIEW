@@ -428,7 +428,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__GetSystemDateAndTime(struct soap *soap, struct 
     GetTimeResp->SystemDateAndTime->UTCDateTime->Date->Month = time->UTCDateTime.month;
     GetTimeResp->SystemDateAndTime->UTCDateTime->Date->Day = time->UTCDateTime.day;
 
-    GetTimeResp->SystemDateAndTime->UTCDateTime->Time->Hour = time->UTCDateTime.hour + 8;  //assume that beijing time 
+    GetTimeResp->SystemDateAndTime->UTCDateTime->Time->Hour = time->UTCDateTime.hour;
     GetTimeResp->SystemDateAndTime->UTCDateTime->Time->Minute = time->UTCDateTime.minute;
     GetTimeResp->SystemDateAndTime->UTCDateTime->Time->Second = time->UTCDateTime.second;
 
@@ -538,13 +538,13 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetSystemDateAndTime(struct soap *soap, struct 
     memset(_time, 0, sizeof(systime_t));
 
     _time->datetype = SetTimeReq->DateTimeType; //Manual = 0, NTP = 1
-#if 0
+#if 1 //maohw
 	/* TimeZone */
 	if(SetTimeReq->TimeZone)
 	{
 		_TZ  = SetTimeReq->TimeZone->TZ;
                 
-		ret = get_timezone_num(_TZ);
+		//maohw ret = get_timezone_num(_TZ);
 		if(ret == -1)
 		{
 			return SOAP_FAULT;
@@ -552,10 +552,12 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetSystemDateAndTime(struct soap *soap, struct 
 	}
 #endif
 	_time->daylightsaving = SetTimeReq->DaylightSavings;
+	if(_TZ)
+	  strncpy(_time->TZ, _TZ, sizeof(_time->TZ)-1);
 	
 	if(_time->datetype == 1) // NTP
 	{
-        fprintf(stderr, "[%s][%d] using ntp sync!\n", __FUNCTION__, __LINE__);
+    fprintf(stderr, "[%s][%d] using ntp sync!\n", __FUNCTION__, __LINE__);
 		return SOAP_OK;
 	}
 #if 1	
@@ -565,18 +567,8 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetSystemDateAndTime(struct soap *soap, struct 
 		_time->UTCDateTime.year = SetTimeReq->UTCDateTime->Date->Year;
 		_time->UTCDateTime.month = SetTimeReq->UTCDateTime->Date->Month;
 		_time->UTCDateTime.day = SetTimeReq->UTCDateTime->Date->Day;
-        if((SetTimeReq->UTCDateTime->Time->Hour - 8) < 0)
-        {
-            _time->UTCDateTime.hour = 24 + SetTimeReq->UTCDateTime->Time->Hour - 8;//assume that beijing time   
-            _time->UTCDateTime.day = _time->UTCDateTime.day - 1;
-        }
-        else
-        {
-            _time->UTCDateTime.hour = SetTimeReq->UTCDateTime->Time->Hour - 8;//assume that beijing time   
-        }  
-            
-        //time->UTCDateTime.hour = SetTimeReq->UTCDateTime->Time->Hour - 8;//assume that beijing time      
-        _time->UTCDateTime.minute = SetTimeReq->UTCDateTime->Time->Minute;
+    _time->UTCDateTime.hour = SetTimeReq->UTCDateTime->Time->Hour;
+    _time->UTCDateTime.minute = SetTimeReq->UTCDateTime->Time->Minute;
 		_time->UTCDateTime.second = SetTimeReq->UTCDateTime->Time->Second;
                 
 		if((_time->UTCDateTime.hour > 24) 
@@ -1441,6 +1433,8 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetNetworkInterfaces(struct soap *soap, struct 
         return SOAP_FAULT;
     }
 
+    printf("NetworkInterface => IPv4->Enabled:%p, IPv4->Manual:%p, IPv4->DHCP:%p\n", input->NetworkInterface->IPv4->Enabled, input->NetworkInterface->IPv4->Manual, input->NetworkInterface->IPv4->DHCP);
+
     if(input->NetworkInterface->IPv4->Enabled != NULL)
     {
         if(input->NetworkInterface->IPv4->Manual != NULL)
@@ -1451,14 +1445,15 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetNetworkInterfaces(struct soap *soap, struct 
         		{
         			return SOAP_FAULT;
         		}
-                if(strcmp(info->ip_addr, input->NetworkInterface->IPv4->Manual->Address))
-                {
-                    strcpy(info->ip_addr, input->NetworkInterface->IPv4->Manual->Address);
-                }
-                else
-                {
-                    return SOAP_OK;
-                }
+        		info->dhcp_status = 0; //maohw;
+            if(strcmp(info->ip_addr, input->NetworkInterface->IPv4->Manual->Address))
+            {
+                strcpy(info->ip_addr, input->NetworkInterface->IPv4->Manual->Address);
+            }
+            else
+            {
+                //maohw return SOAP_OK;
+            }
         	}                                            
         }
         else
@@ -1472,7 +1467,8 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetNetworkInterfaces(struct soap *soap, struct 
         	}
         }
     }
-    output->RebootNeeded = TRUE;
+    
+    output->RebootNeeded = FALSE;
     set_dev_netinfo(info);
     if(info)
     {
@@ -1486,17 +1482,52 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetNetworkInterfaces(struct soap *soap, struct 
 SOAP_FMAC5 int SOAP_FMAC6 __tds__GetWsdlUrl(struct soap *soap, struct _tds__GetWsdlUrl *tds__GetWsdlUrl, struct _tds__GetWsdlUrlResponse *tds__GetWsdlUrlResponse)
 {
 	tds__GetWsdlUrlResponse->WsdlUrl = "http://www.onvif.org/Documents/Specifications.aspx";
-    return SOAP_OK;
+  return SOAP_OK;
 }
 
 SOAP_FMAC5 int SOAP_FMAC6 __tds__GetNTP(struct soap *soap, struct _tds__GetNTP *tds__GetNTP, struct _tds__GetNTPResponse *tds__GetNTPResponse)
 {
-    return SOAP_OK;
+  
+  tds__GetNTPResponse->NTPInformation = (struct tt__NTPInformation *)soap_malloc(soap, sizeof(struct tt__NTPInformation));
+  
+  tds__GetNTPResponse->NTPInformation->FromDHCP = _false;
+  tds__GetNTPResponse->NTPInformation->__sizeNTPManual = 2;
+  tds__GetNTPResponse->NTPInformation->NTPManual = (struct tt__NetworkHost *)soap_malloc(soap, 2 * sizeof(struct tt__NetworkHost));
+  tds__GetNTPResponse->NTPInformation->NTPManual[0].Type = tt__NetworkHostType__IPv4;
+  tds__GetNTPResponse->NTPInformation->NTPManual[0].IPv4Address = (char **)soap_malloc(soap, sizeof(char *));
+  tds__GetNTPResponse->NTPInformation->NTPManual[0].IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char) * INFO_LENGTH);
+  
+  tds__GetNTPResponse->NTPInformation->NTPManual[1].Type = tt__NetworkHostType__IPv4;
+  tds__GetNTPResponse->NTPInformation->NTPManual[1].IPv4Address = (char **)soap_malloc(soap, sizeof(char *));
+  tds__GetNTPResponse->NTPInformation->NTPManual[1].IPv4Address[0] = (char *)soap_malloc(soap, sizeof(char) * INFO_LENGTH);
+  
+  char ntp[2][INFO_LENGTH];
+  ntp[0][0] = ntp[1][0] = '\0'; 
+  get_ntp_info(ntp[0], ntp[1]);
+
+  strcpy(tds__GetNTPResponse->NTPInformation->NTPManual[0].IPv4Address[0], ntp[0]);
+  strcpy(tds__GetNTPResponse->NTPInformation->NTPManual[1].IPv4Address[0], ntp[1]);
+
+  return SOAP_OK;
 }
 
 SOAP_FMAC5 int SOAP_FMAC6 __tds__SetNTP(struct soap *soap, struct _tds__SetNTP *tds__SetNTP, struct _tds__SetNTPResponse *tds__SetNTPResponse)
 { 
-    return SOAP_OK;
+  char ntp[2][INFO_LENGTH];
+  ntp[0][0] = ntp[1][0] = '\0'; 
+  
+  for(int i = 0; i < tds__SetNTP->__sizeNTPManual && i < 2; i++)
+  {
+    if(tds__SetNTP->NTPManual[i].IPv4Address)
+    {
+      printf("%s => i:%d, [%s]\n", __func__, i, tds__SetNTP->NTPManual[i].IPv4Address[0]);
+      strncpy(ntp[i], tds__SetNTP->NTPManual[i].IPv4Address[0], INFO_LENGTH-1);
+    }
+  }
+  
+  set_ntp_info(ntp[0], ntp[1]);
+  
+  return SOAP_OK;
 }
 
 SOAP_FMAC5 int SOAP_FMAC6 __tds__GetHostname(struct soap *soap, struct _tds__GetHostname *tds__GetHostname, struct _tds__GetHostnameResponse *tds__GetHostnameResponse)
@@ -2998,7 +3029,7 @@ soap *soap, struct _trt__GetVideoEncoderConfigurationOptions *input, struct _trt
         get_dev_capability(g_nvt->t.device_cap, streamtype);
 
         int i, j;
-        for(j = 0; j < t; j++)
+        for(j = 0; j < 4/*maohw max resolution num*/; j++)
         {
             if(!g_nvt->t.device_cap->videostream[stream_num].reswidth[0][j])
                 break;
@@ -5931,7 +5962,8 @@ START:;
         usleep(1000);//2013-09-28 add for cpu usage 100%.
         soap_destroy(&soap);
         soap_end(&soap);
-        if(count > 10)
+        
+        if(0)//if(count > 10)
         {
             error_flag = 1;
             soap_done(&soap);

@@ -520,6 +520,8 @@ extern int set_imaging_conf(int chs, imaging_conf_t *img);
 extern int get_recording_list(nvt_time_t starttime, nvt_time_t endtime);
 extern int get_dev_time(systime_t *time);
 extern int set_dev_time(systime_t *time);
+extern int get_ntp_info(char *ntp1, char *ntp2);
+extern int set_ntp_info(char *ntp1, char *ntp2);
 extern int get_dev_netinfo(net_info_t *info);
 extern int set_dev_netinfo(net_info_t *info);
 extern int get_user_info(user_info_t *info);

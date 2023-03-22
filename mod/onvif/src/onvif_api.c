@@ -10,6 +10,8 @@
 #include "nvc.h"
 #include "nvt.h"
 
+#include "mod/codec/inc/codec.h"
+
 #define MAX_DEST_LEN 1280
 
 /************************************************************************************/
@@ -781,6 +783,8 @@ int set_imaging_conf(int chs, imaging_conf_t *img);
 int get_recording_list(nvt_time_t starttime, nvt_time_t endtime);
 int get_dev_time(systime_t *time);
 int set_dev_time(systime_t *time);
+int get_ntp_info(char *ntp1, char *ntp2);
+int set_ntp_info(char *ntp1, char *ntp2);
 int get_dev_netinfo(net_info_t *info);
 int set_dev_netinfo(net_info_t *info);
 int get_user_info(user_info_t *info);
@@ -1022,32 +1026,45 @@ int get_vec_profiles(int chs, video_encoder_conf_t *info, int num)
 {
     char name[SMALL_INFO_LENGTH];
     char token[SMALL_INFO_LENGTH];
-    int ret = -1;
+    int ret = 0;
     
     memset(name, 0, sizeof(SMALL_INFO_LENGTH));
     memset(token, 0, sizeof(SMALL_INFO_LENGTH));
-    
+    printf("%s => GET chs:%d\n", __func__, chs);
     if(ret == 0)
     {
         if(chs%2 == 0)
-        {          
-            info->BitrateLimit  = 4000;//main.bitrate;
-            info->gLength       = 30;//main.gop;
-            info->hProfile      = 0;//main.level;
-            info->quality       = 0;//main.pic_quilty;
-            info->FrameRateLimit= 30;//main.frame_rate;
-            info->width = 1920;
-            info->height = 1080;
+        {
+          
+          GSF_MSG_DEF(gsf_venc_t, venc, sizeof(gsf_msg_t)+sizeof(gsf_venc_t));
+          ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VENC, chs/2, GET, 0, 0, GSF_IPC_CODEC, 2000);
+          if(ret == 0)
+          {  
+            info->BitrateLimit  = venc->bitrate;
+            info->gLength       = venc->gop;
+            info->hProfile      = venc->profile;
+            info->quality       = venc->qp;
+            info->FrameRateLimit= venc->fps;
+            info->width = venc->width;
+            info->height = venc->height;
+          }
+          printf("%s => GET main ret:%d, fps:%d\n", __func__, ret, info->FrameRateLimit);
         }
         else
         {
-            info->BitrateLimit    = 2000;//second.bitrate;
-            info->gLength         = 30;//second.gop;
-            info->hProfile        = 0;//second.level;
-            info->quality         = 0;//second.pic_quilty;
-            info->FrameRateLimit  = 30;//second.frame_rate;
-            info->width = 704;
-            info->height = 576;
+          GSF_MSG_DEF(gsf_venc_t, venc, sizeof(gsf_msg_t)+sizeof(gsf_venc_t));
+          ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VENC, chs/2, GET, 1, 0, GSF_IPC_CODEC, 2000);
+          if(ret == 0)
+          {  
+            info->BitrateLimit  = venc->bitrate;
+            info->gLength       = venc->gop;
+            info->hProfile      = venc->profile;
+            info->quality       = venc->qp;
+            info->FrameRateLimit= venc->fps;
+            info->width = venc->width;
+            info->height = venc->height;
+          }
+          printf("%s => GET second ret:%d, fps:%d\n", __func__, ret, info->FrameRateLimit);
         }
     }
     else
@@ -1232,31 +1249,46 @@ int set_vsc_conf(int chs, video_source_conf_t *info)
 int set_vec_conf(int chs, video_encoder_conf_t *info)
 {
     int ret = 0;
-
+    
     if(ret == 0)
     {
-        #if 0
-        sdk_encode_t *videoconf = NULL;
         if(chs%2 == 0)
-        {  
-            videoconf->main.bitrate =     info->BitrateLimit;
-            videoconf->main.frame_rate =  info->FrameRateLimit;
-            videoconf->main.gop =         info->gLength;
-            videoconf->main.pic_quilty =  info->quality;
-            videoconf->main.level =       info->hProfile;
-            videoconf->main.resolution =  (info->width == 1280) && (info->height == 720);
+        {
+          
+          GSF_MSG_DEF(gsf_venc_t, venc, sizeof(gsf_msg_t)+sizeof(gsf_venc_t));
+          ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VENC, chs/2, GET, 0, 0, GSF_IPC_CODEC, 2000);
+          if(ret == 0)
+          {  
+            venc->width = info->width;
+            venc->height = info->height;
+            venc->fps = info->FrameRateLimit;
+            venc->gop = info->gLength;
+            venc->bitrate = info->BitrateLimit;
+            venc->profile = info->hProfile;
+            venc->qp = info->quality;
+
+            ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VENC, 0, SET, 0, sizeof(gsf_venc_t), GSF_IPC_CODEC, 2000);
+            printf("%s => SET main ret:%d\n", __func__, ret);
+          }
         }
         else
         {
-            videoconf->second.bitrate = info->BitrateLimit;
-            videoconf->second.frame_rate = info->FrameRateLimit;
-            videoconf->second.gop = info->gLength;
-            videoconf->second.pic_quilty = info->quality;
-            videoconf->second.level = info->hProfile;
-            videoconf->second.resolution = (info->width == 352) && (info->height == 288);
+          GSF_MSG_DEF(gsf_venc_t, venc, sizeof(gsf_msg_t)+sizeof(gsf_venc_t));
+          ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VENC, chs/2, GET, 1, 0, GSF_IPC_CODEC, 2000);
+          if(ret == 0)
+          {  
+            venc->width = info->width;
+            venc->height = info->height;
+            venc->fps = info->FrameRateLimit;
+            venc->gop = info->gLength;
+            venc->bitrate = info->BitrateLimit;
+            venc->profile = info->hProfile;
+            venc->qp = info->quality;
 
+            ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VENC, 0, SET, 1, sizeof(gsf_venc_t), GSF_IPC_CODEC, 2000);
+            printf("%s => SET second ret:%d\n", __func__, ret);
+          }
         }
-        #endif
     }
     else
     {
@@ -1296,55 +1328,147 @@ int set_imaging_conf(int chs, imaging_conf_t *img)
     return ret;
 }
 
-int get_dev_time(systime_t *time)
+int get_dev_time(systime_t *_time)
 {
     int ret = 0;
-#if 0
-    nvt_time_t *time_cfg;
-    time->datetype = Manual;
-    strcpy(time->TZ, "GMT+08");
-    time->daylightsaving = 0;
-    time->UTCDateTime.year   = time_cfg->year;
-    time->UTCDateTime.month  = time_cfg->mon;
-    time->UTCDateTime.day    = time_cfg->day;
-    time->UTCDateTime.hour   = time_cfg->hour;
-    time->UTCDateTime.minute = time_cfg->min;
-    time->UTCDateTime.second = time_cfg->sec;
-    time->LocalDateTime = time->UTCDateTime;
-#endif
+    
+    time_t _t = time(NULL);
+    struct tm _tm, _gm;
+    gmtime_r(&_t, &_gm);
+    localtime_r(&_t, &_tm);
+    
+    char *z = getenv("TZ");
+
+    if(strlen(z))
+    {
+      char s = '+';
+      int hour = 0, min = 0;
+      sscanf(z, "UTC%c%d:%02d", &s, &hour, &min);
+      sprintf(_time->TZ, "UTC%c%02d:%02d", s, hour, min);
+    }
+
+    _time->datetype = Manual;
+    _time->daylightsaving = 0;
+    _time->UTCDateTime.year   = _gm.tm_year + 1900;
+    _time->UTCDateTime.month  = _gm.tm_mon + 1;
+    _time->UTCDateTime.day    = _gm.tm_mday;
+    _time->UTCDateTime.hour   = _gm.tm_hour;
+    _time->UTCDateTime.minute = _gm.tm_min;
+    _time->UTCDateTime.second = _gm.tm_sec;
+    
+    printf("%s => UTC [%04d-%02d-%02d %02d:%02d:%02d %s] ret:%d\n", __func__
+          , _time->UTCDateTime.year, _time->UTCDateTime.month, _time->UTCDateTime.day
+          , _time->UTCDateTime.hour, _time->UTCDateTime.minute,_time->UTCDateTime.second, _time->TZ
+          , ret);    
+    
+    _time->LocalDateTime.year   = _tm.tm_year + 1900;
+    _time->LocalDateTime.month  = _tm.tm_mon + 1;
+    _time->LocalDateTime.day    = _tm.tm_mday;
+    _time->LocalDateTime.hour   = _tm.tm_hour;
+    _time->LocalDateTime.minute = _tm.tm_min;
+    _time->LocalDateTime.second = _tm.tm_sec;
+    
+    printf("%s => LOCAL [%04d-%02d-%02d %02d:%02d:%02d %s] ret:%d\n", __func__
+          , _time->LocalDateTime.year, _time->LocalDateTime.month, _time->LocalDateTime.day
+          , _time->LocalDateTime.hour, _time->LocalDateTime.minute,_time->LocalDateTime.second, _time->TZ
+          , ret);
     return 0;
 }
 
-int set_dev_time(systime_t *time)
+int set_dev_time(systime_t *_time)
 {
-    int ret = 0;
-#if 0
-    nvt_time_t *time_cfg;
-    time_cfg->year = time->UTCDateTime.year;
-    time_cfg->mon  = time->UTCDateTime.month;
-    time_cfg->day  = time->UTCDateTime.day;
-    time_cfg->hour = time->UTCDateTime.hour;
-    time_cfg->min  = time->UTCDateTime.minute;
-    time_cfg->sec  = time->UTCDateTime.second;
-#endif
-    return ret;
+  int ret = 0;
+  
+  GSF_MSG_DEF(gsf_time_t, t, sizeof(gsf_msg_t)+sizeof(gsf_time_t));
+  
+  struct tm e2;
+    
+  e2.tm_year = _time->UTCDateTime.year - 1900;
+  e2.tm_mon  = _time->UTCDateTime.month - 1;
+  e2.tm_mday = _time->UTCDateTime.day;
+  e2.tm_hour = _time->UTCDateTime.hour;
+  e2.tm_min  = _time->UTCDateTime.minute;
+  e2.tm_sec  = _time->UTCDateTime.second;
+    
+  printf("%s => UTC [%04d-%02d-%02d %02d:%02d:%02d %s]\n", __func__
+        , e2.tm_year + 1900, e2.tm_mon + 1, e2.tm_mday
+        , e2.tm_hour, e2.tm_min,e2.tm_sec, _time->TZ);
+  
+  time_t _new = timegm(&e2);
+  localtime_r(&_new, &e2);
+  
+  t->year   = e2.tm_year;
+  t->month  = e2.tm_mon; 
+  t->day    = e2.tm_mday;
+  t->hour   = e2.tm_hour;
+  t->minute = e2.tm_min; 
+  t->second = e2.tm_sec;
+  
+  if(strlen(_time->TZ))
+  { 
+    char s = '+';
+    int hour = 0, min = 0;
+    sscanf(_time->TZ, "UTC%c%d:%02d", &s, &hour, &min);
+    t->zone = (hour*60 + min) * (s=='+'?1:-1);
+  }
+  ret = GSF_MSG_SENDTO(GSF_ID_BSP_TIME, 0, SET, 0, sizeof(gsf_time_t), GSF_IPC_BSP, 2000);
+  printf("%s => LOCAL [%04d-%02d-%02d %02d:%02d:%02d %s]\n", __func__
+        , e2.tm_year + 1900, e2.tm_mon + 1, e2.tm_mday
+        , e2.tm_hour, e2.tm_min,e2.tm_sec, _time->TZ);
+
+  return ret;
 }
+
+int get_ntp_info(char *ntp1, char *ntp2)
+{
+  int ret = 0;
+  GSF_MSG_DEF(gsf_ntp_t, ntp, sizeof(gsf_msg_t)+sizeof(gsf_ntp_t));
+  ret = GSF_MSG_SENDTO(GSF_ID_BSP_NTP, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
+  if(strlen(ntp->server1))
+    strcpy(ntp1, &ntp->server1[strlen("server ")]);
+  if(strlen(ntp->server2))
+    strcpy(ntp2, &ntp->server2[strlen("server ")]);
+  return 0;
+}
+int set_ntp_info(char *ntp1, char *ntp2)
+{
+  int ret = 0;
+  
+  if(!strlen(ntp1) && !strlen(ntp2))
+    return ret;
+ 
+  GSF_MSG_DEF(gsf_ntp_t, ntp, sizeof(gsf_msg_t)+sizeof(gsf_ntp_t));
+  ntp->prog = 600;
+  if(strlen(ntp1))
+    sprintf(ntp->server1, "server %s", ntp1);
+  if(strlen(ntp2))
+    sprintf(ntp->server2, "server %s", ntp2);  
+  ret = GSF_MSG_SENDTO(GSF_ID_BSP_NTP, 0, SET, 0, sizeof(gsf_ntp_t), GSF_IPC_BSP, 2000);
+
+  return 0;
+}
+
+
 
 int get_dev_netinfo(net_info_t *info)
 {
     int ret = 0;
-#if 0
-  	sdk_ip_info_t *ip_info;
-    info->dhcp_status = ip_info->enable_dhcp;
-    strncpy(info->dns1, ip_info->dns1, sizeof(info->dns1));
-    strncpy(info->dns2, ip_info->dns2, sizeof(info->dns2));
-    strncpy(info->gateway, ip_info->gateway, sizeof(info->gateway));
-    strncpy(info->if_name, ip_info->if_name, sizeof(info->if_name));
-    strncpy(info->ip_addr, ip_info->ip_addr, sizeof(info->ip_addr));
-    strncpy(info->mac, ip_info->mac, sizeof(info->mac));
-    strncpy(info->mask, ip_info->mask, sizeof(info->mask));
-    info->dns_auto = ip_info->dns_auto_en;
-#endif
+    GSF_MSG_DEF(gsf_eth_t, eth, sizeof(gsf_msg_t)+sizeof(gsf_eth_t));
+    ret = GSF_MSG_SENDTO(GSF_ID_BSP_ETH, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
+    printf("%s => ret:%d\n", __func__, ret);
+    if(ret < 0)
+      return ret;
+  	
+    info->dhcp_status = eth->dhcp;
+    strncpy(info->dns1, eth->dns1, sizeof(info->dns1));
+    strncpy(info->dns2, eth->dns2, sizeof(info->dns2));
+    strncpy(info->gateway, eth->gateway, sizeof(info->gateway));
+    strncpy(info->if_name, "eth0", sizeof(info->if_name));
+    strncpy(info->ip_addr, eth->ipaddr, sizeof(info->ip_addr));
+    strncpy(info->mac, eth->mac, sizeof(info->mac));
+    strncpy(info->mask, eth->netmask, sizeof(info->mask));
+    info->dns_auto = eth->dhcp;
+
     return ret;
 }
 
@@ -1361,21 +1485,20 @@ int get_dev_portinfo(port_info_t *info)
 
 int set_dev_netinfo(net_info_t *info)
 {
-    int ret;
-#if 0
-  	sdk_ip_info_t *ip_info;
-    ip_info->enable_dhcp = info->dhcp_status;
-    strncpy(ip_info->gateway, info->gateway, sizeof(info->gateway));
-    strncpy(ip_info->if_name, info->if_name, sizeof(info->if_name));
-    strncpy(ip_info->ip_addr, info->ip_addr, sizeof(info->ip_addr));
-    strncpy(ip_info->mac, info->mac, sizeof(info->mac));
-    strncpy(ip_info->mask, info->mask, sizeof(info->mask));
-    ip_info->dns_auto_en = info->dns_auto;
-    sprintf(ip_info->dns1, "%s", info->dns1);
-    sprintf(ip_info->dns2, "%s", info->dns2);
-#endif
-    get_dev_netinfo(info);
-    return 0;
+    int ret = 0;
+    GSF_MSG_DEF(gsf_eth_t, eth, sizeof(gsf_msg_t)+sizeof(gsf_eth_t));
+    
+    eth->dhcp = info->dhcp_status;
+    strncpy(eth->gateway, info->gateway, sizeof(info->gateway));
+    strncpy(eth->ipaddr, info->ip_addr, sizeof(info->ip_addr));
+    strncpy(eth->netmask, info->mask, sizeof(info->mask));
+    strncpy(eth->mac, info->mac, sizeof(info->mac));
+    sprintf(eth->dns1, "%s", info->dns1);
+    sprintf(eth->dns2, "%s", info->dns2);
+    
+    ret = GSF_MSG_SENDTO(GSF_ID_BSP_ETH, 0, SET, 0, sizeof(gsf_eth_t), GSF_IPC_BSP, 2000);
+    printf("%s => ret:%d, info->dhcp_status:%d\n", __func__, ret, info->dhcp_status);
+    return ret;
 }
 
 int set_dev_portinfo(port_info_t *info)
@@ -1521,18 +1644,22 @@ int fill_resolutions(device_capability_t *dev_cap, int stream_type, int i, int i
     {
       case MAIN_STREAM:
         {
-          dev_cap->videostream[i].resheight[index][0] = 720;
-          dev_cap->videostream[i].reswidth[index][0]  = 1280;
-          dev_cap->videostream[i].resheight[index][1] = 1080;
-          dev_cap->videostream[i].reswidth[index][1]  = 1920;
+          dev_cap->videostream[i].resheight[index][0] = 2160;
+          dev_cap->videostream[i].reswidth[index][0]  = 3840;
+          dev_cap->videostream[i].resheight[index][1] = 1536;
+          dev_cap->videostream[i].reswidth[index][1]  = 2592;
+          dev_cap->videostream[i].resheight[index][2] = 1080;
+          dev_cap->videostream[i].reswidth[index][2]  = 1920;
         }
         break;
       case SUB_STREAM:
         {
-          dev_cap->videostream[i].resheight[index][0] = 576;
-          dev_cap->videostream[i].reswidth[index][0]  = 704;
-          dev_cap->videostream[i].resheight[index][1] = 288;
-          dev_cap->videostream[i].reswidth[index][1]  = 352;
+          dev_cap->videostream[i].resheight[index][0] = 1080;
+          dev_cap->videostream[i].reswidth[index][0]  = 1920;
+          dev_cap->videostream[i].resheight[index][1] = 720;
+          dev_cap->videostream[i].reswidth[index][1]  = 1280;
+          dev_cap->videostream[i].resheight[index][2] = 480;
+          dev_cap->videostream[i].reswidth[index][2]  = 720;
         }
         break;
       default:
@@ -1553,7 +1680,7 @@ int get_dev_capability(device_capability_t *dev_cap, int stream_type)
         if(encodetype & _H264)
         {
             dev_cap->videostream[i].encodeformat |= _H264;
-            dev_cap->videostream[i].maxframe[0] = 25;
+            dev_cap->videostream[i].maxframe[0] = 30;
             dev_cap->videostream[i].minframe[0] = 1;
             dev_cap->videostream[i].maxgovlen[0] = 200;
             dev_cap->videostream[i].mingovlen[0] = 1;
@@ -1569,7 +1696,7 @@ int get_dev_capability(device_capability_t *dev_cap, int stream_type)
         else if(encodetype & _JPEG)
         {
             dev_cap->videostream[i].encodeformat |= _JPEG;
-            dev_cap->videostream[i].maxframe[1] = 25;
+            dev_cap->videostream[i].maxframe[1] = 30;
             dev_cap->videostream[i].minframe[1] = 1;
             dev_cap->videostream[i].maxgovlen[1] = 200;
             dev_cap->videostream[i].mingovlen[1] = 1;
@@ -1581,7 +1708,7 @@ int get_dev_capability(device_capability_t *dev_cap, int stream_type)
         else if(encodetype & _MPEG4)
         {
             dev_cap->videostream[i].encodeformat |= _MPEG4;
-            dev_cap->videostream[i].maxframe[2] = 25;
+            dev_cap->videostream[i].maxframe[2] = 30;
             dev_cap->videostream[i].minframe[2] = 1;
             dev_cap->videostream[i].maxgovlen[2] = 200;
             dev_cap->videostream[i].mingovlen[2] = 1;
