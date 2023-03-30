@@ -140,9 +140,19 @@ void rtc_RtcOnMessage(UINT64 customData, PRtcDataChannel dc, BOOL isBinary, PBYT
   }
 }
 
+char* peer_conn_state[RTC_PEER_CONNECTION_TOTAL_STATE_COUNT] = {
+    "RTC_PEER_CONNECTION_STATE_NONE"
+    ,"RTC_PEER_CONNECTION_STATE_NEW"
+    ,"RTC_PEER_CONNECTION_STATE_CONNECTING"
+    ,"RTC_PEER_CONNECTION_STATE_CONNECTED"
+    ,"RTC_PEER_CONNECTION_STATE_DISCONNECTED"
+    ,"RTC_PEER_CONNECTION_STATE_FAILED"
+    ,"RTC_PEER_CONNECTION_STATE_CLOSED"
+};
+
 void rtc_RtcOnConnectionStateChange(UINT64 customData, RTC_PEER_CONNECTION_STATE state)
 {
-  printf("@@@@@@@@@@@@@@@@@@ state: %d @@@@@@@@@@@@@@@@@@\n", state);
+  warn("@@@@@@ state: [%s] @@@@@@\n", peer_conn_state[state]);
   
   rtc_sess_t *rtc_sess = (rtc_sess_t*)customData;
   
@@ -187,13 +197,14 @@ rtc_sess_t *__rtc_sess_new()
   //conf_.kvsRtcConfiguration.generatedCertificateBits = 2048;
   conf_.kvsRtcConfiguration.generateRSACertificate = 1;
   
-  strcpy(conf_.iceServers[0].urls, "stun:openrelay.metered.ca:80");
-  strcpy(conf_.iceServers[1].urls, "turn:openrelay.metered.ca:80");
   strcpy(conf_.iceServers[1].username, "openrelayproject");
   strcpy(conf_.iceServers[1].credential, "openrelayproject");
+  
+  strcpy(conf_.iceServers[0].urls, "stun:openrelay.metered.ca:80");
+  strcpy(conf_.iceServers[1].urls, "turn:openrelay.metered.ca:80");
   //https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
-  //strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.us-west-2.amazonaws.com:443");
-  //strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.ap-east-1.amazonaws.com:443");
+  strcpy(conf_.iceServers[0].urls, "stun:stun.kinesisvideo.us-west-2.amazonaws.com:443");
+  strcpy(conf_.iceServers[1].urls, "stun:stun.kinesisvideo.ap-east-1.amazonaws.com:443");
 
   ret = createPeerConnection(&conf_, &rtc_sess->peer_);
   printf("createPeerConnection ret:%x\n", ret);
