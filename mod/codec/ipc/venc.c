@@ -236,6 +236,7 @@ static int osd_time_sec[GSF_CODEC_IPC_CHN] = {0};
 
 int gsf_venc_set_osd_time_idx(int ch, int idx)
 {
+  printf("ch:%d, idx:%d\n", ch, idx);
   osd_time_idx[ch] = idx;
   return 0;
 }
@@ -326,7 +327,7 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
     sprintf(_osd.text, "%04d-%02d-%02d %02d:%02d:%02d" 
         , _tm.tm_year+1900, _tm.tm_mon+1, _tm.tm_mday
 		    , _tm.tm_hour, _tm.tm_min, _tm.tm_sec);
-  
+    //printf("ch:%d, idx:%d\n", venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM]);
     gsf_rgn_osd_set(venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM], &_osd);
   }
 

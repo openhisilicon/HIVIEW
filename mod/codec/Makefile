@@ -25,15 +25,15 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lcomm -lpthread -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lm
          
 ifeq ($(GSF_CPU_ARCH), 3516a)
-LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -laf -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker -l_hiacs -l_hiir_auto -ltde
 else ifeq ($(GSF_CPU_ARCH), 3519)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hiaf -l_hidefog \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -ltde
 else ifeq ($(GSF_CPU_ARCH), 3516d)
-#LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+#LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -laf -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
 #        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -ltde
-LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -laf -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker -l_hiir_auto -ltde
 else ifeq ($(GSF_CPU_ARCH), 3519a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
@@ -48,7 +48,7 @@ else ifeq ($(GSF_CPU_ARCH), 3516e)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -ltde
 else ifeq ($(GSF_CPU_ARCH), 3559)
-LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiir_auto -l_hiacs -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiir_auto -l_hiacs -l_hiae -l_hiawb -laf -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker -ltde
 else ifeq ($(GSF_CPU_ARCH), 3531d)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \

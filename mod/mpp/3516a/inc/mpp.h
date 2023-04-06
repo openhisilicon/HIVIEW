@@ -39,7 +39,8 @@ typedef struct {
 }gsf_mpp_af_t;
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af);
-
+int af_get_vd(void);
+int af_get_value(HI_U32 FV[2]);
 
 //vpss;
 typedef struct {

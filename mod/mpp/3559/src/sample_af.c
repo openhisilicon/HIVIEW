@@ -25,7 +25,9 @@ static int af_runing = 0;
 static pthread_t af_tid;
 static gsf_mpp_af_t af_ini;
 
-#if 1
+#define LDM_LENS 1 //ldm;
+
+#if LDM_LENS
 static unsigned short  AFWeight[AE_ZONE_ROW][AE_ZONE_COLUMN] =
 {
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
@@ -45,24 +47,24 @@ static unsigned short  AFWeight[AE_ZONE_ROW][AE_ZONE_COLUMN] =
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} 
 
 };
-#else
+#else //ori
 static int AFWeight[AE_ZONE_ROW][AE_ZONE_COLUMN] =
 {
-  {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-  {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
-  {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 6, 6, 6, 6, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 6, 6, 6, 6, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 6, 6, 6, 6, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1},
-  {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
-  {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
-  {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+	{1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 4, 4, 4, 4, 2, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 6, 6, 6, 6, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 6, 9, 9, 6, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 6, 9, 9, 6, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 6, 9, 9, 6, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 6, 6, 6, 6, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 1},
+	{1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+	{1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
 
 #endif
@@ -105,54 +107,85 @@ int af_set_statistic(VI_PIPE ViPipe)
 	return HI_SUCCESS;
 }
 
-void* af_task(void * argv)
-{	
+int af_get_vd(void)
+{
+  HI_S32 s32Ret = 0;
+  s32Ret = HI_MPI_ISP_GetVDTimeOut(0, ISP_VD_FE_START, 5000);
+  return s32Ret;
+}
+
+int af_get_value(HI_U32 FV[2])
+{
 	ISP_AF_STATISTICS_S stIspStatics;
 	HI_S32 s32Ret = 0;
-	HI_U32 u32SumFv1 = 0, u32SumFv2 = 0, u32WgtSum = 0, u32Gain = 0;
+	HI_U32 u32SumFv1 = 0, u32SumFv2 = 0, u32WgtSum = 0;
 	HI_U32 u32Fv1_n = 0, u32Fv2_n = 0;
 	int i = 0, j = 0;
 
+	s32Ret = HI_MPI_ISP_GetFocusStatistics(0, &stIspStatics);
+	if (HI_SUCCESS != s32Ret)
+	{
+		printf("HI_MPI_ISP_GetStatistics error!(s32Ret = 0x%x)\n", s32Ret);
+		return s32Ret;
+	}
+	
+	u32SumFv1 = u32SumFv2 = u32WgtSum = 0;
+	for (i = 0; i < AF_ZONE_ROW; i++)
+	{
+		for (j = 0; j < AF_ZONE_COLUMN; j++)
+		{
+			HI_U32 u32H1, u32H2, u32V1, u32V2;
+			
+			if(FEAF == 1)
+			{
+				u32H1 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16h1;
+				u32H2 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16h2;
+				u32V1 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16v1;
+				u32V2 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16v2;
+			}
+			else
+			{
+				u32H1 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16h1;
+				u32H2 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16h2;
+				u32V1 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16v1;
+				u32V2 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16v2;	
+			}
+			
+			u32Fv1_n = (u32H1 * ALPHA + u32V1 * ((1<<BLEND_SHIFT) - ALPHA)) >> BLEND_SHIFT;
+			u32Fv2_n = (u32H2 * BELTA + u32V2 * ((1<<BLEND_SHIFT) - BELTA)) >> BLEND_SHIFT;
+
+			u32SumFv1 += AFWeight[i][j] * u32Fv1_n;
+			u32SumFv2 += AFWeight[i][j] * u32Fv2_n;
+			u32WgtSum += AFWeight[i][j];
+		}
+	}
+	
+  #if LDM_LENS
+  FV[0] = u32SumFv1;
+	FV[1] = u32SumFv2;
+	#else //ori
+	FV[0] = u32SumFv1 / u32WgtSum;
+	FV[1] = u32SumFv2 / u32WgtSum;
+  #endif
+
+  return s32Ret;
+}
+
+void* af_task(void * argv)
+{	
+	HI_S32 s32Ret = 0;
+  HI_U32 FV[2] = {0};
+  HI_S32 i = 0, u32Gain = 0;
+
 	while (af_runing)
 	{
-		s32Ret = HI_MPI_ISP_GetVDTimeOut(0, ISP_VD_FE_START, 5000);
-
-		s32Ret |= HI_MPI_ISP_GetFocusStatistics(0, &stIspStatics);
+		s32Ret = af_get_vd();
+		s32Ret |= af_get_value(FV);
 		if (HI_SUCCESS != s32Ret)
 		{
 			printf("HI_MPI_ISP_GetStatistics error!(s32Ret = 0x%x)\n", s32Ret);
 			sleep(5);
 			continue;
-		}
-		u32SumFv1 = u32SumFv2 = u32WgtSum = 0;
-		for (i = 0; i < AF_ZONE_ROW; i++)
-		{
-			for (j = 0; j < AF_ZONE_COLUMN; j++)
-			{
-				HI_U32 u32H1, u32H2, u32V1, u32V2;
-				
-				if(FEAF == 1)
-				{
-  				u32H1 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16h1;
-  				u32H2 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16h2;
-  				u32V1 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16v1;
-  				u32V2 = stIspStatics.stFEAFStat.stZoneMetrics[0][i][j].u16v2;
-				}
-				else
-				{
-  				u32H1 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16h1;
-  				u32H2 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16h2;
-  				u32V1 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16v1;
-  				u32V2 = stIspStatics.stBEAFStat.stZoneMetrics[i][j].u16v2;	
-				}
-				
-				u32Fv1_n = (u32H1 * ALPHA + u32V1 * ((1<<BLEND_SHIFT) - ALPHA)) >> BLEND_SHIFT;
-				u32Fv2_n = (u32H2 * BELTA + u32V2 * ((1<<BLEND_SHIFT) - BELTA)) >> BLEND_SHIFT;
-
-				u32SumFv1 += AFWeight[i][j] * u32Fv1_n;
-				u32SumFv2 += AFWeight[i][j] * u32Fv2_n;
-				u32WgtSum += AFWeight[i][j];
-			}
 		}
 		
 		// ISP_EXP_INFO_S
@@ -168,7 +201,7 @@ void* af_task(void * argv)
 
 		if(af_ini.cb)
 		{
-		  af_ini.cb(u32SumFv1, u32SumFv2, u32Gain, af_ini.uargs);
+		  af_ini.cb(FV[0], FV[1], u32Gain, af_ini.uargs);
 		}
 	}
 	printf("%s exit.\n", __func__);
@@ -183,6 +216,12 @@ int sample_af_main(gsf_mpp_af_t *af)
   {
     printf("af_set_statistic err.\n");
     return -1;
+  }
+  
+  if(af_ini.cb == NULL)
+  {
+    printf("af.cb = NULL.\n"); 
+    return 0;
   }
   
   af_runing = 1;

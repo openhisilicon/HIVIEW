@@ -7,6 +7,7 @@ CFLAGS := $(shell echo ${GSF_CFLAGS})
 LDFLAGS := -shared -g $(shell echo ${GSF_LDFLAGS})
 TARG := lib/libmpp.so
 
+#CFLAGS += -D__GUIDE__
 #============================================================= 
 
 INCS := -I$(HOME) -Isrc -Iinc -Iinc/hisisdk -Iinc/common -Iinc/scene_auto

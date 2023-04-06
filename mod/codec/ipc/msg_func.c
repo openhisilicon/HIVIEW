@@ -97,10 +97,8 @@ static void msg_func_osd(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
       gsf_rgn_osd_set(req->ch, req->sid, osd);
     }
     
-    if(osd->en && osd->type == 1)
-    {
-      gsf_venc_set_osd_time_idx(req->ch, req->sid);
-    }  
+    if(osd->type == 1)
+      gsf_venc_set_osd_time_idx(req->ch, (osd->en)?req->sid:-1);
       
     rsp->err  = 0;
     rsp->size = 0;
@@ -217,8 +215,6 @@ static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   }
 }
 
-
-extern int zoom_plus;
 static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   rsp->err  = 0;
@@ -233,11 +229,9 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
       rsp->err = gsf_lens_ircut(req->ch, lens->arg1);
       break;
     case GSF_LENS_STOP:
-      zoom_plus = 0;
       rsp->err = gsf_lens_stop(req->ch);
       break;
     case GSF_LENS_ZOOM:
-      zoom_plus = (lens->arg1)?1:-1;
       rsp->err = gsf_lens_zoom(req->ch, lens->arg1, lens->arg2);
       break;
     case GSF_LENS_FOCUS:

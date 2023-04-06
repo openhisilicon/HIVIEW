@@ -171,10 +171,10 @@ static int sub_recv(char *msg, int size, int err)
       osd.en = 1;
       osd.type = 0;
       osd.fontsize = 0;
-      osd.point[0] = (unsigned int)((float)mds->result[i].rect[0]/(float)mds->w*1920)&(-1);
-      osd.point[1] = (unsigned int)((float)mds->result[i].rect[1]/(float)mds->h*1080)&(-1);
-      osd.wh[0]    = (unsigned int)((float)mds->result[i].rect[2]/(float)mds->w*1920)&(-1);
-      osd.wh[1]    = (unsigned int)((float)mds->result[i].rect[3]/(float)mds->h*1080)&(-1);
+      osd.point[0] = (unsigned int)((float)mds->result[i].rect[0]/(float)mds->w*codec_ipc.venc[0].width)&(-1);
+      osd.point[1] = (unsigned int)((float)mds->result[i].rect[1]/(float)mds->h*codec_ipc.venc[0].height)&(-1);
+      osd.wh[0]    = (unsigned int)((float)mds->result[i].rect[2]/(float)mds->w*codec_ipc.venc[0].width)&(-1);
+      osd.wh[1]    = (unsigned int)((float)mds->result[i].rect[3]/(float)mds->h*codec_ipc.venc[0].height)&(-1);
       
       sprintf(osd.text, "ID: %d", i);
       
@@ -198,12 +198,10 @@ static int sub_recv(char *msg, int size, int err)
       osd.type = 0;
       osd.fontsize = 1;
 
-      //osd.point[0] = 16+i*300;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
-      //osd.point[1] = 16;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
-      osd.point[0] = (unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
-      osd.point[1] = (unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
-      osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*1920)&(-1);
-      osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*1080)&(-1);
+      osd.point[0] = (unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*codec_ipc.venc[0].width)&(-1);
+      osd.point[1] = (unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*codec_ipc.venc[0].height)&(-1);
+      osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*codec_ipc.venc[0].width)&(-1);
+      osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*codec_ipc.venc[0].height)&(-1);
       
       char utf8str[32] = {0};
       gsf_gb2312_to_utf8(lprs->result[i].number, strlen(lprs->result[i].number), utf8str);
@@ -450,16 +448,19 @@ int venc_start(int start)
       st.s32Cnt++;
     }
     
-    // refresh rgn for st_num+1(JPEG);
-    for(k = 0; k < GSF_CODEC_OSD_NUM; k++)
+    if(0 == j)//for each channel;
     {
-      gsf_rgn_osd_set(i, k, &codec_ipc.osd[k]);
-      if(codec_ipc.osd[k].en && codec_ipc.osd[k].type == 1)
-        gsf_venc_set_osd_time_idx(i, k);
-    }  
-    for(k = 0; k < GSF_CODEC_VMASK_NUM; k++)
-    {
-      gsf_rgn_vmask_set(i, k, &codec_ipc.vmask[k]);
+      // refresh rgn for st_num+1(JPEG);
+      for(k = 0; k < GSF_CODEC_OSD_NUM; k++)
+      {
+        gsf_rgn_osd_set(i, k, &codec_ipc.osd[k]);
+        if(codec_ipc.osd[k].type == 1)
+          gsf_venc_set_osd_time_idx(i, (codec_ipc.osd[k].en)?k:-1);
+      }  
+      for(k = 0; k < GSF_CODEC_VMASK_NUM; k++)
+      {
+        gsf_rgn_vmask_set(i, k, &codec_ipc.vmask[k]);
+      }
     }  
   }
   
@@ -1193,7 +1194,7 @@ int vo_start()
 }
 
 
-int zoom_plus = 0;
+int dzoom_plus = 0;
 
 int main(int argc, char *argv[])
 {
@@ -1298,20 +1299,20 @@ int main(int argc, char *argv[])
       gsf_mpp_img_dis_t dis;
       
       dis.bEnable = 0;
-      dis.enMode = 0;
+      dis.enMode = DIS_MODE_6_DOF_GME;
       dis.enPdtType = 0;
       gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
       sleep(6);
       
       dis.bEnable = 1;
-      dis.enMode = 0;
+      dis.enMode = DIS_MODE_6_DOF_GME;
       dis.enPdtType = 1;
       gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
       sleep(6);
       #endif
       
       #if defined(GSF_CPU_3516d)
-      if(strstr(p_cfg->snsname, "imx482") || strstr(p_cfg->snsname, "imx585"))
+      //if(strstr(p_cfg->snsname, "imx482") || strstr(p_cfg->snsname, "imx585"))
       {
         #define ZOOM_STEPS 100
         #define STEP_X  (MAX_W-MIN_W)/ZOOM_STEPS/2
@@ -1332,17 +1333,17 @@ int main(int argc, char *argv[])
           MIN_H = MAX_H/3.0;
         }
         
-        if(zoom_plus > 0)
+        if(dzoom_plus > 0)
         {
           if(cnt < ZOOM_STEPS-1)
             cnt++;
         }
-        else if(zoom_plus < 0)
+        else if(dzoom_plus < 0)
         {
           if(cnt > 0)
             --cnt;
         }
-        if(zoom_plus)
+        if(dzoom_plus)
         {
           int step = cnt%ZOOM_STEPS;
           VPSS_CROP_INFO_S stcrop;

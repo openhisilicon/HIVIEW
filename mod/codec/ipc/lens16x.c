@@ -5,8 +5,11 @@
 #include "cfg.h"
 #include "lens.h"
 #include "mpp.h"
+#include "fw/libaf/inc/af_ptz.h"
 
 #define DEBUG 0
+
+extern int dzoom_plus;
 
 static int _sensor_flag = 0;
 static gsf_lens_ini_t _ini;
@@ -171,9 +174,19 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
   return 0;
 }
 
+//lens-type 0: ldm lens, 1: sony lens, 2: computar, 3: hiview;
+
 int lens16x_lens_start(int ch, char *ttyAMA)
 {
-  if(codec_ipc.lenscfg.lens == 2)
+  if(codec_ipc.lenscfg.lens == 3)
+  {
+    af_ptz_fv_t fvcb = {
+      .get_vd = af_get_vd,
+      .get_value = af_get_value,
+    };
+    af_ptz_init(&fvcb);
+  }  
+  else if(codec_ipc.lenscfg.lens == 2)
   {
     system("himm 0x114F0058 0; himm 0x114F005c 0");
     system("echo 30 > /sys/class/gpio/export; echo 31 > /sys/class/gpio/export");
@@ -209,21 +222,30 @@ int lens16x_lens_start(int ch, char *ttyAMA)
   
   gsf_mpp_af_t af = {
       .uargs = (void*)ch,
-      .cb = af_cb,
+      .cb = (codec_ipc.lenscfg.lens == 3)?NULL:af_cb,
   };
   
   if(ch < 0)
-  {  
+  {
   	return 0;
   }
+  
   return gsf_mpp_af_start(&af);
 }
+
 
 int lens16x_lens_stop(int ch)
 {
   int ret = 0;
   
-  if(codec_ipc.lenscfg.lens == 2)
+  dzoom_plus = 0;
+  
+  if(codec_ipc.lenscfg.lens == 3)
+  {
+    char buf[1] = {AF_PTZ_CMD_ZOOM_STOP};
+    af_ptz_ctl(buf, 1);
+  }
+  else if(codec_ipc.lenscfg.lens == 2)
   {
     system("echo 0 > /sys/class/gpio/gpio30/value;echo 0 > /sys/class/gpio/gpio31/value;"
           "echo 0 > /sys/class/gpio/gpio26/value;echo 0 > /sys/class/gpio/gpio29/value;");
@@ -247,7 +269,19 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
 {
   int ret = 0;
   
-  if(codec_ipc.lenscfg.lens == 2)
+  if(strstr(_ini.sns, "imx585") || strstr(_ini.sns, "imx482"))
+  {
+    dzoom_plus = (dir)?1:-1;
+    return 0;
+  }
+  
+  if(codec_ipc.lenscfg.lens == 3)
+  {
+    char buf[1];
+    buf[0] = (dir)?AF_PTZ_CMD_ZOOM_WIDE:AF_PTZ_CMD_ZOOM_TELE;
+    af_ptz_ctl(buf, 1);
+  }  
+  else if(codec_ipc.lenscfg.lens == 2)
   {
     if(dir)
       system("echo 1 > /sys/class/gpio/gpio30/value; echo 0 > /sys/class/gpio/gpio31/value;"
@@ -279,7 +313,11 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
 int lens16x_lens_focus(int ch, int dir, int speed)
 {
   int ret = 0;
-  if(codec_ipc.lenscfg.lens == 2)
+  if(codec_ipc.lenscfg.lens == 3)
+  {
+    ;
+  }  
+  else if(codec_ipc.lenscfg.lens == 2)
   {
     if(dir)
       system("echo 1 > /sys/class/gpio/gpio29/value; echo 0 > /sys/class/gpio/gpio26/value;");
@@ -309,10 +347,18 @@ int lens16x_lens_focus(int ch, int dir, int speed)
 int lens16x_lens_cal(int ch)
 {
 	// lens calibration
-  char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c};
-  int ret = gsf_uart_write(buf, 8);
-  usleep(100*1000);
-  ret |= gsf_uart_write(buf, 8);
+  if(codec_ipc.lenscfg.lens == 3)
+  {
+    char buf[1] = {AF_PTZ_CMD_LENS_CORRECT};
+    af_ptz_ctl(buf, 1);
+  }  
+  else
+  {
+    char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c};
+    int ret = gsf_uart_write(buf, 8);
+    usleep(100*1000);
+    ret |= gsf_uart_write(buf, 8);
+  }
   return 0;
 }
 
