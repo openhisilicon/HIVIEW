@@ -5,6 +5,8 @@
     <div style="height: 15px"></div>
     <button class="w2ui-btn" onmousedown="zoomPlus()" onmouseup="zoomStop()">ZOOM+</button>
     <button class="w2ui-btn" onmousedown="zoomMinus()" onmouseup="zoomStop()">ZOOM-</button>
+    <button class="w2ui-btn" onmousedown="focusPlus()" onmouseup="zoomStop()">FOCUS+</button>
+    <button class="w2ui-btn" onmousedown="focusMinus()" onmouseup="zoomStop()">FOCUS-</button>
     <div style="height: 15px"></div>
     <button class="w2ui-btn" onclick="lensCalClick()">LensCal</button>
     <div style="height: 15px"></div>
@@ -756,6 +758,53 @@ function zoomMinus() {
         "id": "GSF_ID_CODEC_LENS",
         "args":"G0C0S0",
         "data":{"cmd": 3, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+
+function focusPlus() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 4, "arg1": 1, "arg2": document.getElementById("range").value}
+    }
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+function focusMinus() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 4, "arg1": 0, "arg2": document.getElementById("range").value}
     }
     
     $.ajax({
