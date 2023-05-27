@@ -24,6 +24,10 @@
 static int avs = 0; // codec_ipc.vi.avs;
 
 // if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
+#ifndef HAVE_PIC_288P
+#warning "PIC_288P => PIC_CIF"
+#define PIC_288P PIC_CIF
+#endif
 #ifndef HAVE_PIC_400P
 #warning "PIC_400P => PIC_CIF"
 #define PIC_400P PIC_CIF
@@ -46,6 +50,7 @@ static int avs = 0; // codec_ipc.vi.avs;
           (w >= 720 && h >= 480)?PIC_D1_NTSC: \
           (w >= 640 && h >= 512)?PIC_512P: \
           (w >= 400 && h >= 400)?PIC_400P: \
+          (w >= 384 && h >= 288)?PIC_288P: \
           PIC_CIF
 
 static gsf_resolu_t __pic_wh[PIC_BUTT] = {
@@ -59,6 +64,7 @@ static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_D1_NTSC]   = {0, 720, 480},
       [PIC_512P]      = {0, 640, 512},
       [PIC_400P]      = {0, 400, 400},
+      [PIC_288P]      = {0, 384, 288},
       [PIC_CIF]       = {0, 352, 288},
 };          
 #define PIC_WH(e,_w,_h) do {\
@@ -95,9 +101,9 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
 #define SECOND_HEIGHT(second) ((second) == 1?1080:(second) == 2?480:512)
 #define SECOND_HIRES(second) ((second) == 1?PIC_1080P:(second) == 2?PIC_D1_NTSC:PIC_512P)
 #else
-#define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:640)
-#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:512)
-#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:PIC_512P)
+#define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:(second) == 3?640:384)
+#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:(second) == 3?512:288)
+#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:(second) == 2?PIC_512P:PIC_288P)
 #endif  
 
 int second_sdp(int i, gsf_sdp_t *sdp)
@@ -892,7 +898,7 @@ int mpp_start(gsf_bsp_def_t *def)
         printf("chipid[%s]\n", chipid);
         strcpy(cfg.type, def->board.type);
         chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
-        //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT601.GD, 4:BT601.PAL, 5:USB.GD]
+        //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT656.512P, 4:BT656.288P, 5:USB.GD]
         cfg.second = (cfg.snscnt > 1)?0:
                      (def->board.second <= 0)?0:def->board.second;
         printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);

@@ -209,8 +209,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   {
     SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT: //PAL
                    (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT://NTSC
-                   (cfg->second == 3)?BT601GD_YUV_0M_60FPS_8BIT://GD
-                                      BT601_YUV_0M_60FPS_8BIT;//PAL
+                   (cfg->second == 3)?BT656_YUV_512P_60FPS_8BIT://640x512
+                                      BT656_YUV_288P_60FPS_8BIT;//384x288
   }
   
   if(dl)
