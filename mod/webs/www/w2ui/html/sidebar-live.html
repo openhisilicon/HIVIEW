@@ -127,13 +127,25 @@ function tabIM_change(ev, save)
     for(i = 0; i < event.changes.length; i++)
     {
       if(event.changes[i].recid == RECID_Sharpen+0)
+      {
         req.data.bEnable = parseInt(event.changes[i].lname, 10);
+        sharpen.lname = event.changes[i].lname;
+      }
       if(event.changes[i].recid == RECID_Sharpen+1)
+      {
         req.data.u16TextureFreq = parseInt(event.changes[i].lname, 10);
+        sharpen.w2ui.children[0].lname = event.changes[i].lname;
+      }
       if(event.changes[i].recid == RECID_Sharpen+2)
+      {
         req.data.u16EdgeFreq = parseInt(event.changes[i].lname, 10);
+        sharpen.w2ui.children[1].lname = event.changes[i].lname;
+      }
       if(event.changes[i].recid == RECID_Sharpen+3)
+      {
         req.data.u8DetailCtrl = parseInt(event.changes[i].lname, 10);
+        sharpen.w2ui.children[2].lname = event.changes[i].lname;
+      }
     }
     console.log(req);
     

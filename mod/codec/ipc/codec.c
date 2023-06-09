@@ -1025,7 +1025,7 @@ int mpp_start(gsf_bsp_def_t *def)
     #endif
     
    
-    if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) < 0)
+    if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) <= 0) //enable img;
     {
       // First tested on Hi3516X;
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)

@@ -875,18 +875,13 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      case GSF_MPP_ISP_CTL_SHARPEN:
      {   
         gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
-        if(!sharpen->bEnable)
-        {
-          ret = 0;  
-          break;
-        }
-          
+
         printf("sharpen->bEnable:%d,u16TextureFreq:%d\n", sharpen->bEnable, sharpen->u16TextureFreq);  
         ISP_SHARPEN_ATTR_S stIspShpAttr;
         ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
         
-        stIspShpAttr.bEnable = 1;
-        stIspShpAttr.enOpType= OP_TYPE_MANUAL;
+        //stIspShpAttr.bEnable = 1;
+        stIspShpAttr.enOpType= (sharpen->bEnable)?OP_TYPE_MANUAL:OP_TYPE_AUTO;
         stIspShpAttr.stManual.u16TextureFreq = sharpen->u16TextureFreq;
         stIspShpAttr.stManual.u16EdgeFreq = sharpen->u16EdgeFreq;
         stIspShpAttr.stManual.u8DetailCtrl = sharpen->u8DetailCtrl;
