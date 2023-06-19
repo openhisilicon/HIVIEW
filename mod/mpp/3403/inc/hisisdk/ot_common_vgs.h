@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_VGS_H
@@ -61,11 +61,7 @@ typedef enum {
 
 typedef struct {
     ot_rect                    rect;                      /* RW; Osd area. */
-    /*
-     * RW; Background color of osd, depends on pixel format of osd,ARGB8888:[0,0xFFFFFFFF],
-     * ARGB4444:[0,0xFFFF], ARGB1555:[0,0x1FFF].
-     */
-    td_u32                     bg_color;
+    td_u32                     bg_color;                  /* RW; Reserved */
     ot_pixel_format            pixel_format;              /* RW; Pixel format of osd. */
     td_phys_addr_t             phys_addr;                 /* RW; Physical address of osd. */
     td_u32                     stride;                    /* RW; Range: [16,16384]; Stride of osd. */

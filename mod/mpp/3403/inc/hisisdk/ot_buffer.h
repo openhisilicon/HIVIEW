@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_BUFFER_H
@@ -312,21 +312,26 @@ __inline static td_void ot_common_vi_get_raw_buf_cfg_with_compress_ratio(ot_pic_
     td_u32 height = buf_attr->height;
     td_u32 size = 0;
     td_u32 stride = 0;
-    td_u32 raw_compress_ratio = 1600;
+    td_u32 raw_compress_ratio = 0;
 
     if ((width > OT_MAXI_NUM_LIMIT) || (height > OT_MAXI_NUM_LIMIT)) {
         (td_void)memset_s(calc_cfg, sizeof(*calc_cfg), 0, sizeof(*calc_cfg));
         return;
     }
 
+    /* align: 0 is automatic mode, alignment size following system. Non-0 for specified alignment size */
+    if (buf_attr->align == 0) {
+        buf_attr->align = OT_DEFAULT_ALIGN;
+    } else if (buf_attr->align > OT_MAX_ALIGN) {
+        buf_attr->align = OT_MAX_ALIGN;
+    } else {
+        buf_attr->align = (OT_ALIGN_UP(buf_attr->align, OT_DEFAULT_ALIGN));
+    }
+
     if (buf_attr->compress_mode == OT_COMPRESS_MODE_LINE) {
-        raw_compress_ratio = 1600;
+        raw_compress_ratio = 1538; /* 1538: raw_line_compress_ratio */
     } else if (buf_attr->compress_mode == OT_COMPRESS_MODE_FRAME) {
-        if (compress_ratio == 0) {
-            raw_compress_ratio = 2000;
-        } else {
-            raw_compress_ratio = compress_ratio;
-        }
+        raw_compress_ratio = (compress_ratio == 0 ? 2000 : compress_ratio); /* 2000: raw_frame_compress_ratio */
     }
 
     if (buf_attr->compress_mode == OT_COMPRESS_MODE_NONE) {
@@ -338,7 +343,12 @@ __inline static td_void ot_common_vi_get_raw_buf_cfg_with_compress_ratio(ot_pic_
         stride = OT_ALIGN_UP(tmp * 16, buf_attr->align);
         size = stride * height;
     } else if (buf_attr->compress_mode == OT_COMPRESS_MODE_FRAME) {
-        size = OT_ALIGN_UP(height * width * bit_width * 1000UL / (raw_compress_ratio * 8), buf_attr->align);
+        if ((OT_DIV_UP(width, 32) * height) <= 4096) {
+            size = (height * width * bit_width * 3 / 2 + (width + 31) / 32 * height + 255) / 256 * 2 * 16;
+        } else {
+            size = height * width * bit_width * 1000UL / (raw_compress_ratio * 8);
+        }
+        size = OT_ALIGN_UP(size, buf_attr->align);
     }
 
     calc_cfg->vb_size     = size;

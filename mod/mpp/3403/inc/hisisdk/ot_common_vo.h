@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_VO_H
@@ -217,6 +217,11 @@ typedef struct {
     td_u32 vtth;     /* RW, vtth value */
 }ot_vo_less_buf_attr;
 
+typedef struct {
+    td_bool enable;  /* RW, user notify enable */
+    td_u32 vtth;     /* RW, vtth value */
+}ot_vo_user_notify_attr;
+
 typedef enum {
     OT_VO_INTF_STATUS_NO_PLUG = 0,  /* Interface status is not plugged */
     OT_VO_INTF_STATUS_PLUG = 1,     /* Interface status is plugged */
@@ -297,11 +302,19 @@ typedef struct {
                                 default: 0, bit[5/7/15/17/23:0] */
 } ot_vo_rgb_param;
 
+typedef enum {
+    OT_VO_CLK_EDGE_SINGLE = 0,  /* single-edge mode */
+    OT_VO_CLK_EDGE_DUAL,        /* dual-edge mode */
+
+    OT_VO_CLK_EDGE_BUTT
+} ot_vo_clk_edge;
+
 typedef struct {
     td_bool yc_inverted_en; /* RW; component y c inverted, yc to cy, default: 0, yc */
     td_bool bit_inverted_en; /* RW; data's bit inverted, bt.656: bit[7:0] to bit[0:7],
                                 bt.1120: bit[15:0] to bit[0:15],
                                 default: 0, bit[7:0] or bit[15:0] */
+    ot_vo_clk_edge clk_edge; /* RW; clk edge */
 } ot_vo_bt_param;
 
 typedef struct {

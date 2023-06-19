@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __OT_OSAL__
@@ -30,6 +30,19 @@ int osal_atomic_read(osal_atomic_t *v);
 void osal_atomic_set(osal_atomic_t *v, int i);
 int osal_atomic_inc_return(osal_atomic_t *v);
 int osal_atomic_dec_return(osal_atomic_t *v);
+int osal_atomic_fetch_and(int i, osal_atomic_t *atomic);
+int osal_atomic_fetch_or(int i, osal_atomic_t *atomic);
+
+typedef struct {
+    void *atomic64;
+} osal_atomic64_t;
+
+int osal_atomic64_init(osal_atomic64_t *atomic);
+void osal_atomic64_destroy(osal_atomic64_t *atomic);
+long long osal_atomic64_read(osal_atomic64_t *v);
+void osal_atomic64_set(osal_atomic64_t *v, long long i);
+long long osal_atomic64_fetch_and(long long i, osal_atomic64_t *atomic);
+long long osal_atomic64_fetch_or(long long i, osal_atomic64_t *atomic);
 
 /* semaphore api */
 #define EINTR              4
@@ -382,6 +395,7 @@ void osal_deregisterdevice(const osal_dev_t *pdev);
 void osal_poll_wait(osal_poll_t *table, const osal_wait_t *wait);
 void osal_pgprot_noncached(osal_vm_t *vm);
 void osal_pgprot_cached(osal_vm_t *vm);
+void osal_pgprot_writecombine(osal_vm_t *vm);
 int osal_remap_pfn_range(osal_vm_t *vm, unsigned long addr, unsigned long pfn, unsigned long size);
 
 /* timer */
@@ -431,7 +445,7 @@ unsigned long osal_timer_get_private_data(const void *data);
 int osal_del_timer(osal_timer_t *timer);
 int osal_timer_destroy(osal_timer_t *timer);
 
-unsigned long osal_msleep(unsigned int msecs);
+void osal_msleep(unsigned int msecs);
 void osal_udelay(unsigned int usecs);
 void osal_mdelay(unsigned int msecs);
 

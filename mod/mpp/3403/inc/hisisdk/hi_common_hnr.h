@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_HNR_H__
@@ -34,9 +34,11 @@ typedef ot_hnr_attr hi_hnr_attr;
 typedef ot_hnr_alg_cfg hi_hnr_alg_cfg;
 #define HI_HNR_REF_MODE_NORM OT_HNR_REF_MODE_NORM
 #define HI_HNR_REF_MODE_NONE OT_HNR_REF_MODE_NONE
+#define HI_HNR_REF_MODE_NONE_ADVANCED OT_HNR_REF_MODE_NONE_ADVANCED
 #define HI_HNR_REF_MODE_BUTT OT_HNR_REF_MODE_BUTT
 typedef ot_hnr_ref_mode hi_hnr_ref_mode;
 typedef ot_hnr_err_code hi_hnr_err_code; /* inner errno */
+typedef ot_hnr_thread_attr hi_hnr_thread_attr;
 
 #ifdef __cplusplus
 }

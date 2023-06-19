@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_MPI_AE_H__
@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 /* The interface of ae lib register to isp. */
-hi_s32 hi_mpi_ae_register(hi_vi_pipe vi_pipe, hi_isp_3a_alg_lib *ae_lib);
+hi_s32 hi_mpi_ae_register(hi_vi_pipe vi_pipe, const hi_isp_3a_alg_lib *ae_lib);
 hi_s32 hi_mpi_ae_unregister(hi_vi_pipe vi_pipe, const hi_isp_3a_alg_lib *ae_lib);
 
 /* The callback function of sensor register to ae lib. */

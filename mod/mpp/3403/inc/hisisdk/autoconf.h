@@ -1,13 +1,10 @@
 /*
- * Copyright (c) Shenshu Technologies Co., Ltd. 2008-2020. All rights reserved.
- * Description   : Automatically generated C config: don't edit
- * Author        : Shenshu multimedia software
- * Create        : 2008/06/06
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 #ifndef __AUTOCONF_H__
 #define __AUTOCONF_H__
 
-#define AUTOCONF_TIMESTAMP "2021-12-06 12:12:54 CST"
+#define AUTOCONF_TIMESTAMP "2022-12-28 11:55:55 CST"
 
 /*
  * General Setup
@@ -68,6 +65,7 @@
  */
 #define CONFIG_OT_VB_EXTPOOL_SUPPORT 1
 #define CONFIG_OT_VB_SUPPLEMENT_MASK_SUPPORT 1
+#define CONFIG_OT_VB_ASYNC_SUPPORT 1
 
 /*
  * media chnl config
@@ -116,7 +114,6 @@
  * media region config
  */
 #define CONFIG_OT_REGION_SUPPORT 1
-#define CONFIG_OT_RGN_VGS_QUICKCOPY_SUPPORT 1
 #define CONFIG_OT_RGN_CORNER_RECT_SUPPORT 1
 
 /*
@@ -310,6 +307,11 @@
  */
 
 /*
+ * media uvc config
+ */
+#define CONFIG_OT_UVC_SUPPORT 1
+
+/*
  * Device Driver Setup
  */
 
@@ -380,6 +382,11 @@
 #define CONFIG_OT_PHOTO_SUPPORT 1
 
 /*
+ * Component heif Config
+ */
+#define CONFIG_OT_HEIF_SUPPORT 1
+
+/*
  * Component svp Config
  */
 #define CONFIG_OT_SVP_SUPPORT 1
@@ -400,6 +407,7 @@
 #define CONFIG_OT_SVP_MAU 1
 #define CONFIG_OT_SVP_NPU_V1R1 1
 #define CONFIG_OT_SVP_NPU_V1R1_COMPILE 1
+#define CONFIG_OT_SVP_NPU_V2R1 1
 #define CONFIG_OT_SVP_DPU_RECT 1
 #define CONFIG_OT_SVP_DPU_MATCH 1
 

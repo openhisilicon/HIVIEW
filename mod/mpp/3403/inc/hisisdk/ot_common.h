@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __OT_COMMON_H__
@@ -52,7 +52,7 @@ extern "C" {
 
 #define __MK_VERSION(x, y, z, p, b) #x "." #y "." #z "." #p " B0" #b
 #define MK_VERSION(x, y, z, p, b) __MK_VERSION(x, y, z, p, b)
-#define OT_MPP_VERSION             OT_MPP_VER_PRIX MK_VERSION(VER_X, VER_Y, VER_Z, VER_P, VER_B) VER_D
+#define OT_MPP_VERSION            OT_CHIP_NAME OT_MPP_VER_PRIX MK_VERSION(VER_X, VER_Y, VER_Z, VER_P, VER_B) VER_D
 
 #define OT_MAX_VERSION_NAME_LEN    64
 #define OT_INVALID_CHN         (-1)
@@ -132,6 +132,7 @@ extern "C" {
 #define OT_MPP_MOD_DCC            "dcc"
 #define OT_MPP_MOD_VDEC_SERVERS   "vdec_server"
 #define OT_MPP_MOD_VDEC_ADAPT     "vdec_adapt"
+#define OT_MPP_MOD_UVC            "uvc"
 typedef struct {
     td_char version[OT_MAX_VERSION_NAME_LEN];
 } ot_mpp_version;
@@ -176,6 +177,7 @@ typedef td_s32 ot_mcf_pipe;
 typedef td_s32 ot_mcf_chn;
 typedef td_s32 ot_vda_chn;
 typedef td_s32 ot_pciv_chn;
+typedef td_s32 ot_uvc_chn;
 
 typedef enum {
     OT_ID_CMPI    = 0,
@@ -261,6 +263,8 @@ typedef enum {
     OT_ID_HNR          = 82,
     OT_ID_SNAP         = 83,
     OT_ID_LOG_MDC      = 84,
+    OT_ID_UVC          = 85,
+    OT_ID_FISHEYE_CALIBRATION = 86,
     OT_ID_BUTT,
 } ot_mod_id;
 

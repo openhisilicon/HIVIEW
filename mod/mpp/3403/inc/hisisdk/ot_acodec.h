@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_ACODEC_H
@@ -94,6 +94,11 @@ typedef enum {
     IOC_NR_SET_DAC_DE_EMPHASIS,
     IOC_NR_SET_ADC_HP_FILTER,
     IOC_NR_SET_I2S1_DATAWIDTH,
+
+    /* soft mute */
+    IOC_NR_DAC_SOFT_MUTE,
+    IOC_NR_DAC_SOFT_UNMUTE,
+    IOC_NR_DAC_SOFT_MUTE_RATE,
 } acodec_ioc;
 
 /* reset the audio code to the default config */
@@ -221,5 +226,15 @@ typedef enum {
     _IOWR(IOC_TYPE_ACODEC, IOC_NR_SET_ADC_HP_FILTER, td_u32)
 #define OT_ACODEC_SET_I2S1_DATAWIDTH \
     _IOWR(IOC_TYPE_ACODEC, IOC_NR_SET_I2S1_DATAWIDTH, td_u32)
+
+/* DAC soft mute control, 1:enable, 0:disable */
+#define OT_ACODEC_DAC_SOFT_MUTE \
+    _IOWR(IOC_TYPE_ACODEC, IOC_NR_DAC_SOFT_MUTE, td_u32)
+/* DAC soft unmute control, 1:enable, 0:disable */
+#define OT_ACODEC_DAC_SOFT_UNMUTE \
+    _IOWR(IOC_TYPE_ACODEC, IOC_NR_DAC_SOFT_UNMUTE, td_u32)
+/* set DAC soft mute rate, 0:fs/2, 1:fs/8, 2:fs/32, 3:fs/64 */
+#define OT_ACODEC_DAC_SOFT_MUTE_RATE \
+    _IOWR(IOC_TYPE_ACODEC, IOC_NR_DAC_SOFT_MUTE_RATE, td_u32)
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_CIPHER_H
@@ -124,6 +124,7 @@ typedef struct {
     td_u32 tag_len;                      /* Tag length for CCM which is an element of {4, 6, 8, 10, 12, 14, 16}. */
     td_u32 aad_len;                      /* Associated data for CCM and GCM. */
     td_phys_addr_t aad_phys_addr;        /* Physical address of Associated data  for CCM and GCM. */
+    td_u8 *aad_addr;
 } ot_cipher_ctrl_aes_ccm_gcm;
 
 /* Structure of the cipher SM4 control information */

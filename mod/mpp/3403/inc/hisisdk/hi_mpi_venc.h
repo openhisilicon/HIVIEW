@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef HI_MPI_VENC_H
@@ -86,6 +86,8 @@ hi_s32 hi_mpi_venc_set_jpeg_param(hi_venc_chn chn, const hi_venc_jpeg_param *jpe
 hi_s32 hi_mpi_venc_get_jpeg_param(hi_venc_chn chn, hi_venc_jpeg_param *jpeg_param);
 hi_s32 hi_mpi_venc_set_mjpeg_param(hi_venc_chn chn, const hi_venc_mjpeg_param *mjpeg_param);
 hi_s32 hi_mpi_venc_get_mjpeg_param(hi_venc_chn chn, hi_venc_mjpeg_param *mjpeg_param);
+hi_s32 hi_mpi_venc_set_jpeg_dering_level(hi_venc_chn chn, const hi_venc_jpeg_dering_level dering_level);
+hi_s32 hi_mpi_venc_get_jpeg_dering_level(hi_venc_chn chn, hi_venc_jpeg_dering_level *dering_level);
 hi_s32 hi_mpi_venc_set_jpeg_enc_mode(hi_venc_chn chn, const hi_venc_jpeg_enc_mode enc_mode);
 hi_s32 hi_mpi_venc_get_jpeg_enc_mode(hi_venc_chn chn, hi_venc_jpeg_enc_mode *enc_mode);
 
@@ -135,6 +137,7 @@ hi_s32 hi_mpi_venc_set_deblur(hi_venc_chn chn, const hi_venc_deblur_param *deblu
 hi_s32 hi_mpi_venc_get_deblur(hi_venc_chn chn, hi_venc_deblur_param *deblur_param);
 hi_s32 hi_mpi_venc_set_md(hi_venc_chn chn, const hi_venc_md_param *md_param);
 hi_s32 hi_mpi_venc_get_md(hi_venc_chn chn, hi_venc_md_param *md_param);
+td_s32 hi_mpi_venc_omx_send_frame(hi_venc_chn chn, const hi_omx_user_frame_info *frame, hi_s32 milli_sec);
 
 #ifdef __cplusplus
 }

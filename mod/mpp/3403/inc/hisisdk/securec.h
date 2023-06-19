@@ -1,18 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2014-2021. All rights reserved.
- * Licensed under Mulan PSL v2.
- * You can use this software according to the terms and conditions of the Mulan PSL v2.
- * You may obtain a copy of Mulan PSL v2 at:
- *          http://license.coscl.org.cn/MulanPSL2
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
- * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
- * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
- * See the Mulan PSL v2 for more details.
- * Description: The user of this secure c library should include this header file in you source code.
- *              This header file declare all supported API prototype of the library,
- *              such as memcpy_s, strcpy_s, wcscpy_s,strcat_s, strncat_s, sprintf_s, scanf_s, and so on.
- * Create: 2014-02-25
- * Notes: Do not modify this file by yourself.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef SECUREC_H_5D13A042_DC3F_4ED9_A8D1_882811274C27

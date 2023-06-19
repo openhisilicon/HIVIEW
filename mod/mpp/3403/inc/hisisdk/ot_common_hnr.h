@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_HNR_H
@@ -65,6 +65,7 @@ typedef struct {
 typedef struct {
     td_bool enable; /* RW; Range:[0x0, 0x1]; Format:1.0 */
     td_bool bnr_bypass; /* RW; Range:[0x0, 0x1]; Format:1.0 */
+    td_bool normal_blend; /* RW; only to normal mode, Range:[0x0, 0x1]; Format:1.0 */
     ot_op_mode op_type;
     ot_hnr_manual_attr manual_attr;
     ot_hnr_auto_attr auto_attr;
@@ -73,12 +74,17 @@ typedef struct {
 typedef enum {
     OT_HNR_REF_MODE_NORM = 0,
     OT_HNR_REF_MODE_NONE,
+    OT_HNR_REF_MODE_NONE_ADVANCED,
     OT_HNR_REF_MODE_BUTT
 } ot_hnr_ref_mode;
 
 typedef struct {
     ot_hnr_ref_mode ref_mode;
 } ot_hnr_alg_cfg;
+
+typedef struct {
+    td_u32 cpu_id; /* RW; pthread of hnr bind to cpu core, Range:[0, 3]; Format:2.0 */
+} ot_hnr_thread_attr;
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_H__
@@ -70,6 +70,7 @@ extern "C" {
 #define HI_MPP_MOD_PCIVFMW OT_MPP_MOD_PCIVFMW
 #define HI_MPP_MOD_PROC OT_MPP_MOD_PROC
 #define HI_MPP_MOD_LOG OT_MPP_MOD_LOG
+#define HI_MPP_MOD_LOG_MDC OT_MPP_MOD_LOG_MDC
 #define HI_MPP_MOD_FB OT_MPP_MOD_FB
 #define HI_MPP_MOD_RC OT_MPP_MOD_RC
 #define HI_MPP_MOD_TDE OT_MPP_MOD_TDE
@@ -92,6 +93,8 @@ extern "C" {
 #define HI_MPP_MOD_OTP OT_MPP_MOD_OTP
 #define HI_MPP_MOD_DCC OT_MPP_MOD_DCC
 #define HI_MPP_MOD_VDEC_SERVERS OT_MPP_MOD_VDEC_SERVERS
+#define HI_MPP_MOD_VDEC_ADAPT OT_MPP_MOD_VDEC_ADAPT
+#define HI_MPP_MOD_UVC OT_MPP_MOD_UVC
 typedef ot_mpp_version hi_mpp_version;
 typedef ot_ai_chn hi_ai_chn;
 typedef ot_ao_chn hi_ao_chn;
@@ -133,6 +136,8 @@ typedef ot_mcf_pipe hi_mcf_pipe;
 typedef ot_mcf_chn hi_mcf_chn;
 typedef ot_vda_chn hi_vda_chn;
 typedef ot_pciv_chn hi_pciv_chn;
+typedef ot_uvc_chn hi_uvc_chn;
+
 #define HI_ID_CMPI OT_ID_CMPI
 #define HI_ID_VB OT_ID_VB
 #define HI_ID_SYS OT_ID_SYS
@@ -208,9 +213,11 @@ typedef ot_pciv_chn hi_pciv_chn;
 #define HI_ID_VFMW_MDC OT_ID_VFMW_MDC
 #define HI_ID_VB_LOG OT_ID_VB_LOG
 #define HI_ID_MCF_CALIBRATION OT_ID_MCF_CALIBRATION
+#define HI_ID_FISHEYE_CALIBRATION OT_ID_FISHEYE_CALIBRATION
 #define HI_ID_SVP_NPU OT_ID_SVP_NPU
 #define HI_ID_HNR OT_ID_HNR
 #define HI_ID_SNAP OT_ID_SNAP
+#define HI_ID_UVC OT_ID_UVC
 #define HI_ID_BUTT OT_ID_BUTT
 typedef ot_mod_id hi_mod_id;
 typedef ot_mpp_chn hi_mpp_chn;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_MATCH_H
@@ -123,9 +123,34 @@ typedef struct {
 } ot_dpu_match_chn_attr;
 
 typedef struct {
-    td_u16 first_penalty_coef; /* First penalty coefficient. Range: [0, 138] */
-    td_u16 second_penalty_coef; /* First penalty coefficient. Range: [0, 138] */
+    td_u16 first_penalty_coef; /* first penalty coefficient. Range: [0, 138] */
+    td_u16 second_penalty_coef; /* second penalty coefficient. Range: [0, 138] */
 } ot_dpu_match_cost_param;
+
+typedef enum {
+    OT_DPU_MATCH_VERSION_V1 = 0,
+    OT_DPU_MATCH_VERSION_V2 = 1,
+    OT_DPU_MATCH_VERSION_BUTT
+} ot_dpu_match_version;
+
+typedef ot_dpu_match_cost_param ot_dpu_match_param_v1;
+
+typedef struct {
+    td_u16 first_penalty_coef; /* first penalty coefficient. Range: [0, 138] */
+    td_u16 second_penalty_coef; /* second penalty coefficient. Range: [0, 138] */
+    td_u8 aggregate_coef; /* aggregate coefficient. Range: [0, 8] */
+    td_u8 unique_ratio; /* uniqueness ratio. Range: [0, 31] */
+    td_u8 fg_init_cost_zero_thr; /* the foreground overexposure area filter threshold,[1, 16] */
+    td_u8 rsv;
+} ot_dpu_match_param_v2;
+
+typedef struct {
+    ot_dpu_match_version version;
+    union {
+        ot_dpu_match_param_v1 v1; /* v1 param,AUTO:ot_dpu_match_version:OT_DPU_MATCH_VERSION_V1 */
+        ot_dpu_match_param_v2 v2; /* v2 param,AUTO:ot_dpu_match_version:OT_DPU_MATCH_VERSION_V2 */
+    };
+} ot_dpu_match_param;
 
 #ifdef __cplusplus
 #if __cplusplus

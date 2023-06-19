@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_ISP_H
@@ -187,6 +187,12 @@ typedef enum {
     OT_ISP_ALG_RUN_BUTT,
 } ot_isp_alg_run_select;
 
+typedef enum {
+    OT_ISP_RUN_WAKEUP_FE_START = 0,
+    OT_ISP_RUN_WAKEUP_BE_END = 1,
+    OT_ISP_RUN_WAKEUP_BUTT,
+} ot_isp_run_wakeup_select;
+
 typedef struct {
     td_u8   be_buf_num;      /* RW;Range:SS928V100 = [2, 20]; offline be cfg buffer number(Only used for offline mode).
                                 Not support changed after isp init */
@@ -197,13 +203,16 @@ typedef struct {
     td_u32  update_pos;      /* RW;Range:[0, 1]; Format:32.0; Indicate the location of the configuration register of
                                 ISP interrupt */
     td_u32  interrupt_time_out; /* RW;Format:32.0; Indicate the time(unit:ms) of interrupt timeout */
-    td_u32  pwm_num;      /* R;Format:32.0; Indicate PWM number */
+    td_u32  pwm_num;      /* RW;Format:32.0; Indicate PWM number */
     td_u32  port_interrupt_delay;  /* RW;Format:32.0; Port intertupt delay value, unit:clk */
-    td_bool ldci_tpr_flt_en; /* R;Indicate Enable LDCI temporal filter. Not support changed after isp init */
+    td_bool ldci_tpr_flt_en; /* RW;Range:[0, 1]; Indicate Enable LDCI temporal filter. Not support changed after
+                                isp init */
     ot_isp_ob_stats_update_pos ob_stats_update_pos; /* RW;Range:[0, 1];  Indicate the location of reading ob orea
                                                        statistics. Not support changed after isp init */
     ot_isp_alg_run_select alg_run_select; /* RW;Range:[0, 1];  Indicate the algorithm of isp register and run.
                                              Not support changed after isp init */
+    ot_isp_run_wakeup_select isp_run_wakeup_select; /* RW;Range:[0, 1];  Indicate the isp software is drived by which
+                                                       interrupt, FE_START or BE_END */
 } ot_isp_ctrl_param;
 
 /*
@@ -1849,6 +1858,7 @@ typedef struct {
                                                                                Format:16.0; Zone average value of BE */
     ot_isp_ae_grid_info fe_grid_info;
     ot_isp_ae_grid_info be_grid_info;
+    td_u64 pts;
 } ot_isp_ae_stats;
 
 typedef struct {
@@ -1863,6 +1873,7 @@ typedef struct {
     td_u16 be_global_avg[OT_ISP_BAYER_CHN_NUM];  /* R; Range: [0x0, 0xFFFF]; Format:16.0; Global average value of BE */
     td_u16 be_zone_avg[OT_ISP_MAX_STITCH_NUM][OT_ISP_AE_ZONE_ROW][OT_ISP_AE_ZONE_COLUMN][OT_ISP_BAYER_CHN_NUM]; /* R;
                                                         Range: [0x0, 0xFFFF]; Format:16.0; Zone average value of BE */
+    td_u64 pts;
 } ot_isp_ae_stitch_stats;
 
 typedef struct {
@@ -1928,6 +1939,7 @@ typedef struct {
     td_u16  zone_avg_b[OT_ISP_AWB_ZONE_STITCH_MAX];     /* R; Range: [0x0, 0xFFFF];Zone Average B  for Stitich mode */
     td_u16  zone_count_all[OT_ISP_AWB_ZONE_STITCH_MAX]; /* R; Range: [0x0, 0xFFFF];
                                                     normalized number of Gray points  for Stitich mode */
+    td_u64 pts;
 } ot_isp_wb_stitch_stats;
 
 typedef struct {
@@ -1941,6 +1953,7 @@ typedef struct {
     td_u16 zone_avg_b[OT_ISP_AWB_ZONE_NUM];            /* R; Range: [0x0, 0xFFFF];Zone Average B */
     td_u16 zone_count_all[OT_ISP_AWB_ZONE_NUM];        /* R; Range: [0x0, 0xFFFF];normalized number of Gray points */
     ot_isp_awb_grid_info grid_info;
+    td_u64 pts;
 } ot_isp_wb_stats;
 
 typedef struct {
@@ -1966,6 +1979,7 @@ typedef struct {
     ot_isp_be_focus_stats  be_af_stat;
     ot_isp_focus_grid_info fe_af_grid_info;
     ot_isp_focus_grid_info be_af_grid_info;
+    td_u64 pts;
 } ot_isp_af_stats;
 
 typedef struct {
@@ -1989,6 +2003,7 @@ typedef struct {
 typedef struct {
     td_u32  frame_num_begain;
     td_u16  black_level_actual[OT_ISP_WDR_MAX_FRAME_NUM][OT_ISP_BAYER_CHN_NUM];    /* R; BLC actual value  */
+    td_u16  black_level_original[OT_ISP_WDR_MAX_FRAME_NUM][OT_ISP_BAYER_CHN_NUM];  /* R; BLC logic value  */
     td_u32  frame_num_end;
 } ot_isp_debug_status;
 
@@ -2057,8 +2072,11 @@ typedef struct {
     td_u8   cfg2_valid_delay_max;  /* RW;Maximum number of delayed frames from the time when all sensor registers are
                                       configured to the time when configurations take effect, which is used to ensure
                                       the synchronization between sensor registers and ISP registers */
+    struct {
+        td_u32  exp_distance[OT_ISP_WDR_MAX_FRAME_NUM - 1]; /* RW; wdr sensor exposure distance. */
+        td_u8   delay_frame_num;
+    } distance_attr;
 
-    td_u32  exp_distance[OT_ISP_WDR_MAX_FRAME_NUM - 1]; /* RW; wdr sensor exposure distance. */
     ot_isp_sns_commbus  com_bus;
     union {
         ot_isp_i2c_data i2c_data[OT_ISP_MAX_SNS_REGS];  /* AUTO: ot_isp_sns_type:OT_ISP_SNS_I2C_TYPE */
@@ -2252,20 +2270,6 @@ typedef struct {
                           introduce flicker in the pircture */
 } ot_isp_subflicker;
 
-/*
- * Defines the ISP FSWDR operating mode
- * 0 = Normal FSWDR mode
- * 1 = Long frame mode, only effective in LINE_WDR,
- * when running in this mode FSWDR module only output the long frame data
- */
-typedef enum {
-    OT_ISP_FSWDR_NORMAL_MODE          = 0x0,
-    OT_ISP_FSWDR_LONG_FRAME_MODE      = 0x1,
-    OT_ISP_FSWDR_AUTO_LONG_FRAME_MODE = 0x2, /* Auto long frame mode, only effective in LINE_WDR,  When running in this
-                                             mode, normal WDR and long frame mode would auto switch */
-    OT_ISP_FSWDR_MODE_BUTT
-} ot_isp_fswdr_mode;
-
 typedef struct {
     /* base parameter */
     ot_isp_ae_range exp_time_range;   /* RW; Range:[0x0, 0xFFFFFFFF]; Format:32.0; sensor exposure time (unit: us),
@@ -2339,7 +2343,7 @@ typedef struct {
     td_bool   ae_route_ex_valid;   /* RW; Range:[0, 1]; Format:1.0; use extend AE route or not */
     ot_isp_me_attr   manual_attr;
     ot_isp_ae_attr   auto_attr;
-    ot_isp_prior_frame prior_frame; /* RW; Range:[0, 3]; Format:1.0; AE prior frame */
+    ot_isp_prior_frame prior_frame; /* RW; Range:[0, 2); Format:1.0; AE prior frame */
     td_bool ae_gain_sep_cfg; /* RW; Range:[0, 1]; Format:1.0; long and short frame gain separately configure or not */
     td_bool advance_ae; /* RW; Range:[0, 1]; Format:1.0;  open advance AE or not */
 } ot_isp_exposure_attr;
@@ -2771,9 +2775,13 @@ typedef struct {
 
 typedef struct {
     td_bool is_ir_mode;
+    td_u32 ae_comp;
     td_u32 exp_time;
+    td_float int_time_accu;
     td_u32 a_gain;
+    td_float again_accu;
     td_u32 d_gain;
+    td_float dgain_accu;
     td_u32 ispd_gain;
     td_u32 exposure;
     td_u32 init_iso;

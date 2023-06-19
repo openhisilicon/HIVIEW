@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef SAMPLE_HNR_MCF_COMMON_H
@@ -51,7 +51,7 @@ hi_s32 sample_hnr_common_mcf_unbind_vpss(hi_mcf_grp mcf_grp, hi_mcf_chn mcf_chn,
     hi_vpss_chn vpss_chn);
 
 /* functions for hnr */
-hi_void sample_hnr_mcf_get_large_size(hi_size mono_size, hi_size color_size, hi_size *large_size);
+hi_s32 sample_hnr_mcf_check_size(hi_size mono_size, hi_size color_size);
 hi_void sample_hnr_mcf_start_mcf_vi_cfg(hi_mcf_grp mcf_grp, const hi_mcf_grp_attr *mcf_grp_attr);
 hi_void sample_hnr_mcf_stop_mcf_vi_cfg(hi_mcf_grp mcf_grp);
 

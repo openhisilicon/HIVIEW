@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_VB_H
@@ -52,7 +52,9 @@ typedef enum {
     OT_VB_UID_VDA = 22,
     OT_VB_UID_VPP = 23,
     OT_VB_UID_COMMON = 24,
-    OT_VB_UID_BUTT = 25,
+    OT_VB_UID_UVC = 25,
+    OT_VB_UID_VDEC_ADAPT = 26,
+    OT_VB_UID_BUTT = 27,
 } ot_vb_uid;
 
 typedef enum {

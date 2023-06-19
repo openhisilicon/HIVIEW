@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_VB_H__
@@ -47,7 +47,9 @@ typedef ot_vb_blk hi_vb_blk;
 #define HI_VB_UID_MCF OT_VB_UID_MCF
 #define HI_VB_UID_VDA OT_VB_UID_VDA
 #define HI_VB_UID_VPP OT_VB_UID_VPP
+#define HI_VB_UID_UVC OT_VB_UID_UVC
 #define HI_VB_UID_COMMON OT_VB_UID_COMMON
+#define HI_VB_UID_VDEC_ADAPT OT_VB_UID_VDEC_ADAPT
 #define HI_VB_UID_BUTT OT_VB_UID_BUTT
 typedef ot_vb_uid hi_vb_uid;
 #define HI_VB_REMAP_MODE_NONE OT_VB_REMAP_MODE_NONE

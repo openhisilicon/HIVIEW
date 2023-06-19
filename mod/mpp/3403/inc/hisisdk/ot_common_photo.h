@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_PHOTO_H
@@ -23,6 +23,8 @@ extern "C" {
 #define OT_PHOTO_MIN_HEIGHT 720
 #define OT_PHOTO_MAX_WIDTH  8192
 #define OT_PHOTO_MAX_HEIGHT 6144
+
+#define OT_PHOTO_HDR_MAX_HEIGHT 8192
 
 #define OT_PHOTO_HDR_ISO_LEVEL_CNT  10
 #define OT_PHOTO_SFNR_ISO_LEVEL_CNT 8
@@ -57,6 +59,14 @@ typedef struct {
     td_s32 night_average_luma; /* RW: Range: [0, 255]. */
 } ot_photo_dark_motion_detection_param;
 
+typedef enum {
+    OT_PHOTO_HDR_FUSION_AUTO = 0,
+    OT_PHOTO_HDR_FUSION_SHORT_MEDIAN = 1,
+    OT_PHOTO_HDR_FUSION_MEDIAN_LONG = 2,
+    OT_PHOTO_HDR_FUSION_ALL = 3,
+    OT_PHOTO_HDR_FUSION_BUTT
+} ot_photo_hdr_fusion_mode;
+
 typedef struct {
     td_s32 iso_speed;               /* RW: iso value, Range: [160, 6400]. */
     td_s32 pyramid_top_size;        /* RW: Range: [16, 128]. */
@@ -66,6 +76,7 @@ typedef struct {
     td_s32 detail_enhance_ratio_l0; /* RW: Range: [0, 1024]. */
     td_s32 detail_enhance_ratio_l1; /* RW: Range: [0, 1024]. */
     td_float blend_sigma;           /* RW: Range: [0.00, 4.00]. */
+    ot_photo_hdr_fusion_mode fusion_mode; /* RW;Range:[0, 3]; */
 } ot_photo_image_fusion_param;
 
 typedef struct {

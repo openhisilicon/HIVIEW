@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __OT_MATH_H__
@@ -153,9 +153,12 @@ __inline static td_bool is_little_end(void)
     return (end_test.test_full > 0x01020304) ? (TD_TRUE) : (TD_FALSE);
 }
 
+#define address_out_32bit(addr, len) ((addr >= 0x100000000) || ((addr + len) >= 0x100000000))
+
 /*
  * rgb_to_yc(r, g, b, *y, *u, *u)    convert r,g,b to y,u,v
  * rgb_to_yuv(rgb)             convert rgb to yuv
+ * rgbfull to yuv601limit
  */
 __inline static td_void rgb_to_yc(td_u16 r, td_u16 g, td_u16 b, td_u16 *y, td_u16 *cb, td_u16 *cr)
 {
@@ -178,13 +181,15 @@ __inline static td_u32 rgb_to_yuv(td_u32 rgb)
     return YUV(y, u, v);
 }
 
+
+/* rgbfull to yuv601full */
 __inline static td_void rgb_to_yc_full(td_u16 r, td_u16 g, td_u16 b, td_u16 *y, td_u16 *cb, td_u16 *cr)
 {
     td_u16 y_tmp, cb_tmp, cr_tmp;
 
     y_tmp = (td_u16)(((r * 76 + g * 150 + b * 29) >> 8) * 4);
-    cb_tmp = (td_u16)(clip_min(((((b * 130 - r * 44) - g * 86) >> 8) + 128), 0) * 4);
-    cr_tmp = (td_u16)(clip_min(((((r * 130 - g * 109) - b * 21) >> 8) + 128), 0) * 4);
+    cb_tmp = (td_u16)(clip_min(((((b * 128 - r * 43) - g * 84) >> 8) + 128), 0) * 4);
+    cr_tmp = (td_u16)(clip_min(((((r * 128 - g * 107) - b * 20) >> 8) + 128), 0) * 4);
 
     *y = MAX2(MIN2(y_tmp, 1023), 0);
     *cb = MAX2(MIN2(cb_tmp, 1023), 0);
@@ -203,6 +208,7 @@ __inline static td_u32 rgb_to_yuv_full(td_u32 rgb)
 /*
  * rgb_to_yc_8bit(r, g, b, *y, *u, *u)    convert r,g,b to y,u,v
  * rgb_to_yuv_8bit(rgb)                   convert rgb to yuv
+ * rgbfull to yuv601limit
  */
 __inline static td_void rgb_to_yc_8bit(td_u8 r, td_u8 g, td_u8 b, td_u8 *y, td_u8 *cb, td_u8 *cr)
 {
@@ -225,13 +231,14 @@ __inline static td_u32 rgb_to_yuv_8bit(td_u32 rgb)
     return YUV_8BIT(y, u, v);
 }
 
+/* rgbfull to yuv601full */
 __inline static td_void rgb_to_yc_full_8bit(td_u8 r, td_u8 g, td_u8 b, td_u8 *y, td_u8 *cb, td_u8 *cr)
 {
     td_s16 y_tmp, cb_tmp, cr_tmp;
 
     y_tmp = (r * 76 + g * 150 + b * 29) >> 8;
-    cb_tmp = (((b * 130 - r * 44) - g * 86) >> 8) + 128;
-    cr_tmp = (((r * 130 - g * 109) - b * 21) >> 8) + 128;
+    cb_tmp = (((b * 128 - r * 43) - g * 84) >> 8) + 128;
+    cr_tmp = (((r * 128 - g * 107) - b * 20) >> 8) + 128;
 
     *y = MAX2(MIN2(y_tmp, 255), 0);
     *cb = MAX2(MIN2(cb_tmp, 255), 0);

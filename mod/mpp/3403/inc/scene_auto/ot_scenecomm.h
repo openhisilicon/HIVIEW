@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef HI_SCENECOMM_H
@@ -149,7 +149,7 @@ extern "C" {
 #define HI_SCENECOMM_ERR_ID(module, err) ((hi_s32)((HI_SCENECOMM_ERR_BASEID) | ((module) << 20) | (err)))
 
 /* * App Module ID */
-typedef enum hiSCENE_MOD_E {
+typedef enum {
     HI_SCENE_MOD_SCENE = 0,
     HI_SCENE_MOD_CONFACCESS,
     HI_SCENE_MOD_BUTT

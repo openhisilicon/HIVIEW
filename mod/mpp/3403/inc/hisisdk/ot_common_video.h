@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __OT_COMMON_VIDEO_H__
@@ -24,7 +24,7 @@ extern "C" {
 #define OT_ISP_CAP_CCM_NUM         9
 #define OT_SRC_LENS_COEF_NUM       9
 #define OT_DST_LENS_COEF_NUM       14
-#define OT_ISP_WDR_MAX_FRAME_NUM  4
+#define OT_ISP_WDR_MAX_FRAME_NUM   4
 
 typedef enum  {
     OT_OP_MODE_AUTO   = 0,
@@ -644,12 +644,29 @@ typedef struct {
     ot_isp_dcf_info isp_dcf_info;
 } ot_jpeg_dcf;
 
+/*
+ * Defines the ISP FSWDR operating mode
+ * 0 = Normal FSWDR mode
+ * 1 = Long frame mode, only effective in LINE_WDR,
+ * when running in this mode FSWDR module only output the long frame data
+ */
+typedef enum {
+    OT_ISP_FSWDR_NORMAL_MODE          = 0x0,
+    OT_ISP_FSWDR_LONG_FRAME_MODE      = 0x1,
+    OT_ISP_FSWDR_AUTO_LONG_FRAME_MODE = 0x2, /* Auto long frame mode, only effective in LINE_WDR,  When running in this
+                                             mode, normal WDR and long frame mode would auto switch */
+    OT_ISP_FSWDR_MODE_BUTT
+} ot_isp_fswdr_mode;
+
 typedef struct {
     td_u32      iso;                    /* ISP internal ISO : again*dgain*is_pgain */
-    td_u32      exposure_time;          /* exposure time (reciprocal of shutter speed), unit is us */
-    td_u32      isp_dgain;
-    td_u32      again;
-    td_u32      dgain;
+    td_u32      exposure_time[OT_ISP_WDR_MAX_FRAME_NUM]; /* exposure time (reciprocal of shutter speed), unit is us */
+    td_u32      isp_dgain[OT_ISP_WDR_MAX_FRAME_NUM];
+    td_u32      again[OT_ISP_WDR_MAX_FRAME_NUM];
+    td_u32      dgain[OT_ISP_WDR_MAX_FRAME_NUM];
+    ot_isp_fswdr_mode fs_wdr_mode;
+
+    td_s32      fe_id[OT_ISP_WDR_MAX_FRAME_NUM];
     td_u32      ratio[3];
     td_u32      isp_nr_strength;
     td_u32      f_number;               /* the actual F-number (F-stop) of lens when the image was taken */

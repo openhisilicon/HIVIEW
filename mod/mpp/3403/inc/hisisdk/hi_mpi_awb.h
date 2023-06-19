@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_MPI_AWB_H__
@@ -17,7 +17,7 @@ extern "C" {
 
 /* The interface of awb lib register to isp. */
 hi_s32 hi_mpi_awb_unregister(hi_vi_pipe vi_pipe, const hi_isp_3a_alg_lib *awb_lib);
-hi_s32 hi_mpi_awb_register(hi_vi_pipe vi_pipe, hi_isp_3a_alg_lib *awb_lib);
+hi_s32 hi_mpi_awb_register(hi_vi_pipe vi_pipe, const hi_isp_3a_alg_lib *awb_lib);
 
 /* The callback function of sensor register to awb lib. */
 hi_s32 hi_mpi_awb_sensor_reg_callback(hi_vi_pipe vi_pipe, hi_isp_3a_alg_lib *awb_lib,

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __SAMPLE_COMM_H__
@@ -41,6 +41,7 @@
 #include "hi_mpi_audio.h"
 #include "hi_mpi_hdmi.h"
 #include "hi_mpi_vgs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* end of #ifdef __cplusplus */
@@ -183,6 +184,7 @@ extern "C" {
 typedef enum {
     PIC_CIF,
     PIC_360P,    /* 640 * 360 */
+    #define HAVE_PIC_512P
     PIC_512P,    /* 640 * 512 maohw */
     PIC_D1_PAL,  /* 720 * 576 */
     PIC_D1_NTSC, /* 720 * 480 */
@@ -206,6 +208,7 @@ typedef enum {
     PIC_2560X1600,
     PIC_2592X1520,
     PIC_2592X1944,
+    PIC_2688X1520,
     PIC_3840X2160,
     PIC_4096X2160,
     PIC_3000X3000,
@@ -233,6 +236,7 @@ enum {
     PIC_2560x1600 = PIC_2560X1600,
     PIC_2592x1520 = PIC_2592X1520,
     PIC_2592x1944 = PIC_2592X1944,
+	PIC_2688x1520 = PIC_2688X1520,
     PIC_3840x2160 = PIC_3840X2160,
     PIC_4096x2160 = PIC_4096X2160,
     PIC_3000x3000 = PIC_3000X3000,
@@ -412,6 +416,7 @@ typedef struct {
     hi_bool thread_start;
     hi_venc_chn venc_chn[HI_VENC_MAX_CHN_NUM];
     hi_s32 cnt;
+    hi_bool save_heif;	
     //maohw add callback;
     void *uargs;
     int (*cb)(hi_venc_chn chn, hi_payload_type pt, hi_venc_stream* stream, void* uargs);
@@ -676,10 +681,6 @@ typedef struct {
 #ifndef __LITEOS__
 hi_void sample_sys_signal(void (*func)(int));
 #endif
-hi_void *sample_sys_io_mmap(hi_u64 phy_addr, hi_u32 size);
-hi_s32 sample_sys_munmap(hi_void *vir_addr, hi_u32 size);
-hi_s32 sample_sys_set_reg(hi_u64 addr, hi_u32 value);
-hi_s32 sample_sys_get_reg(hi_u64 addr, hi_u32 *value);
 
 hi_s32 sample_comm_sys_get_pic_size(hi_pic_size pic_size, hi_size *size);
 hi_pic_size sample_comm_sys_get_pic_enum(const hi_size *size);
@@ -709,9 +710,9 @@ hi_s32 sample_comm_vpss_un_bind_vo(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn, h
 hi_s32 sample_comm_vpss_bind_avs(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn, hi_avs_grp avs_grp, hi_avs_pipe avs_pipe);
 hi_s32 sample_comm_vpss_un_bind_avs(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn,
                                     hi_avs_grp avs_grp, hi_avs_pipe avs_pipe);
-
 hi_s32 sample_comm_vpss_bind_venc(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn, hi_venc_chn venc_chn);
 hi_s32 sample_comm_vpss_un_bind_venc(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn, hi_venc_chn venc_chn);
+
 hi_s32 sample_comm_vdec_bind_vpss(hi_vdec_chn vdec_chn, hi_vpss_grp vpss_grp);
 hi_s32 sample_comm_vdec_un_bind_vpss(hi_vdec_chn vdec_chn, hi_vpss_grp vpss_grp);
 hi_s32 sample_comm_vo_bind_vo(hi_vo_layer src_vo_layer, hi_vo_chn src_vo_chn,
@@ -781,7 +782,7 @@ hi_s32 sample_comm_vo_stop_wbc(sample_vo_wbc_cfg *wbc_config);
 hi_s32 sample_comm_vo_get_def_wbc_config(sample_vo_wbc_cfg *wbc_config);
 hi_s32 sample_comm_vo_bind_vi(hi_vo_layer vo_layer, hi_vo_chn vo_chn, hi_vi_chn vi_chn);
 hi_s32 sample_comm_vo_un_bind_vi(hi_vo_layer vo_layer, hi_vo_chn vo_chn);
-hi_s32 sample_comm_vo_bt1120_start(hi_vo_pub_attr *pub_attr);
+hi_s32 sample_comm_vo_bt1120_start(hi_vo_dev vo_dev, hi_vo_pub_attr *pub_attr);
 hi_s32 sample_comm_vo_hdmi_start(hi_vo_intf_sync intf_sync);
 hi_s32 sample_comm_vo_hdmi_stop(hi_void);
 hi_s32 sample_comm_start_mipi_tx(const sample_mipi_tx_config *tx_config);
@@ -888,7 +889,7 @@ hi_void sample_comm_vi_get_default_mipi_info(sample_sns_type sns_type, sample_mi
 hi_void sample_comm_vi_get_default_dev_info(sample_sns_type sns_type, sample_vi_dev_info *dev_info);
 hi_void sample_comm_vi_get_mipi_info_by_dev_id(sample_sns_type sns_type, hi_vi_dev vi_dev,
                                                sample_mipi_info *mipi_info);
-
+hi_void sample_comm_venc_set_save_heif(hi_bool save_heif);
 
 //// maohw ////
 #define CHN_NUM_MAX 2
@@ -906,6 +907,15 @@ typedef struct {
     hi_u32 blk_cnt[HI_VB_MAX_COMMON_POOLS];
     hi_u32 supplement_config;
 } sample_venc_vb_attr;
+
+#include "hi_mpi_hnr.h"
+typedef struct {
+    hi_bool is_wdr_mode;
+    hi_hnr_ref_mode ref_mode;
+    hi_bool normal_blend;
+    hi_vi_video_mode video_mode;
+} sample_hnr_param;
+
 #include "mpp.h"
 ///////////////
 

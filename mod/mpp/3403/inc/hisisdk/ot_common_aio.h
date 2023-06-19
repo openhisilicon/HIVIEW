@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_AIO_H
@@ -152,7 +152,7 @@ typedef enum {
 } ot_g726_bps;
 
 typedef enum {
-    /* see DVI4 diiffers in three respects from the IMA ADPCM at RFC3551.txt 4.5.1 DVI4 */
+    /* see DVI4 differs in three respects from the IMA ADPCM at RFC3551.txt 4.5.1 DVI4 */
     OT_ADPCM_TYPE_DVI4 = 0,    /* 32kbps ADPCM(DVI4) for RTP */
     OT_ADPCM_TYPE_IMA,         /* 32kbps ADPCM(IMA),NOTICE:point num must be 161/241/321/481 */
     OT_ADPCM_TYPE_ORG_DVI4,
@@ -166,7 +166,7 @@ typedef struct {
     ot_audio_sample_rate sample_rate;    /* sample rate */
     ot_audio_bit_width   bit_width;      /* bit_width */
     ot_aio_mode          work_mode;      /* master or slave mode */
-    ot_audio_snd_mode    snd_mode;       /* momo or stereo */
+    ot_audio_snd_mode    snd_mode;       /* mono or stereo */
     td_u32               expand_flag;    /* expand 8bit to 16bit, use OT_AI_EXPAND(only valid for AI 8bit),
                                             use OT_AI_CUT(only valid for extern codec for 24bit) */
     td_u32               frame_num;      /* frame num in buf[2,OT_MAX_AUDIO_FRAME_NUM] */
@@ -194,7 +194,7 @@ typedef struct {
 
 typedef struct {
     ot_audio_bit_width   bit_width;     /* audio frame bit_width */
-    ot_audio_snd_mode    snd_mode;      /* audio frame momo or stereo mode */
+    ot_audio_snd_mode    snd_mode;      /* audio frame mono or stereo mode */
     td_u8 ATTRIBUTE *virt_addr[OT_AUDIO_FRAME_CHN_NUM];
     td_phys_addr_t ATTRIBUTE phys_addr[OT_AUDIO_FRAME_CHN_NUM];
     td_u64  time_stamp;                 /* audio frame time stamp */
@@ -210,7 +210,7 @@ typedef struct {
 } ot_aec_frame;
 
 typedef struct {
-    ot_audio_frame *frame;         /* frame pointor */
+    ot_audio_frame *frame;         /* frame pointer */
     td_u32         id;             /* frame id */
 } ot_audio_frame_info;
 
@@ -373,7 +373,7 @@ typedef struct {
     td_s32 max_gain_db;             /* the maximum of MIC(AI) CODEC gain, [0, 120] */
 
     td_s32 mic_gain_db;             /* the current gain of MIC(AI) CODEC,[min_gain_db, max_gain_db] */
-    td_s32 mic_gain_step_db;        /* the step size of gain adjustment, [1, 3], recommemd 2 */
+    td_s32 mic_gain_step_db;        /* the step size of gain adjustment, [1, 3], recommend 2 */
     func_gain_callback callback;    /* the callback function pointer of CODEC gain adjustment */
 } ot_ai_hdr_cfg;
 
@@ -575,11 +575,11 @@ typedef enum {
     OT_AIO_ERR_VQE_ERR        = 65, /* vqe error */
 } ot_aio_err_code;
 
-/* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+/* at lease one parameter is illegal, eg, an illegal enumeration value */
 #define OT_ERR_AIO_ILLEGAL_PARAM    OT_DEFINE_ERR(OT_ID_AIO, OT_ERR_LEVEL_ERROR, OT_ERR_ILLEGAL_PARAM)
 /* using a NULL pointer */
 #define OT_ERR_AIO_NULL_PTR         OT_DEFINE_ERR(OT_ID_AIO, OT_ERR_LEVEL_ERROR, OT_ERR_NULL_PTR)
-/* operation is not supported by NOW */
+/* operation is not supported by now */
 #define OT_ERR_AIO_NOT_PERM         OT_DEFINE_ERR(OT_ID_AIO, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_PERM)
 /* system is not ready, had not initialed or loaded */
 #define OT_ERR_AIO_NOT_READY        OT_DEFINE_ERR(OT_ID_AIO, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_READY)
@@ -592,17 +592,17 @@ typedef enum {
 #define OT_ERR_AI_INVALID_DEV_ID    OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_DEV_ID)
 /* invalid channel ID */
 #define OT_ERR_AI_INVALID_CHN_ID    OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_CHN_ID)
-/* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+/* at lease one parameter is illegal, eg, an illegal enumeration value */
 #define OT_ERR_AI_ILLEGAL_PARAM     OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_ILLEGAL_PARAM)
-/* using a NULL pointer */
+/* using a null pointer */
 #define OT_ERR_AI_NULL_PTR          OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NULL_PTR)
-/* try to enable or initialize system,device or channel, before configing attribute */
+/* try to enable or initialize system, device or channel, before configing attribute */
 #define OT_ERR_AI_NOT_CFG           OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_CFG)
-/* operation is not supported by NOW */
+/* operation is not supported by now */
 #define OT_ERR_AI_NOT_SUPPORT       OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_SUPPORT)
-/* operation is not permitted ,eg, try to change static attribute */
+/* operation is not permitted, eg, try to change static attribute */
 #define OT_ERR_AI_NOT_PERM          OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_PERM)
-/* the device is not enabled  */
+/* the device is not enabled */
 #define OT_ERR_AI_NOT_ENABLED       OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_ENABLE)
 /* failure caused by malloc memory */
 #define OT_ERR_AI_NO_MEM            OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NO_MEM)
@@ -612,7 +612,7 @@ typedef enum {
 #define OT_ERR_AI_BUF_EMPTY         OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_BUF_EMPTY)
 /* no buffer for new data */
 #define OT_ERR_AI_BUF_FULL          OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_BUF_FULL)
-/* system is not ready,had not initialed or loaded */
+/* system is not ready, had not initialed or loaded */
 #define OT_ERR_AI_NOT_READY         OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_READY)
 /* ai is working */
 #define OT_ERR_AI_BUSY              OT_DEFINE_ERR(OT_ID_AI, OT_ERR_LEVEL_ERROR, OT_ERR_BUSY)
@@ -623,17 +623,17 @@ typedef enum {
 #define OT_ERR_AO_INVALID_DEV_ID    OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_DEV_ID)
 /* invalid channel ID */
 #define OT_ERR_AO_INVALID_CHN_ID    OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_CHN_ID)
-/* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+/* at lease one parameter is illegal, eg, an illegal enumeration value */
 #define OT_ERR_AO_ILLEGAL_PARAM     OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_ILLEGAL_PARAM)
-/* using a NULL pointer */
+/* using a null pointer */
 #define OT_ERR_AO_NULL_PTR          OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_NULL_PTR)
-/* try to enable or initialize system,device or channel, before configing attribute */
+/* try to enable or initialize system, device or channel, before configing attribute */
 #define OT_ERR_AO_NOT_CFG           OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_CFG)
-/* operation is not supported by NOW */
+/* operation is not supported by now */
 #define OT_ERR_AO_NOT_SUPPORT       OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_SUPPORT)
-/* operation is not permitted ,eg, try to change static attribute */
+/* operation is not permitted, eg, try to change static attribute */
 #define OT_ERR_AO_NOT_PERM          OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_PERM)
-/* the device is not enabled  */
+/* the device is not enabled */
 #define OT_ERR_AO_NOT_ENABLED       OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_ENABLE)
 /* failure caused by malloc memory */
 #define OT_ERR_AO_NO_MEM            OT_DEFINE_ERR(OT_ID_AO, OT_ERR_LEVEL_ERROR, OT_ERR_NO_MEM)

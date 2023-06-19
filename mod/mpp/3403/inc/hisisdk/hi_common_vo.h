@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_VO_H__
@@ -121,6 +121,7 @@ typedef ot_vo_pll hi_vo_pll;
 typedef ot_vo_user_sync_attr hi_vo_user_sync_attr;
 typedef ot_vo_user_sync_info hi_vo_user_sync_info;
 typedef ot_vo_less_buf_attr hi_vo_less_buf_attr;
+typedef ot_vo_user_notify_attr hi_vo_user_notify_attr;
 #define HI_VO_INTF_STATUS_NO_PLUG OT_VO_INTF_STATUS_NO_PLUG
 #define HI_VO_INTF_STATUS_PLUG OT_VO_INTF_STATUS_PLUG
 #define HI_VO_INTF_STATUS_BUTT OT_VO_INTF_STATUS_BUTT
@@ -155,6 +156,10 @@ typedef ot_vo_intf_status hi_vo_intf_status;
 #define HI_VO_CSC_MATRIX_RGBFULL_TO_BT709LIMIT OT_VO_CSC_MATRIX_RGBFULL_TO_BT709LIMIT
 #define HI_VO_CSC_MATRIX_RGBFULL_TO_BT709FULL OT_VO_CSC_MATRIX_RGBFULL_TO_BT709FULL
 #define HI_VO_CSC_MATRIX_BUTT OT_VO_CSC_MATRIX_BUTT
+#define HI_VO_CLK_EDGE_SINGLE OT_VO_CLK_EDGE_SINGLE
+#define HI_VO_CLK_EDGE_DUAL OT_VO_CLK_EDGE_DUAL
+#define HI_VO_CLK_EDGE_BUTT OT_VO_CLK_EDGE_BUTT
+typedef ot_vo_clk_edge hi_vo_clk_edge;
 typedef ot_vo_csc_matrix hi_vo_csc_matrix;
 typedef ot_vo_csc hi_vo_csc;
 typedef ot_vo_vga_param hi_vo_vga_param;

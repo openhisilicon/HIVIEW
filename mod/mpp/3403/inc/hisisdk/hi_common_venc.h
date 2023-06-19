@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef HI_COMMON_VENC_H
@@ -189,6 +189,12 @@ typedef ot_venc_ref_param hi_venc_ref_param;
 #define HI_VENC_JPEG_ENC_ALL OT_VENC_JPEG_ENC_ALL
 #define HI_VENC_JPEG_ENC_SNAP OT_VENC_JPEG_ENC_SNAP
 #define HI_VENC_JPEG_ENC_BUTT OT_VENC_JPEG_ENC_BUTT
+typedef ot_venc_jpeg_dering_level hi_venc_jpeg_dering_level;
+#define HI_VENC_JPEG_DERING_LEVEL_0 OT_VENC_JPEG_DERING_LEVEL_0
+#define HI_VENC_JPEG_DERING_LEVEL_1 OT_VENC_JPEG_DERING_LEVEL_1
+#define HI_VENC_JPEG_DERING_LEVEL_2 OT_VENC_JPEG_DERING_LEVEL_2
+#define HI_VENC_JPEG_DERING_LEVEL_3 OT_VENC_JPEG_DERING_LEVEL_3
+#define HI_VENC_JPEG_DERING_LEVEL_BUTT OT_VENC_JPEG_DERING_LEVEL_BUTT
 typedef ot_venc_jpeg_enc_mode hi_venc_jpeg_enc_mode;
 typedef ot_venc_stream_buf_info hi_venc_stream_buf_info;
 typedef ot_venc_h265_pu hi_venc_h265_pu;
@@ -254,6 +260,8 @@ typedef ot_venc_deblur_param hi_venc_deblur_param;
 #define HI_VENC_MD_SAD_MODE_BUTT OT_VENC_MD_SAD_MODE_BUTT
 typedef ot_venc_md_sad_mode hi_venc_md_sad_mode;
 typedef ot_venc_md_param hi_venc_md_param;
+typedef ot_omx_user_rc_info hi_omx_user_rc_info;
+typedef ot_omx_user_frame_info hi_omx_user_frame_info;
 
 #ifdef __cplusplus
 }

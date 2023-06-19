@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef  OT_COMMON_ADEC_H
@@ -84,19 +84,19 @@ typedef enum {
 #define OT_ERR_ADEC_INVALID_DEV_ID    OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_DEV_ID)
 /* invalid channel ID */
 #define OT_ERR_ADEC_INVALID_CHN_ID    OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_CHN_ID)
-/* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+/* at lease one parameter is illegal, eg, an illegal enumeration value */
 #define OT_ERR_ADEC_ILLEGAL_PARAM     OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_ILLEGAL_PARAM)
 /* channel exists */
 #define OT_ERR_ADEC_EXIST             OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_EXIST)
-/* channel unexists */
+/* channel unexist */
 #define OT_ERR_ADEC_UNEXIST           OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_UNEXIST)
-/* using a NULL pointer */
+/* using a null pointer */
 #define OT_ERR_ADEC_NULL_PTR          OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_NULL_PTR)
-/* try to enable or initialize system,device or channel, before configing attribute */
+/* try to enable or initialize system, device or channel, before configing attribute */
 #define OT_ERR_ADEC_NOT_CFG           OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_CFG)
-/* operation is not supported by NOW */
+/* operation is not supported by now */
 #define OT_ERR_ADEC_NOT_SUPPORT       OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_SUPPORT)
-/* operation is not permitted ,eg, try to change static attribute */
+/* operation is not permitted, eg, try to change static attribute */
 #define OT_ERR_ADEC_NOT_PERM          OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_PERM)
 /* failure caused by malloc memory */
 #define OT_ERR_ADEC_NO_MEM            OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_NO_MEM)
@@ -106,7 +106,7 @@ typedef enum {
 #define OT_ERR_ADEC_BUF_EMPTY         OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_BUF_EMPTY)
 /* no buffer for new data */
 #define OT_ERR_ADEC_BUF_FULL          OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_BUF_FULL)
-/* system is not ready,had not initialed or loaded */
+/* system is not ready, had not initialed or loaded */
 #define OT_ERR_ADEC_NOT_READY         OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_READY)
 /* decoder internal err */
 #define OT_ERR_ADEC_DECODER_ERR       OT_DEFINE_ERR(OT_ID_ADEC, OT_ERR_LEVEL_ERROR, OT_ADEC_ERR_DECODER_ERR)
@@ -119,4 +119,3 @@ typedef enum {
 #endif /* End of #ifdef __cplusplus */
 
 #endif /* End of #ifndef OT_COMMON_ADEC_H */
-

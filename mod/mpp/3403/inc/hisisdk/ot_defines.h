@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_DEFINES_H
@@ -18,8 +18,9 @@ extern "C" {
 #endif
 
 #define OT_CHIP_SS528V100                    0x01050100
-#define OT_CHIP_SS624V100                    0x01050200
+#define OT_CHIP_SS524V100                    0x01050200
 #define OT_CHIP_SS625V100                    0x01090500
+#define OT_CHIP_SS626V100                    0x01090200
 #define OT_CHIP_SS928V100                     0x01090100
 #define OT_CHIP_SS000V100                     0x01090300
 
@@ -506,6 +507,9 @@ extern "C" {
 #define OT_MCF_MAX_EXT_CHN_HEIGHT       8192
 #define OT_MCF_MIN_EXT_CHN_WIDTH        64
 #define OT_MCF_MIN_EXT_CHN_HEIGHT       64
+
+/* For UVC */
+#define OT_UVC_MAX_CHN_NUM                1 /* max chn num */
 
 #ifdef __cplusplus
 #if __cplusplus

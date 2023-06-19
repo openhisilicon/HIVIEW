@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_ISP_H__
@@ -131,6 +131,12 @@ typedef ot_isp_ob_stats_update_pos hi_isp_ob_stats_update_pos;
 #define HI_ISP_ALG_RUN_FE_ONLY OT_ISP_ALG_RUN_FE_ONLY
 #define HI_ISP_ALG_RUN_BUTT    OT_ISP_ALG_RUN_BUTT
 typedef ot_isp_alg_run_select hi_isp_alg_run_select;
+
+#define HI_ISP_RUN_WAKEUP_FE_START OT_ISP_RUN_WAKEUP_FE_START
+#define HI_ISP_RUN_WAKEUP_BE_END   OT_ISP_RUN_WAKEUP_BE_END
+#define HI_ISP_RUN_WAKEUP_BUTT     OT_ISP_RUN_WAKEUP_BUTT
+typedef ot_isp_run_wakeup_select hi_isp_run_wakeup_select;
+
 typedef ot_isp_ctrl_param hi_isp_ctrl_param;
 #define HI_ISP_LONG_FRAME OT_ISP_LONG_FRAME
 #define HI_ISP_SHORT_FRAME OT_ISP_SHORT_FRAME
@@ -490,11 +496,6 @@ typedef ot_isp_fast_face_ae_attr hi_isp_fast_face_ae_attr;
 typedef ot_isp_antiflicker_mode hi_isp_antiflicker_mode;
 typedef ot_isp_antiflicker hi_isp_antiflicker;
 typedef ot_isp_subflicker hi_isp_subflicker;
-#define HI_ISP_FSWDR_NORMAL_MODE OT_ISP_FSWDR_NORMAL_MODE
-#define HI_ISP_FSWDR_LONG_FRAME_MODE OT_ISP_FSWDR_LONG_FRAME_MODE
-#define HI_ISP_FSWDR_AUTO_LONG_FRAME_MODE OT_ISP_FSWDR_AUTO_LONG_FRAME_MODE
-#define HI_ISP_FSWDR_MODE_BUTT OT_ISP_FSWDR_MODE_BUTT
-typedef ot_isp_fswdr_mode hi_isp_fswdr_mode;
 typedef ot_isp_ae_attr hi_isp_ae_attr;
 typedef ot_isp_me_attr hi_isp_me_attr;
 typedef ot_isp_exposure_attr hi_isp_exposure_attr;

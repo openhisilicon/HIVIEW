@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_MPI_ISP_H__
@@ -31,7 +31,7 @@ hi_s32 hi_mpi_isp_sensor_unreg_callback(hi_vi_pipe vi_pipe, hi_sensor_id sensor_
 /* if have registered multy libs, set bind attr to appoint the active lib. */
 hi_s32 hi_mpi_isp_set_bind_attr(hi_vi_pipe vi_pipe, const hi_isp_bind_attr *bind_attr);
 hi_s32 hi_mpi_isp_get_bind_attr(hi_vi_pipe vi_pipe, hi_isp_bind_attr *bind_attr);
-hi_s32 hi_mpi_isp_ae_lib_reg_callback(hi_vi_pipe vi_pipe, hi_isp_3a_alg_lib *ae_lib,
+hi_s32 hi_mpi_isp_ae_lib_reg_callback(hi_vi_pipe vi_pipe, const hi_isp_3a_alg_lib *ae_lib,
     const hi_isp_ae_register *ae_register);
 hi_s32 hi_mpi_isp_awb_lib_reg_callback(hi_vi_pipe vi_pipe, const hi_isp_3a_alg_lib *awb_lib,
                                        const hi_isp_awb_register *awb_register);
@@ -194,7 +194,7 @@ hi_s32 hi_mpi_isp_set_smart_info(hi_vi_pipe vi_pipe, const hi_isp_smart_info *sm
 hi_s32 hi_mpi_isp_get_smart_info(hi_vi_pipe vi_pipe, hi_isp_smart_info *smart_info);
 
 hi_s32 hi_mpi_isp_set_frame_info(hi_vi_pipe vi_pipe, const hi_isp_frame_info *isp_frame);
-hi_s32 hi_mpi_isp_get_frame_info(hi_vi_pipe vi_pipe, const hi_isp_frame_info *isp_frame);
+hi_s32 hi_mpi_isp_get_frame_info(hi_vi_pipe vi_pipe, hi_isp_frame_info *isp_frame);
 hi_s32 hi_mpi_isp_calc_flicker_type(hi_vi_pipe vi_pipe, hi_isp_calc_flicker_input *input_param,
                                     hi_isp_calc_flicker_output *output_param, hi_video_frame_info frame[],
                                     hi_u32 array_size);

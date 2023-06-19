@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_PHOTO_H__
@@ -17,6 +17,7 @@ extern "C" {
 #define HI_PHOTO_MIN_HEIGHT OT_PHOTO_MIN_HEIGHT
 #define HI_PHOTO_MAX_WIDTH OT_PHOTO_MAX_WIDTH
 #define HI_PHOTO_MAX_HEIGHT OT_PHOTO_MAX_HEIGHT
+#define HI_PHOTO_HDR_MAX_HEIGHT OT_PHOTO_HDR_MAX_HEIGHT
 #define HI_PHOTO_HDR_ISO_LEVEL_CNT OT_PHOTO_HDR_ISO_LEVEL_CNT
 #define HI_PHOTO_SFNR_ISO_LEVEL_CNT OT_PHOTO_SFNR_ISO_LEVEL_CNT
 #define HI_PHOTO_MFNR_ISO_LEVEL_CNT OT_PHOTO_MFNR_ISO_LEVEL_CNT
@@ -28,6 +29,12 @@ extern "C" {
 #define HI_PHOTO_ALG_TYPE_MFNR OT_PHOTO_ALG_TYPE_MFNR
 #define HI_PHOTO_ALG_TYPE_DE OT_PHOTO_ALG_TYPE_DE
 #define HI_PHOTO_ALG_TYPE_BUTT OT_PHOTO_ALG_TYPE_BUTT
+
+#define HI_PHOTO_HDR_FUSION_AUTO  OT_PHOTO_HDR_FUSION_AUTO
+#define HI_PHOTO_HDR_FUSION_SHORT_MEDIAN OT_PHOTO_HDR_FUSION_SHORT_MEDIAN
+#define HI_PHOTO_HDR_FUSION_MEDIAN_LONG  OT_PHOTO_HDR_FUSION_MEDIAN_LONG
+#define HI_PHOTO_HDR_FUSION_ALL  OT_PHOTO_HDR_FUSION_ALL
+#define HI_PHOTO_HDR_FUSION_BUTT  OT_PHOTO_HDR_FUSION_BUTT
 
 typedef ot_photo_alg_type hi_photo_alg_type;
 typedef ot_photo_face_info hi_photo_face_info;
@@ -50,6 +57,7 @@ typedef ot_photo_sfnr_attr hi_photo_sfnr_attr;
 typedef ot_photo_mfnr_attr hi_photo_mfnr_attr;
 typedef ot_photo_de_attr hi_photo_de_attr;
 typedef ot_photo_alg_attr hi_photo_alg_attr;
+typedef ot_photo_hdr_fusion_mode hi_photo_hdr_fusion_mode;
 
 #define HI_ERR_PHOTO_NULL_PTR OT_ERR_PHOTO_NULL_PTR
 #define HI_ERR_PHOTO_NOT_READY OT_ERR_PHOTO_NOT_READY

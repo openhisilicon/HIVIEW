@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #include "ot_common.h"
@@ -9,6 +9,7 @@
 
 typedef struct {
     void (*vo_notify)(int mod_id, int dev);
+    void (*vo_user_notify)(int mod_id, int dev);
 } ot_vo_export_callback;
 
 typedef td_s32 ot_vo_register_export_callback(ot_vo_export_callback *export_callback);

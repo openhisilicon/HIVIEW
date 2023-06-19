@@ -22,7 +22,7 @@ INCS := -I$(HOME) -I$(GSF_DEV_TYPE) -Iinc \
 SRCS := $(shell find $(GSF_DEV_TYPE) -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lcomm -lpthread -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lm
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lcomm -lfont -lmpp -lcfifo -lrt -lnm -lcjson -lpthread -lm
          
 ifeq ($(GSF_CPU_ARCH), 3516a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -laf -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
@@ -53,10 +53,20 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiir_auto -l_hiac
 else ifeq ($(GSF_CPU_ARCH), 3531d)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -live -lmd -lnnie -lhive_RES -laacenc -laacdec -laaccomm -ltde -lstdc++ 
-else ifeq ($(GSF_CPU_ARCH), 3403)
+else ifeq ($(GSF_CPU_ARCH), 3403_020)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \
         -lisp -lot_isp -l_hiae -l_hiawb -l_hidehaze -l_hiextend_stats -l_hidrc -l_hildci -l_hibnr -l_hicalcflicker -l_hiir_auto -l_hiacs -l_hicrb \
         -live -lmpi -live -lmd -ltde -lVoiceEngine -ldnvqe -lupvqe -laac_enc -laac_dec -laac_comm -lpqp -lhnr -lmcf -l_mcf_vi -lstdc++ 
+else ifeq ($(GSF_CPU_ARCH), 3403)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lhdmi -lsecurec \
+        -lisp -lot_isp -l_hiae -l_hiawb -l_hidehaze -l_hiextend_stats -l_hidrc -l_hildci -l_hibnr -l_hicalcflicker -l_hiir_auto -l_hiacs -l_hicrb -lfileformat -lheif \
+        -live -lmpi -live -lmd -ltde -lVoiceEngine -ldnvqe -lupvqe -laac_enc -laac_dec -laac_comm -lpqp -lhnr -lmcf -l_mcf_vi -lstdc++ 
+else ifeq ($(GSF_CPU_ARCH), 3519d)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lsecurec \
+        -lhi_mpi -lhi_mpi_sysbind -lhi_mpi_sysmem -lhi_mpi_ae -lhi_mpi_isp -lot_mpi_isp -lhi_mpi_awb -ldehaze -lextend_stats -ldrc -lldci -lbnr -lcalcflicker -lir_auto -lacs \
+        -lhi_mpi_aibnr -lhi_mpi_aidrc -lhi_mpi_ai3dnr -lhi_mpi_mcf -lhi_mpi_mcf_vi -lsvp_acl -lprotobuf-c -lheif -lfileformat \
+        -lhi_mpi_audio -lvoice_engine -lupvqe -ldnvqe -lhi_mpi_audio_adp -lopus -lvqe_res -lvqe_record -lvqe_hpf -lvqe_anr -lvqe_aec -lvqe_agc -lvqe_eq -lvqe_talkv2 \
+        -laac_dec -laac_enc -laac_comm -laac_sbr_dec -laac_sbr_enc -lstdc++ -lhi_tde -lmp3_dec -lmp3_enc -lmp3_lame
 endif
 
 $(TARG): $(OBJS)

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_VIDEO_H__
@@ -245,6 +245,11 @@ typedef ot_isp_dcf_const_info hi_isp_dcf_const_info;
 typedef ot_isp_dcf_update_info hi_isp_dcf_update_info;
 typedef ot_isp_dcf_info hi_isp_dcf_info;
 typedef ot_jpeg_dcf hi_jpeg_dcf;
+#define HI_ISP_FSWDR_NORMAL_MODE OT_ISP_FSWDR_NORMAL_MODE
+#define HI_ISP_FSWDR_LONG_FRAME_MODE OT_ISP_FSWDR_LONG_FRAME_MODE
+#define HI_ISP_FSWDR_AUTO_LONG_FRAME_MODE OT_ISP_FSWDR_AUTO_LONG_FRAME_MODE
+#define HI_ISP_FSWDR_MODE_BUTT OT_ISP_FSWDR_MODE_BUTT
+typedef ot_isp_fswdr_mode hi_isp_fswdr_mode;
 typedef ot_isp_frame_info hi_isp_frame_info;
 typedef ot_isp_hdr_info hi_isp_hdr_info;
 typedef ot_isp_attach_info hi_isp_attach_info;

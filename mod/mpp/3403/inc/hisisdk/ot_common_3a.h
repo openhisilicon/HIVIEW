@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_3A_H
@@ -8,6 +8,7 @@
 #include "ot_common.h"
 #include "ot_common_isp.h"
 #include "ot_common_sns.h"
+#include "ot_common_video.h"
 
 #ifdef __cplusplus
 #if __cplusplus

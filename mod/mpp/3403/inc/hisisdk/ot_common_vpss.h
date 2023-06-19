@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_VPSS_H
@@ -69,13 +69,13 @@ typedef struct {
     td_bool             dci_en;                   /* RW; Range: [0, 1]; Dynamic contrast improve enable. */
     td_bool             buf_share_en;             /* RW; Range: [0, 1]; Buffer share enable. */
     td_bool             mcf_en;                   /* RW; Range: [0, 1]; MCF enable. */
-    /* RW; Range: SS528V100/SS624V100 = [64, 16384] | SS928V100 = [64, 8192]; Width of source image. */
+    /* RW; Range: SS528V100/SS524V100 = [64, 16384] | SS928V100 = [64, 8192]; Width of source image. */
     td_u32              max_width;
-    /* RW; Range: SS528V100/SS624V100/SS928V100 = [64, 8192]; Height of source image. */
+    /* RW; Range: SS528V100/SS524V100/SS928V100 = [64, 8192]; Height of source image. */
     td_u32              max_height;
-    /* RW; Range: SS528V100/SS624V100 = [64, 960]; Width of max dei image. */
+    /* RW; Range: SS528V100/SS524V100 = [64, 960]; Width of max dei image. */
     td_u32              max_dei_width;
-    /* RW; Range: SS528V100/SS624V100 = [64, 4096]; Height of max dei image. */
+    /* RW; Range: SS528V100/SS524V100 = [64, 4096]; Height of max dei image. */
     td_u32              max_dei_height;
     ot_dynamic_range    dynamic_range;            /* RW; Dynamic range of source image. */
     ot_pixel_format     pixel_format;             /* RW; Pixel format of source image. */
@@ -95,9 +95,9 @@ typedef struct {
     td_bool             mirror_en;                /* RW; Range: [0, 1]; Mirror enable. */
     td_bool             flip_en;                  /* RW; Range: [0, 1]; Flip enable. */
     td_bool             border_en;                /* RW; Range: [0, 1]; Border enable. */
-    /* RW; range: SS528V100/SS624V100/SS928V100 = [64, 16384]; Width of target image. */
+    /* RW; range: SS528V100/SS524V100/SS928V100 = [64, 16384]; Width of target image. */
     td_u32              width;
-    /* RW; range: SS528V100/SS624V100/SS928V100 = [64, 8192]; Height of target image. */
+    /* RW; range: SS528V100/SS524V100/SS928V100 = [64, 8192]; Height of target image. */
     td_u32              height;
     td_u32              depth;                    /* RW; Range: [0, 8]; Depth of chn image list. */
     ot_vpss_chn_mode    chn_mode;                 /* RW; Work mode of vpss channel. */
@@ -135,7 +135,7 @@ typedef struct {
     ot_rect                  crop_rect;           /* RW; Crop rectangular. */
 } ot_vpss_crop_info;
 
-/* Only used for SS528V100/SS624V100 */
+/* Only used for SS528V100/SS524V100 */
 typedef struct {
     td_u32                   sf_strength;         /* RW; Range: [0, 255]; Strength of y space filter. */
     td_u32                   tf_strength;         /* RW; Range: [0, 63]; Strength of y time filter. */
@@ -226,7 +226,7 @@ typedef struct {
     struct {
         td_u16 tfs1      : 4;   /* RW; Range: [0,  15]; The NR strength for temporal filtering. */
         td_u16 tdz1      : 10;  /* RW; Range: [0, 999]; Protection of the weak texture area from temporal filtering. */
-        td_u16 math_mode : 2;   /* RW; Range: [0,   1]; The motion dection mode. */
+        td_u16 math_mode : 2;   /* RW; Range: [0,   1]; The motion detection mode. */
     };
     struct {
         td_u16 sdz0   : 10; /* RW; Range: [0, 999]; The threshold of NR control for result mai00. */
@@ -241,8 +241,8 @@ typedef struct {
     td_u8   tss0;       /* RW; Range: [0,  15]; The ratio for blending spatial NR with the temporal NR results. */
     td_u8   tss1;       /* RW; Range: [0,  15]; The ratio for blending spatial NR with the temporal NR results. */
     td_u16  auto_math;  /* RW; Range: [0, 999]; The motion threshold for the Level 0 denoise. */
-    td_u8   tfr0[6];    /* RW; Range: [0,  31]; The temoproal NR strength control for background (static) area. */
-    td_u8   tfr1[6];    /* RW; Range: [0,  31]; The temoproal NR strength control for background (static) area. */
+    td_u8   tfr0[6];    /* RW; Range: [0,  31]; The temporal NR strength control for background (static) area. */
+    td_u8   tfr1[6];    /* RW; Range: [0,  31]; The temporal NR strength control for background (static) area. */
 } ot_vpss_nrx_v2_tfy;
 
 typedef struct {
@@ -266,13 +266,13 @@ typedef struct {
 } ot_vpss_nrx_v2_mdy;
 
 typedef struct {
-    td_u8   sfc;                /* RW; Range: [0, 31];  The chorma NR strength. */
-    td_u8   sfc_enhance;        /* RW; Range: [0, 255];  The chorma NR strength for sfc. */
-    td_u8   sfc_ext;            /* RW; Range: [0, 255];  The extra chorma NR strength for sfc. */
-    td_u8   trc;                /* RW; Range: [0, 255];  The temporal chorma NR strength. */
+    td_u8   sfc;                /* RW; Range: [0, 31];  The chroma NR strength. */
+    td_u8   sfc_enhance;        /* RW; Range: [0, 255];  The chroma NR strength for sfc. */
+    td_u8   sfc_ext;            /* RW; Range: [0, 255];  The extra chroma NR strength for sfc. */
+    td_u8   trc;                /* RW; Range: [0, 255];  The temporal chroma NR strength. */
     struct {
-        td_u16 auto_math : 10;  /* RW; Range: [0, 999];  The motion threshold for chorma. */
-        td_u16 tfc       : 6;   /* RW; Range: [0, 32];   The control of temporal chorma NR strength. */
+        td_u16 auto_math : 10;  /* RW; Range: [0, 999];  The motion threshold for chroma. */
+        td_u16 tfc       : 6;   /* RW; Range: [0, 32];   The control of temporal chroma NR strength. */
     };
 } ot_vpss_nrx_v2_nrc0;
 
@@ -285,16 +285,16 @@ typedef struct {
     td_u8   sfs4;       /* RW; Range: [0, 255];  The NR strength parameters for NO.3 and NO.4 filter. */
     td_u8   sft4;       /* RW; Range: [0, 255];  The NR strength parameters for NO.3 and NO.4 filter. */
     td_u8   sbr4;       /* RW; Range: [0, 255];  The NR strength parameters for NO.3 and NO.4 filter. */
-    td_u8   sfc6;       /* RW; Range: [0, 255];  The chorma NR strength for NO.6 filter. */
-    td_u8   sfc_ext6;   /* RW; Range: [0, 255];  The extra chorma NR strength for NO.6 filter. */
-    /* sfr6_u, sfr6_v; Range: [0, 15]; The chorma NR strength control for U and V, respectively, for NO.6 filter. */
+    td_u8   sfc6;       /* RW; Range: [0, 255];  The chroma NR strength for NO.6 filter. */
+    td_u8   sfc_ext6;   /* RW; Range: [0, 255];  The extra chroma NR strength for NO.6 filter. */
+    /* sfr6_u, sfr6_v; Range: [0, 15]; The chroma NR strength control for U and V, respectively, for NO.6 filter. */
     struct {
         td_u8 sfr6_u : 4;
         td_u8 sfr6_v : 4;
     };
     /*
-     * sf5_str_u, sf5_str_v; Range: [0, 31]; The chorma NR strength for U and V, respectively, for NO.5 filter.
-     * post_sfc; Range: [0, 31]; The chorma NR strength for sfc filter.
+     * sf5_str_u, sf5_str_v; Range: [0, 31]; The chroma NR strength for U and V, respectively, for NO.5 filter.
+     * post_sfc; Range: [0, 31]; The chroma NR strength for sfc filter.
      */
     struct {
         td_u16 sf5_str_u : 5;
@@ -338,8 +338,8 @@ typedef struct {
         td_u8 bri1_h_sfn10 : 4; /* RW; Range: [0, 9];  The selection of filters to be mixed for NO.10 filter. */
     };
     struct {
-        td_u8 sfn0 : 4; /* RW; Range: [0, 10]; The selection of filters for foreground and background, respectivel. */
-        td_u8 sfn1 : 4; /* RW; Range: [0, 10]; The selection of filters for foreground and background, respectivel. */
+        td_u8 sfn0 : 4; /* RW; Range: [0, 10]; The selection of filters for foreground and background, respectively. */
+        td_u8 sfn1 : 4; /* RW; Range: [0, 10]; The selection of filters for foreground and background, respectively. */
     };
     td_u8   bak_grd_sat[OT_VPSS_S_IDX_LEN]; /* RW; Range: [0, 255]; Chroma NR strength based on saturation. */
     td_u8   for_grd_sat[OT_VPSS_S_IDX_LEN]; /* RW; Range: [0, 255]; Chroma NR strength based on saturation. */
@@ -374,8 +374,8 @@ typedef struct {
 
 typedef struct {
     td_u32 param_num;
-    td_u32 *iso;
-    ot_vpss_nrx_v2 *nrx_param;
+    td_u32 ATTRIBUTE *iso;
+    ot_vpss_nrx_v2 ATTRIBUTE *nrx_param;
 } ot_vpss_nrx_param_auto_v2;
 
 typedef struct {

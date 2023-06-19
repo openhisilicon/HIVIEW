@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_MPI_VO_H__
@@ -29,6 +29,8 @@ hi_s32 hi_mpi_vo_set_vtth(hi_vo_dev dev, hi_u32 vtth);
 hi_s32 hi_mpi_vo_get_vtth(hi_vo_dev dev, hi_u32 *vtth);
 hi_s32 hi_mpi_vo_set_less_buf_attr(hi_vo_dev dev, const hi_vo_less_buf_attr *less_buf_attr);
 hi_s32 hi_mpi_vo_get_less_buf_attr(hi_vo_dev dev, hi_vo_less_buf_attr *less_buf_attr);
+hi_s32 hi_mpi_vo_set_user_notify_attr(hi_vo_dev dev, const hi_vo_user_notify_attr *user_notify_attr);
+hi_s32 hi_mpi_vo_get_user_notify_attr(hi_vo_dev dev, hi_vo_user_notify_attr *user_notify_attr);
 
 hi_s32 hi_mpi_vo_query_intf_status(hi_vo_intf_type intf_type, hi_vo_intf_status *status);
 hi_s32 hi_mpi_vo_set_vga_param(hi_vo_dev dev, const hi_vo_vga_param *vga_param);

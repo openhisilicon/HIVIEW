@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 #ifndef OT_COMMON_VENC_H
 #define OT_COMMON_VENC_H
@@ -561,6 +561,14 @@ typedef struct {
 } ot_venc_ref_param;
 
 typedef enum {
+    OT_VENC_JPEG_DERING_LEVEL_0 = 0,                  /* Jpeg channel dering mode is 1 */
+    OT_VENC_JPEG_DERING_LEVEL_1 = 1,                  /* Jpeg channel dering mode is adaptive  */
+    OT_VENC_JPEG_DERING_LEVEL_2 = 2,                  /* Jpeg channel dering mode is adaptive  */
+    OT_VENC_JPEG_DERING_LEVEL_3 = 3,                  /* Jpeg channel dering mode is adaptive  */
+    OT_VENC_JPEG_DERING_LEVEL_BUTT,
+} ot_venc_jpeg_dering_level;
+
+typedef enum {
     OT_VENC_JPEG_ENC_ALL  = 0,                        /* Jpeg channel snap all the pictures when started. */
     OT_VENC_JPEG_ENC_SNAP = 1,                        /* Jpeg channel snap the flashed pictures when started. */
     OT_VENC_JPEG_ENC_BUTT,
@@ -884,6 +892,22 @@ typedef struct {
     td_s32 qp_delta[OT_VENC_MD_LEVEL_NUM];
     td_s32 md_skip_weight[OT_VENC_MD_LEVEL_NUM];
 } ot_venc_md_param;
+
+/* the information of the user frame */
+typedef struct {
+    td_bool rc_info_valid;
+    td_u32 target_bits;
+    td_u32 max_qp;
+    td_u32 min_qp;
+    td_u32 start_qp;
+
+    ot_venc_frame_type frame_type;
+} ot_omx_user_rc_info;
+
+typedef struct {
+    ot_video_frame_info user_frame;
+    ot_omx_user_rc_info user_rc_info;
+} ot_omx_user_frame_info;
 
 #ifdef __cplusplus
 #if __cplusplus

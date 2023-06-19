@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef _OSAL_MMZ_H
@@ -7,7 +7,10 @@
 
 #include "ot_osal.h"
 
+#ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE            0x40
+#endif
+
 #define OT_MMZ_NAME_LEN           32
 #define OT_MMB_NAME_LEN           32
 

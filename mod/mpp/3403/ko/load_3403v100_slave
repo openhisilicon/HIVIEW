@@ -111,18 +111,18 @@ function remove_gyro()
 
 function insert_npu()
 {
-    insmod ot_npu_device.ko
-    insmod ot_npu_aicpu.ko
-    insmod ot_npu_dfx.ko
-    insmod ot_npu_tsfw.ko
+    insmod npu/ot_npu_device.ko
+    insmod npu/ot_npu_aicpu.ko
+    insmod npu/ot_npu_dfx.ko
+    insmod npu/ot_npu_tsfw.ko
 }
 
 function remove_npu()
 {
-    rmmod ot_npu_tsfw.ko
-    rmmod ot_npu_dfx.ko
-    rmmod ot_npu_aicpu.ko
-    rmmod ot_npu_device.ko
+    rmmod ot_npu_tsfw
+    rmmod ot_npu_dfx
+    rmmod ot_npu_aicpu
+    rmmod ot_npu_device
 }
 
 function insert_ko()
@@ -140,10 +140,12 @@ function insert_ko()
     insmod ot_vpp.ko
     insmod ot_vgs.ko
     insmod ot_dis.ko
+    insmod ot_vpss.ko
     insmod ot_vi.ko
     insmod ot_isp.ko
     insmod ot_pqp.ko
-    insmod ot_vpss.ko
+    # ot_svp_npu.ko/ot_pqp.ko cannot be installed at the same time
+    # insmod svp_npu/ot_svp_npu.ko svp_npu_save_power=1 svp_npu_max_task_node_num=512
     insmod ot_mcf.ko
     insmod ot_avs.ko
     insmod ot_vo.ko
@@ -159,6 +161,7 @@ function insert_ko()
     insmod ot_jpegd.ko
     insmod ot_vfmw.ko
     insmod ot_vdec.ko
+    insmod ot_uvc.ko
 
     insmod ot_ive.ko save_power=1
     insmod ot_dpu_rect.ko
@@ -205,6 +208,7 @@ function remove_ko()
     rmmod ot_dpu_rect
     rmmod ot_ive
 
+    rmmod ot_uvc
     rmmod ot_vdec
     rmmod ot_vfmw
     rmmod ot_jpegd
@@ -219,10 +223,11 @@ function remove_ko()
     rmmod ot_vo
     rmmod ot_avs
     rmmod ot_mcf
-    rmmod ot_vpss
+    # rmmod ot_svp_npu
     rmmod ot_pqp
     rmmod ot_isp
     rmmod ot_vi
+    rmmod ot_vpss
     rmmod ot_dis
     rmmod ot_vgs
     rmmod ot_vpp

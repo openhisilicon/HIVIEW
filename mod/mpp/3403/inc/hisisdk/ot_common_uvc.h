@@ -1,0 +1,47 @@
+/*
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef OT_COMM_UVC_H
+#define OT_COMM_UVC_H
+
+#include "ot_errno.h"
+#include "ot_common.h"
+#include "ot_common_video.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define OT_ERR_UVC_NULL_PTR         OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_NULL_PTR)
+#define OT_ERR_UVC_NOTREADY         OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_READY)
+#define OT_ERR_UVC_INVALID_CHNID    OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_INVALID_CHN_ID)
+#define OT_ERR_UVC_EXIST            OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_EXIST)
+#define OT_ERR_UVC_UNEXIST          OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_UNEXIST)
+#define OT_ERR_UVC_NOT_SUPPORT      OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_SUPPORT)
+#define OT_ERR_UVC_NOT_PERM         OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_NOT_PERM)
+#define OT_ERR_UVC_NOMEM            OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_NO_MEM)
+#define OT_ERR_UVC_NOBUF            OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_NO_BUF)
+#define OT_ERR_UVC_ILLEGAL_PARAM    OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_ILLEGAL_PARAM)
+#define OT_ERR_UVC_BUSY             OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_BUSY)
+#define OT_ERR_UVC_BUF_EMPTY        OT_DEFINE_ERR(OT_ID_UVC, OT_ERR_LEVEL_ERROR, OT_ERR_BUF_EMPTY)
+
+typedef enum {
+    OT_UVC_FORMAT_YUYV = 0,
+    OT_UVC_FORMAT_NV21,
+    OT_UVC_FORMAT_NV12,
+    OT_UVC_FORMAT_MJPEG,
+    OT_UVC_FORMAT_H264,
+    OT_UVC_FORMAT_H265,
+    OT_UVC_FORMAT_BUTT
+} ot_uvc_format;
+
+typedef struct {
+    ot_uvc_format   uvc_format;
+} ot_uvc_chn_attr;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* end of #ifndef OT_COMM_UVC_H */

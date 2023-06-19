@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_COMMON_DPU_MATCH_H__
@@ -79,6 +79,13 @@ typedef ot_dpu_match_disparity_subpixel hi_dpu_match_disparity_subpixel;
 typedef ot_dpu_match_grp_attr hi_dpu_match_grp_attr;
 typedef ot_dpu_match_chn_attr hi_dpu_match_chn_attr;
 typedef ot_dpu_match_cost_param hi_dpu_match_cost_param;
+#define HI_DPU_MATCH_VERSION_V1 OT_DPU_MATCH_VERSION_V1
+#define HI_DPU_MATCH_VERSION_V2 OT_DPU_MATCH_VERSION_V2
+#define HI_DPU_MATCH_VERSION_BUTT OT_DPU_MATCH_VERSION_BUTT
+typedef ot_dpu_match_version hi_dpu_match_version;
+typedef ot_dpu_match_param_v1 hi_dpu_match_param_v1;
+typedef ot_dpu_match_param_v2 hi_dpu_match_param_v2;
+typedef ot_dpu_match_param hi_dpu_match_param;
 
 #ifdef __cplusplus
 }

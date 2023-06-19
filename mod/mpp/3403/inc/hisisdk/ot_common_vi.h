@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_VI_H
@@ -332,6 +332,7 @@ typedef struct {
     ot_wdr_mode wdr_mode;                         /* RW; WDR mode. */
     td_u32      cache_line;                       /* RW; WDR cache line. */
     ot_vi_pipe  pipe_id[OT_VI_MAX_WDR_FRAME_NUM]; /* RW; WDR fusion pipe */
+    td_bool     pipe_reverse;                       /* RW; WDR pipe reverse */
 } ot_vi_wdr_fusion_grp_attr;
 
 typedef enum {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef _OSAL_IOCTL_H
@@ -22,8 +22,6 @@
  * this explicit here.  Please be sure to use the decoding macros
  * below from now on.
  */
-
-#ifndef _IOC_TYPECHECK
 
 #define _IOC_NRBITS    8
 #define _IOC_TYPEBITS  8
@@ -92,6 +90,7 @@
         ((size) << _IOC_SIZESHIFT))
 #endif
 
+#ifndef _IOC_TYPECHECK
 #ifdef __CHECKER__
 #define _IOC_TYPECHECK(t) (sizeof(t))
 #else
@@ -103,6 +102,7 @@ extern unsigned int __invalid_size_argument_for_IOC;
             ? sizeof(t)                      \
             : __invalid_size_argument_for_IOC)
 #endif
+#endif /* _IOC_TYPECHECK */
 
 /* used to create numbers */
 #ifndef _IO
@@ -171,8 +171,6 @@ extern unsigned int __invalid_size_argument_for_IOC;
 
 #ifndef IOCSIZE_SHIFT
 #define IOCSIZE_SHIFT    (_IOC_SIZESHIFT)
-#endif
-
 #endif
 
 #endif /* _OSAL_IOCTL_H */

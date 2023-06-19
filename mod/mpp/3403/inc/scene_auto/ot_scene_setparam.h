@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef HI_SCENE_SETPARAM_H
@@ -55,6 +55,7 @@ extern "C" {
 #define DIR_NAME_BUFF 200
 #define ISP_AUTO_RATIO_FSWDR_NUM 9
 #define HNR_ISO_NUM 2
+#define NR_WDR_STRENGTH_MAX 64
 
 #undef _tmprt1_5
 #define _tmprt1_5(ps, X) ps[0].X, ps[1].X, ps[2].X, ps[3].X, ps[4].X
@@ -208,7 +209,7 @@ typedef struct {
     hi_u32 iso;
 } set_isp_attr_param;
 
-typedef enum hiSCENE_OP_TYPE_E {
+typedef enum {
     HI_SCENE_OP_TYPE_AUTO = 0,
     HI_SCENE_OP_TYPE_MANUAL = 1,
     HI_SCENE_OP_TYPE_BUTT

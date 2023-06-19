@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef OT_COMMON_AVS_LUT_GENERATE_H
@@ -15,6 +15,7 @@ extern "C" {
 #define OT_AVS_MAX_CAMERA_NUM 8
 #define OT_AVS_LUT_SIZE  0x400000 /* 4MB */
 #define OT_AVS_CALIBRATION_FILE_LEN 0x5800 /* 22KB */
+#define OT_AVS_MATRIX_SIZE 9
 
 /* the status of avs interface returned */
 typedef enum {

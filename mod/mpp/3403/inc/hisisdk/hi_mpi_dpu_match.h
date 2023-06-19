@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_MPI_DPU_MATCH_H__
@@ -38,6 +38,9 @@ hi_s32 hi_mpi_dpu_match_release_frame(hi_dpu_match_grp match_grp, const hi_dpu_m
     const hi_video_frame_info *dst_frame);
 hi_s32 hi_mpi_dpu_match_send_frame(hi_dpu_match_grp match_grp, const hi_dpu_match_frame_info *src_frame_info,
     hi_s32 milli_sec);
+
+hi_s32 hi_mpi_dpu_match_set_grp_param(hi_dpu_match_grp match_grp, const hi_dpu_match_param *param);
+hi_s32 hi_mpi_dpu_match_get_grp_param(hi_dpu_match_grp match_grp, hi_dpu_match_param *param);
 
 #ifdef __cplusplus
 }

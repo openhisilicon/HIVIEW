@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2021, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef __HI_ACODEC_H__
@@ -72,6 +72,9 @@ typedef ot_acodec_volume_ctrl hi_acodec_volume_ctrl;
 #define HI_ACODEC_SET_DAC_DE_EMPHASIS OT_ACODEC_SET_DAC_DE_EMPHASIS
 #define HI_ACODEC_SET_ADC_HP_FILTER OT_ACODEC_SET_ADC_HP_FILTER
 #define HI_ACODEC_SET_I2S1_DATAWIDTH OT_ACODEC_SET_I2S1_DATAWIDTH
+#define HI_ACODEC_DAC_SOFT_MUTE OT_ACODEC_DAC_SOFT_MUTE
+#define HI_ACODEC_DAC_SOFT_UNMUTE OT_ACODEC_DAC_SOFT_UNMUTE
+#define HI_ACODEC_DAC_SOFT_MUTE_RATE OT_ACODEC_DAC_SOFT_MUTE_RATE
 
 #ifdef __cplusplus
 }
