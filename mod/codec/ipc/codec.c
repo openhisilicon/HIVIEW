@@ -1266,6 +1266,14 @@ int main(int argc, char *argv[])
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
 
+    //flip&mirror;
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
+    gsf_mpp_img_flip_t flip;    
+    flip.bFlip = codec_ipc.vi.flip;
+    flip.bMirror = codec_ipc.vi.flip;
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
+    #endif
+    
     while(1)
     {
       usleep(10*1000);
@@ -1285,21 +1293,6 @@ int main(int argc, char *argv[])
       sleep(6);
       #endif
 
-      //#define __TEST_FLIP__
-      #if defined(__TEST_FLIP__)
-      gsf_mpp_img_flip_t flip;
-      
-      flip.bFlip = 0;
-      flip.bMirror = 0;
-      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
-      sleep(6);
-      
-      flip.bFlip = 1;
-      flip.bMirror = 1;
-      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
-      sleep(6);
-      #endif
-      
       //#define __TEST_DIS__
       #if defined(__TEST_DIS__)
       gsf_mpp_img_dis_t dis;

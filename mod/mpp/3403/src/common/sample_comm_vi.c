@@ -802,8 +802,8 @@ hi_void sample_comm_vi_get_default_pipe_info(sample_sns_type sns_type, hi_vi_bin
         pipe_info[i].chn_info[0].chn_attr.dynamic_range                  = HI_DYNAMIC_RANGE_SDR8;
         pipe_info[i].chn_info[0].chn_attr.video_format                   = HI_VIDEO_FORMAT_LINEAR;
         pipe_info[i].chn_info[0].chn_attr.compress_mode                  = HI_COMPRESS_MODE_NONE;
-        pipe_info[i].chn_info[0].chn_attr.mirror_en                      = (sns_type == SONY_IMX334_MIPI_8M_30FPS_12BIT || sns_type == SONY_IMX334_MIPI_8M_60FPS_12BIT)?HI_TRUE:HI_FALSE;
-        pipe_info[i].chn_info[0].chn_attr.flip_en                        = (sns_type == SONY_IMX334_MIPI_8M_30FPS_12BIT || sns_type == SONY_IMX334_MIPI_8M_60FPS_12BIT)?HI_TRUE:HI_FALSE;
+        pipe_info[i].chn_info[0].chn_attr.mirror_en                      = HI_FALSE;
+        pipe_info[i].chn_info[0].chn_attr.flip_en                        = HI_FALSE;
         pipe_info[i].chn_info[0].chn_attr.depth                          = 0;
         pipe_info[i].chn_info[0].chn_attr.frame_rate_ctrl.src_frame_rate = -1;
         pipe_info[i].chn_info[0].chn_attr.frame_rate_ctrl.dst_frame_rate = -1;

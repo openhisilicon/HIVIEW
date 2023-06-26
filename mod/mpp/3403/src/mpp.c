@@ -585,6 +585,35 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
+{
+  int ret = -1;
+  switch(id)
+  {
+     case GSF_MPP_ISP_CTL_FLIP:
+     {
+      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+      
+      hi_vi_chn_attr chn_attr;
+      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
+      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+      
+      chn_attr.flip_en = flip->bFlip;
+      chn_attr.mirror_en = flip->bMirror;
+      
+      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
+      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+     }
+     break;
+     
+     default:
+     break;
+  }
+  return ret;
+}
+
+
+
 //启动接收线程
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
 {
