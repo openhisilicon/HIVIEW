@@ -101,7 +101,11 @@ function insert_ko()
 {
     # sys config
     insmod sys_config.ko sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1,sns2=$SNS_TYPE2,sns3=$SNS_TYPE3
-
+    
+    echo "maohw gpio10-5 out:0"
+    bspmm 0x0102F0110 0x1201;
+    echo 85 > /sys/class/gpio/export;echo low > /sys/class/gpio/gpio85/direction;
+    
     # driver load
     insmod ot_osal.ko anony=1 mmz_allocator=ot mmz=anonymous,0,$mmz_start,$mmz_size$1 || report_error
     insmod ot_base.ko
