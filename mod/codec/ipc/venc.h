@@ -58,6 +58,6 @@ int gsf_aenc_recv(int AeChn, PAYLOAD_TYPE_E PT, AUDIO_STREAM_S* pstStream, void*
 
 int gsf_venc_usei(int (*sei_fill)(char *buf, int size));
 
-int gsf_venc_set_osd_time_idx(int ch, int idx);
+int gsf_venc_set_osd_time_idx(int ch, int idx, int x, int y);
 
 #endif // __venc_h__

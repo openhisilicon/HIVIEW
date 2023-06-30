@@ -98,7 +98,7 @@ static void msg_func_osd(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
     }
     
     if(osd->type == 1)
-      gsf_venc_set_osd_time_idx(req->ch, (osd->en)?req->sid:-1);
+      gsf_venc_set_osd_time_idx(req->ch, (osd->en)?req->sid:-1, osd->point[0], osd->point[1]);
       
     rsp->err  = 0;
     rsp->size = 0;

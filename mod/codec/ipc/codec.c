@@ -461,7 +461,7 @@ int venc_start(int start)
       {
         gsf_rgn_osd_set(i, k, &codec_ipc.osd[k]);
         if(codec_ipc.osd[k].type == 1)
-          gsf_venc_set_osd_time_idx(i, (codec_ipc.osd[k].en)?k:-1);
+          gsf_venc_set_osd_time_idx(i, (codec_ipc.osd[k].en)?k:-1, codec_ipc.osd[k].point[0], codec_ipc.osd[k].point[1]);
       }  
       for(k = 0; k < GSF_CODEC_VMASK_NUM; k++)
       {

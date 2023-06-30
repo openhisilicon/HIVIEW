@@ -231,13 +231,20 @@ int gsf_venc_usei(int (*sei_fill)(char *buf, int size))
   _sei_fill = sei_fill;
 }
 
-static int osd_time_idx[GSF_CODEC_IPC_CHN] = {-1, -1, -1, -1};
-static int osd_time_sec[GSF_CODEC_IPC_CHN] = {0};
+typedef struct {
+  int idx;
+  int time_sec;
+  int x, y;
+}osd_time_mng_t;
 
-int gsf_venc_set_osd_time_idx(int ch, int idx)
+static osd_time_mng_t osd_time_mng[GSF_CODEC_IPC_CHN] = {{-1},{-1},{-1},{-1}};
+
+int gsf_venc_set_osd_time_idx(int ch, int idx, int x, int y)
 {
   printf("ch:%d, idx:%d\n", ch, idx);
-  osd_time_idx[ch] = idx;
+  osd_time_mng[ch].idx = idx;
+  osd_time_mng[ch].x = x;
+  osd_time_mng[ch].y = y;
   return 0;
 }
 
@@ -305,11 +312,11 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
   }
 
   //osd_time;
-  if(osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM] >= 0 
+  if(osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].idx >= 0 
     &&  venc_mgr[VeChn].vst%GSF_CODEC_VENC_NUM == 0 
-    && ts1.tv_sec != osd_time_sec[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM])
+    && ts1.tv_sec != osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].time_sec)
   {
-    osd_time_sec[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM] = ts1.tv_sec;
+    osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].time_sec = ts1.tv_sec;
     
     time_t _time = time(NULL);
     struct tm _tm;
@@ -319,16 +326,16 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
     _osd.en = 1;
     _osd.type = 0;
     _osd.fontsize = 0;
-    _osd.point[0] = 10;
-    _osd.point[1] = 10;
+    _osd.point[0] = osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].x;
+    _osd.point[1] = osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].y;
     _osd.wh[0] = 0;
     _osd.wh[1] = 0;
     
     sprintf(_osd.text, "%04d-%02d-%02d %02d:%02d:%02d" 
         , _tm.tm_year+1900, _tm.tm_mon+1, _tm.tm_mday
 		    , _tm.tm_hour, _tm.tm_min, _tm.tm_sec);
-    //printf("ch:%d, idx:%d\n", venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM]);
-    gsf_rgn_osd_set(venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_idx[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM], &_osd);
+    //printf("ch:%d, idx:%d\n", venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].idx);
+    gsf_rgn_osd_set(venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM, osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].idx, &_osd);
   }
 
   
