@@ -325,7 +325,7 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
     gsf_osd_t _osd;
     _osd.en = 1;
     _osd.type = 0;
-    _osd.fontsize = 0;
+    _osd.fontsize = 1;
     _osd.point[0] = osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].x;
     _osd.point[1] = osd_time_mng[venc_mgr[VeChn].vst/GSF_CODEC_VENC_NUM].y;
     _osd.wh[0] = 0;

@@ -12,7 +12,7 @@ int gsf_rgn_init(gsf_rgn_ini_t *ini)
 }
 
 typedef struct {
-    char  lines[8][128];//osd叠加行信息
+    char  lines[16][128];//osd叠加行信息
   	int   lineN;        //osd行数
   	int   colN;         //osd列数
     int   fontW;        //位图字体宽度
@@ -63,7 +63,7 @@ int utf8_byte_num(unsigned char firstCh)
 	return num;
 }
 
-int gsf_parse_text(char *text, char lines[8][128], int *lineN, int *colN)
+int gsf_parse_text(char *text, char lines[16][128], int *lineN, int *colN)
 {
 	int nIndex = 0, nMaxLen = 0, nLen = 0, nLinePos = 0;
 
@@ -71,13 +71,13 @@ int gsf_parse_text(char *text, char lines[8][128], int *lineN, int *colN)
 
 	while(nIndex < 128 
 		  && text[nIndex] != '\0'
-		  && u8LineNum <= 8)
+		  && u8LineNum <= 16)
 	{
 		if (text[nIndex] == '\n')
 		{
 	    memset(lines[u8LineNum-1], 0, 128);
 	    strncpy(lines[u8LineNum-1], &text[nLinePos], nIndex - nLinePos);
-			if ((++u8LineNum) > 8) //行数超出后不再检测
+			if ((++u8LineNum) > 16) //行数超出后不再检测
 				break;
 			else 
 				nLinePos = nIndex + 1;  //标记下一行开始位置信息
@@ -95,7 +95,7 @@ int gsf_parse_text(char *text, char lines[8][128], int *lineN, int *colN)
 		}
 	}
 	
-	if (u8LineNum <= 8)
+	if (u8LineNum <= 16)
 	{
     memset(lines[u8LineNum-1], 0, 128);
 		strncpy(lines[u8LineNum-1], &text[nLinePos], nIndex - nLinePos);
@@ -103,7 +103,7 @@ int gsf_parse_text(char *text, char lines[8][128], int *lineN, int *colN)
 	}
 	else
 	{
-		u8LineNum = 8;
+		u8LineNum = 16;
 	}
 	
 	*lineN = u8LineNum;
@@ -178,19 +178,10 @@ int gsf_calc_fontsize(int nVencWidth, int nVencHeight, int u8FontSize, int *pu8F
  		(*pu8FontW) = u8FontWTmp;
 
  	if (NULL != pu8FontH)
- 		(*pu8FontH) = u8FontHTmp; 		
- 		
-	if (u8FontWTmp >= 48 && (FontSTmp >= 0))	
-		FontSTmp -= 2*6;
-  if (u8FontWTmp >= 32 && (FontSTmp >= 0))	
-		FontSTmp -= 2*4;
-  else if (u8FontWTmp >= 24 && (FontSTmp >= 0))	
-		FontSTmp -= 2*3;
-	else if (FontSTmp < 0 && u8FontWTmp < 24)
-    FontSTmp -= 2*2;
+ 		(*pu8FontH) = u8FontHTmp;
 
  	if (NULL != pFontS)
- 		(*pFontS) = FontSTmp;
+ 		(*pFontS) = FontSTmp; 	
  		
 	return 0;
 }
@@ -479,7 +470,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *_osd)
       	    gsf_font_utf8_draw_line(info->fontW,
       	          bitmap_w,
                   info->fontS,
-                  bitmap_data + l * bitmap_w * info->fontH*2,
+                  bitmap_data + l * bitmap_w * info->fontH*2, //maohw
           		    info->lines[l], "",
           		    (osd->wh[0] && osd->wh[1])?ARG1555_RED:0xffff, 0x0000, 0xffff, 0x0000);
       	}
