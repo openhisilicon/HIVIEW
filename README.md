@@ -8,10 +8,10 @@
 
 <img src=/res/31dv200-c.jpg width=200 height=200 /><img src=/res/38base-1.jpg width=200 height=200 /><img src=/res/hv3403-c.jpg width=200 height=200 />
 
-<img src=/res/16dv300-b2.jpg width=41% /><img src=/res/16dv300-b3.jpg width=45% /><img src=/res/16dv300-b.jpg width=43% /><img src=/res/16dv300-b1.jpg width=43% /><img src=/res/16dv300-b5.jpg width=44% /><img src=/res/hv3403-b.jpg width=44% />
+<img src=/res/16dv300-b2.jpg width=40% /><img src=/res/16dv300-b3.jpg width=40% /><img src=/res/16dv300-b.jpg width=40% /><img src=/res/16dv300-b1.jpg width=40% /><img src=/res/16dv300-b5.jpg width=41% /><img src=/res/hv3403-b.jpg width=41% />
 
 ### 2. Support users to develop their own products based on OpenHisilicon;
-<img src=/res/p1.jpg width=300 height=200 /> <img src=/res/p2.jpg width=300 height=200 />
+<img src=/res/p1.jpg width=30% /> <img src=/res/p2.jpg width=30% /> <img src=/res/p3.jpg width=30% />
 ### 3. More products: https://github.com/openhisilicon/PRODUCT
 ## Features:
 
