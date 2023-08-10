@@ -1,13 +1,20 @@
 <div class="content">
     <div id="example_title" style="text-align:center">
-    <button class="w2ui-btn" onclick="ircutDay()">IRC-D</button>
-    <button class="w2ui-btn" onclick="ircutNight()">IRC-N</button>
-    <div style="height: 15px"></div>
+    <button class="w2ui-btn" onmousedown="ptzUp()" onmouseup="ptzStop()"> UP </button>
+    <div style="height: 2px"></div>
+    <button class="w2ui-btn" onmousedown="ptzLeft()" onmouseup="ptzStop()">LEFT</button>
+    <button class="w2ui-btn" onmousedown="ptzRight()" onmouseup="ptzStop()">RIGHT</button>
+    <div style="height: 2px"></div>
+    <button class="w2ui-btn" onmousedown="ptzDown()" onmouseup="ptzStop()">DOWN</button>
+    <div style="height: 15px"></div>        
     <button class="w2ui-btn" onmousedown="zoomPlus()" onmouseup="zoomStop()">ZOOM+</button>
     <button class="w2ui-btn" onmousedown="zoomMinus()" onmouseup="zoomStop()">ZOOM-</button>
     <button class="w2ui-btn" onmousedown="focusPlus()" onmouseup="zoomStop()">FOCUS+</button>
     <button class="w2ui-btn" onmousedown="focusMinus()" onmouseup="zoomStop()">FOCUS-</button>
     <div style="height: 15px"></div>
+    <button class="w2ui-btn" onclick="ircutDay()">IRC-D</button>
+    <button class="w2ui-btn" onclick="ircutNight()">IRC-N</button>
+    <div style="height: 15px"></div>    
     <button class="w2ui-btn" onclick="lensCalClick()">LensCal</button>
     <div style="height: 15px"></div>
     <input id="range" type="range" min="0.2" max="1.8" value="1" step="0.1" onchange="sceneAE()"/>
@@ -483,7 +490,7 @@ $(function () {
             toolbar: true,
             toolbarInput:  false,
             toolbarSearch: false,
-            toolbarSave: false,//true,
+            toolbarSave: true,
         },
     
         columns: [                
@@ -528,7 +535,8 @@ $(function () {
     }); 
     
     
-    $('#selected-tab').html('<br><br><H4> Welcome to OpenHisilicon </H4><br> <A HREF="https://github.com/openhisilicon">https://github.com/openhisilicon</A><br><br> <H5> When the video is paused or delayed, plase click [Play] </H5><br>');
+    //$('#selected-tab').html('<br><br><H4> Welcome to OpenHisilicon </H4><br> <A HREF="https://github.com/openhisilicon">https://github.com/openhisilicon</A><br><br> <H5> When the video is paused or delayed, plase click [Play] </H5><br>');
+    $('#selected-tab').html('<br><br><H4> Welcome to Xview </H4><br><br> <H5> When the video is paused or delayed, plase click [Play] </H5><br>');
     load_html('main', 'live');
        
 });
@@ -691,10 +699,11 @@ function grid_load(grid_name)
   
 }
 
-
-
-
-
+//GSF_LENS_IRC   = 1, // arg1: 0-day, 1-night
+//GSF_LENS_STOP  = 2, // stop;
+//GSF_LENS_ZOOM  = 3, // arg1: 1-++, 0---, arg2: speed;
+//GSF_LENS_FOCUS = 4, // arg1: 1-++, 0---, arg2: speed;
+//GSF_LENS_CAL   = 5, // lens calibration;
 
 function ircutDay() {
     const req = {
@@ -916,7 +925,123 @@ function sceneAE() {
     });
 }
 
+//GSF_PTZ_STOP   = 6, // arg1: 0, arg2: 0 
+//GSF_PTZ_UP     = 7, // arg1: 0, arg2: speed 
+//GSF_PTZ_DOWN   = 8, // arg1: 0, arg2: speed 
+//GSF_PTZ_LEFT   = 9, // arg1: 0, arg2: speed  
+//GSF_PTZ_RIGHT  = 10,// arg1: 0, arg2: speed  
 
+function ptzStop() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 6, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
 
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+function ptzUp() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 7, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+function ptzDown() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 8, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+function ptzLeft() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 9, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+function ptzRight() {
+    const req = {
+        "id": "GSF_ID_CODEC_LENS",
+        "args":"G0C0S0",
+        "data":{"cmd": 10, "arg1": 0, "arg2": document.getElementById("range").value}
+    }
+
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
 
 </script>

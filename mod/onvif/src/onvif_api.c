@@ -779,7 +779,6 @@ int get_dev_capability(device_capability_t *dev_cap, int streamtype);
 int set_vsc_conf(int chs, video_source_conf_t *info);
 int set_vec_conf(int chs, video_encoder_conf_t *info);
 int set_aec_conf(int chs, audio_encoder_conf_t *info);
-int set_imaging_conf(int chs, imaging_conf_t *img);
 int get_recording_list(nvt_time_t starttime, nvt_time_t endtime);
 int get_dev_time(systime_t *time);
 int set_dev_time(systime_t *time);
@@ -796,6 +795,7 @@ int device_reboot();
 int get_dev_portinfo(port_info_t *info);
 int set_dev_portinfo(port_info_t *info);
 int get_curr_chs();
+int set_imaging_conf(int chs, imaging_conf_t *img);
 int get_imaging_conf(int chs, imaging_conf_t *img, int num);
 int get_recording_info(recording_info_t *info, char *token);
 int set_device_factorydefault(int mask);
@@ -992,14 +992,20 @@ int get_vsc_profiles(int chs, video_source_conf_t *info, int num)
 
 int get_imaging_conf(int chs, imaging_conf_t *img, int num)
 {
-    int ret = -1;
-    // get dev imgattr;
-    img->brightness = 100.00;
-    img->ColorSaturation = 100.00;
-    img->contrast = 100.00;
-    img->sharpness = 100.00;
-    img->IrCtFilter = 0;
-    return 0;
+  int ret = 0;
+  GSF_MSG_DEF(gsf_img_csc_t, csc, sizeof(gsf_msg_t)+sizeof(gsf_img_csc_t));
+  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_IMGCSC, chs/2
+                        , GET, 0, sizeof(gsf_img_csc_t)
+                        , GSF_IPC_CODEC, 2000);
+                        
+  img->brightness = csc->u8Luma;
+  img->ColorSaturation = csc->u8Satu;
+  img->contrast = csc->u8Contr;
+  img->sharpness = 50;
+  img->IrCtFilter= 0;
+
+  return ret;
+
 }
 
 int get_asc_profiles(int chs, audio_source_conf_t *info, int num)
@@ -1314,18 +1320,19 @@ int set_aec_conf(int chs, audio_encoder_conf_t *info)
 
 int set_imaging_conf(int chs, imaging_conf_t *img)
 {
-    int ret = 0;
-#if 0
-    sdk_image_attr_t *imgconf;
+  int ret = 0;
+  GSF_MSG_DEF(gsf_img_csc_t, csc, sizeof(gsf_msg_t)+sizeof(gsf_img_csc_t));
+  
+  csc->bEnable = 1;
+  csc->u8Hue = 50;
+  csc->u8Luma = img->brightness;
+  csc->u8Contr = img->contrast;
+  csc->u8Satu = img->ColorSaturation;
 
-    imgconf = ((sdk_msg_t*)msg_buf)->data;
-    imgconf->brightness = img->brightness;
-    imgconf->contrast = img->contrast;
-    imgconf->hue = img->IrCtFilter;
-    imgconf->saturation = img->ColorSaturation;
-    imgconf->sharpness = img->sharpness;
-#endif
-    return ret;
+  ret = GSF_MSG_SENDTO(GSF_ID_CODEC_IMGCSC, chs/2
+                        , SET, 0, sizeof(gsf_img_csc_t)
+                        , GSF_IPC_CODEC, 2000);
+  return ret;
 }
 
 int get_dev_time(systime_t *_time)
@@ -1338,15 +1345,14 @@ int get_dev_time(systime_t *_time)
     localtime_r(&_t, &_tm);
     
     char *z = getenv("TZ");
-
-    if(strlen(z))
+    if(z && strlen(z))
     {
       char s = '+';
       int hour = 0, min = 0;
       sscanf(z, "UTC%c%d:%02d", &s, &hour, &min);
       sprintf(_time->TZ, "UTC%c%02d:%02d", s, hour, min);
     }
-
+    
     _time->datetype = Manual;
     _time->daylightsaving = 0;
     _time->UTCDateTime.year   = _gm.tm_year + 1900;
@@ -1816,55 +1822,60 @@ int get_recording_info(recording_info_t *info, char *token)
   return chs;
 }
 
-
-//To be improved
-
-#include "fw/comm/inc/serial.h"
-#define TTYAMA4 "/dev/ttyAMA4"
-static int serial_fd = 0;
-
 int ptz_ctl(int chs, int action, int speed)
 {
-  if(serial_fd <= 0)
-  {
-    #if defined(GSF_CPU_3519)
-    system("himm 0x120400A0 2;himm 0x120400A4 2;");
-    #elif defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
-    system("himm 0x111F0000 0x502;himm 0x111F0004 0x402;");
-    #endif
-    
-    serial_fd = open(TTYAMA4, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
-    if(serial_fd > 0)
-    {
-      serial_set_param(serial_fd, 9600, 0, 1, 8);
-    }
-    if(serial_fd <= 0)
-      return -1;
-  }
-  
   int ret = 0;
-  unsigned char buf[6] = {0x81, 0x01, 0x04, 0x07, 0x00, 0xFF};
-  unsigned char* pbuf = NULL;
-    
+  GSF_MSG_DEF(gsf_lens_t, lens, sizeof(gsf_msg_t)+sizeof(gsf_lens_t));
+
   switch(action)
   {
     case NVC_PTZ_ZOOM_ADD_START:
-      buf[4] = 0x20 | (speed&0x0F);
-      pbuf = buf;
+      lens->cmd = GSF_LENS_ZOOM;
+      lens->arg1 = 1;
+      lens->arg2 = speed;
       break;
     case NVC_PTZ_ZOOM_SUB_START:
-      buf[4] = 0x30 | (speed&0x0F);
-      pbuf = buf;
+      lens->cmd = GSF_LENS_ZOOM;
+      lens->arg1 = 0;
+      lens->arg2 = speed;
       break;
     case NVC_PTZ_ZOOM_ADD_STOP:
     case NVC_PTZ_ZOOM_SUB_STOP:
-      buf[4] = 0x00;
-      pbuf = buf;
+      lens->cmd = GSF_LENS_STOP;
+      lens->arg1 = 0;
+      lens->arg2 = 0;
       break;
+    case NVC_PTZ_UP_STOP:
+      lens->cmd = GSF_PTZ_STOP;
+      lens->arg1 = 0;
+      lens->arg2 = 0;
+      break;
+    case NVC_PTZ_UP_START:
+      lens->cmd = GSF_PTZ_UP;
+      lens->arg1 = 0;
+      lens->arg2 = speed;
+      break;  
+    case NVC_PTZ_DOWN_START:
+      lens->cmd = GSF_PTZ_DOWN;
+      lens->arg1 = 0;
+      lens->arg2 = speed;
+      break;
+    case NVC_PTZ_LEFT_START:
+      lens->cmd = GSF_PTZ_LEFT;
+      lens->arg1 = 0;
+      lens->arg2 = speed;
+      break;
+    case NVC_PTZ_RIGHT_START:
+      lens->cmd = GSF_PTZ_RIGHT;
+      lens->arg1 = 0;
+      lens->arg2 = speed;
+      break;          
   }
-  
-  if(pbuf)
-    ret = write(serial_fd, pbuf, 6);
-  
+  if(lens->cmd)
+  {  
+    ret = GSF_MSG_SENDTO(GSF_ID_CODEC_LENS, chs/2
+                        , SET, 0, sizeof(gsf_lens_t)
+                        , GSF_IPC_CODEC, 2000);
+  }
   return ret;
 }

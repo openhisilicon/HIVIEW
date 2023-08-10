@@ -4389,19 +4389,19 @@ SOAP_FMAC5 int SOAP_FMAC6 __timg__GetOptions(struct soap *soap, struct _timg__Ge
 
     output->ImagingOptions->Brightness = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
     output->ImagingOptions->Brightness->Min = 1;
-    output->ImagingOptions->Brightness->Max = 255;
+    output->ImagingOptions->Brightness->Max = 100;
 
     output->ImagingOptions->Contrast = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
     output->ImagingOptions->Contrast->Min = 1;
-    output->ImagingOptions->Contrast->Max = 255;
+    output->ImagingOptions->Contrast->Max = 100;
 
     output->ImagingOptions->Sharpness = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
     output->ImagingOptions->Sharpness->Min = 1;
-    output->ImagingOptions->Sharpness->Max = 225;
+    output->ImagingOptions->Sharpness->Max = 100;
 
     output->ImagingOptions->ColorSaturation = (struct tt__FloatRange *)soap_malloc(soap, sizeof(struct tt__FloatRange));
     output->ImagingOptions->ColorSaturation->Min = 1;
-    output->ImagingOptions->ColorSaturation->Max = 255;
+    output->ImagingOptions->ColorSaturation->Max = 100;
     output->ImagingOptions->__sizeIrCutFilterModes = 1;
 
     output->ImagingOptions->IrCutFilterModes = NULL;
@@ -5810,7 +5810,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tptz__ContinuousMove(struct soap* soap, struct _tptz
         ySpeed = (ySpeed < 0)?-ySpeed:ySpeed;
 
   			speed = xSpeed > ySpeed ? xSpeed : ySpeed;
-        printf("%s => PanTilt action:%d, speed:%d\n", __func__, action, speed);
+        printf("%s => PanTilt action:%d, speed:%d, ret:%d\n", __func__, action, speed, ptz_ctl(0, action, speed));
       }
 		}
 

@@ -101,9 +101,9 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
 #define SECOND_HEIGHT(second) ((second) == 1?1080:(second) == 2?480:512)
 #define SECOND_HIRES(second) ((second) == 1?PIC_1080P:(second) == 2?PIC_D1_NTSC:PIC_512P)
 #else
-#define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:(second) == 3?640:384)
-#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:(second) == 3?512:288)
-#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:(second) == 2?PIC_512P:PIC_288P)
+#define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:(second) == 4?384:640)
+#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:(second) == 4?288:512)
+#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:(second) == 4?PIC_288P:PIC_512P)
 #endif  
 
 int second_sdp(int i, gsf_sdp_t *sdp)
@@ -1245,7 +1245,10 @@ int main(int argc, char *argv[])
     
     #ifdef __GUIDE__
     extern int guide_start();
-    guide_start();
+    if(p_cfg->second == 5)
+    {
+      guide_start();
+    }
     #endif
     
     extern int vdec_start();

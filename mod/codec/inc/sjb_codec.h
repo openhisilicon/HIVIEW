@@ -12,9 +12,14 @@
 typedef enum {
   GSF_LENS_IRC   = 1, // arg1: 0-day, 1-night
   GSF_LENS_STOP  = 2, // stop;
-  GSF_LENS_ZOOM  = 3, // arg1: 0-++, 1---, arg2: speed;
-  GSF_LENS_FOCUS = 4, // arg1: 0-++, 1---, arg2: speed;
+  GSF_LENS_ZOOM  = 3, // arg1: 1-++, 0---, arg2: speed;
+  GSF_LENS_FOCUS = 4, // arg1: 1-++, 0---, arg2: speed;
   GSF_LENS_CAL   = 5, // lens calibration;
+  GSF_PTZ_STOP   = 6, // arg1: 0, arg2: 0 
+  GSF_PTZ_UP     = 7, // arg1: 0, arg2: speed 
+  GSF_PTZ_DOWN   = 8, // arg1: 0, arg2: speed 
+  GSF_PTZ_LEFT   = 9, // arg1: 0, arg2: speed  
+  GSF_PTZ_RIGHT  = 10,// arg1: 0, arg2: speed  
 }GSF_LENS_CMD_E;
 
 

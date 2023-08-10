@@ -2296,6 +2296,16 @@ int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority)
     HI_S32 s32Ret = HI_SUCCESS;
     VO_CHN_ATTR_S stChnAttr;
  
+    if(rect->u32Width == 0 || rect->u32Height == 0)
+    {
+      s32Ret = HI_MPI_VO_HideChn(volayer, ch);
+      return s32Ret;
+    }
+    else 
+    {
+      s32Ret = HI_MPI_VO_ShowChn(volayer, ch);
+    }
+
     vo_mng_t *vdev = &vo_mng[layer2vdev[volayer]];
     
     int l = vdev->layer[volayer].rect.s32X;
