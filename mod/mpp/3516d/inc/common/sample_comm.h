@@ -146,7 +146,9 @@ typedef enum hiPIC_SIZE_E
     #define HAVE_PIC_400P 
     PIC_400P,      /* 400 * 400 */ 
     #define HAVE_PIC_512P
-    PIC_512P,      /* 640 * 512 */    
+    PIC_512P,      /* 640 * 512 */  
+    #define HAVE_PIC_640P
+    PIC_640P,      /* 640 * 640 */  
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
     PIC_720P,      /* 1280 * 720  */

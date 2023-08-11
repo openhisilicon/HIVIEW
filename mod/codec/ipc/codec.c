@@ -32,12 +32,15 @@ static int avs = 0; // codec_ipc.vi.avs;
 #warning "PIC_400P => PIC_CIF"
 #define PIC_400P PIC_CIF
 #endif
-
 #ifndef HAVE_PIC_512P
 #warning "PIC_512P => PIC_D1_PAL"
 #define PIC_512P PIC_D1_PAL
 #endif
 
+#ifndef HAVE_PIC_640P
+#warning "PIC_640P => PIC_512P"
+#define PIC_640P PIC_512P
+#endif
 
 #define PIC_WIDTH(w, h) \
           (w >= 7680)?PIC_7680x4320:\
@@ -48,6 +51,7 @@ static int avs = 0; // codec_ipc.vi.avs;
           (w >= 1280)?PIC_720P: \
           (w >= 720 && h >= 576)?PIC_D1_PAL: \
           (w >= 720 && h >= 480)?PIC_D1_NTSC: \
+          (w >= 640 && h >= 640)?PIC_640P: \
           (w >= 640 && h >= 512)?PIC_512P: \
           (w >= 400 && h >= 400)?PIC_400P: \
           (w >= 384 && h >= 288)?PIC_288P: \
@@ -63,6 +67,7 @@ static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_D1_PAL]    = {0, 720, 576},
       [PIC_D1_NTSC]   = {0, 720, 480},
       [PIC_512P]      = {0, 640, 512},
+      [PIC_640P]      = {0, 640, 640},
       [PIC_400P]      = {0, 400, 400},
       [PIC_288P]      = {0, 384, 288},
       [PIC_CIF]       = {0, 352, 288},
