@@ -43,12 +43,6 @@ HI_S32 VpssCapture::VPSS_Restore(VPSS_GRP VpssGrp, VPSS_CHN VpssChn)
 		hPool = VB_INVALID_POOLID;
 	}
 
-	if (HI_NULL != pUserPageAddr[0])
-	{
-		HI_MPI_SYS_Munmap(pUserPageAddr[0], u32Size);
-		pUserPageAddr[0] = HI_NULL;
-	}
-
 	if (u32VpssDepthFlag)
 	{
 		if (VpssChn > 3)
@@ -190,7 +184,7 @@ int VpssCapture::YUV2Mat(VIDEO_FRAME_S* pVBuf, cv::Mat& img)
 	return 0;
 }
 
-int VpssCapture::init(int VpssGrp, int VpssChn)
+int VpssCapture::init(int VpssGrp, int VpssChn, int vgsW, int vgsH)
 {
 	HI_CHAR szPixFrm[10];
 	HI_U32 u32Depth = 2;
@@ -288,12 +282,16 @@ int VpssCapture::init(int VpssGrp, int VpssChn)
 	
 	this->VpssGrp = VpssGrp;
 	this->VpssChn = VpssChn;
+	this->vgsW = vgsW;
+	this->vgsH = vgsH;
 	
 	return HI_MPI_VPSS_GetChnFd(VpssGrp,VpssChn);
 }
 
 int VpssCapture::get_frame(cv::Mat &frame)
 {
+  HI_S32 s32Ret = 0;
+  
 	if (HI_MPI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stFrame, s32MilliSec) != HI_SUCCESS)
 	{
 		printf("Get frame fail \n");
@@ -301,30 +299,153 @@ int VpssCapture::get_frame(cv::Mat &frame)
 		return -1;
 	}
 
-	bool bSendToVgs = ((COMPRESS_MODE_NONE != stFrame.stVFrame.enCompressMode) || (VIDEO_FORMAT_LINEAR != stFrame.stVFrame.enVideoFormat));
+	bool bSendToVgs = ((COMPRESS_MODE_NONE != stFrame.stVFrame.enCompressMode) 
+	                  || (VIDEO_FORMAT_LINEAR != stFrame.stVFrame.enVideoFormat)
+	                  || (this->vgsW != 0 && this->vgsH != 0));
 
 	if (bSendToVgs){
-		return -1;
-	}
+	  
+	  // vpss stFrame => vgs stFrmInfo => Mat;
+	  
+	  VIDEO_FRAME_INFO_S stFrmInfo;
+	  
+    /* convert the pixel format to vgs task */
+    PIXEL_FORMAT_E enPixelFormat = stFrame.stVFrame.enPixelFormat;
+    if(PIXEL_FORMAT_YUV_SEMIPLANAR_420 == enPixelFormat)
+    {
+        stFrame.stVFrame.enPixelFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+    }
+    if(PIXEL_FORMAT_YUV_SEMIPLANAR_422 == enPixelFormat)
+    {
+        stFrame.stVFrame.enPixelFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_422;
+    }
+	  
+    HI_U32 u32Width    = ALIGN_UP(this->vgsW, 2);//stFrame.stVFrame.u32Width;
+    HI_U32 u32Height   = ALIGN_UP(this->vgsH, 2);//stFrame.stVFrame.u32Height;
 
-	if (DYNAMIC_RANGE_SDR8 == stFrame.stVFrame.enDynamicRange)
+    HI_U32 u32BitWidth = (DYNAMIC_RANGE_SDR8 == stFrame.stVFrame.enDynamicRange) ? 8 : 10;
+    HI_U32 u32PicLStride = ALIGN_UP((u32Width * u32BitWidth + 7) >> 3, DEFAULT_ALIGN);
+    HI_U32 u32PicCStride = u32PicLStride;
+    HI_U32 u32LumaSize = u32PicLStride * u32Height;
+
+    if (PIXEL_FORMAT_YVU_SEMIPLANAR_420 == stFrame.stVFrame.enPixelFormat)
+    {
+        u32BlkSize = u32PicLStride * u32Height * 3 >> 1;
+    }
+    else if (PIXEL_FORMAT_YVU_SEMIPLANAR_422 == stFrame.stVFrame.enPixelFormat)
+    {
+        u32BlkSize = u32PicLStride * u32Height * 2;
+    }
+    else
+    {
+        u32BlkSize = u32PicLStride * u32Height;
+    }
+    
+    if(VB_INVALID_POOLID == hPool)
+    {
+      VB_POOL_CONFIG_S stVbPoolCfg;
+      memset(&stVbPoolCfg, 0, sizeof(VB_POOL_CONFIG_S));
+      stVbPoolCfg.u64BlkSize  = u32BlkSize;
+      stVbPoolCfg.u32BlkCnt   = 1;
+      stVbPoolCfg.enRemapMode = VB_REMAP_MODE_NONE;
+      hPool = HI_MPI_VB_CreatePool(&stVbPoolCfg);
+      if (hPool == VB_INVALID_POOLID)
+      {
+          printf("HI_MPI_VB_CreatePool failed! \n");
+          return -1;
+      }
+
+      stMem.hPool = hPool;
+      while ((stMem.hBlock = HI_MPI_VB_GetBlock(stMem.hPool, u32BlkSize, HI_NULL)) == VB_INVALID_HANDLE)
+      {
+          printf("HI_MPI_VB_GetBlock continue.\n");
+      }
+      stMem.u64PhyAddr = HI_MPI_VB_Handle2PhysAddr(stMem.hBlock);
+      stMem.pVirAddr = (HI_U8*) HI_MPI_SYS_Mmap( stMem.u64PhyAddr, u32BlkSize );
+      if (stMem.pVirAddr == HI_NULL)
+      {
+          printf("HI_MPI_SYS_Mmap failed! \n");
+          return -1;
+      }
+    }
+
+    memset(&stFrmInfo.stVFrame, 0, sizeof(VIDEO_FRAME_S));
+    stFrmInfo.stVFrame.u64PhyAddr[0] = stMem.u64PhyAddr;
+    stFrmInfo.stVFrame.u64PhyAddr[1] = stFrmInfo.stVFrame.u64PhyAddr[0] + u32LumaSize;
+
+    stFrmInfo.stVFrame.u64VirAddr[0] = (HI_U64)(HI_UL)stMem.pVirAddr;
+    stFrmInfo.stVFrame.u64VirAddr[1] = (stFrmInfo.stVFrame.u64VirAddr[0] + u32LumaSize);
+
+    stFrmInfo.stVFrame.u32Width     = u32Width;
+    stFrmInfo.stVFrame.u32Height    = u32Height;
+    stFrmInfo.stVFrame.u32Stride[0] = u32PicLStride;
+    stFrmInfo.stVFrame.u32Stride[1] = u32PicCStride;
+
+    stFrmInfo.stVFrame.enCompressMode = COMPRESS_MODE_NONE;
+    stFrmInfo.stVFrame.enPixelFormat  = stFrame.stVFrame.enPixelFormat;
+    stFrmInfo.stVFrame.enVideoFormat  = VIDEO_FORMAT_LINEAR;
+    stFrmInfo.stVFrame.enDynamicRange =  stFrame.stVFrame.enDynamicRange;
+
+    stFrmInfo.stVFrame.u64PTS     = stFrame.stVFrame.u64PTS;
+    stFrmInfo.stVFrame.u32TimeRef = stFrame.stVFrame.u32TimeRef;
+
+    stFrmInfo.u32PoolId = hPool;
+    stFrmInfo.enModId = HI_ID_VGS;
+
+    s32Ret = HI_MPI_VGS_BeginJob(&hHandle);
+
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("HI_MPI_VGS_BeginJob failed\n");
+        hHandle = -1;
+    }
+    
+    VGS_TASK_ATTR_S stTask;
+
+    memcpy(&stTask.stImgIn, &stFrame, sizeof(VIDEO_FRAME_INFO_S));
+    memcpy(&stTask.stImgOut , &stFrmInfo, sizeof(VIDEO_FRAME_INFO_S));
+    s32Ret = HI_MPI_VGS_AddScaleTask(hHandle, &stTask, VGS_SCLCOEF_NORMAL);
+
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("HI_MPI_VGS_AddScaleTask failed\n");
+        HI_MPI_VGS_CancelJob(hHandle);
+        hHandle = -1;
+        return -1;
+    }
+
+    s32Ret = HI_MPI_VGS_EndJob(hHandle);
+
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("HI_MPI_VGS_EndJob failed\n");
+        HI_MPI_VGS_CancelJob(hHandle);
+        hHandle = -1;
+        return -1;
+    }
+    hHandle = -1;
+
+    /* reset the pixel format after vgs */
+    stFrmInfo.stVFrame.enPixelFormat = enPixelFormat;
+	  
+  	if (DYNAMIC_RANGE_SDR8 == stFrame.stVFrame.enDynamicRange)
+  	{
+  		int ret = YUV2Mat(&stFrmInfo.stVFrame, frame);
+  		if(ret < 0) return -1;
+  	}
+	}
+	else if (DYNAMIC_RANGE_SDR8 == stFrame.stVFrame.enDynamicRange)
 	{
+	  // vpss stFrame => Mat;
 		int ret = YUV2Mat(&stFrame.stVFrame, frame);	
 		if(ret < 0) return -1;
 	}
 	
-	HI_S32 s32Ret = 0;
 	if(!frame_lock)
 	{
 	  HI_MPI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stFrame);
   }
 
-	if (HI_SUCCESS != s32Ret)
-	{
-		printf("Release frame error ,now exit !!!\n");
-		VPSS_Restore(VpssGrp, VpssChn);
-		return -1;
-	}
 	frame_id++;
 	return 0;
 }

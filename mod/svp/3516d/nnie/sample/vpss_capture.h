@@ -22,11 +22,14 @@ typedef struct hiDUMP_MEMBUF_S
 	HI_S32  s32Mdev;
 } DUMP_MEMBUF_S;
 
+
 class VpssCapture
 {
 public:
 
-	int init(int VpssGrp, int VpssChn);
+  //When vgsW = vgsH = 0, the RGB image cv::Mat has the same resolution as the YUV image pstFrame
+  //When vgsW & vgsH, cv::Mat is the RGB image after VGS scaling, pstFrame is the YUV image before scaling
+	int init(int VpssGrp, int VpssChn, int vgsW = 0, int vgsH = 0);
 	int get_frame(cv::Mat &frame);	
 	int get_frame_lock(cv::Mat &frame, VIDEO_FRAME_INFO_S **pstFrame);
   int get_frame_unlock(VIDEO_FRAME_INFO_S *pstFrame);
@@ -49,13 +52,12 @@ private:
 	HI_U32 u32SignalFlag = 0;
 	VIDEO_FRAME_INFO_S stFrame;
 
-	HI_U32  u32BlkSize = 0;
+  int vgsW = 0;
+  int vgsH = 0;
 	VGS_HANDLE hHandle = -1;
+	HI_U32  u32BlkSize = 0;	
 	DUMP_MEMBUF_S stMem = {0};
 	VB_POOL hPool  = VB_INVALID_POOLID;
-
-	HI_U32 u32Size = 0;
-	HI_CHAR* pUserPageAddr[2] = {HI_NULL, HI_NULL};
 	
 	unsigned int frame_id = 0;
 	unsigned int frame_lock = 0;
