@@ -593,8 +593,8 @@ function grid_load(grid_name)
                   children: [ //auto
                       { recid: RECID_AE+1, fname: 'u8Speed',          lname: data.data.ae.u8Speed.toString(10), nname: '[0, 255]'},
                       { recid: RECID_AE+2, fname: 'u8Compensation',   lname: data.data.ae.u8Compensation.toString(10), nname: '[0, 255]'},
-                      { recid: RECID_AE+3, fname: 'SysGainRangeMax',  lname: data.data.ae.SysGainRangeMax.toString(10), nname: '[1024, 16000000] us'},
-                      { recid: RECID_AE+4, fname: 'SysGainRangeMin',  lname: data.data.ae.SysGainRangeMin.toString(10), nname: '[1024, 16000000] us'}, 
+                      { recid: RECID_AE+3, fname: 'SysGainRangeMax',  lname: data.data.ae.SysGainRangeMax.toString(10), nname: '[1024, 16000000] x1024'},
+                      { recid: RECID_AE+4, fname: 'SysGainRangeMin',  lname: data.data.ae.SysGainRangeMin.toString(10), nname: '[1024, 16000000] x1024'}, 
                       { recid: RECID_AE+5, fname: 'ExpTimeRangeMax', lname: data.data.ae.ExpTimeRangeMax.toString(10), nname: '[1, 1000000] us'},
                       { recid: RECID_AE+6, fname: 'ExpTimeRangeMin', lname: data.data.ae.ExpTimeRangeMin.toString(10), nname: '[1, 1000000] us'}
                   ]
