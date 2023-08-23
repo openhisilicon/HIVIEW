@@ -77,12 +77,12 @@ function tabIM_change(ev, save)
         "id": "GSF_ID_CODEC_IMGAE",
         "args":"G1C0S0",
         "data":{"bEnable":  parseInt(ae.lname, 10), 
-          "u8Speed": parseInt(ae.w2ui.children[0].lname, 16), 
-          "u8Compensation": parseInt(ae.w2ui.children[1].lname, 16), 
-          "SysGainRangeMax": parseInt(ae.w2ui.children[2].lname, 16), 
-          "SysGainRangeMin": parseInt(ae.w2ui.children[3].lname, 16),
-          "ExpTimeRangeMax": parseInt(ae.w2ui.children[4].lname, 16), 
-          "ExpTimeRangeMin": parseInt(ae.w2ui.children[5].lname, 16)
+          "u8Speed": parseInt(ae.w2ui.children[0].lname, 10), 
+          "u8Compensation": parseInt(ae.w2ui.children[1].lname, 10), 
+          "SysGainRangeMax": parseInt(ae.w2ui.children[2].lname, 10), 
+          "SysGainRangeMin": parseInt(ae.w2ui.children[3].lname, 10),
+          "ExpTimeRangeMax": parseInt(ae.w2ui.children[4].lname, 10), 
+          "ExpTimeRangeMin": parseInt(ae.w2ui.children[5].lname, 10)
           }
     }
     for(i = 0; i < event.changes.length; i++)
@@ -90,15 +90,15 @@ function tabIM_change(ev, save)
       if(event.changes[i].recid == RECID_AE+0)
         req.data.bEnable = parseInt(event.changes[i].lname, 10);
       if(event.changes[i].recid == RECID_AE+1)
-        req.data.u8Speed = parseInt(event.changes[i].lname, 16);
+        req.data.u8Speed = parseInt(event.changes[i].lname, 10);
       if(event.changes[i].recid == RECID_AE+2)
-        req.data.u8Compensation = parseInt(event.changes[i].lname, 16);
+        req.data.u8Compensation = parseInt(event.changes[i].lname, 10);
       if(event.changes[i].recid == RECID_AE+3)
-        req.data.SysGainRangeMax = parseInt(event.changes[i].lname, 16);
+        req.data.SysGainRangeMax = parseInt(event.changes[i].lname, 10);
       if(event.changes[i].recid == RECID_AE+4)
-        req.data.SysGainRangeMin = parseInt(event.changes[i].lname, 16);
+        req.data.SysGainRangeMin = parseInt(event.changes[i].lname, 10);
       if(event.changes[i].recid == RECID_AE+5)
-        req.data.ExpTimeRangeMax = parseInt(event.changes[i].lname, 16);
+        req.data.ExpTimeRangeMax = parseInt(event.changes[i].lname, 10);
       if(event.changes[i].recid == RECID_AE+6)
         req.data.ExpTimeRangeMin = parseInt(event.changes[i].lname, 10);
     }
@@ -591,12 +591,12 @@ function grid_load(grid_name)
             { recid: RECID_AE, fname: 'AE', lname: data.data.ae.bEnable.toString(10), nname: 'bEnable' + rw,
               w2ui: {
                   children: [ //auto
-                      { recid: RECID_AE+1, fname: 'u8Speed',          lname: data.data.ae.u8Speed.toString(16), nname: '[0x0, 0xFF]'},
-                      { recid: RECID_AE+2, fname: 'u8Compensation',   lname: data.data.ae.u8Compensation.toString(16), nname: '[0x0, 0xFF]'},
-                      { recid: RECID_AE+3, fname: 'SysGainRangeMax',  lname: data.data.ae.SysGainRangeMax.toString(16), nname: '[0x400, 0xFFFFFFFF]'},
-                      { recid: RECID_AE+4, fname: 'SysGainRangeMin',  lname: data.data.ae.SysGainRangeMin.toString(16), nname: '[0x400, 0xFFFFFFFF]'}, 
-                      { recid: RECID_AE+5, fname: 'ExpTimeRangeMax', lname: data.data.ae.ExpTimeRangeMax.toString(16), nname: '[0x0, 0xFFFFFFFF]'},
-                      { recid: RECID_AE+6, fname: 'ExpTimeRangeMin', lname: data.data.ae.ExpTimeRangeMin.toString(16), nname: '[0x0, 0xFFFFFFFF]'}
+                      { recid: RECID_AE+1, fname: 'u8Speed',          lname: data.data.ae.u8Speed.toString(10), nname: '[0, 255]'},
+                      { recid: RECID_AE+2, fname: 'u8Compensation',   lname: data.data.ae.u8Compensation.toString(10), nname: '[0, 255]'},
+                      { recid: RECID_AE+3, fname: 'SysGainRangeMax',  lname: data.data.ae.SysGainRangeMax.toString(10), nname: '[1024, 16000000] us'},
+                      { recid: RECID_AE+4, fname: 'SysGainRangeMin',  lname: data.data.ae.SysGainRangeMin.toString(10), nname: '[1024, 16000000] us'}, 
+                      { recid: RECID_AE+5, fname: 'ExpTimeRangeMax', lname: data.data.ae.ExpTimeRangeMax.toString(10), nname: '[1, 1000000] us'},
+                      { recid: RECID_AE+6, fname: 'ExpTimeRangeMin', lname: data.data.ae.ExpTimeRangeMin.toString(10), nname: '[1, 1000000] us'}
                   ]
               } 
             },
