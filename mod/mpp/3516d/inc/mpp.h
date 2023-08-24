@@ -364,11 +364,12 @@ typedef struct {
     unsigned long long pts; // timestamp;
 }gsf_mpp_frm_attr_t;
 
+
 //发送视频数据到显示通道(创建VDEC通道)
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //发送音频数据到 audio 解码输出;
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //解码状态;
 typedef struct {

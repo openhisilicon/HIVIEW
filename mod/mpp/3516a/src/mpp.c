@@ -1334,14 +1334,14 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   return ret;
 }
 
+static int _audio_init = 0;
 static gsf_mpp_aenc_t _aenc;
+
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
-  static int init = 0;
-  
-  if(!init)
+  if(!_audio_init)
   {
-    init = 1;
+    _audio_init = 1;
     extern HI_S32 sample_audio_init();
     sample_audio_init();
   }
@@ -1793,7 +1793,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 
 
 //发送视频数据到指定ch;
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
   int err = 0;
   HI_S32 s32Ret = HI_SUCCESS;
@@ -2021,10 +2021,18 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 }
 
 
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
-
+  if(!_audio_init)
+  {
+    _audio_init = 1;
+    extern HI_S32 sample_audio_init();
+    sample_audio_init();
+  }
+  
   HI_S32 s32Ret = 0;
+  HI_S32 adch = 0;
+    
   static gsf_mpp_frm_attr_t _attr = {.etype = PT_BUTT, };
   
   if(_attr.etype != attr->etype)
@@ -2034,7 +2042,11 @@ int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
     SAMPLE_AUDIO_AdecAo(attr);
   }
   
-  HI_S32 adch = 0;
+  if(attr->size == 0)
+  {
+    return HI_MPI_ADEC_SendEndOfStream(adch, HI_FALSE);
+  }
+  
   AUDIO_STREAM_S stAudioStream;
   stAudioStream.pStream = data;
   stAudioStream.u32Len = attr->size;
@@ -2042,7 +2054,7 @@ int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
   stAudioStream.u32Seq = 0;
   
   /* here only demo adec streaming sending mode, but pack sending mode is commended */
-  s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, 0);
+  s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, flag);
   if (HI_SUCCESS != s32Ret)
   {
     printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \

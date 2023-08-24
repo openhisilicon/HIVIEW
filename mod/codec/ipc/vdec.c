@@ -1,5 +1,6 @@
 #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
 
+#include "fw/comm/inc/proc.h"
 #include "mod/rtsps/inc/rtsps.h"
 #include "codec.h"
 #include "cfg.h"
@@ -80,7 +81,7 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
       attr.etype  = PT_VENC(frm[i]->video.encode);// PAYLOAD_TYPE_E;
       attr.width  = frm[i]->video.width;   // width;
       attr.height = frm[i]->video.height;  // height;
-      ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, data, &attr);
+      ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, 0, data, &attr);
       //printf("video size:%d, pts:%llu\n", attr.size, attr.pts);
     }
     else if(frm[i]->type == GSF_FRM_AUDIO)
@@ -89,7 +90,7 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
       if(frm[i]->audio.encode == GSF_ENC_AAC)
       {
         attr.etype  = PT_AAC;
-        ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, data, &attr);
+        ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, 0, data, &attr);
       }
     }
   };
@@ -118,11 +119,63 @@ void* vdec_task(void *param)
   return NULL;
 }
 
+void* adec_task(void *param)
+{
+  char *filename = (char*)param;
+  FILE* pfd = fopen(filename, "rb");
+  if(!pfd)
+    return NULL;
+  
+  HI_U32 s32Ret = 0, ch = 0;
+  HI_U32 u32Len = 640;
+  HI_U8 u8Data[640];
+  
+  sleep(5);//wait hdmi-display screen;
+
+
+  while(_task_runing)
+  {
+    gsf_mpp_frm_attr_t attr = {0};
+    attr.etype = PT_AAC;
+    
+    HI_U32 u32ReadLen = fread(u8Data, 1, u32Len, pfd);
+    if (u32ReadLen <= 0)
+    {
+      attr.size = 0;
+      s32Ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, 1, u8Data, &attr);
+      printf("file EOF.\n");
+      break;
+    }
+    
+    attr.size = u32ReadLen;
+    s32Ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, 1, u8Data, &attr);
+    if (HI_SUCCESS != s32Ret)
+    {
+      printf("asend err ret:%d\n", s32Ret);
+      break;
+    }
+  }
+  return NULL;
+}
+
+
+
 
 static pthread_t pid;
 
 int vdec_start()
 {
+  //////// test hdmi-audio //////// 
+  static char adec_filename[256] = {0};
+  proc_absolute_path(adec_filename);
+  sprintf(adec_filename, "%s/../cfg/audio2ch48k.aaclc", adec_filename);
+  if (access(adec_filename, 0) != -1)
+  {
+    printf("test hdmi-audio decode from adec_filename:[%s]\n", adec_filename);
+    return pthread_create(&pid, 0, adec_task, (void*)adec_filename);
+  }
+  //////////////////////////////// 
+  
   if(!codec_ipc.vdec.en)
     return -1;
  
