@@ -17,6 +17,10 @@ YOLOV5C yolov5;
 static int vcap_cnt = 0;
 static int qrcode = 0; 
 
+//save test flag;
+static int vcap_save_yuv   = 0;
+static int vcap_save_image = 0;
+
 int yolo_init(int VpssGrp[YOLO_CHN_MAX], int VpssChn[YOLO_CHN_MAX], char *ModelPath)
 {
     int i = 0, cnt = 10;
@@ -138,8 +142,34 @@ int yolo_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
           zbar_image_set_format(zbar_image, *(int*)"Y800");
         }
         
-        char *srcVirAddr = (char*)HI_MPI_SYS_Mmap(pstFrame->stVFrame.u64PhyAddr[0], boxs->w*boxs->h);
-        //printf("chn:%d, srcVirAddr:%p, w:%d, h:%d\n", i, srcVirAddr, boxs->w, boxs->h);
+        VIDEO_FRAME_S* pVBuf = &pstFrame->stVFrame;
+        PIXEL_FORMAT_E  enPixelFormat = pVBuf->enPixelFormat;
+        HI_U32 u32UvHeight = 0, u32Size = 0;
+        HI_BOOL bUvInvert = (PIXEL_FORMAT_YUV_SEMIPLANAR_420 == enPixelFormat || PIXEL_FORMAT_YUV_SEMIPLANAR_422 == enPixelFormat) ? HI_TRUE : HI_FALSE;
+        if (PIXEL_FORMAT_YVU_SEMIPLANAR_420 == enPixelFormat || PIXEL_FORMAT_YUV_SEMIPLANAR_420 == enPixelFormat)
+        {
+            u32Size = (pVBuf->u32Stride[0]) * (pVBuf->u32Height) * 3 / 2;
+            u32UvHeight = pVBuf->u32Height / 2;
+        }
+        else if (PIXEL_FORMAT_YVU_SEMIPLANAR_422 == enPixelFormat || PIXEL_FORMAT_YUV_SEMIPLANAR_422 == enPixelFormat)
+        {
+            u32Size = (pVBuf->u32Stride[0]) * (pVBuf->u32Height) * 2;
+            u32UvHeight = pVBuf->u32Height;
+        }
+        else if (PIXEL_FORMAT_YUV_400 == enPixelFormat)
+        {
+            u32Size = (pVBuf->u32Stride[0]) * (pVBuf->u32Height);
+            u32UvHeight = pVBuf->u32Height;
+        }
+        char *srcVirAddr = (char*)HI_MPI_SYS_Mmap(pVBuf->u64PhyAddr[0], u32Size);
+        #if 0
+        if(boxs->w != pVBuf->u32Width)
+        {  
+          printf("chn:%d, srcVirAddr:%p, w:%d, h:%d, u32Width:%d, u32Height:%d, u32Stride[0]:%d\n"
+                , i, srcVirAddr, boxs->w, boxs->h
+                , pVBuf->u32Width, pVBuf->u32Height, pVBuf->u32Stride[0]);
+        }
+        #endif
         
         static char label[256][256] = {0};
         for(int i = 0; i < boxs->size; i++)
@@ -161,12 +191,17 @@ int yolo_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
               int w = boxs->box[i].w;
               int h = boxs->box[i].h;
 
+              x = (float)x/boxs->w * pVBuf->u32Width;
+              y = (float)y/boxs->h * pVBuf->u32Height;
+              w = (float)w/boxs->w * pVBuf->u32Width;
+              h = (float)h/boxs->h * pVBuf->u32Height;
+              
               char *dstVirAddr = (char*)malloc(w*h);
               char *dstOffset = dstVirAddr;
               //printf("dstVirAddr:%p, [%d,%d,%d,%d]\n", srcVirAddr, x, y, w, h);
               for(int l = 0; l < h; l++)
               {
-                memcpy(dstOffset, srcVirAddr + x + (y+l)*pstFrame->stVFrame.u32Stride[0], w);
+                memcpy(dstOffset, srcVirAddr + x + (y+l)*pVBuf->u32Stride[0], w);
                 dstOffset += w;
                 assert(dstOffset <= dstVirAddr+w*h);
               }
@@ -193,12 +228,95 @@ int yolo_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
           	}
         }
         
-        clock_gettime(CLOCK_MONOTONIC, &ts2);
         #if 0
+        clock_gettime(CLOCK_MONOTONIC, &ts2);
         printf("cost:%d ms\n", (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
         #endif
+
+        if(vcap_save_yuv) do // save pstFrame .yuv;
+        {
+          unsigned char TmpBuff[20480];
+          char* pMemContent = NULL;
+          char* pVBufVirt_Y = srcVirAddr;
+          char* pVBufVirt_C = pVBufVirt_Y + (pVBuf->u32Stride[0]) * (pVBuf->u32Height);
+          HI_CHAR szYuvName[128];
+          sprintf(szYuvName, "/nfsroot/16d/vcap/ch%d_%dx%d_%llu.yuv", i, pVBuf->u32Width, pVBuf->u32Height, pVBuf->u64PTS);
+          FILE *pfd = fopen(szYuvName, "wb");
+          if(!pfd)
+          {
+            break;
+          }  
+          /* save Y ----------------------------------------------------------------*/
+          fprintf(stderr, "saving......Y......");
+          fflush(stderr);
+
+          for (int h = 0; h < pVBuf->u32Height; h++)
+          {
+              pMemContent = pVBufVirt_Y + h * pVBuf->u32Stride[0];
+              fwrite(pMemContent, pVBuf->u32Width, 1, pfd);
+          }
+
+          if (PIXEL_FORMAT_YUV_400 != enPixelFormat)
+          {
+              fflush(pfd);
+              /* save U ----------------------------------------------------------------*/
+              fprintf(stderr, "U......");
+              fflush(stderr);
+
+              for (int h = 0; h < u32UvHeight; h++)
+              {
+                  pMemContent = pVBufVirt_C + h * pVBuf->u32Stride[1];
+
+                  if(!bUvInvert) pMemContent += 1;
+
+                  for (int w = 0; w < pVBuf->u32Width / 2; w++)
+                  {
+                      TmpBuff[w] = *pMemContent;
+                      pMemContent += 2;
+                  }
+
+                  fwrite(TmpBuff, pVBuf->u32Width / 2, 1, pfd);
+              }
+
+              fflush(pfd);
+
+              /* save V ----------------------------------------------------------------*/
+              fprintf(stderr, "V......");
+              fflush(stderr);
+
+              for (int h = 0; h < u32UvHeight; h++)
+              {
+                  pMemContent = pVBufVirt_C + h * pVBuf->u32Stride[1];
+
+                  if(bUvInvert) pMemContent += 1;
+
+                  for (int w = 0; w < pVBuf->u32Width / 2; w++)
+                  {
+                      TmpBuff[w] = *pMemContent;
+                      pMemContent += 2;
+                  }
+
+                  fwrite(TmpBuff, pVBuf->u32Width / 2, 1, pfd);
+              }
+          }
+
+          fflush(pfd);
+          fclose(pfd);
+         
+          fprintf(stderr, "save [%s] done!\n", szYuvName);
+          fflush(stderr);
+        }while(0);
         
-        HI_MPI_SYS_Munmap(srcVirAddr, boxs->w*boxs->h);
+        if(vcap_save_image) // save image .jpg
+        {
+          HI_CHAR szJpgName[128];
+          sprintf(szJpgName, "/nfsroot/16d/vcap/ch%d_%dx%d_%llu.jpg", i, pVBuf->u32Width, pVBuf->u32Height, pVBuf->u64PTS);
+          cv::imwrite(szJpgName, vcap[i].image);
+          fprintf(stderr, "save [%s] done!\n", szJpgName);
+          fflush(stderr);  
+        }
+        
+        HI_MPI_SYS_Munmap(srcVirAddr, u32Size);
         vcap[i].vcap.get_frame_unlock(pstFrame);
         boxs++;
       }
