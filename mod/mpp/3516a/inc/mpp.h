@@ -64,6 +64,7 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 //HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 
+
 enum {
   GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
   GSF_MPP_VPSS_CTL_RESUM = 1, //HI_MPI_VPSS_StopGrp(VpssGrp);
@@ -234,6 +235,17 @@ typedef struct {
   gsf_mpp_img_3dnr_t  _3dnr;
 }gsf_mpp_img_all_t;
 
+typedef struct {
+  int bFlip;
+  int bMirror;
+}gsf_mpp_img_flip_t;
+    
+typedef struct {
+  int bEnable;
+  int enMode;    //DIS_MODE_4_DOF_GME = 0 ;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+  int enPdtType; //DIS_PDT_TYPE_IPC = 0; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+}gsf_mpp_img_dis_t;
+
 enum {
   GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
   GSF_MPP_ISP_CTL_IMG = 1,    // get gsf_mpp_img_all_t;
@@ -247,6 +259,8 @@ enum {
   GSF_MPP_ISP_CTL_DRC    = 9, // set gsf_mpp_img_drc_t;
   GSF_MPP_ISP_CTL_LDCI   = 10,// set gsf_mpp_img_ldci_t;  
   GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
+  GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
+  GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
@@ -350,11 +364,12 @@ typedef struct {
     unsigned long long pts; // timestamp;
 }gsf_mpp_frm_attr_t;
 
+
 //发送视频数据到显示通道(创建VDEC通道)
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //发送音频数据到 audio 解码输出;
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //解码状态;
 typedef struct {
