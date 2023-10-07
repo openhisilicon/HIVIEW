@@ -83,6 +83,11 @@ int cfifo_get_io(struct cfifo_ex *fifo_ex
 // fd
 int cfifo_take_fd(struct cfifo_ex *fifo_ex);
 
+// fd is ET or LT
+int cfifo_fd_et(int fd);
+
+// fd after POLL;
+int cfifo_fd_resume(int fd);
 
 int cfifo_set_u(struct cfifo_ex *fifo_ex, void *u);
 void* cfifo_get_u(struct cfifo_ex *fifo_ex);

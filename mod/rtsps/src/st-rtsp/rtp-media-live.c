@@ -210,7 +210,11 @@ static void *live_send_task(void *arg)
                     , 2000);
                     
     fds[j].fd = m->track[MEDIA_TRACK_VIDEO].m_evfd;
-    fds[j].events = POLLIN|POLLET;
+	#if defined(GSF_CPU_3519d) 
+    fds[j].events = POLLIN|(cfifo_fd_et(fds[j].fd)?POLLET:0);
+	#else
+	fds[j].events = POLLIN|POLLET;
+	#endif
     m_evfd[MEDIA_TRACK_VIDEO] = st_netfd_open(fds[j].fd);
     j++;
   }
@@ -218,7 +222,11 @@ static void *live_send_task(void *arg)
   {
     cfifo_newest(m->track[MEDIA_TRACK_AUDIO].m_reader, 0);
     fds[j].fd = m->track[MEDIA_TRACK_AUDIO].m_evfd;
-    fds[j].events = POLLIN|POLLET;
+	#if defined(GSF_CPU_3519d) 
+    fds[j].events = POLLIN|(cfifo_fd_et(fds[j].fd)?POLLET:0);
+	#else
+	fds[j].events = POLLIN|POLLET;
+	#endif
     m_evfd[MEDIA_TRACK_AUDIO] = st_netfd_open(fds[j].fd);
     j++;
   }
