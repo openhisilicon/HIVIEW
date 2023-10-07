@@ -1,0 +1,74 @@
+/*
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef HI_COMMON_DPU_RECT_H
+#define HI_COMMON_DPU_RECT_H
+
+#include "hi_common.h"
+#include "hi_errno.h"
+#include "hi_debug.h"
+#include "hi_common_video.h"
+#include "ot_common_dpu_rect.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HI_DPU_RECT_LEFT_PIPE OT_DPU_RECT_LEFT_PIPE
+#define HI_DPU_RECT_RIGHT_PIPE OT_DPU_RECT_RIGHT_PIPE
+#define HI_DPU_RECT_LEFT_CHN OT_DPU_RECT_LEFT_CHN
+#define HI_DPU_RECT_RIGHT_CHN OT_DPU_RECT_RIGHT_CHN
+#define HI_DPU_RECT_UNWARP_IH3X_FIXED_NUM OT_DPU_RECT_UNWARP_IH3X_FIXED_NUM
+typedef ot_dpu_rect_lut_id hi_dpu_rect_lut_id;
+typedef ot_dpu_rect_grp hi_dpu_rect_grp;
+typedef ot_dpu_rect_pipe hi_dpu_rect_pipe;
+typedef ot_dpu_rect_chn hi_dpu_rect_chn;
+#define HI_ERR_DPU_RECT_BUF_FULL OT_ERR_DPU_RECT_BUF_FULL
+#define HI_ERR_DPU_RECT_SYS_TIMEOUT OT_ERR_DPU_RECT_SYS_TIMEOUT
+#define HI_ERR_DPU_RECT_OPEN_FILE OT_ERR_DPU_RECT_OPEN_FILE
+#define HI_ERR_DPU_RECT_READ_FILE OT_ERR_DPU_RECT_READ_FILE
+#define HI_ERR_DPU_RECT_WRITE_FILE OT_ERR_DPU_RECT_WRITE_FILE
+#define HI_ERR_DPU_RECT_BUTT OT_ERR_DPU_RECT_BUTT
+typedef ot_dpu_rect_err_code hi_dpu_rect_err_code;
+#define HI_ERR_DPU_RECT_NULL_PTR OT_ERR_DPU_RECT_NULL_PTR
+#define HI_ERR_DPU_RECT_NOT_READY OT_ERR_DPU_RECT_NOT_READY
+#define HI_ERR_DPU_RECT_INVALID_DEV_ID OT_ERR_DPU_RECT_INVALID_DEV_ID
+#define HI_ERR_DPU_RECT_INVALID_PIPE_ID OT_ERR_DPU_RECT_INVALID_PIPE_ID
+#define HI_ERR_DPU_RECT_INVALID_CHN_ID OT_ERR_DPU_RECT_INVALID_CHN_ID
+#define HI_ERR_DPU_RECT_INVALID_GRP_ID OT_ERR_DPU_RECT_INVALID_GRP_ID
+#define HI_ERR_DPU_RECT_EXIST OT_ERR_DPU_RECT_EXIST
+#define HI_ERR_DPU_RECT_UNEXIST OT_ERR_DPU_RECT_UNEXIST
+#define HI_ERR_DPU_RECT_NOT_SUPPORT OT_ERR_DPU_RECT_NOT_SUPPORT
+#define HI_ERR_DPU_RECT_NOT_PERM OT_ERR_DPU_RECT_NOT_PERM
+#define HI_ERR_DPU_RECT_NO_MEM OT_ERR_DPU_RECT_NO_MEM
+#define HI_ERR_DPU_RECT_NO_BUF OT_ERR_DPU_RECT_NO_BUF
+#define HI_ERR_DPU_RECT_ILLEGAL_PARAM OT_ERR_DPU_RECT_ILLEGAL_PARAM
+#define HI_ERR_DPU_RECT_BUSY OT_ERR_DPU_RECT_BUSY
+#define HI_ERR_DPU_RECT_BUF_EMPTY OT_ERR_DPU_RECT_BUF_EMPTY
+#define HI_ERR_DPU_RECT_BUF_FULL OT_ERR_DPU_RECT_BUF_FULL
+#define HI_ERR_DPU_RECT_SYS_TIMEOUT OT_ERR_DPU_RECT_SYS_TIMEOUT
+#define HI_ERR_DPU_RECT_OPEN_FILE OT_ERR_DPU_RECT_OPEN_FILE
+#define HI_ERR_DPU_RECT_READ_FILE OT_ERR_DPU_RECT_READ_FILE
+#define HI_ERR_DPU_RECT_WRITE_FILE OT_ERR_DPU_RECT_WRITE_FILE
+typedef ot_dpu_rect_mem_info hi_dpu_rect_mem_info;
+typedef ot_dpu_rect_frame_info hi_dpu_rect_frame_info;
+#define HI_DPU_RECT_MODE_SINGLE OT_DPU_RECT_MODE_SINGLE
+#define HI_DPU_RECT_MODE_DOUBLE OT_DPU_RECT_MODE_DOUBLE
+#define HI_DPU_RECT_MODE_BUTT OT_DPU_RECT_MODE_BUTT
+typedef ot_dpu_rect_mode hi_dpu_rect_mode;
+#define HI_DPU_RECT_UPSAMPLE_SCALE_0 OT_DPU_RECT_UPSAMPLE_SCALE_0
+#define HI_DPU_RECT_UPSAMPLE_SCALE_1 OT_DPU_RECT_UPSAMPLE_SCALE_1
+#define HI_DPU_RECT_UPSAMPLE_SCALE_2 OT_DPU_RECT_UPSAMPLE_SCALE_2
+#define HI_DPU_RECT_UPSAMPLE_SCALE_BUTT OT_DPU_RECT_UPSAMPLE_SCALE_BUTT
+typedef ot_dpu_rect_upsample_scale hi_dpu_rect_upsample_scale;
+typedef ot_dpu_rect_unwarp_attr hi_dpu_rect_unwarp_attr;
+typedef ot_dpu_rect_depth_attr hi_dpu_rect_depth_attr;
+typedef ot_dpu_rect_pipe_attr hi_dpu_rect_pipe_attr;
+typedef ot_dpu_rect_grp_attr hi_dpu_rect_grp_attr;
+typedef ot_dpu_rect_chn_attr hi_dpu_rect_chn_attr;
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* HI_COMMON_DPU_RECT_H */

@@ -1,0 +1,171 @@
+/*
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef HI_COMMON_VI_H
+#define HI_COMMON_VI_H
+
+#include "hi_common.h"
+#include "hi_errno.h"
+#include "hi_common_video.h"
+#include "hi_common_sys.h"
+#include "ot_common_vi.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HI_ERR_VI_INVALID_DEV_ID OT_ERR_VI_INVALID_DEV_ID
+#define HI_ERR_VI_INVALID_PIPE_ID OT_ERR_VI_INVALID_PIPE_ID
+#define HI_ERR_VI_INVALID_CHN_ID OT_ERR_VI_INVALID_CHN_ID
+#define HI_ERR_VI_INVALID_GRP_ID OT_ERR_VI_INVALID_GRP_ID
+#define HI_ERR_VI_ILLEGAL_PARAM OT_ERR_VI_ILLEGAL_PARAM
+#define HI_ERR_VI_NULL_PTR OT_ERR_VI_NULL_PTR
+#define HI_ERR_VI_NOT_CFG OT_ERR_VI_NOT_CFG
+#define HI_ERR_VI_NOT_SUPPORT OT_ERR_VI_NOT_SUPPORT
+#define HI_ERR_VI_NOT_PERM OT_ERR_VI_NOT_PERM
+#define HI_ERR_VI_NOT_ENABLE OT_ERR_VI_NOT_ENABLE
+#define HI_ERR_VI_NOT_DISABLE OT_ERR_VI_NOT_DISABLE
+#define HI_ERR_VI_NO_MEM OT_ERR_VI_NO_MEM
+#define HI_ERR_VI_BUF_EMPTY OT_ERR_VI_BUF_EMPTY
+#define HI_ERR_VI_BUF_FULL OT_ERR_VI_BUF_FULL
+#define HI_ERR_VI_NOT_READY OT_ERR_VI_NOT_READY
+#define HI_ERR_VI_TIMEOUT OT_ERR_VI_TIMEOUT
+#define HI_ERR_VI_BUSY OT_ERR_VI_BUSY
+#define HI_ERR_VI_NOT_BINDED OT_ERR_VI_NOT_BINDED
+#define HI_ERR_VI_BINDED OT_ERR_VI_BINDED
+#define HI_VI_MAX_AD_CHN_NUM OT_VI_MAX_AD_CHN_NUM
+#define HI_VI_COMPONENT_MASK_NUM OT_VI_COMPONENT_MASK_NUM
+#define HI_VI_MAX_SNS_CFG_NUM OT_VI_MAX_SNS_CFG_NUM
+#define HI_VI_MAX_SD_MUX_NUM OT_VI_MAX_SD_MUX_NUM
+#define HI_VI_INTF_MODE_BT656 OT_VI_INTF_MODE_BT656
+#define HI_VI_INTF_MODE_BT601 OT_VI_INTF_MODE_BT601
+#define HI_VI_INTF_MODE_DC OT_VI_INTF_MODE_DC
+#define HI_VI_INTF_MODE_BT1120 OT_VI_INTF_MODE_BT1120
+#define HI_VI_INTF_MODE_MIPI OT_VI_INTF_MODE_MIPI
+#define HI_VI_INTF_MODE_MIPI_YUV420_NORM OT_VI_INTF_MODE_MIPI_YUV420_NORM
+#define HI_VI_INTF_MODE_MIPI_YUV420_LEGACY OT_VI_INTF_MODE_MIPI_YUV420_LEGACY
+#define HI_VI_INTF_MODE_MIPI_YUV422 OT_VI_INTF_MODE_MIPI_YUV422
+#define HI_VI_INTF_MODE_THERMO OT_VI_INTF_MODE_THERMO
+#define HI_VI_INTF_MODE_BUTT OT_VI_INTF_MODE_BUTT
+typedef ot_vi_intf_mode hi_vi_intf_mode;
+#define HI_VI_WORK_MODE_MULTIPLEX_1 OT_VI_WORK_MODE_MULTIPLEX_1
+#define HI_VI_WORK_MODE_MULTIPLEX_2 OT_VI_WORK_MODE_MULTIPLEX_2
+#define HI_VI_WORK_MODE_MULTIPLEX_4 OT_VI_WORK_MODE_MULTIPLEX_4
+#define HI_VI_WORK_MODE_BUTT OT_VI_WORK_MODE_BUTT
+typedef ot_vi_work_mode hi_vi_work_mode;
+#define HI_VI_SCAN_PROGRESSIVE OT_VI_SCAN_PROGRESSIVE
+#define HI_VI_SCAN_INTERLACED OT_VI_SCAN_INTERLACED
+#define HI_VI_SCAN_BUTT OT_VI_SCAN_BUTT
+typedef ot_vi_scan_mode hi_vi_scan_mode;
+#define HI_VI_DATA_SEQ_VUVU OT_VI_DATA_SEQ_VUVU
+#define HI_VI_DATA_SEQ_UVUV OT_VI_DATA_SEQ_UVUV
+#define HI_VI_DATA_SEQ_UYVY OT_VI_DATA_SEQ_UYVY
+#define HI_VI_DATA_SEQ_VYUY OT_VI_DATA_SEQ_VYUY
+#define HI_VI_DATA_SEQ_YUYV OT_VI_DATA_SEQ_YUYV
+#define HI_VI_DATA_SEQ_YVYU OT_VI_DATA_SEQ_YVYU
+#define HI_VI_DATA_SEQ_BUTT OT_VI_DATA_SEQ_BUTT
+typedef ot_vi_data_seq hi_vi_data_seq;
+#define HI_VI_VSYNC_FIELD OT_VI_VSYNC_FIELD
+#define HI_VI_VSYNC_PULSE OT_VI_VSYNC_PULSE
+#define HI_VI_VSYNC_BUTT OT_VI_VSYNC_BUTT
+typedef ot_vi_vsync hi_vi_vsync;
+#define HI_VI_VSYNC_NEG_HIGH OT_VI_VSYNC_NEG_HIGH
+#define HI_VI_VSYNC_NEG_LOW OT_VI_VSYNC_NEG_LOW
+#define HI_VI_VSYNC_NEG_BUTT OT_VI_VSYNC_NEG_BUTT
+typedef ot_vi_vsync_neg hi_vi_vsync_neg;
+#define HI_VI_HSYNC_VALID_SIG OT_VI_HSYNC_VALID_SIG
+#define HI_VI_HSYNC_PULSE OT_VI_HSYNC_PULSE
+#define HI_VI_HSYNC_BUTT OT_VI_HSYNC_BUTT
+typedef ot_vi_hsync hi_vi_hsync;
+#define HI_VI_HSYNC_NEG_HIGH OT_VI_HSYNC_NEG_HIGH
+#define HI_VI_HSYNC_NEG_LOW OT_VI_HSYNC_NEG_LOW
+#define HI_VI_HSYNC_NEG_BUTT OT_VI_HSYNC_NEG_BUTT
+typedef ot_vi_hsync_neg hi_vi_hsync_neg;
+#define HI_VI_VSYNC_NORM_PULSE OT_VI_VSYNC_NORM_PULSE
+#define HI_VI_VSYNC_VALID_SIG OT_VI_VSYNC_VALID_SIG
+#define HI_VI_VSYNC_VALID_BUTT OT_VI_VSYNC_VALID_BUTT
+typedef ot_vi_vsync_valid hi_vi_vsync_valid;
+#define HI_VI_VSYNC_VALID_NEG_HIGH OT_VI_VSYNC_VALID_NEG_HIGH
+#define HI_VI_VSYNC_VALID_NEG_LOW OT_VI_VSYNC_VALID_NEG_LOW
+#define HI_VI_VSYNC_VALID_NEG_BUTT OT_VI_VSYNC_VALID_NEG_BUTT
+typedef ot_vi_vsync_valid_neg hi_vi_vsync_valid_neg;
+typedef ot_vi_timing_blank hi_vi_timing_blank;
+typedef ot_vi_sync_cfg hi_vi_sync_cfg;
+#define HI_VI_DATA_TYPE_RAW OT_VI_DATA_TYPE_RAW
+#define HI_VI_DATA_TYPE_YUV OT_VI_DATA_TYPE_YUV
+#define HI_VI_DATA_TYPE_BUTT OT_VI_DATA_TYPE_BUTT
+typedef ot_vi_data_type hi_vi_data_type;
+typedef ot_vi_dev_attr hi_vi_dev_attr;
+#define HI_VI_REPHASE_MODE_NONE OT_VI_REPHASE_MODE_NONE
+#define HI_VI_REPHASE_MODE_SKIP_1_2 OT_VI_REPHASE_MODE_SKIP_1_2
+#define HI_VI_REPHASE_MODE_SKIP_1_3 OT_VI_REPHASE_MODE_SKIP_1_3
+#define HI_VI_REPHASE_MODE_BINNING_1_2 OT_VI_REPHASE_MODE_BINNING_1_2
+#define HI_VI_REPHASE_MODE_BINNING_1_3 OT_VI_REPHASE_MODE_BINNING_1_3
+#define HI_VI_REPHASE_MODE_BUTT OT_VI_REPHASE_MODE_BUTT
+typedef ot_vi_rephase_mode hi_vi_rephase_mode;
+typedef ot_vi_rephase_attr hi_vi_rephase_attr;
+typedef ot_vi_scale_attr hi_vi_scale_attr;
+typedef ot_vi_bas_attr hi_vi_bas_attr;
+#define HI_VI_THERMO_WORK_MODE_T0 OT_VI_THERMO_WORK_MODE_T0
+#define HI_VI_THERMO_WORK_MODE_T1 OT_VI_THERMO_WORK_MODE_T1
+#define HI_VI_THERMO_WORK_MODE_T2 OT_VI_THERMO_WORK_MODE_T2
+#define HI_VI_THERMO_WORK_MODE_T3 OT_VI_THERMO_WORK_MODE_T3
+#define HI_VI_THERMO_WORK_MODE_BUTT OT_VI_THERMO_WORK_MODE_BUTT
+typedef ot_vi_thermo_work_mode hi_vi_thermo_work_mode;
+#define HI_VI_SD_MUX_T0_SD0 OT_VI_SD_MUX_T0_SD0
+#define HI_VI_SD_MUX_T0_SD1 OT_VI_SD_MUX_T0_SD1
+#define HI_VI_SD_MUX_T1_SDA OT_VI_SD_MUX_T1_SDA
+#define HI_VI_SD_MUX_T1_FS OT_VI_SD_MUX_T1_FS
+#define HI_VI_SD_MUX_T2_SDA0 OT_VI_SD_MUX_T2_SDA0
+#define HI_VI_SD_MUX_T2_SDA1 OT_VI_SD_MUX_T2_SDA1
+#define HI_VI_SD_MUX_T2_SDA2 OT_VI_SD_MUX_T2_SDA2
+#define HI_VI_SD_MUX_T2_FS OT_VI_SD_MUX_T2_FS
+#define HI_VI_SD_MUX_BUTT OT_VI_SD_MUX_BUTT
+typedef ot_vi_sd_mux hi_vi_sd_mux;
+typedef ot_vi_thermo_sns_attr hi_vi_thermo_sns_attr;
+typedef ot_vi_dev_timing_attr hi_vi_dev_timing_attr;
+typedef ot_vi_dev_data_attr hi_vi_dev_data_attr;
+typedef ot_vi_bind_pipe hi_vi_bind_pipe;
+typedef ot_vi_wdr_fusion_grp_attr hi_vi_wdr_fusion_grp_attr;
+#define HI_VI_PIPE_BYPASS_NONE OT_VI_PIPE_BYPASS_NONE
+#define HI_VI_PIPE_BYPASS_FE OT_VI_PIPE_BYPASS_FE
+#define HI_VI_PIPE_BYPASS_BE OT_VI_PIPE_BYPASS_BE
+#define HI_VI_PIPE_BYPASS_BUTT OT_VI_PIPE_BYPASS_BUTT
+typedef ot_vi_pipe_bypass_mode hi_vi_pipe_bypass_mode;
+typedef ot_vi_pipe_attr hi_vi_pipe_attr;
+typedef ot_vi_frame_dump_attr hi_vi_frame_dump_attr;
+#define HI_VI_PRIVATE_DATA_MODE_BACK OT_VI_PRIVATE_DATA_MODE_BACK
+#define HI_VI_PRIVATE_DATA_MODE_FRONT OT_VI_PRIVATE_DATA_MODE_FRONT
+#define HI_VI_PRIVATE_DATA_MODE_BUTT OT_VI_PRIVATE_DATA_MODE_BUTT
+typedef ot_vi_private_data_mode hi_vi_private_data_mode;
+typedef ot_vi_private_data_dump_attr hi_vi_private_data_dump_attr;
+typedef ot_vi_private_data_info hi_vi_private_data_info;
+#define HI_VI_OUT_MODE_NORM OT_VI_OUT_MODE_NORM
+#define HI_VI_OUT_MODE_2F1_STAGGER OT_VI_OUT_MODE_2F1_STAGGER
+#define HI_VI_OUT_MODE_3F1_STAGGER OT_VI_OUT_MODE_3F1_STAGGER
+#define HI_VI_OUT_MODE_4F1_STAGGER OT_VI_OUT_MODE_4F1_STAGGER
+#define HI_VI_OUT_MODE_BUTT OT_VI_OUT_MODE_BUTT
+typedef ot_vi_out_mode hi_vi_out_mode;
+typedef ot_vi_pipe_param hi_vi_pipe_param;
+#define HI_VI_PIPE_FRAME_SOURCE_FE OT_VI_PIPE_FRAME_SOURCE_FE
+#define HI_VI_PIPE_FRAME_SOURCE_USER OT_VI_PIPE_FRAME_SOURCE_USER
+#define HI_VI_PIPE_FRAME_SOURCE_BUTT OT_VI_PIPE_FRAME_SOURCE_BUTT
+typedef ot_vi_pipe_frame_source hi_vi_pipe_frame_source;
+typedef ot_vi_pipe_status hi_vi_pipe_status;
+typedef ot_vi_compress_param hi_vi_compress_param;
+typedef ot_vi_chn_attr hi_vi_chn_attr;
+typedef ot_vi_ext_chn_attr hi_vi_ext_chn_attr;
+typedef ot_vi_crop_info hi_vi_crop_info;
+typedef ot_vi_chn_status hi_vi_chn_status;
+#define HI_VI_STITCH_CFG_MODE_NORM OT_VI_STITCH_CFG_MODE_NORM
+#define HI_VI_STITCH_CFG_MODE_SYNC OT_VI_STITCH_CFG_MODE_SYNC
+#define HI_VI_STITCH_CFG_MODE_BUTT OT_VI_STITCH_CFG_MODE_BUTT
+typedef ot_vi_stitch_cfg_mode hi_vi_stitch_cfg_mode;
+typedef ot_vi_stitch_grp_attr hi_vi_stitch_grp_attr;
+typedef ot_vi_mod_param hi_vi_mod_param;
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* HI_COMMON_VI_H */

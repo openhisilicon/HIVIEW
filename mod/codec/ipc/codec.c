@@ -36,17 +36,30 @@ static int avs = 0; // codec_ipc.vi.avs;
 #warning "PIC_512P => PIC_D1_PAL"
 #define PIC_512P PIC_D1_PAL
 #endif
-
+#ifndef HAVE_PIC_2048P
+#warning "PIC_2448x2048 => PIC_2592x1944"
+#define PIC_2448x2048 PIC_2592x1944
+#endif
 #ifndef HAVE_PIC_640P
 #warning "PIC_640P => PIC_512P"
 #define PIC_640P PIC_512P
 #endif
 
+#if !defined(GSF_CPU_3403) && !defined(GSF_CPU_3519d)
+  #ifndef HAVE_PIC_1520P
+  #define PIC_2688x1520 PIC_2592x1520
+  #warning "PIC_2688x1520 => PIC_2592x1520"
+  #endif
+#endif
+
 #define PIC_WIDTH(w, h) \
           (w >= 7680)?PIC_7680x4320:\
           (w >= 3840)?PIC_3840x2160:\
+          (w >= 2688 && h >= 1520)?PIC_2688x1520:\
           (w >= 2592 && h >= 1944)?PIC_2592x1944:\
           (w >= 2592 && h >= 1536)?PIC_2592x1536:\
+          (w >= 2592 && h >= 1520)?PIC_2592x1520:\
+          (w >= 2448 && h >= 2048)?PIC_2448x2048:\
           (w >= 1920)?PIC_1080P:\
           (w >= 1280)?PIC_720P: \
           (w >= 720 && h >= 576)?PIC_D1_PAL: \
@@ -60,8 +73,11 @@ static int avs = 0; // codec_ipc.vi.avs;
 static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_7680x4320] = {0, 7680, 4320},
       [PIC_3840x2160] = {0, 3840, 2160},
+      [PIC_2688x1520] = {0, 2688, 1520},
       [PIC_2592x1944] = {0, 2592, 1944},
       [PIC_2592x1536] = {0, 2592, 1536},
+      [PIC_2592x1520] = {0, 2592, 1520},
+      [PIC_2448x2048] = {0, 2448, 2048},
       [PIC_1080P]     = {0, 1920, 1080},
       [PIC_720P]      = {0, 1280, 720},
       [PIC_D1_PAL]    = {0, 720, 576},
@@ -97,11 +113,12 @@ static gsf_layout_t voly;
 int vo_ly_set(int ly) {voly.layout = ly; return 0;}
 int vo_ly_get(gsf_layout_t *ly) { *ly = voly; return 0;}
 
+static gsf_mpp_vpss_t *p_vpss = NULL;
 static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 //second sdp hook, fixed venc cfg;
-#if defined(GSF_CPU_3403)
+#if defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
 #define SECOND_WIDTH(second) ((second) == 1?1920:(second) == 2?720:640)
 #define SECOND_HEIGHT(second) ((second) == 1?1080:(second) == 2?480:512)
 #define SECOND_HIRES(second) ((second) == 1?PIC_1080P:(second) == 2?PIC_D1_NTSC:PIC_512P)
@@ -113,7 +130,7 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 int second_sdp(int i, gsf_sdp_t *sdp)
 {
-  #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
+  #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
   if(p_cfg->second)
   {
     sdp->audio_shmid = -1;
@@ -409,7 +426,7 @@ int venc_start(int start)
     }
     
     //only 3516D supported 
-    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
     if(p_cfg->second && i == 1)
     {
       gsf_sdp_t sdp;
@@ -610,11 +627,11 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
 	      VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
 	      
     }
-    else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") || strstr(cfg->snsname, "imx585"))
+    else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") || strstr(cfg->snsname, "imx585") || strstr(cfg->snsname, "imx678") )
     {
         if(strcasestr(cfg->type, "3516a"))
         {          
-          cfg->lane = 0; cfg->wdr = 0; cfg->res = (codec_ipc.vi.res==2)?2:8; cfg->fps = 30;
+          cfg->lane = 0; cfg->wdr = 0; cfg->res = (codec_ipc.vi.res==2)?2:8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
           rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
           venc_ini->ch_num = 1; venc_ini->st_num = 2;
           VPSS(0, 0, 0, 0, 1, 1-1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_1080P);
@@ -664,11 +681,12 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }
-    else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") || strstr(cfg->snsname, "imx585"))
+    else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") 
+      || strstr(cfg->snsname, "imx585") || strstr(cfg->snsname, "imx678"))
     {
         if(strcasestr(cfg->type, "3516a"))
         {
-          cfg->lane = 0; cfg->wdr = 0; cfg->res = (codec_ipc.vi.res==2)?2:8; cfg->fps = 30;
+          cfg->lane = 0; cfg->wdr = 0; cfg->res = (codec_ipc.vi.res==2)?2:8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
           rgn_ini->ch_num = 1; rgn_ini->st_num = (avs==2)?1:2;
           venc_ini->ch_num = 1; venc_ini->st_num = (avs==2)?1:2;
           VPSS(0, 0, 0, 0, 1, 1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_1080P);
@@ -711,6 +729,32 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }
+    else if(strstr(cfg->snsname, "imx568"))
+    {
+      // imx335-0-0-4-30
+      cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = 5; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_2448x2048, PIC_1080P);
+      if(cfg->second)
+      {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+      }
+    }
+    else if(strstr(cfg->snsname, "imx664"))
+    {
+      // imx335-0-0-4-30
+      cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = 4; cfg->fps = 60;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+      if(cfg->second)
+      {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+      }
+    }    
     else if(strstr(cfg->snsname, "ov426"))
     {
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 0; cfg->fps = 30;
@@ -864,6 +908,107 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
 }
 #endif
 
+#if defined(GSF_CPU_3519d)
+
+static char* _chipid()
+{
+  static char chipid[64] = {0};
+  sprintf(chipid, "%s", "3519d500");
+  
+  char str[128];
+  sprintf(str, "%s", "bspmd.l 0x011020EE0 | grep 3516d500");
+  FILE* fd = popen(str, "r");
+  if(!fd)
+    return chipid;
+
+  while(1)
+  {
+    if (fgets(str, sizeof(str), fd))
+  	{
+  		if(strstr(str, "3516d500"))
+        sprintf(chipid, "%s", "3516d500");
+  		else if(strstr(str, "3519d500"))
+  		  sprintf(chipid, "%s", "3519d500");
+  	}
+  	else
+  	{
+  	  break;
+  	}
+  }
+  pclose(fd);
+  return chipid;
+}
+
+
+void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
+{
+   sprintf(cfg->type, "%s", _chipid());
+  
+   if(strstr(cfg->snsname, "os04a10"))
+   {
+    // os04a10-0-0-4-30
+    cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+    if(cfg->snscnt > 1)
+    {
+        VPSS(1, 1, 1, 0, 1, 1, PIC_2688x1520, PIC_720P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    } 
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    }
+    return;
+   }  
+  
+  // os08a20-2-0-2-30
+  if(codec_ipc.vi.res==2)
+  {
+    cfg->lane = 2; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    if(cfg->snscnt > 1)
+    {
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    }
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        rgn_ini->st_num = venc_ini->st_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    }
+    return;
+  }
+  
+  // os08a20-0-0-8-30
+  cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
+  rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+  venc_ini->ch_num = 1; venc_ini->st_num = 2;
+  VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+  if(cfg->snscnt > 1)
+  {
+      // os08a20-0-0-8-30
+      VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+      rgn_ini->ch_num++;
+      venc_ini->ch_num++;
+  }
+  else if(cfg->second)
+  {
+      rgn_ini->ch_num = venc_ini->ch_num = 2;
+      rgn_ini->st_num = venc_ini->st_num = 2;
+      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  }
+}
+#endif
+
+
 
 int mpp_start(gsf_bsp_def_t *def)
 {
@@ -932,6 +1077,12 @@ int mpp_start(gsf_bsp_def_t *def)
         cfg.hnr = codec_ipc.vi.hnr;
         mpp_ini_3403(&cfg, &rgn_ini, &venc_ini, vpss);
       }
+      #elif defined(GSF_CPU_3519d)
+      {
+        cfg.second = def->board.second;
+        cfg.aiisp = codec_ipc.vi.hnr;
+        mpp_ini_3519d(&cfg, &rgn_ini, &venc_ini, vpss);
+      }
       #else
       {
         #error "error unknow gsf_mpp_cfg_t."
@@ -940,13 +1091,14 @@ int mpp_start(gsf_bsp_def_t *def)
     }while(0);
     
     p_venc_ini = &venc_ini;
+    p_vpss     = vpss;
     p_cfg      = &cfg;
     
     char home_path[256] = {0};
     proc_absolute_path(home_path);
     sprintf(home_path, "%s/../", home_path);
     printf("home_path:[%s]\n", home_path);
-    
+
     gsf_mpp_cfg(home_path, &cfg);
     
     lens_ini.ch_num = 1;  // lens number;
@@ -962,10 +1114,15 @@ int mpp_start(gsf_bsp_def_t *def)
         #if defined(GSF_CPU_3516e)
         .vpss_en = {1, 1,},
         .vpss_sz = {PIC_1080P, PIC_720P,},
-        #elif defined(GSF_CPU_3403)
+        #elif defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
         .venc_pic_size = {PIC_3840x2160, PIC_1080P},
         #endif
     };
+    //re-set vpss output size;
+    #if defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
+    vi.venc_pic_size[0] = p_vpss[0].enSize[0];
+    vi.venc_pic_size[1] = p_vpss[0].enSize[1];
+    #endif
     
     #if defined(GSF_CPU_3559a)
     if(avs == 1)
@@ -981,6 +1138,21 @@ int mpp_start(gsf_bsp_def_t *def)
     #endif
   
     gsf_mpp_vi_start(&vi);
+    
+    #if defined(GSF_CPU_3559a)
+    if(1)
+    {
+    	struct timespec _ts;  
+      clock_gettime(CLOCK_REALTIME, &_ts);
+      HI_U64 u64PTSBase = _ts.tv_sec;
+      u64PTSBase = _ts.tv_sec*1000000 + _ts.tv_nsec/1000;
+      int ret = HI_MPI_SYS_InitPTSBase(u64PTSBase);//建议在媒体业务没有启动时调用这个接口
+      //HI_S32 HI_MPI_SYS_SyncPTS(u64PTSBase);  //建议一秒钟进行一次时间戳微调;
+      HI_U64 u64CurPTS;
+      ret |= HI_MPI_SYS_GetCurPTS(&u64CurPTS);       
+      printf("HI_MPI_SYS_InitPTSBase ret:%d, u64PTSBase:%llu, u64CurPTS:%llu\n", ret, u64PTSBase, u64CurPTS);
+    }
+    #endif
     
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
     {
@@ -1016,21 +1188,17 @@ int mpp_start(gsf_bsp_def_t *def)
     proc_absolute_path(scene_ini);
 
     #if defined(GSF_CPU_3559a)
-      if(avs == 1)
-        sprintf(scene_ini, "%s/../cfg/%savs.ini", scene_ini, cfg.snsname);
-      else 
-        sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
+      sprintf(scene_ini, "%s/../cfg/%s%s.ini", scene_ini, cfg.snsname, (avs)?"avs":"");
     #elif defined(GSF_CPU_3403)
-      if(cfg.hnr)
-        sprintf(scene_ini, "%s/../cfg/%s_hnr.ini", scene_ini, cfg.snsname);
-      else 
-        sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
+      sprintf(scene_ini, "%s/../cfg/%s%s.ini", scene_ini, cfg.snsname, (cfg.hnr)?"_hnr":"");
+    #elif defined(GSF_CPU_3519d)
+      sprintf(scene_ini, "%s/../cfg/%s%s.ini", scene_ini, cfg.snsname, (cfg.aiisp)?"_hnr":"");
     #else
       sprintf(scene_ini, "%s/../cfg/%s.ini", scene_ini, cfg.snsname);
     #endif
     
    
-    if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) <= 0) //enable img;
+    if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) <= 0)  //enable img;
     {
       // First tested on Hi3516X;
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
@@ -1093,7 +1261,7 @@ int mpp_start(gsf_bsp_def_t *def)
 
 int vo_start()
 {
-    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
+    #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3559a) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
     //aenc;
     if( codec_ipc.aenc.en)
     {
@@ -1108,7 +1276,7 @@ int vo_start()
         .cb = gsf_aenc_recv,
       };
       
-      #if defined(GSF_CPU_3403)
+      #if defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
       gsf_mpp_audio_start(NULL);
       #else
       gsf_mpp_audio_start(&aenc);
@@ -1145,16 +1313,22 @@ int vo_start()
     }
     else
     {
+      
+      int inf = VO_INTF_HDMI;
+      #if defined(GSF_CPU_3519d)
+      inf = HI_VO_INTF_BT1120;
+      #endif
+      
       int sync = (codec_ipc.vo.sync == 3)?VO_OUTPUT_7680x4320_30:
             (codec_ipc.vo.sync == 2)?VO_OUTPUT_3840x2160_60:
             (codec_ipc.vo.sync == 1)?VO_OUTPUT_3840x2160_30:
             VO_OUTPUT_1080P60;
       printf("codec_ipc.vo.sync:%d\n", codec_ipc.vo.sync);
-      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
+      gsf_mpp_vo_start(VODEV_HD0, inf, sync, 0);
       
       int ly = VO_LAYOUT_1MUX;
 
-      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
+      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
         if(p_cfg->second || p_cfg->snscnt > 1)
           ly = VO_LAYOUT_2MUX;
         if (avs == 1)
@@ -1175,7 +1349,7 @@ int vo_start()
         gsf_mpp_vo_aspect(VOLAYER_HD0, 0, &rect);
       }
       
-      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
+      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
       if(ly == VO_LAYOUT_2MUX)
       {
         if(p_cfg->second)
@@ -1260,7 +1434,9 @@ int main(int argc, char *argv[])
     if(vdec_start() < 0)
     {
       gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+      #ifndef GSF_CPU_3519d
       gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+      #endif
     }
     
     //init listen;
@@ -1274,8 +1450,8 @@ int main(int argc, char *argv[])
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
 
-    //flip&mirror;
     #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403)
+    //flip&mirror;
     gsf_mpp_img_flip_t flip;    
     flip.bFlip = codec_ipc.vi.flip;
     flip.bMirror = codec_ipc.vi.flip;

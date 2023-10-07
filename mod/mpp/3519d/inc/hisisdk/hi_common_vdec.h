@@ -1,0 +1,100 @@
+/*
+  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef HI_COMMON_VDEC_H
+#define HI_COMMON_VDEC_H
+
+#include "hi_type.h"
+#include "hi_common.h"
+#include "hi_errno.h"
+#include "hi_common_video.h"
+#include "hi_common_vb.h"
+#include "hi_defines.h"
+#include "ot_common_vdec.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HI_VDEC_SEND_MODE_STREAM OT_VDEC_SEND_MODE_STREAM
+#define HI_VDEC_SEND_MODE_FRAME OT_VDEC_SEND_MODE_FRAME
+#define HI_VDEC_SEND_MODE_COMPAT OT_VDEC_SEND_MODE_COMPAT
+#define HI_VDEC_SEND_MODE_BUTT OT_VDEC_SEND_MODE_BUTT
+typedef ot_vdec_send_mode hi_vdec_send_mode;
+#define HI_VIDEO_DEC_MODE_IPB OT_VIDEO_DEC_MODE_IPB
+#define HI_VIDEO_DEC_MODE_IP OT_VIDEO_DEC_MODE_IP
+#define HI_VIDEO_DEC_MODE_I OT_VIDEO_DEC_MODE_I
+#define HI_VIDEO_DEC_MODE_BUTT OT_VIDEO_DEC_MODE_BUTT
+typedef ot_video_dec_mode hi_video_dec_mode;
+#define HI_VIDEO_OUT_ORDER_DISPLAY OT_VIDEO_OUT_ORDER_DISPLAY
+#define HI_VIDEO_OUT_ORDER_DEC OT_VIDEO_OUT_ORDER_DEC
+#define HI_VIDEO_OUT_ORDER_BUTT OT_VIDEO_OUT_ORDER_BUTT
+typedef ot_video_out_order hi_video_out_order;
+#define HI_VDEC_EVENT_STREAM_ERR OT_VDEC_EVENT_STREAM_ERR
+#define HI_VDEC_EVENT_UNSUPPORT OT_VDEC_EVENT_UNSUPPORT
+#define HI_VDEC_EVENT_ERR_THRESHOLD_OVER OT_VDEC_EVENT_ERR_THRESHOLD_OVER
+#define HI_VDEC_EVENT_REF_NUM_OVER OT_VDEC_EVENT_REF_NUM_OVER
+#define HI_VDEC_EVENT_SLICE_NUM_OVER OT_VDEC_EVENT_SLICE_NUM_OVER
+#define HI_VDEC_EVENT_SPS_NUM_OVER OT_VDEC_EVENT_SPS_NUM_OVER
+#define HI_VDEC_EVENT_PPS_NUM_OVER OT_VDEC_EVENT_PPS_NUM_OVER
+#define HI_VDEC_EVENT_PIC_BUF_SIZE_ERR OT_VDEC_EVENT_PIC_BUF_SIZE_ERR
+#define HI_VDEC_EVENT_SIZE_OVER OT_VDEC_EVENT_SIZE_OVER
+#define HI_VDEC_EVENT_FRAME_SIZE_CHG OT_VDEC_EVENT_FRAME_SIZE_CHG
+#define HI_VDEC_EVENT_VPS_NUM_OVER OT_VDEC_EVENT_VPS_NUM_OVER
+#define HI_VDEC_EVENT_BUTT OT_VDEC_EVENT_BUTT
+typedef ot_vdec_event hi_vdec_event;
+#define HI_VDEC_CAPACITY_STRATEGY_BY_MOD OT_VDEC_CAPACITY_STRATEGY_BY_MOD
+#define HI_VDEC_CAPACITY_STRATEGY_BY_CHN OT_VDEC_CAPACITY_STRATEGY_BY_CHN
+#define HI_VDEC_CAPACITY_STRATEGY_BUTT OT_VDEC_CAPACITY_STRATEGY_BUTT
+typedef ot_vdec_capacity_strategy hi_vdec_capacity_strategy;
+#define HI_VDEC_FRAME_TYPE_I OT_VDEC_FRAME_TYPE_I
+#define HI_VDEC_FRAME_TYPE_P OT_VDEC_FRAME_TYPE_P
+#define HI_VDEC_FRAME_TYPE_B OT_VDEC_FRAME_TYPE_B
+#define HI_VDEC_FRAME_TYPE_BUTT OT_VDEC_FRAME_TYPE_BUTT
+typedef ot_vdec_frame_type hi_vdec_frame_type;
+typedef ot_vdec_video_attr hi_vdec_video_attr;
+typedef ot_vdec_chn_attr hi_vdec_chn_attr;
+typedef ot_vdec_stream hi_vdec_stream;
+typedef ot_vdec_user_data hi_vdec_user_data;
+typedef ot_vdec_video_supplement_info hi_vdec_video_supplement_info;
+typedef ot_vdec_supplement_info hi_vdec_supplement_info;
+typedef ot_vdec_dec_err hi_vdec_dec_err;
+typedef ot_vdec_chn_status hi_vdec_chn_status;
+#define HI_QUICK_MARK_ADAPT OT_QUICK_MARK_ADAPT
+#define HI_QUICK_MARK_FORCE OT_QUICK_MARK_FORCE
+#define HI_QUICK_MARK_NONE OT_QUICK_MARK_NONE
+#define HI_QUICK_MARK_BUTT OT_QUICK_MARK_BUTT
+typedef ot_quick_mark_mode hi_quick_mark_mode;
+typedef ot_vdec_video_param hi_vdec_video_param;
+typedef ot_vdec_pic_param hi_vdec_pic_param;
+typedef ot_vdec_chn_param hi_vdec_chn_param;
+typedef ot_h264_protocol_param hi_h264_protocol_param;
+typedef ot_h265_protocol_param hi_h265_protocol_param;
+typedef ot_vdec_protocol_param hi_vdec_protocol_param;
+typedef ot_vdec_chn_pool hi_vdec_chn_pool;
+typedef ot_vdec_video_mod_param hi_vdec_video_mod_param;
+typedef ot_vdec_pic_mod_param hi_vdec_pic_mod_param;
+typedef ot_vdec_mod_param hi_vdec_mod_param;
+typedef ot_vdec_user_data_attr hi_vdec_user_data_attr;
+typedef ot_vdec_chn_config hi_vdec_chn_config;
+#define HI_ERR_VDEC_INVALID_CHN_ID OT_ERR_VDEC_INVALID_CHN_ID
+#define HI_ERR_VDEC_ILLEGAL_PARAM OT_ERR_VDEC_ILLEGAL_PARAM
+#define HI_ERR_VDEC_EXIST OT_ERR_VDEC_EXIST
+#define HI_ERR_VDEC_NULL_PTR OT_ERR_VDEC_NULL_PTR
+#define HI_ERR_VDEC_NOT_CFG OT_ERR_VDEC_NOT_CFG
+#define HI_ERR_VDEC_NOT_SUPPORT OT_ERR_VDEC_NOT_SUPPORT
+#define HI_ERR_VDEC_NOT_PERM OT_ERR_VDEC_NOT_PERM
+#define HI_ERR_VDEC_UNEXIST OT_ERR_VDEC_UNEXIST
+#define HI_ERR_VDEC_NO_MEM OT_ERR_VDEC_NO_MEM
+#define HI_ERR_VDEC_NO_BUF OT_ERR_VDEC_NO_BUF
+#define HI_ERR_VDEC_BUF_EMPTY OT_ERR_VDEC_BUF_EMPTY
+#define HI_ERR_VDEC_BUF_FULL OT_ERR_VDEC_BUF_FULL
+#define HI_ERR_VDEC_SYS_NOT_READY OT_ERR_VDEC_SYS_NOT_READY
+#define HI_ERR_VDEC_BUSY OT_ERR_VDEC_BUSY
+#define HI_ERR_VDEC_BAD_ADDR OT_ERR_VDEC_BAD_ADDR
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* HI_COMMON_VDEC_H */

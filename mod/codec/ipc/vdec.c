@@ -168,7 +168,7 @@ int vdec_start()
   //////// test hdmi-audio //////// 
   static char adec_filename[256] = {0};
   proc_absolute_path(adec_filename);
-  sprintf(adec_filename, "%s/../cfg/audio2ch48k.aaclc", adec_filename);
+  sprintf(adec_filename, "%s/../cfg/audio2ch48k.mpa", adec_filename); //aac-lc;
   if (access(adec_filename, 0) != -1)
   {
     printf("test hdmi-audio decode from adec_filename:[%s]\n", adec_filename);

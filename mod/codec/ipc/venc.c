@@ -78,7 +78,10 @@ unsigned int cfifo_recput_v(unsigned char *p1, unsigned int n1, unsigned char *p
   rec.video.width  = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].width;
   rec.video.height = codec_ipc.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;
   rec.size = 0;
-  
+#if 0
+  if(mgr->vst/GSF_CODEC_VENC_NUM == 0 && mgr->vst%GSF_CODEC_VENC_NUM == 0)
+    printf("vst:%d, venc_pts: %llu, pts:%u\n", mgr->vst, venc_pts, rec.pts);
+#endif
   if(mgr->vst/GSF_CODEC_VENC_NUM == 1)
   {  
     gsf_sdp_t sdp;

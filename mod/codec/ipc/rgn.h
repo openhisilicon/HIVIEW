@@ -6,7 +6,7 @@
 #include "fw/libfont/inc/gsf_character_conv.h"
 
 
-#if defined(GSF_CPU_3531d) || defined(GSF_CPU_3403)
+#if defined(GSF_CPU_3531d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
 
 #define rgn_type        rgn_obj[handle].rgn.stRegion.type
 #define rgn_attr_fmt    rgn_obj[handle].rgn.stRegion.attr.overlay.pixel_format
@@ -29,10 +29,18 @@
 #define rgn_chattr_over_fgalpha rgn_obj[handle].rgn.stChnAttr.attr.overlay_chn.fg_alpha
 
 #define rgn_chattr_cover_type    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.type
+#ifdef GSF_CPU_3519d
+#define rgn_chattr_cover_x    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect_attr.rect.x
+#define rgn_chattr_cover_y    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect_attr.rect.y
+#define rgn_chattr_cover_w    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect_attr.rect.width
+#define rgn_chattr_cover_h    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect_attr.rect.height
+#else
 #define rgn_chattr_cover_x    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect.x
 #define rgn_chattr_cover_y    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect.y
 #define rgn_chattr_cover_w    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect.width
 #define rgn_chattr_cover_h    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.rect.height
+#endif
+
 #define rgn_chattr_cover_layer    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.layer
 #define rgn_chattr_cover_color    rgn_obj[handle].rgn.stChnAttr.attr.cover_chn.cover.color
 
