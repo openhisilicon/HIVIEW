@@ -20,6 +20,11 @@
 
 #include "ot_type.h"
 #include "ot_scene.h"
+#include "hi_mpi_awb.h"
+#include "hi_mpi_ae.h"
+#include "hi_mpi_isp.h"
+#include "hi_mpi_venc.h"
+
 #include "scene_loadparam.h"
 #include "ot_scenecomm_log.h"
 
@@ -63,6 +68,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,        "imx482-0-0-2-30",   "libsns_imx482.so",     "g_sns_imx482_obj"},
     {MIPI_YUV422_2M_60FPS_8BIT,              "yuv422-0-0-2-60",     NULL,                 NULL},
     {MIPI_YUV422_half8M_60FPS_8BIT,          "yuv422-1-0-8-60",     NULL,                 NULL},
+    {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30",  "libsns_os04a10_2l.so",    "g_sns_os04a10_2l_obj"}, 
   };
 
 
@@ -246,6 +252,8 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       }
   }
 
+  //LANE_DIVIDE_MODE_3 for 4x2lane;
+
   // get vi param
   for(i = 0; i < snscnt; i++)
   {
@@ -359,7 +367,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   for(i = 0; i < hnr_cnt; i++)
   {
     hi_s32 blk_size;
-    hi_vb_pool vb_pool = NULL;
+    hi_vb_pool vb_pool = HI_VB_INVALID_POOL_ID;
     hi_vb_pool_cfg vb_pool_cfg = {0};
     
     //if(i == 0)
@@ -585,34 +593,6 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
-int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
-{
-  int ret = -1;
-  switch(id)
-  {
-     case GSF_MPP_ISP_CTL_FLIP:
-     {
-      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
-      
-      hi_vi_chn_attr chn_attr;
-      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
-      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
-      
-      chn_attr.flip_en = flip->bFlip;
-      chn_attr.mirror_en = flip->bMirror;
-      
-      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
-      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
-     }
-     break;
-     
-     default:
-     break;
-  }
-  return ret;
-}
-
-
 
 //启动接收线程
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
@@ -636,8 +616,7 @@ int gsf_mpp_venc_dest()
 
 int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
 {
-  int ret = 0;
-  return ret;
+  return sample_comm_venc_snap_processCB(VencChn, SnapCnt, cb, u);
 }
 
 static int g_scenebEnable = 0;
@@ -724,6 +703,118 @@ int gsf_mpp_scene_stop()
   printf("The scene sceneauto is stop, hnr_cnt:%d\n", hnr_cnt);
   return ret;
 }
+
+
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
+{
+  int ret = -1;
+  switch(id)
+  {
+    case GSF_MPP_ISP_CTL_IMG:
+      {
+        gsf_mpp_img_all_t *all = (gsf_mpp_img_all_t*)args;
+        
+        all->scene.bEnable = g_scenebEnable;
+        
+        hi_isp_exposure_attr exp_attr;
+        ret = hi_mpi_isp_get_exposure_attr(ViPipe, &exp_attr);
+        all->ae.u8Speed         = exp_attr.auto_attr.speed;
+        all->ae.u8Compensation  = exp_attr.auto_attr.compensation;
+        all->ae.SysGainRangeMax = exp_attr.auto_attr.sys_gain_range.max;
+        all->ae.SysGainRangeMin = exp_attr.auto_attr.sys_gain_range.min;
+        all->ae.ExpTimeRangeMax = exp_attr.auto_attr.exp_time_range.max;
+        all->ae.ExpTimeRangeMin = exp_attr.auto_attr.exp_time_range.min;
+
+        hi_isp_sharpen_attr shp_attr;
+        ret = hi_mpi_isp_get_sharpen_attr(ViPipe, &shp_attr);
+        all->sharpen.u16TextureFreq = shp_attr.manual_attr.texture_freq;
+        all->sharpen.u16EdgeFreq    = shp_attr.manual_attr.edge_freq;   
+        all->sharpen.u8DetailCtrl   = shp_attr.manual_attr.detail_ctrl; 
+        
+        printf("all->scene.bEnable:%d\n", all->scene.bEnable);
+      }
+      break;
+    case GSF_MPP_ISP_CTL_AE:
+      {
+        gsf_mpp_img_ae_t *ae = (gsf_mpp_img_ae_t*)args;
+        
+        printf("ae->bEnable:%d, u8Compensation:%d\n", ae->bEnable, ae->u8Compensation);  
+        if(!ae->bEnable)
+        {
+          ret = 0;  
+          break;
+        }
+
+        hi_isp_exposure_attr exp_attr;
+        ret = hi_mpi_isp_get_exposure_attr(ViPipe, &exp_attr);
+
+        //exp_attr.bypass = 0;
+        exp_attr.auto_attr.speed              = ae->u8Speed;
+        exp_attr.auto_attr.compensation       = ae->u8Compensation;
+        exp_attr.auto_attr.sys_gain_range.max = ae->SysGainRangeMax;
+        exp_attr.auto_attr.sys_gain_range.min = ae->SysGainRangeMin;
+        exp_attr.auto_attr.exp_time_range.max = ae->ExpTimeRangeMax;
+        exp_attr.auto_attr.exp_time_range.min = ae->ExpTimeRangeMin;
+        
+        ret = hi_mpi_isp_set_exposure_attr(ViPipe, &exp_attr);
+      }
+      break;
+     case GSF_MPP_ISP_CTL_SHARPEN:
+      {
+        gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
+
+        printf("sharpen->bEnable:%d,u16TextureFreq:%d\n", sharpen->bEnable, sharpen->u16TextureFreq);  
+
+        hi_isp_sharpen_attr shp_attr;
+        ret = hi_mpi_isp_get_sharpen_attr(ViPipe, &shp_attr);
+        
+        //shp_attr.en = HI_TRUE;
+        shp_attr.op_type = (sharpen->bEnable)?HI_OP_MODE_MANUAL:HI_OP_MODE_AUTO;
+        shp_attr.manual_attr.texture_freq   = sharpen->u16TextureFreq;
+        shp_attr.manual_attr.edge_freq      = sharpen->u16EdgeFreq;
+        shp_attr.manual_attr.detail_ctrl    = sharpen->u8DetailCtrl;
+        ret = hi_mpi_isp_set_sharpen_attr(ViPipe, &shp_attr);
+      }
+      break;       
+     case GSF_MPP_ISP_CTL_FLIP:
+      {
+      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+
+      hi_vi_chn_attr chn_attr;
+      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
+      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+
+      chn_attr.flip_en = flip->bFlip;
+      chn_attr.mirror_en = flip->bMirror;
+
+      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
+      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+      }
+      break;
+
+     default:
+     break;
+  }
+  return ret;
+}
+
+
+
+int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
+{
+  switch(id)
+  {
+    case GSF_MPP_SCENE_CTL_AE:
+      { 
+        extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
+        g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
+        printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
+      }
+      break;
+  }
+  return 0;
+}
+
 
 static gsf_mpp_aenc_t _aenc;
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)

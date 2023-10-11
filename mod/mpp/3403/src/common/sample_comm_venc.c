@@ -1697,6 +1697,52 @@ error:
     return HI_FAILURE;
 }
 
+
+//maohw
+static pthread_mutex_t SnapMutex = PTHREAD_MUTEX_INITIALIZER;
+static int(*SnapCB)(int i, hi_venc_stream* stream, void* u) = NULL;
+static void* SnapU = NULL;
+
+static int SnapTaskStartFlag = HI_FALSE;
+static pthread_t SnapTask;
+
+void* sample_comm_venc_snap_processTask(void *parm)
+{
+  hi_venc_chn venc_chn = (hi_venc_chn)parm;
+  
+  sample_comm_venc_snap_process(venc_chn, 0xffffffff, 0, 0);
+  return NULL;
+}
+
+
+hi_s32 sample_comm_venc_snap_processCB(hi_venc_chn venc_chn, hi_u32 snap_cnt, int(*cb)(int i, hi_venc_stream* stream, void* u), void* u)
+{
+  hi_s32 ret = 0;
+  
+  pthread_mutex_lock(&SnapMutex);
+
+  if(SnapTaskStartFlag)
+    goto __end;
+    
+  SnapCB = cb;
+  SnapU  = u;
+  if(snap_cnt == 0xffffffff)
+  {
+    SnapTaskStartFlag = HI_TRUE;
+    ret = pthread_create(&SnapTask, 0, sample_comm_venc_snap_processTask, (void*)venc_chn);
+  }
+  else 
+  {
+    ret = sample_comm_venc_snap_process(venc_chn, snap_cnt, 0, 0);
+    SnapCB = NULL;
+  }
+  
+__end:
+  pthread_mutex_unlock(&SnapMutex);
+  return ret;
+}
+
+
 static hi_s32 sample_comm_get_snap_stream(hi_venc_chn venc_chn, hi_bool save_jpg, hi_bool save_thm)
 {
     hi_s32 ret;
@@ -1734,6 +1780,11 @@ static hi_s32 sample_comm_get_snap_stream(hi_venc_chn venc_chn, hi_bool save_jpg
         }
     }
 
+    if(SnapCB) //maohw
+    {
+      SnapCB(0, &stream, SnapU);
+    }
+
     ret = hi_mpi_venc_release_stream(venc_chn, &stream);
     if (ret != HI_SUCCESS) {
         sample_print("release_stream failed with %#x!\n", ret);
@@ -1760,6 +1811,17 @@ hi_s32 sample_comm_venc_snap_process(hi_venc_chn venc_chn, hi_u32 snap_cnt, hi_b
     hi_s32 ret;
     hi_u32 i;
 
+    #if 1 //maohw add;
+     /* start recv venc pictures */
+    hi_venc_start_param start_param;
+    start_param.recv_pic_num = snap_cnt;
+    ret = hi_mpi_venc_start_chn(venc_chn, &start_param);
+    if (ret != HI_SUCCESS) {
+        sample_print("mpi_venc_start_chn faild with%#x!\n", ret);
+        return HI_FAILURE;
+    }
+    #endif
+
     /******************************************
      step 4:  recv picture
     ******************************************/
@@ -1772,7 +1834,7 @@ hi_s32 sample_comm_venc_snap_process(hi_venc_chn venc_chn, hi_u32 snap_cnt, hi_b
     for (i = 0; i < snap_cnt; i++) {
         FD_ZERO(&read_fds);
         FD_SET(venc_fd, &read_fds);
-        timeout_val.tv_sec  = 10; // 10 : 10 seconds
+        timeout_val.tv_sec  = 2; // 10 : 10 seconds
         timeout_val.tv_usec = 0;
         ret = select(venc_fd + 1, &read_fds, NULL, NULL, &timeout_val);
         if (ret < 0) {

@@ -231,6 +231,7 @@ hi_s32 sample_comm_isp_get_pub_attr_by_sns(sample_sns_type sns_type, hi_isp_pub_
             break;
 
         case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:
             (hi_void)memcpy_s(pub_attr, sizeof(hi_isp_pub_attr),
                 &g_isp_pub_attr_os05a10_2l_mipi_4m_30fps, sizeof(hi_isp_pub_attr));
             break;
@@ -274,6 +275,8 @@ hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
             return &g_sns_os08a20_obj;
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
             return &g_sns_os04a10_obj;
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:
+            return &g_sns_os04a10_2l_obj;  
         case OV_OS08B10_MIPI_8M_30FPS_12BIT:
         case OV_OS08B10_MIPI_8M_30FPS_12BIT_WDR2TO1:
             return &g_sns_os08b10_obj;

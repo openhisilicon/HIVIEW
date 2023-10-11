@@ -570,7 +570,7 @@ function grid_load(grid_name)
   {
     var req = {
           "id": "GSF_ID_CODEC_IMGALL",
-          "args":"G0C0S0",
+          "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
           "data":{}
         }
         
@@ -708,7 +708,7 @@ function grid_load(grid_name)
 function ircutDay() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 1, "arg1": 0}
     }
     
@@ -731,7 +731,7 @@ function ircutDay() {
 function ircutNight() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 1, "arg1": 1}
     }
     
@@ -754,7 +754,7 @@ function ircutNight() {
 function zoomPlus() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 3, "arg1": 1, "arg2": document.getElementById("range").value}
     }
 
@@ -777,7 +777,7 @@ function zoomPlus() {
 function zoomMinus() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 3, "arg1": 0, "arg2": document.getElementById("range").value}
     }
     
@@ -801,7 +801,7 @@ function zoomMinus() {
 function focusPlus() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 4, "arg1": 1, "arg2": document.getElementById("range").value}
     }
 
@@ -824,7 +824,7 @@ function focusPlus() {
 function focusMinus() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 4, "arg1": 0, "arg2": document.getElementById("range").value}
     }
     
@@ -847,7 +847,7 @@ function focusMinus() {
 function zoomStop() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 2, "arg1": 0}
     }
     
@@ -870,7 +870,7 @@ function zoomStop() {
 function lensCal() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 5, "arg1": 0}
     }
     
@@ -905,7 +905,7 @@ function lensCalClick() {
 function sceneAE() {
     const req = {
         "id": "GSF_ID_CODEC_SCENEAE",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"compensation_mul": parseFloat(document.getElementById("range").value)}
     }
     
@@ -934,7 +934,7 @@ function sceneAE() {
 function ptzStop() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 6, "arg1": 0, "arg2": document.getElementById("range").value}
     }
 
@@ -957,7 +957,7 @@ function ptzStop() {
 function ptzUp() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 7, "arg1": 0, "arg2": document.getElementById("range").value}
     }
 
@@ -979,7 +979,7 @@ function ptzUp() {
 function ptzDown() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 8, "arg1": 0, "arg2": document.getElementById("range").value}
     }
 
@@ -1002,7 +1002,7 @@ function ptzDown() {
 function ptzLeft() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 9, "arg1": 0, "arg2": document.getElementById("range").value}
     }
 
@@ -1024,7 +1024,7 @@ function ptzLeft() {
 function ptzRight() {
     const req = {
         "id": "GSF_ID_CODEC_LENS",
-        "args":"G0C0S0",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"cmd": 10, "arg1": 0, "arg2": document.getElementById("range").value}
     }
 

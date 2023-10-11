@@ -48,6 +48,7 @@ function flv_load() {
             // enableWorker: false,
             // lazyLoadMaxDuration: 3 * 60,
             // seekType: 'range',
+            isLive: true,
             enableWorker: true,
             enableStashBuffer: false,
             stashInitialSize: 128,
@@ -84,9 +85,17 @@ function flv_seekto() {
 }
 function flv_seektoend()
 {
-	console.log("seek to end", player.buffered.end(0));
-	player.currentTime = player.buffered.end(0)-0.01;
+	//console.log("seek to end", player.buffered.end(0));
+	//player.currentTime = player.buffered.end(0)-0.01;
 	
+  if (player.buffered.length) {
+    let end = player.buffered.end(0);//获取当前buffered值
+    let diff = end - player.currentTime;//获取buffered与currentTime的差值
+    if (diff >= 0.5) {//如果差值大于等于0.5 手动跳帧 这里可根据自身需求来定
+      player.currentTime = player.buffered.end(0) - 0.01;//手动跳帧 不减的话，会卡死
+      console.log("live seek to end", player.currentTime);
+    }
+  }
 }
 
 
@@ -99,8 +108,10 @@ $(function () {
             items: [
                 { type: 'button', id: 'play', text: 'Play', icon: 'fa-play' },
                 { type: 'break' },
+                { type: 'radio', id: 'stream0', text: 'Stream0', icon: 'fa-star' },
                 { type: 'radio', id: 'stream1', text: 'Stream1', icon: 'fa-star' },
                 { type: 'radio', id: 'stream2', text: 'Stream2', icon: 'fa-star' },
+                { type: 'radio', id: 'stream3', text: 'Stream3', icon: 'fa-star' },
                 { type: 'break' },
                 { type: 'check', id: 'audio', text: 'audio', icon: 'fa-check', checked: false }
             ],
@@ -109,24 +120,37 @@ $(function () {
                 if(event.target == 'play')
                 {
                   flv_load();
-                } 
-                else if (event.target == 'stream1')
+                }
+                else if (event.target == 'stream0')
                 {
                   streamx = 1;
+                  w2ui['main_layout'].content('channel', '0');
+                }
+                else if (event.target == 'stream1')
+                {
+                  streamx = 2;
+                  w2ui['main_layout'].content('channel', '1');
                 }
                 else if (event.target == 'stream2')
                 {
-                  streamx = 2;
+                  streamx = 3;
+                  w2ui['main_layout'].content('channel', '2');
+                }
+                else if (event.target == 'stream3')
+                {
+                  streamx = 4;
+                  w2ui['main_layout'].content('channel', '3');
                 }
                 else if (event.target == 'audio')
                 {
                   audio = !event.object.checked;
                 }
             }
+            
         });
 
     flv_load();
-    
+    setInterval(() => { flv_seektoend() }, 5000); //定时刷新视频
 });
 
 

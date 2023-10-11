@@ -341,8 +341,10 @@ static hi_void sample_comm_vi_get_mipi_attr(sample_sns_type sns_type, combo_dev_
             break;
 
         case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:
             (hi_void)memcpy_s(combo_attr, sizeof(combo_dev_attr_t),
                 &g_mipi_2lane_chn0_sensor_os05a10_12bit_4m_nowdr_single_attr, sizeof(combo_dev_attr_t));
+            combo_attr->mipi_attr.input_data_type = (sns_type==OV_OS04A10_2L_MIPI_4M_30FPS_10BIT)?DATA_TYPE_RAW_10BIT:combo_attr->mipi_attr.input_data_type;
             break;
 
         case SONY_IMX347_SLAVE_MIPI_4M_30FPS_12BIT:
@@ -382,6 +384,7 @@ static hi_void sample_comm_vi_get_mipi_ext_data_attr(sample_sns_type sns_type, e
     switch (sns_type) {
         case OV_OS08A20_MIPI_8M_30FPS_12BIT:
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:  
         case SONY_IMX485_MIPI_8M_30FPS_12BIT: 
 		case SONY_IMX334_MIPI_8M_30FPS_12BIT:
 		case SONY_IMX334_MIPI_8M_60FPS_12BIT:
@@ -391,7 +394,7 @@ static hi_void sample_comm_vi_get_mipi_ext_data_attr(sample_sns_type sns_type, e
             break;
             
         case OV_OS08A20_MIPI_8M_30FPS_12BIT_WDR2TO1:
-        case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:  
         case SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1: 
         case OV_OS08B10_MIPI_8M_30FPS_12BIT_WDR2TO1:
         case OV_OS08B10_MIPI_8M_30FPS_12BIT:
@@ -450,7 +453,9 @@ static hi_void sample_comm_vi_get_mipi_attr_by_dev_id(sample_sns_type sns_type, 
             break;
 
         case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:  
             sample_comm_vi_get_os05a10_mipi_attr(vi_dev, combo_attr);
+            combo_attr->mipi_attr.input_data_type = (sns_type==OV_OS04A10_2L_MIPI_4M_30FPS_10BIT)?DATA_TYPE_RAW_10BIT:combo_attr->mipi_attr.input_data_type;
             break;
 
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
@@ -584,6 +589,7 @@ hi_void sample_comm_vi_get_size_by_sns_type(sample_sns_type sns_type, hi_size *s
             size->height = HEIGHT_2160;
             break;
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:
             size->width  = WIDTH_2688;
             size->height = HEIGHT_1520;
             break;
@@ -626,6 +632,7 @@ hi_u32 sample_comm_vi_get_obheight_by_sns_type(sample_sns_type sns_type)
 			ob_height = IMX334_OB_HEIGHT_END;
             break;
         case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:  
         case SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1:
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
         case OV_OS08B10_MIPI_8M_30FPS_12BIT:
@@ -646,6 +653,7 @@ static hi_u32 sample_comm_vi_get_pipe_num_by_sns_type(sample_sns_type sns_type)
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
         case OV_OS08B10_MIPI_8M_30FPS_12BIT:
         case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:  
         case SONY_IMX347_SLAVE_MIPI_4M_30FPS_12BIT:
         case SONY_IMX485_MIPI_8M_30FPS_12BIT:
 		case SONY_IMX334_MIPI_8M_30FPS_12BIT:
@@ -674,6 +682,7 @@ static hi_wdr_mode sample_comm_vi_get_wdr_mode_by_sns_type(sample_sns_type sns_t
         case OV_OS04A10_MIPI_4M_30FPS_12BIT:
         case OV_OS08B10_MIPI_8M_30FPS_12BIT:
         case OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT:
+        case OV_OS04A10_2L_MIPI_4M_30FPS_10BIT:  
         case SONY_IMX347_SLAVE_MIPI_4M_30FPS_12BIT:
             return HI_WDR_MODE_NONE;
 
@@ -782,7 +791,8 @@ hi_void sample_comm_vi_get_default_pipe_info(sample_sns_type sns_type, hi_vi_bin
         pipe_info[i].pipe_attr.frame_rate_ctrl.src_frame_rate = -1;
         pipe_info[i].pipe_attr.frame_rate_ctrl.dst_frame_rate = -1;
 
-        if (sns_type == SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1) {
+        if (sns_type == SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1
+          || sns_type == OV_OS04A10_2L_MIPI_4M_30FPS_10BIT) {
             pipe_info[i].pipe_attr.pixel_format  = HI_PIXEL_FORMAT_RGB_BAYER_10BPP;
             pipe_info[i].pipe_attr.compress_mode = HI_COMPRESS_MODE_NONE;
         }
@@ -830,7 +840,8 @@ hi_void sample_comm_vi_init_pipe_info(sample_sns_type sns_type, const hi_size *s
         pipe_info[i].pipe_attr.frame_rate_ctrl.src_frame_rate = -1;
         pipe_info[i].pipe_attr.frame_rate_ctrl.dst_frame_rate = -1;
 
-        if (sns_type == SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1) {
+        if (sns_type == SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1 
+          || sns_type == OV_OS04A10_2L_MIPI_4M_30FPS_10BIT) {
             pipe_info[i].pipe_attr.pixel_format  = HI_PIXEL_FORMAT_RGB_BAYER_10BPP;
             pipe_info[i].pipe_attr.compress_mode = HI_COMPRESS_MODE_NONE;
         }

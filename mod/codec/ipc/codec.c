@@ -886,6 +886,28 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     }
     return;
    }
+   
+   if(strstr(cfg->snsname, "os04a10"))
+   {
+    // os04a10-0-0-4-30
+    //cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    cfg->lane = 2; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;  
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+    if(cfg->snscnt > 1)
+    {
+        VPSS(1, 1, 1, 0, 1, 1, PIC_2688x1520, PIC_720P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    } 
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    }
+    return;
+   }
   
   // os08a20-0-0-8-30
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
@@ -1201,7 +1223,7 @@ int mpp_start(gsf_bsp_def_t *def)
     if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) <= 0)  //enable img;
     {
       // First tested on Hi3516X;
-      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+      #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) ||  defined(GSF_CPU_3403)
       printf("scene_auto is bEnable=0, set img(magic:0x%x) to isp.\n", codec_ipc.img.magic);
       if(codec_ipc.img.magic == 0x55aa) 
       {

@@ -251,7 +251,7 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   return;
 }
 
-#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3403)
 static void msg_func_imgall(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   gsf_img_all_t *all = (gsf_img_all_t*)rsp->data;
@@ -523,7 +523,6 @@ static void msg_func_sceneae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
   }
 }
 
-
 #endif
 
 static void msg_func_lenscfg(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
@@ -563,7 +562,7 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_VOLY]   = msg_func_voly,
     [GSF_ID_CODEC_LENS]   = msg_func_lens,
     [GSF_ID_CODEC_LENSCFG]= msg_func_lenscfg,
-#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)    
+#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3403)
     [GSF_ID_CODEC_IMGALL]= msg_func_imgall,
     [GSF_ID_CODEC_IMGCSC]= msg_func_imgcsc,
     [GSF_ID_CODEC_IMGAE]= msg_func_imgae,

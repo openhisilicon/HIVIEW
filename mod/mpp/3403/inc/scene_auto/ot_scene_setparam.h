@@ -1141,6 +1141,12 @@ typedef struct {
     hi_u32 right;
 } _3dnr_nrx_param;
 
+//maohw;
+typedef struct {
+  float compensation_mul; // 0.5 - 1.5;
+}HI_SCENE_CTL_AE_S;
+
+
 hi_s32 ot_scene_set_static_ae(hi_vi_pipe vi_pipe, hi_u8 index);
 
 hi_s32 ot_scene_set_dynamic_fps(hi_vi_pipe vi_pipe, hi_u64 exposure, hi_u64 last_exposure, hi_u8 index);

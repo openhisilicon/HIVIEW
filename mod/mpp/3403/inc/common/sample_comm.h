@@ -271,6 +271,7 @@ typedef enum {
     T1_RAW_0M_60FPS_8BIT,
     T2_RAW_0M_60FPS_8BIT,
     T3_RAW_0M_60FPS_8BIT,
+    OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,
     SNS_TYPE_BUTT,
 } sample_sns_type;
 
@@ -804,9 +805,14 @@ hi_s32 sample_comm_venc_stop(hi_venc_chn venc_chn);
 hi_s32 sample_comm_venc_snap_start(hi_venc_chn venc_chn, hi_size *size, hi_bool support_dcf);
 hi_s32 sample_comm_venc_photo_start(hi_venc_chn venc_chn, hi_size *size, hi_bool support_dcf);
 hi_s32 sample_comm_venc_snap_process(hi_venc_chn venc_chn, hi_u32 snap_cnt, hi_bool save_jpg, hi_bool save_thm);
+
+//maohw
+hi_s32 sample_comm_venc_snap_processCB(hi_venc_chn venc_chn, hi_u32 snap_cnt, int(*cb)(int i, hi_venc_stream* stream, void* u), void* u);
+
 hi_s32 sample_comm_venc_save_jpeg(hi_venc_chn venc_chn, hi_u32 snap_cnt);
 hi_s32 sample_comm_venc_snap_stop(hi_venc_chn venc_chn);
 hi_s32 sample_comm_venc_start_get_stream(hi_venc_chn ve_chn[], hi_s32 cnt);
+
 //maohw
 hi_s32 sample_comm_venc_start_get_streamCB(hi_venc_chn *venc_chn, hi_s32 cnt, int (*cb)(hi_venc_chn chn, hi_payload_type pt, hi_venc_stream* stream, void* uargs), void *uargs);
 

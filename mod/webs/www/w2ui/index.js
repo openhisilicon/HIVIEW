@@ -26,7 +26,8 @@ $(function () {
                }
             },
             { type: 'main', style: 'background-color: Snow;'
-            }
+            },
+            { type: 'channel', hidden: true, content: '0'}
         ]
     });
     

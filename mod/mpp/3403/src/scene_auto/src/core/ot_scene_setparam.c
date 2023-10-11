@@ -1021,6 +1021,14 @@ hi_s32 ot_scene_set_dynamic_fps(hi_vi_pipe vi_pipe, hi_u64 exposure, hi_u64 last
     return HI_SUCCESS;
 }
 
+HI_SCENE_CTL_AE_S g_scene_ctl_ae[4] = {
+  {.compensation_mul = 1},
+  {.compensation_mul = 1},
+  {.compensation_mul = 1},
+  {.compensation_mul = 1},
+  };
+
+
 hi_s32 ot_scene_set_dynamic_ae(hi_vi_pipe vi_pipe, hi_u64 exposure, hi_u64 last_exposure, hi_u8 index)
 {
     ot_scenecomm_expr_true_return(index >= HI_SCENE_PIPETYPE_NUM, HI_FAILURE);
@@ -1039,8 +1047,14 @@ hi_s32 ot_scene_set_dynamic_ae(hi_vi_pipe vi_pipe, hi_u64 exposure, hi_u64 last_
     ret = hi_mpi_isp_query_inner_state_info(vi_pipe, &inner_state_info);
     check_scene_ret(ret);
     actual_ratio = inner_state_info.wdr_exp_ratio_actual[0];
-
-    if ((exposure != last_exposure) || (last_ratio[vi_pipe] != actual_ratio)) {
+    
+    static HI_SCENE_CTL_AE_S _scene_ctl_ae[4];
+    
+    if ((exposure != last_exposure) || (last_ratio[vi_pipe] != actual_ratio)
+        || memcmp(&_scene_ctl_ae[vi_pipe], &g_scene_ctl_ae[vi_pipe], sizeof(HI_SCENE_CTL_AE_S))) //maohw
+    {
+        _scene_ctl_ae[vi_pipe] = g_scene_ctl_ae[vi_pipe];
+        
         check_scene_return_if_pause();
         ret = hi_mpi_isp_get_exposure_attr(vi_pipe, &exposure_attr);
         check_scene_ret(ret);
@@ -1071,7 +1085,7 @@ hi_s32 ot_scene_set_dynamic_ae(hi_vi_pipe vi_pipe, hi_u64 exposure, hi_u64 last_
                     get_pipe_params()[index].dynamic_ae.exp_ltoh_thresh[exp_level],
                     get_pipe_params()[index].dynamic_ae.auto_max_hist_offset[exp_level]);
         }
-
+        exposure_attr.auto_attr.compensation *= _scene_ctl_ae[vi_pipe].compensation_mul;
         check_scene_return_if_pause();
         ret = hi_mpi_isp_set_exposure_attr(vi_pipe, &exposure_attr);
         check_scene_ret(ret);
