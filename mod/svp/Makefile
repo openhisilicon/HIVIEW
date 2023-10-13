@@ -9,9 +9,10 @@ TARG := bin/svp.exe
 
 #============================================================= 
 
-INCS := -I$(HOME) -I$(GSF_CPU_ARCH) -Iinc -I$(GSF_CPU_ARCH)/common -I$(GSF_CPU_ARCH)/ive/sample \
-        -I$(GSF_CPU_ARCH)/nnie/sample -I$(GSF_CPU_ARCH)/nnie/sample_nnie_software \
+INCS := -I$(HOME) -I$(GSF_CPU_ARCH) -Iinc -I$(GSF_CPU_ARCH)/common \
+        -I$(GSF_CPU_ARCH)/ive/sample -I$(GSF_CPU_ARCH)/nnie/sample -I$(GSF_CPU_ARCH)/nnie/sample_nnie_software \
         -I$(GSF_CPU_ARCH)/dsp/encapsulation/include -I$(GSF_CPU_ARCH)/dsp/sample \
+        -I$(GSF_CPU_ARCH)/dpu -I$(GSF_CPU_ARCH)/ive -I$(GSF_CPU_ARCH)/svp_npu \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/hisisdk \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/common \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc \
@@ -64,7 +65,7 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lsecurec \
         -lhi_mpi -lhi_mpi_sysbind -lhi_mpi_sysmem -lhi_mpi_ae -lhi_mpi_isp -lot_mpi_isp -lhi_mpi_awb -ldehaze -lextend_stats -ldrc -lldci -lbnr -lcalcflicker -lir_auto -lacs \
         -lhi_mpi_aibnr -lhi_mpi_aidrc -lhi_mpi_ai3dnr -lhi_mpi_mcf -lsvp_acl -lhi_mpi_km -lhi_mpi_thermo -lprotobuf-c -lheif -lfileformat \
         -lhi_mpi_audio -lvoice_engine -lupvqe -ldnvqe -lhi_mpi_audio_adp -lopus -lvqe_res -lvqe_record -lvqe_hpf -lvqe_anr -lvqe_aec -lvqe_agc -lvqe_eq -lvqe_talkv2 \
-        -laac_dec -laac_enc -laac_comm -laac_sbr_dec -laac_sbr_enc -lstdc++ -lhi_tde -lmp3_dec -lmp3_enc -lmp3_lame
+        -laac_dec -laac_enc -laac_comm -laac_sbr_dec -laac_sbr_enc -lstdc++ -lhi_tde -lhi_mpi_ive -lmp3_dec -lmp3_enc -lmp3_lame
 endif
 
 
