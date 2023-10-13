@@ -352,7 +352,7 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *_osd)
     rgn_chattr_over_y = ALIGN_UP(osd->point[1], 2);
     rgn_chattr_over_layer   = idx;
     rgn_chattr_over_bgalpha = 0;//(osd->wh[0] && osd->wh[1])?80:0;//0;
-    rgn_chattr_over_fgalpha = 128;
+    rgn_chattr_over_fgalpha = 255;//128;
         
     if(rgn_obj[handle].osd_info == NULL)
     {
@@ -603,7 +603,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
     rgn_chattr_over_y = 0;
     rgn_chattr_over_layer   = idx;
     rgn_chattr_over_bgalpha = 0;//80;
-    rgn_chattr_over_fgalpha = 128;
+    rgn_chattr_over_fgalpha = 255;//128;
     
     if(rgn_obj[handle].osd_info == NULL)
     {
@@ -993,7 +993,7 @@ int gsf_rgn_nk_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
     rgn_chattr_over_layer   = idx;
     
     rgn_chattr_over_bgalpha = 0;//80;
-    rgn_chattr_over_fgalpha = 128;
+    rgn_chattr_over_fgalpha = 255;//128;
     
     if(rgn_obj[handle].osd_info == NULL)
     {

@@ -599,6 +599,12 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
+{
+  int ret = 0;
+  return ret;
+}
+
 //启动接收线程
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
 {

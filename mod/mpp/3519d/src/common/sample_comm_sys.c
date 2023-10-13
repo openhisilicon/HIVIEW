@@ -42,6 +42,7 @@ static hi_size g_sample_pic_size[PIC_BUTT] = {
     { 352,  288  },  /* PIC_CIF */
     { 640,  360  },  /* PIC_360P */
     { 640,  512  },  /* maohw PIC_512P */
+    { 640,  640  },  /* maohw PIC_640P */
     { 720,  576  },  /* PIC_D1_PAL */
     { 720,  480  },  /* PIC_D1_NTSC */
     { 960,  576  },  /* PIC_960H */

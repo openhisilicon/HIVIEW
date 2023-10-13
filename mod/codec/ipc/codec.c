@@ -972,17 +972,17 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+    VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_640P);
     if(cfg->snscnt > 1)
     {
-        VPSS(1, 1, 1, 0, 1, 1, PIC_2688x1520, PIC_720P);
+        VPSS(1, 1, 1, 0, 1, 1, PIC_2688x1520, PIC_640P);
         rgn_ini->ch_num++;
         venc_ini->ch_num++;
     } 
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_640P);
     }
     return;
    }  
