@@ -252,12 +252,13 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3403)
+
 static void msg_func_imgall(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   gsf_img_all_t *all = (gsf_img_all_t*)rsp->data;
   
   *all = codec_ipc.img;
-  gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IMG, all);
+  gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_IMG, all);
   rsp->err  = 0;
   rsp->size = sizeof(gsf_img_all_t);
   printf("get all->scene.bEnable:%d\n", all->scene.bEnable);
@@ -269,7 +270,7 @@ static void msg_func_imgcsc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
   {
     gsf_img_csc_t *csc = (gsf_img_csc_t*)req->data;
     
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, csc);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_CSC, csc);
     if(!ret)
     {  
       codec_ipc.img.csc = *csc;
@@ -295,7 +296,7 @@ static void msg_func_imgae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
   {
     gsf_img_ae_t *ae = (gsf_img_ae_t*)req->data;
     
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, ae);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_AE, ae);
     if(!ret)
     {  
       codec_ipc.img.ae = *ae;
@@ -322,7 +323,7 @@ static void msg_func_imgdehaze(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *o
   {
     gsf_img_dehaze_t *dehaze = (gsf_img_dehaze_t*)req->data;
     
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, dehaze);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_DEHAZE, dehaze);
     if(!ret)
     {  
       codec_ipc.img.dehaze = *dehaze;
@@ -348,7 +349,7 @@ static void msg_func_imgscene(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *os
   if(req->set)
   {
     gsf_img_scene_t *scene = (gsf_img_scene_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SCENE, scene);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_SCENE, scene);
     if(!ret)
     {  
       codec_ipc.img.scene = *scene;
@@ -372,7 +373,7 @@ static void msg_func_imgsharpen(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *
   if(req->set)
   {
     gsf_img_sharpen_t *sharpen = (gsf_img_sharpen_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SHARPEN, sharpen);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_SHARPEN, sharpen);
     if(!ret)
     {  
       codec_ipc.img.sharpen = *sharpen;
@@ -396,7 +397,7 @@ static void msg_func_imghlc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
   if(req->set)
   {
     gsf_img_hlc_t *hlc = (gsf_img_hlc_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_HLC, hlc);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_HLC, hlc);
     if(!ret)
     {  
       codec_ipc.img.hlc = *hlc;
@@ -420,7 +421,7 @@ static void msg_func_imggamma(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *os
   if(req->set)
   {
     gsf_img_gamma_t *gamma = (gsf_img_gamma_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_GAMMA, gamma);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_GAMMA, gamma);
     if(!ret)
     {  
       codec_ipc.img.gamma = *gamma;
@@ -444,7 +445,7 @@ static void msg_func_imgdrc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
   if(req->set)
   {
     gsf_img_drc_t *drc = (gsf_img_drc_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DRC, drc);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_DRC, drc);
     if(!ret)
     {  
       codec_ipc.img.drc = *drc;
@@ -468,7 +469,7 @@ static void msg_func_imgldci(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
   if(req->set)
   {
     gsf_img_ldci_t *ldci = (gsf_img_ldci_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_LDCI, ldci);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_LDCI, ldci);
     if(!ret)
     {  
       codec_ipc.img.ldci = *ldci;
@@ -492,7 +493,7 @@ static void msg_func_img3dnr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
   if(req->set)
   {
     gsf_img_3dnr_t *_3dnr = (gsf_img_3dnr_t*)req->data;
-    int ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_3DNR, _3dnr);
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_3DNR, _3dnr);
     if(!ret)
     {  
       codec_ipc.img._3dnr = *_3dnr;
@@ -516,7 +517,7 @@ static void msg_func_sceneae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
 {
   {
     gsf_scene_ae_t *ae = (gsf_scene_ae_t*)req->data;
-    int ret = gsf_mpp_scene_ctl(0, GSF_MPP_SCENE_CTL_AE, ae);
+    int ret = gsf_mpp_scene_ctl(req->ch, GSF_MPP_SCENE_CTL_AE, ae);
     rsp->err  = ret;
     rsp->size = 0;
     printf("gsf_mpp_scene_ctl scene_ae\n");

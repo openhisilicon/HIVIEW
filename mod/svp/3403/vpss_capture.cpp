@@ -159,7 +159,7 @@ int VpssCapture::yuv2mat(hi_video_frame *frame, cv::Mat &cv_mat)
 	return 0;
 }
 
-int VpssCapture::init(int grp, int chn)
+int VpssCapture::init(int grp, int chn, int vgsW, int vgsH)
 {
   const hi_u32 depth = 2;
   hi_s32 ret;
@@ -205,11 +205,79 @@ int VpssCapture::init(int grp, int chn)
 	
 	this->g_vpss_grp = grp;
 	this->g_vpss_chn = chn;
+	
+  this->vgsW = vgsW;
+	this->vgsH = vgsH;
+  g_dump_mem.vb_blk = -1;
+  g_dump_mem.vb_pool = HI_VB_INVALID_POOL_ID;
+  g_dump_mem.phys_addr = 0;
+  g_dump_mem.virt_addr = HI_NULL;
+	
 	return hi_mpi_vpss_get_chn_fd(grp, chn);
 
 exit:
   vpss_restore(grp, chn);
   return -1;  
+}
+
+
+hi_s32 VpssCapture::vpss_chn_dump_init_vgs_pool(vpss_dump_mem *dump_mem, hi_vb_calc_cfg *vb_calc_cfg)
+{
+    hi_u32 width = vgsW;//g_frame.video_frame.width;
+    hi_u32 height = vgsH;//g_frame.video_frame.height;
+    hi_pixel_format pixel_format = g_frame.video_frame.pixel_format;
+    
+    hi_pic_buf_attr buf_attr = {0};
+    hi_vb_pool_cfg vb_pool_cfg = {0};
+
+    buf_attr.width = width;
+    buf_attr.height = height;
+    buf_attr.pixel_format = pixel_format;
+    buf_attr.bit_width = HI_DATA_BIT_WIDTH_8;
+    buf_attr.compress_mode = HI_COMPRESS_MODE_NONE;
+    buf_attr.align = 0;
+    hi_common_get_pic_buf_cfg(&buf_attr, vb_calc_cfg);
+
+    g_blk_size = vb_calc_cfg->vb_size;
+
+    vb_pool_cfg.blk_size = g_blk_size;
+    vb_pool_cfg.blk_cnt = 1;
+    vb_pool_cfg.remap_mode = HI_VB_REMAP_MODE_NONE;
+
+    g_pool = hi_mpi_vb_create_pool(&vb_pool_cfg);
+    if (g_pool == HI_VB_INVALID_POOL_ID) {
+        printf("HI_MPI_VB_CreatePool failed! \n");
+        return HI_FAILURE;
+    }
+
+    dump_mem->vb_pool = g_pool;
+    dump_mem->vb_blk = hi_mpi_vb_get_blk(dump_mem->vb_pool, g_blk_size, HI_NULL);
+    if (dump_mem->vb_blk == HI_VB_INVALID_HANDLE) {
+        printf("get vb blk failed!\n");
+        return HI_FAILURE;
+    }
+
+    dump_mem->phys_addr = hi_mpi_vb_handle_to_phys_addr(dump_mem->vb_blk);
+    return HI_SUCCESS;
+}
+
+hi_void VpssCapture::vpss_chn_dump_set_vgs_frame_info(hi_video_frame_info *vgs_frame_info, const vpss_dump_mem *dump_mem,
+    const hi_vb_calc_cfg *vb_calc_cfg, const hi_video_frame_info *vpss_frame_info)
+{
+    vgs_frame_info->video_frame.phys_addr[0] = dump_mem->phys_addr;
+    vgs_frame_info->video_frame.phys_addr[1] = vgs_frame_info->video_frame.phys_addr[0] + vb_calc_cfg->main_y_size;
+    vgs_frame_info->video_frame.width = vgsW;//vpss_frame_info->video_frame.width;
+    vgs_frame_info->video_frame.height = vgsH;//vpss_frame_info->video_frame.height;
+    vgs_frame_info->video_frame.stride[0] = vb_calc_cfg->main_stride;
+    vgs_frame_info->video_frame.stride[1] = vb_calc_cfg->main_stride;
+    vgs_frame_info->video_frame.compress_mode = HI_COMPRESS_MODE_NONE;
+    vgs_frame_info->video_frame.pixel_format = vpss_frame_info->video_frame.pixel_format;
+    vgs_frame_info->video_frame.video_format = HI_VIDEO_FORMAT_LINEAR;
+    vgs_frame_info->video_frame.dynamic_range = vpss_frame_info->video_frame.dynamic_range;
+    vgs_frame_info->video_frame.pts = 0;
+    vgs_frame_info->video_frame.time_ref = 0;
+    vgs_frame_info->pool_id = dump_mem->vb_pool;
+    vgs_frame_info->mod_id = HI_ID_VGS;
 }
 
 int VpssCapture::get_frame(cv::Mat &cv_mat)
@@ -221,7 +289,64 @@ int VpssCapture::get_frame(cv::Mat &cv_mat)
   }
   //printf("hi_mpi_vpss_get_chn_frame hi_frame:%p\n", &g_frame);
   
-	if (HI_DYNAMIC_RANGE_SDR8 == g_frame.video_frame.dynamic_range)
+	bool send_to_vgs = ((HI_COMPRESS_MODE_NONE != g_frame.video_frame.compress_mode) 
+	                  || (HI_VIDEO_FORMAT_LINEAR != g_frame.video_frame.video_format)
+	                  || (this->vgsW != 0 && this->vgsH != 0));
+  
+  if(send_to_vgs)
+  {
+    //vgs;
+    if(g_pool == HI_VB_INVALID_POOL_ID)
+    {  
+      if (vpss_chn_dump_init_vgs_pool(&g_dump_mem, &vb_calc_cfg) != HI_SUCCESS) {
+          printf("init vgs pool failed\n");
+          return HI_FAILURE;
+      }
+      vpss_chn_dump_set_vgs_frame_info(&vgs_frame, &g_dump_mem, &vb_calc_cfg, &g_frame);
+    }
+    
+    hi_vgs_task_attr vgs_task_attr;
+       
+    if (hi_mpi_vgs_begin_job(&g_handle) != HI_SUCCESS) {
+        printf("hi_mpi_vgs_begin_job failed\n");
+        return HI_FAILURE;
+    }
+
+    if (memcpy_s(&vgs_task_attr.img_in, sizeof(hi_video_frame_info),
+        &g_frame, sizeof(hi_video_frame_info)) != EOK) {
+        printf("memcpy_s img_in failed\n");
+        hi_mpi_vgs_cancel_job(g_handle);
+        g_handle = -1;
+        return HI_FAILURE;
+    }
+    if (memcpy_s(&vgs_task_attr.img_out, sizeof(hi_video_frame_info),
+        &vgs_frame, sizeof(hi_video_frame_info)) != EOK) {
+        printf("memcpy_s img_out failed\n");
+        hi_mpi_vgs_cancel_job(g_handle);
+        g_handle = -1;
+        return HI_FAILURE;
+    }
+    if (hi_mpi_vgs_add_scale_task(g_handle, &vgs_task_attr, HI_VGS_SCALE_COEF_NORM) != HI_SUCCESS) {
+        printf("hi_mpi_vgs_add_scale_task failed\n");
+        hi_mpi_vgs_cancel_job(g_handle);
+        g_handle = -1;
+        return HI_FAILURE;
+    }
+    if (hi_mpi_vgs_end_job(g_handle) != HI_SUCCESS) {
+        printf("hi_mpi_vgs_end_job failed\n");
+        hi_mpi_vgs_cancel_job(g_handle);
+        g_handle = -1;
+        return HI_FAILURE;
+    }
+    g_handle = -1;
+      	
+    if (HI_DYNAMIC_RANGE_SDR8 == g_frame.video_frame.dynamic_range)
+  	{
+  		int ret = yuv2mat(&vgs_frame.video_frame, cv_mat);
+  		if(ret < 0) return -1;
+  	}
+  }  
+	else if (HI_DYNAMIC_RANGE_SDR8 == g_frame.video_frame.dynamic_range)
 	{
 		int ret = yuv2mat(&g_frame.video_frame, cv_mat);
 		if(ret < 0) return -1;

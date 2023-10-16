@@ -327,7 +327,8 @@ hi_void get_default_vpss_chn_attr(hi_size *vi_size, hi_size enc_size[], hi_s32 l
     for (i = 0; (i < len) && (i < HI_VPSS_MAX_PHYS_CHN_NUM); i++) {
         vpss_chan_attr->output_size[i].width = enc_size[i].width;
         vpss_chan_attr->output_size[i].height = enc_size[i].height;
-        vpss_chan_attr->compress_mode[i] = (i == 0) ? HI_COMPRESS_MODE_SEG_COMPACT : HI_COMPRESS_MODE_NONE;
+        //vpss_chan_attr->compress_mode[i] = (i == 0) ? HI_COMPRESS_MODE_SEG_COMPACT : HI_COMPRESS_MODE_NONE;
+        vpss_chan_attr->compress_mode[i] = HI_COMPRESS_MODE_NONE;
         vpss_chan_attr->enable[i] = HI_TRUE;
 
         max_width = MAX2(max_width, enc_size[i].width);

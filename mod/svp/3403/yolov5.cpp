@@ -30,6 +30,7 @@ int yolov5_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *Mo
           
         if(vcap[i].fd <= 0)
         {
+          //vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i], 640, 640);
           vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i]);
           if(vcap[i].fd > 0)
           {
@@ -104,14 +105,16 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
       if (FD_ISSET(vcap[i].fd, &read_fds))
       {
         //printf("vpss get ok! [fd:%d]\n", vcap[i].fd);
-        //vcap[i].vcap.get_frame_lock(vcap[i].image, &frame_info);
-        vcap[i].vcap.get_frame(vcap[i].image);
+        vcap[i].vcap.get_frame_lock(vcap[i].image, &frame_info);
+        //vcap[i].vcap.get_frame(vcap[i].image);
         if(vcap[i].image.empty())
         {
             std::cout << "vpss capture failed!!!\n";
             return -1;
         }
-        //printf("vcap.get_frame_lock i:%d, w:%d, h:%d\n", i, vcap[i].image.cols, vcap[i].image.rows);
+        
+        printf("vcap.get_frame_lock chn:%d, image:[%dx%d], frame_info[%dx%d]\n"
+            , i, vcap[i].image.cols, vcap[i].image.rows, frame_info->video_frame.width, frame_info->video_frame.height);
         
         //cv::imwrite("test.jpg", vcap[i].image);
         //cv::Mat image = cv::imread("test.jpg");
@@ -155,11 +158,12 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         }
         
         clock_gettime(CLOCK_MONOTONIC, &ts2);
+        
         #if 1
         printf("boxs->size:%d, cost:%d ms\n", boxs->size, (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
         #endif
         
-        //vcap[i].vcap.get_frame_unlock(frame_info);
+        vcap[i].vcap.get_frame_unlock(frame_info);
         boxs++;
       }
     }

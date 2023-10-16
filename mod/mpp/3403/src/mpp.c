@@ -708,6 +708,10 @@ int gsf_mpp_scene_stop()
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
 {
   int ret = -1;
+  
+  if(ViPipe < 0 || ViPipe >= 4)
+    return ret;
+      
   switch(id)
   {
     case GSF_MPP_ISP_CTL_IMG:
@@ -778,17 +782,17 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       break;       
      case GSF_MPP_ISP_CTL_FLIP:
       {
-      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+        gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
 
-      hi_vi_chn_attr chn_attr;
-      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
-      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+        hi_vi_chn_attr chn_attr;
+        ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
+        printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
 
-      chn_attr.flip_en = flip->bFlip;
-      chn_attr.mirror_en = flip->bMirror;
+        chn_attr.flip_en = flip->bFlip;
+        chn_attr.mirror_en = flip->bMirror;
 
-      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
-      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+        ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
+        printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
       }
       break;
 
@@ -802,17 +806,23 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
 
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
 {
+  int ret = -1;
+  
+  if(ViPipe < 0 || ViPipe >= 4)
+    return ret;
+    
   switch(id)
   {
     case GSF_MPP_SCENE_CTL_AE:
       { 
         extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
         g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
+        ret = 0;
         printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
       }
       break;
   }
-  return 0;
+  return ret;
 }
 
 

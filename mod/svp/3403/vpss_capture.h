@@ -21,8 +21,9 @@ typedef struct
 class VpssCapture
 {
 public:
-
-	int init(int vpss_grp, int vpss_chn);
+  //When vgsW = vgsH = 0, the RGB image cv::Mat has the same resolution as the YUV image hi_frame
+  //When vgsW & vgsH, cv::Mat is the RGB image after VGS scaling, hi_frame is the YUV image before scaling
+	int init(int vpss_grp, int vpss_chn, int vgsW = 0, int vgsH = 0);
 	int get_frame(cv::Mat &cv_mat);
 	int get_frame_lock(cv::Mat &cv_mat, hi_video_frame_info **hi_frame);
   int get_frame_unlock(hi_video_frame_info *hi_frame);
@@ -32,7 +33,9 @@ private:
   int yuv2mat(hi_video_frame *frame, cv::Mat &cv_mat);
   hi_void vpss_restore_depth(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn);
 	hi_void vpss_restore(hi_vpss_grp hi_vpss_grp, hi_vpss_chn hi_vpss_chn);
-	
+	hi_s32 vpss_chn_dump_init_vgs_pool(vpss_dump_mem *dump_mem, hi_vb_calc_cfg *vb_calc_cfg);
+  hi_void vpss_chn_dump_set_vgs_frame_info(hi_video_frame_info *vgs_frame_info, const vpss_dump_mem *dump_mem,
+                                      const hi_vb_calc_cfg *vb_calc_cfg, const hi_video_frame_info *vpss_frame_info);
 private:
 	hi_vpss_grp g_vpss_grp   = 0;
 	hi_vpss_chn g_vpss_chn   = 0;
@@ -43,10 +46,14 @@ private:
 	hi_video_frame_info g_frame = {0};
 	
 	//vgs;
+  int vgsW = 0;
+  int vgsH = 0;
 	hi_vb_pool g_pool  = HI_VB_INVALID_POOL_ID;
 	vpss_dump_mem g_dump_mem = {0};
 	hi_vgs_handle g_handle = -1;
 	hi_u32 g_blk_size = 0;
+	hi_vb_calc_cfg vb_calc_cfg = {0};
+	hi_video_frame_info vgs_frame = {0};
 	
   //memcpy;
   hi_u32 g_size = 0;
