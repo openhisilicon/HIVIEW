@@ -138,15 +138,12 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         
         //cv::imwrite("test.jpg", vcap[i].image);
         //cv::Mat image = cv::imread("test.jpg");
-        if(vcap_save_yuv) // save y_image .jpg
+        if(vcap_save_yuv) // save _image .jpg
         {
           hi_video_frame *frame = &frame_info->video_frame;
           hi_char *g_user_page_addr[2] = { HI_NULL, HI_NULL }; /* 2 Y and C */
           hi_u32 g_size = 0, g_c_size = 0;
           
-          char *virt_addr_y = HI_NULL;
-          char *mem_content = HI_NULL;
-          hi_phys_addr_t phys_addr;
           hi_pixel_format pixel_format = frame->pixel_format;
           /* When the storage format is a planar format, this variable is used to keep the height of the UV component */
           hi_u32 uv_height = 0;
@@ -166,20 +163,31 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
               uv_height = frame->height;
           }
 
-          phys_addr = frame->phys_addr[0];
-          g_user_page_addr[0] = (hi_char *)hi_mpi_sys_mmap(phys_addr, g_size);
+
+          g_user_page_addr[0] = (hi_char *)hi_mpi_sys_mmap(frame->phys_addr[0], g_size);
+          g_user_page_addr[1] = (hi_char *)hi_mpi_sys_mmap(frame->phys_addr[1], g_c_size);
           if (g_user_page_addr[0] != HI_NULL)
           {
-            virt_addr_y = g_user_page_addr[0];
+            #if 0
             /* save Y */
-            cv::Mat y_image(frame->height, frame->stride[0], CV_8UC1, (unsigned char *)virt_addr_y);
+            cv::Mat _image(frame->height, frame->stride[0], CV_8UC1, g_user_page_addr[0]);
+            #else
+            /* save YUV */
+            cv::Mat _image1(frame->height + uv_height, frame->stride[0], CV_8UC1);
+            memcpy(_image1.data, g_user_page_addr[0], g_size); 
+            memcpy(_image1.data+g_size, g_user_page_addr[1], g_c_size);
+            
+            cv::Mat _image;
+            cv::cvtColor(_image1, _image, CV_YUV2BGR_NV12);
+            #endif
             
             HI_CHAR szJpgName[128];
             sprintf(szJpgName, "/nfsroot/3403/vcap/ch%d_%dx%d_%llu.jpg", i, frame->stride[0], frame->height, frame->pts);
-            cv::imwrite(szJpgName, y_image);
-            fprintf(stderr, "save [%s] done!\n", szJpgName);
+            cv::imwrite(szJpgName, _image);
+            fprintf(stderr, "save _image [%s] done!\n", szJpgName);
             fflush(stderr);
             hi_mpi_sys_munmap(g_user_page_addr[0], g_size);
+            hi_mpi_sys_munmap(g_user_page_addr[1], g_c_size);
           }
         }
 
