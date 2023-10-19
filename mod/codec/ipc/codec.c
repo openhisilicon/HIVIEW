@@ -66,6 +66,7 @@ static int avs = 0; // codec_ipc.vi.avs;
           (w >= 720 && h >= 480)?PIC_D1_NTSC: \
           (w >= 640 && h >= 640)?PIC_640P: \
           (w >= 640 && h >= 512)?PIC_512P: \
+          (w >= 640 && h >= 360)?PIC_360P: \
           (w >= 400 && h >= 400)?PIC_400P: \
           (w >= 384 && h >= 288)?PIC_288P: \
           PIC_CIF
@@ -82,8 +83,9 @@ static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_720P]      = {0, 1280, 720},
       [PIC_D1_PAL]    = {0, 720, 576},
       [PIC_D1_NTSC]   = {0, 720, 480},
-      [PIC_512P]      = {0, 640, 512},
       [PIC_640P]      = {0, 640, 640},
+      [PIC_512P]      = {0, 640, 512},
+      [PIC_360P]      = {0, 640, 360},
       [PIC_400P]      = {0, 400, 400},
       [PIC_288P]      = {0, 384, 288},
       [PIC_CIF]       = {0, 352, 288},
@@ -501,8 +503,8 @@ int venc_start(int start)
   return 0;
 }
 
-#define VPSS(_i, _g, _p, _ch, _en0, _en1, _sz0, _sz1) do{ \
-      vpss[_i].VpssGrp=_g; vpss[_i].ViPipe=_p; vpss[_i].ViChn=_ch;\
+#define VPSS_BIND_VI(_i, _vip, _vich, _vpg, _en0, _en1, _sz0, _sz1) do{ \
+      vpss[_i].VpssGrp=_vpg; vpss[_i].ViPipe=_vip; vpss[_i].ViChn=_vich;\
       vpss[_i].enable[0]=_en0;vpss[_i].enable[1]=_en1;\
       vpss[_i].enSize[0]=_sz0;vpss[_i].enSize[1]=_sz1;}while(0)
       
@@ -515,10 +517,10 @@ void mpp_ini_3559a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 1;
     venc_ini->ch_num = 1; venc_ini->st_num = 1;
-    VPSS(0, 0, 0, 0, 1, 0, PIC_1080P, PIC_720P);
-    VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
-    VPSS(2, 2, 2, 0, 1, 0, PIC_1080P, PIC_720P);
-    VPSS(3, 3, 3, 0, 1, 0, PIC_1080P, PIC_720P);   
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 0, PIC_1080P, PIC_720P);
+    VPSS_BIND_VI(1, 1, 0, 1, 1, 0, PIC_1080P, PIC_720P);
+    VPSS_BIND_VI(2, 2, 0, 2, 1, 0, PIC_1080P, PIC_720P);
+    VPSS_BIND_VI(3, 3, 0, 3, 1, 0, PIC_1080P, PIC_720P);   
   }
   else
   {
@@ -528,7 +530,7 @@ void mpp_ini_3559a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 16; cfg->fps = 30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_7680x4320, PIC_3840x2160);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_7680x4320, PIC_3840x2160);
     }
     else
     {
@@ -536,10 +538,10 @@ void mpp_ini_3559a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
       rgn_ini->ch_num = 4; rgn_ini->st_num = 2;
       venc_ini->ch_num = 4; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
-      VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_720P);
-      VPSS(2, 2, 2, 0, 1, 1, PIC_3840x2160, PIC_720P);
-      VPSS(3, 3, 3, 0, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS_BIND_VI(2, 2, 0, 2, 1, 1, PIC_3840x2160, PIC_720P);
+      VPSS_BIND_VI(3, 3, 0, 3, 1, 1, PIC_3840x2160, PIC_720P);
     } 
   }
 }
@@ -551,7 +553,7 @@ void mpp_ini_3519a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
-  VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+  VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
 }
 #endif
 #if defined(GSF_CPU_3519)
@@ -563,7 +565,7 @@ void mpp_ini_3519(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
   }
   else
   {
@@ -571,8 +573,8 @@ void mpp_ini_3519(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
     rgn_ini->ch_num = 2; rgn_ini->st_num = 1;
     venc_ini->ch_num = 2; venc_ini->st_num = 1;
-    VPSS(0, 0, 0, 0, 1, 0, PIC_3840x2160, PIC_720P);
-    VPSS(1, 1, 1, 0, 1, 0, PIC_1080P, PIC_720P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 0, PIC_3840x2160, PIC_720P);
+    VPSS_BIND_VI(1, 1, 0, 1, 1, 0, PIC_1080P, PIC_720P);
   }
 }
 #endif
@@ -584,7 +586,7 @@ void mpp_ini_3559(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
-  VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
   return;
   #endif
   
@@ -594,7 +596,7 @@ void mpp_ini_3559(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
     return;
   }
   else
@@ -603,7 +605,7 @@ void mpp_ini_3559(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
     return;
   }
 }
@@ -620,11 +622,11 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
       
-      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_720P);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_720P);
       if(cfg->second)
-	      VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+	      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
 	      
     }
     else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") || strstr(cfg->snsname, "imx585") || strstr(cfg->snsname, "imx678") )
@@ -634,26 +636,26 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
           cfg->lane = 0; cfg->wdr = 0; cfg->res = (codec_ipc.vi.res==2)?2:8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
           rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
           venc_ini->ch_num = 1; venc_ini->st_num = 2;
-          VPSS(0, 0, 0, 0, 1, 1-1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_1080P);
+          VPSS_BIND_VI(0, 0, 0, 0, 1, 1-1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_1080P);
         }
         else
         {
           cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx415")?60:30;
           rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
           venc_ini->ch_num = 1; venc_ini->st_num = 2;
-          VPSS(0, 0, 0, 0, 1, 1-1, PIC_1080P, PIC_D1_NTSC);
+          VPSS_BIND_VI(0, 0, 0, 0, 1, 1-1, PIC_1080P, PIC_D1_NTSC);
         }
         if(cfg->second)
-      	  VPSS(1, 1, 1, 0, 1, 1-1, SECOND_HIRES(cfg->second), PIC_CIF);
+      	  VPSS_BIND_VI(1, 1, 0, 1, 1, 1-1, SECOND_HIRES(cfg->second), PIC_CIF);
     }
     else if(strstr(cfg->snsname, "imx335"))
     {
       cfg->lane = (cfg->second)?0:2; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
       if(cfg->second)
-      	VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+      	VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
     }
     return;
   }
@@ -668,17 +670,17 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
       #else
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 120;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P);
       #endif
       if(cfg->second)
       {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }
     else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378") 
@@ -689,7 +691,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
           cfg->lane = 0; cfg->wdr = 0; cfg->res = (codec_ipc.vi.res==2)?2:8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
           rgn_ini->ch_num = 1; rgn_ini->st_num = (avs==2)?1:2;
           venc_ini->ch_num = 1; venc_ini->st_num = (avs==2)?1:2;
-          VPSS(0, 0, 0, 0, 1, 1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_1080P);
+          VPSS_BIND_VI(0, 0, 0, 0, 1, 1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_1080P);
             
           if(strstr(cfg->snsname, "imx415") && codec_ipc.vi.wdr)
           {
@@ -699,7 +701,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
           
           if(strstr(cfg->snsname, "imx585"))
           {
-            VPSS(0, 0, 0, 0, 1, 1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_720P);
+            VPSS_BIND_VI(0, 0, 0, 0, 1, 1, (codec_ipc.vi.res==2)?PIC_1080P:PIC_3840x2160, PIC_720P);
           }  
 
         }
@@ -708,12 +710,12 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
           cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = strstr(cfg->snsname, "imx415")?60:30;
           rgn_ini->ch_num = 1; rgn_ini->st_num = (avs==2)?1:2;
           venc_ini->ch_num = 1; venc_ini->st_num = (avs==2)?1:2;
-          VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+          VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
         }
 			  if(cfg->second)
 			  {
 			    rgn_ini->ch_num = venc_ini->ch_num = 2;
-				  VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+				  VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
 			  }
     }
     else if(strstr(cfg->snsname, "imx335"))
@@ -722,11 +724,11 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = 4; cfg->fps = 30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2592x1536, PIC_1080P);
       if(cfg->second)
       {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }
     else if(strstr(cfg->snsname, "imx568"))
@@ -735,11 +737,11 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = 5; cfg->fps = 30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_2448x2048, PIC_1080P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2448x2048, PIC_1080P);
       if(cfg->second)
       {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }
     else if(strstr(cfg->snsname, "imx664"))
@@ -748,11 +750,11 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = 4; cfg->fps = 60;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
       if(cfg->second)
       {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), PIC_CIF);
       }
     }    
     else if(strstr(cfg->snsname, "ov426"))
@@ -760,7 +762,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 0; cfg->fps = 30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 1;
       venc_ini->ch_num = 1; venc_ini->st_num = 1;
-      VPSS(0, 0, 0, 0, 1, 0, PIC_400P, PIC_400P);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 0, PIC_400P, PIC_400P);
     }
     else if(strstr(cfg->snsname, "yuv422"))
     {
@@ -770,7 +772,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
         rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
         venc_ini->ch_num = 1; venc_ini->st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+        VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
 
       }
       else if (codec_ipc.vi.res == 2)
@@ -779,7 +781,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
         rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
         venc_ini->ch_num = 1; venc_ini->st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
       }
       else if (codec_ipc.vi.res == 1)
       {
@@ -787,7 +789,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         cfg->lane = 0; cfg->wdr = 0; cfg->res = 1; cfg->fps = 60;
         rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
         venc_ini->ch_num = 1; venc_ini->st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_720P, PIC_D1_NTSC);
+        VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_720P, PIC_D1_NTSC);
       }
       else  // other;
       {
@@ -795,7 +797,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
         rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
         venc_ini->ch_num = 1; venc_ini->st_num = 2;
-        VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
       }
     }
     else
@@ -803,7 +805,7 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
     }
   }
   else
@@ -815,8 +817,8 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 2; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
       rgn_ini->ch_num = 2; rgn_ini->st_num = 2;
       venc_ini->ch_num = 2; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
-      VPSS(1, 1, 1, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_2592x1944, PIC_D1_NTSC);
     }
     else  
     {
@@ -824,8 +826,8 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       cfg->lane = 2; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
       rgn_ini->ch_num = 2; rgn_ini->st_num = 2;
       venc_ini->ch_num = 2; venc_ini->st_num = 2;
-      VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_D1_NTSC);
     }
   }
 }
@@ -838,7 +840,7 @@ void mpp_ini_3516e(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
-  VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P); 
+  VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_720P); 
 }
 #endif
 
@@ -850,14 +852,14 @@ void mpp_ini_3531d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   rgn_ini->ch_num = 4; rgn_ini->st_num = 2;
   venc_ini->ch_num = 4; venc_ini->st_num = 2;
 
-  VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-  VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-  VPSS(2, 2, 2, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-  VPSS(3, 3, 3, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
-  //VPSS(4, 4, 4, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
-  //VPSS(5, 5, 5, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
-  //VPSS(6, 6, 6, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
-  //VPSS(7, 7, 7, 0, 1, 0, PIC_1080P, PIC_D1_NTSC);
+  VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS_BIND_VI(2, 2, 0, 2, 1, 1, PIC_1080P, PIC_D1_NTSC);
+  VPSS_BIND_VI(3, 3, 0, 3, 1, 1, PIC_1080P, PIC_D1_NTSC);
+//VPSS_BIND_VI(4, 4, 0, 4, 1, 0, PIC_1080P, PIC_D1_NTSC);
+//VPSS_BIND_VI(5, 5, 0, 5, 1, 0, PIC_1080P, PIC_D1_NTSC);
+//VPSS_BIND_VI(6, 6, 0, 6, 1, 0, PIC_1080P, PIC_D1_NTSC);
+//VPSS_BIND_VI(7, 7, 0, 7, 1, 0, PIC_1080P, PIC_D1_NTSC);
 }
 #endif
 
@@ -871,18 +873,18 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_1080P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_1080P);
     if(cfg->snscnt > 1)
     {
         // imx482-0-0-2-30
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_1080P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_1080P);
         rgn_ini->ch_num++;
         venc_ini->ch_num++;
     } 
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_D1_NTSC);
     }
     return;
    }
@@ -894,17 +896,19 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     cfg->lane = 2; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;  
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+    
     if(cfg->snscnt > 1)
+    for(int i = 1; i < cfg->snscnt; i++)
     {
-        VPSS(1, 1, 1, 0, 1, 1, PIC_2688x1520, PIC_720P);
+        VPSS_BIND_VI(i, i, 0, i, 1, 1, PIC_2688x1520, PIC_720P);
         rgn_ini->ch_num++;
         venc_ini->ch_num++;
     } 
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_D1_NTSC);
     }
     return;
    }
@@ -913,11 +917,11 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
-  VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+  VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_640P);
   if(cfg->snscnt > 1)
   {
       // os08a20-0-0-8-30
-      VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_3840x2160, PIC_640P);
       rgn_ini->ch_num++;
       venc_ini->ch_num++;
   }
@@ -925,7 +929,7 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
   {
       rgn_ini->ch_num = venc_ini->ch_num = 2;
       rgn_ini->st_num = venc_ini->st_num = 2;
-      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
   }
 }
 #endif
@@ -972,17 +976,17 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_640P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_640P);
     if(cfg->snscnt > 1)
     {
-        VPSS(1, 1, 1, 0, 1, 1, PIC_2688x1520, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_2688x1520, PIC_640P);
         rgn_ini->ch_num++;
         venc_ini->ch_num++;
     } 
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
     }
     return;
    }  
@@ -993,10 +997,10 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     cfg->lane = 2; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_640P);
     if(cfg->snscnt > 1)
     {
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
         rgn_ini->ch_num++;
         venc_ini->ch_num++;
     }
@@ -1004,7 +1008,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
         rgn_ini->st_num = venc_ini->st_num = 2;
-        VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
     }
     return;
   }
@@ -1013,11 +1017,11 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
-  VPSS(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+  VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_640P);
   if(cfg->snscnt > 1)
   {
       // os08a20-0-0-8-30
-      VPSS(1, 1, 1, 0, 1, 1, PIC_3840x2160, PIC_1080P);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_3840x2160, PIC_640P);
       rgn_ini->ch_num++;
       venc_ini->ch_num++;
   }
@@ -1025,7 +1029,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   {
       rgn_ini->ch_num = venc_ini->ch_num = 2;
       rgn_ini->st_num = venc_ini->st_num = 2;
-      VPSS(1, 1, 1, 0, 1, 1, PIC_1080P, PIC_D1_NTSC);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
   }
 }
 #endif
@@ -1349,12 +1353,8 @@ int vo_start()
       gsf_mpp_vo_start(VODEV_HD0, inf, sync, 0);
       
       int ly = VO_LAYOUT_1MUX;
-
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
-        if(p_cfg->second || p_cfg->snscnt > 1)
-          ly = VO_LAYOUT_2MUX;
-        if (avs == 1)
-          ly = VO_LAYOUT_2MUX;
+      ly = (p_cfg->second || avs == 1)?VO_LAYOUT_2MUX:p_cfg->snscnt;
       #endif
       
       gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
@@ -1362,8 +1362,10 @@ int vo_start()
       
       gsf_mpp_fb_start(VOFB_GUI, sync, 0);
       
+      //win0;
       gsf_mpp_vo_src_t src0 = {0, 0};
       gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+      
       //ov426 aspect;
       if(strstr(p_cfg->snsname, "ov426"))
       {
@@ -1374,6 +1376,7 @@ int vo_start()
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
       if(ly == VO_LAYOUT_2MUX)
       {
+        //win1;
         if(p_cfg->second)
     	  {
     	    gsf_sdp_t sdp;
@@ -1388,6 +1391,13 @@ int vo_start()
         gsf_mpp_vo_src_t src1 = {1, 0};
         gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src1);
       }
+      else if(ly > VO_LAYOUT_2MUX)
+      for(int i = 2; i < ly; i++)
+      {
+        //win2 win3 win4 ...;
+        gsf_mpp_vo_src_t src1 = {i, 0};
+        gsf_mpp_vo_bind(VOLAYER_HD0, i, &src1);
+      }      
       #endif
       
       if(sync == VO_OUTPUT_1080P60)

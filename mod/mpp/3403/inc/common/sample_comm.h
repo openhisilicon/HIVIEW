@@ -182,10 +182,12 @@ extern "C" {
     } while (0)
 
 typedef enum {
-    PIC_CIF,
+    PIC_CIF,     /*352 * 288 */
     PIC_360P,    /* 640 * 360 */
     #define HAVE_PIC_512P
     PIC_512P,    /* 640 * 512 maohw */
+    #define HAVE_PIC_640P
+    PIC_640P,      /* 640 * 640 maohw */
     PIC_D1_PAL,  /* 720 * 576 */
     PIC_D1_NTSC, /* 720 * 480 */
     PIC_960H,      /* 960 * 576 */
