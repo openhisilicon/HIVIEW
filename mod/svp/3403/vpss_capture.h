@@ -21,12 +21,13 @@ typedef struct
 class VpssCapture
 {
 public:
-  //When vgsW = vgsH = 0, the RGB image cv::Mat has the same resolution as the YUV image hi_frame
-  //When vgsW & vgsH, cv::Mat is the RGB image after VGS scaling, hi_frame is the YUV image before scaling
-	int init(int vpss_grp, int vpss_chn, int vgsW = 0, int vgsH = 0);
+  //when vgsW = vgsH = 0, the RGB image cv::Mat has the same resolution as the YUV image hi_frame
+  //when vgsW & vgsH, cv::Mat is the RGB image after VGS, hi_frame is the YUV image before VGS
+  //when both = 1, other_frame return YUV image of the vpss chn = int(!vpss_chn)
+	int init(int vpss_grp, int vpss_chn, int vgsW = 0, int vgsH = 0, int both = 0);
 	int get_frame(cv::Mat &cv_mat);
-	int get_frame_lock(cv::Mat &cv_mat, hi_video_frame_info **hi_frame);
-  int get_frame_unlock(hi_video_frame_info *hi_frame);
+	int get_frame_lock(cv::Mat &cv_mat, hi_video_frame_info **hi_frame, hi_video_frame_info **other_frame = NULL);
+  int get_frame_unlock(hi_video_frame_info *hi_frame, hi_video_frame_info *other_frame = NULL);
 	int destroy();
 
 private:
@@ -43,7 +44,7 @@ private:
 	hi_u32 g_orig_depth      = 0;
 	hi_vpss_chn_mode g_orig_chn_mode = HI_VPSS_CHN_MODE_USER;
 	hi_u32 g_vpss_depth_flag = 0;
-	hi_video_frame_info g_frame = {0};
+	hi_video_frame_info g_frame[2] = {{0},};
 	
 	//vgs;
   int vgsW = 0;
@@ -67,6 +68,9 @@ private:
 	//csc;
 	hi_svp_dst_img dst_img = {0};
 	cv::Mat dst_mat;
+	  
+	//both;
+	int g_both = 0;
 };
 
 

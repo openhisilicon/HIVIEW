@@ -29,6 +29,7 @@ hi_void VpssCapture::vpss_restore_depth(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_c
         if (ret != HI_SUCCESS) {
             printf("set chn attr error!!!\n");
         }
+        printf("set chn attr grp:%d, chn:%d, depth:%d\n", vpss_grp, vpss_chn, g_orig_depth);
     }
 }
 
@@ -36,13 +37,15 @@ hi_void VpssCapture::vpss_restore(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn)
 {
     hi_s32 ret;
 
-    if (g_frame.pool_id != HI_VB_INVALID_POOL_ID) {
-        ret = hi_mpi_vpss_release_chn_frame(vpss_grp, vpss_chn, &g_frame);
-        if (ret != HI_SUCCESS) {
-            printf("Release Chn Frame error!!!\n");
-        }
-
-        g_frame.pool_id = HI_VB_INVALID_POOL_ID;
+    for(int i = 0; i < 2; i++)
+    {
+      if (g_frame[i].pool_id != HI_VB_INVALID_POOL_ID) {
+          ret = hi_mpi_vpss_release_chn_frame(vpss_grp, vpss_chn, &g_frame[i]);
+          if (ret != HI_SUCCESS) {
+              printf("Release Chn Frame error!!!\n");
+          }
+          g_frame[i].pool_id = HI_VB_INVALID_POOL_ID;
+      }
     }
 
     if (g_handle != -1) {
@@ -71,6 +74,8 @@ hi_void VpssCapture::vpss_restore(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn)
     
     if (g_vpss_depth_flag) {
         vpss_restore_depth(vpss_grp, vpss_chn);
+        if(g_both)
+          vpss_restore_depth(vpss_grp, !vpss_chn);
         g_vpss_depth_flag = 0;
     }
     return;
@@ -159,52 +164,58 @@ int VpssCapture::yuv2mat(hi_video_frame *frame, cv::Mat &cv_mat)
 	return 0;
 }
 
-int VpssCapture::init(int grp, int chn, int vgsW, int vgsH)
+int VpssCapture::init(int grp, int chn, int vgsW, int vgsH, int both)
 {
   const hi_u32 depth = 2;
   hi_s32 ret;
   hi_vpss_chn_attr chn_attr;
   hi_vpss_ext_chn_attr ext_chn_attr;
+  
+  g_both = both;
+  g_vpss_grp = grp;
+	g_vpss_chn = chn;
+    
+  do{
+    if (chn >= HI_VPSS_MAX_PHYS_CHN_NUM) {
+        ret = hi_mpi_vpss_get_ext_chn_attr(grp, chn, &ext_chn_attr);
+        if (ret != HI_SUCCESS) {
+            printf("get ext chn attr error!!!\n");
+            return -1;
+        }
 
-  if (chn >= HI_VPSS_MAX_PHYS_CHN_NUM) {
-      ret = hi_mpi_vpss_get_ext_chn_attr(grp, chn, &ext_chn_attr);
-      if (ret != HI_SUCCESS) {
-          printf("get ext chn attr error!!!\n");
-          return -1;
-      }
+        g_orig_depth = ext_chn_attr.depth;
+        ext_chn_attr.depth = depth;
 
-      g_orig_depth = ext_chn_attr.depth;
-      ext_chn_attr.depth = depth;
+        if (hi_mpi_vpss_set_ext_chn_attr(grp, chn, &ext_chn_attr) != HI_SUCCESS) {
+            printf("set ext chn attr error!!!\n");
+            goto exit;
+        }
+    } else {
+        ret = hi_mpi_vpss_get_chn_attr(grp, chn, &chn_attr);
+        if (ret != HI_SUCCESS) {
+            printf("get chn attr error!!!\n");
+            return -1;
+        }
 
-      if (hi_mpi_vpss_set_ext_chn_attr(grp, chn, &ext_chn_attr) != HI_SUCCESS) {
-          printf("set ext chn attr error!!!\n");
-          goto exit;
-      }
-  } else {
-      ret = hi_mpi_vpss_get_chn_attr(grp, chn, &chn_attr);
-      if (ret != HI_SUCCESS) {
-          printf("get chn attr error!!!\n");
-          return -1;
-      }
+        g_orig_depth = chn_attr.depth;
+        g_orig_chn_mode = chn_attr.chn_mode;
+        chn_attr.depth = depth;
+        chn_attr.chn_mode = HI_VPSS_CHN_MODE_USER;
 
-      g_orig_depth = chn_attr.depth;
-      g_orig_chn_mode = chn_attr.chn_mode;
-      chn_attr.depth = depth;
-      chn_attr.chn_mode = HI_VPSS_CHN_MODE_USER;
-
-      if (hi_mpi_vpss_set_chn_attr(grp, chn, &chn_attr) != HI_SUCCESS) {
-          printf("set chn attr error!!!\n");
-          goto exit;
-      }
-  }
+        if (hi_mpi_vpss_set_chn_attr(grp, chn, &chn_attr) != HI_SUCCESS) {
+            printf("set chn attr error!!!\n");
+            goto exit;
+        }
+        printf("set chn attr grp:%d, chn:%d, depth:%d\n", grp, chn, depth);
+    }
+    chn = !chn;
+  }while(both--);
 
 	g_vpss_depth_flag = 1;
 
 	memset(&g_frame, 0, sizeof(g_frame));
-	g_frame.pool_id = HI_VB_INVALID_POOL_ID;
-	
-	this->g_vpss_grp = grp;
-	this->g_vpss_chn = chn;
+	g_frame[0].pool_id = HI_VB_INVALID_POOL_ID;
+	g_frame[1].pool_id = HI_VB_INVALID_POOL_ID;
 	
   this->vgsW = vgsW;
 	this->vgsH = vgsH;
@@ -213,19 +224,19 @@ int VpssCapture::init(int grp, int chn, int vgsW, int vgsH)
   g_dump_mem.phys_addr = 0;
   g_dump_mem.virt_addr = HI_NULL;
 	
-	return hi_mpi_vpss_get_chn_fd(grp, chn);
+	return hi_mpi_vpss_get_chn_fd(grp, g_vpss_chn);
 
 exit:
-  vpss_restore(grp, chn);
+  vpss_restore(grp, g_vpss_chn);
   return -1;  
 }
 
 
 hi_s32 VpssCapture::vpss_chn_dump_init_vgs_pool(vpss_dump_mem *dump_mem, hi_vb_calc_cfg *vb_calc_cfg)
 {
-    hi_u32 width = vgsW;//g_frame.video_frame.width;
-    hi_u32 height = vgsH;//g_frame.video_frame.height;
-    hi_pixel_format pixel_format = g_frame.video_frame.pixel_format;
+    hi_u32 width = vgsW;//g_frame[0].video_frame.width;
+    hi_u32 height = vgsH;//g_frame[0].video_frame.height;
+    hi_pixel_format pixel_format = g_frame[0].video_frame.pixel_format;
     
     hi_pic_buf_attr buf_attr = {0};
     hi_vb_pool_cfg vb_pool_cfg = {0};
@@ -282,15 +293,14 @@ hi_void VpssCapture::vpss_chn_dump_set_vgs_frame_info(hi_video_frame_info *vgs_f
 
 int VpssCapture::get_frame(cv::Mat &cv_mat)
 {
-  if (hi_mpi_vpss_get_chn_frame(g_vpss_grp, g_vpss_chn, &g_frame, milli_sec) != HI_SUCCESS) {
-      printf("Get frame failed!\n");
-      usleep(1000); /* 1000 sleep */
+  if (hi_mpi_vpss_get_chn_frame(g_vpss_grp, g_vpss_chn, &g_frame[0], milli_sec) != HI_SUCCESS) {
+      printf("Get vpss %d frame failed!\n", g_vpss_chn);
+      usleep(1000); /* 1000 usleep */
       return -1;
   }
-  //printf("hi_mpi_vpss_get_chn_frame hi_frame:%p\n", &g_frame);
   
-	bool send_to_vgs = ((HI_COMPRESS_MODE_NONE != g_frame.video_frame.compress_mode) 
-	                  || (HI_VIDEO_FORMAT_LINEAR != g_frame.video_frame.video_format)
+	bool send_to_vgs = ((HI_COMPRESS_MODE_NONE != g_frame[0].video_frame.compress_mode) 
+	                  || (HI_VIDEO_FORMAT_LINEAR != g_frame[0].video_frame.video_format)
 	                  || (this->vgsW != 0 && this->vgsH != 0));
   
   if(send_to_vgs)
@@ -302,7 +312,7 @@ int VpssCapture::get_frame(cv::Mat &cv_mat)
           printf("init vgs pool failed\n");
           return HI_FAILURE;
       }
-      vpss_chn_dump_set_vgs_frame_info(&vgs_frame, &g_dump_mem, &vb_calc_cfg, &g_frame);
+      vpss_chn_dump_set_vgs_frame_info(&vgs_frame, &g_dump_mem, &vb_calc_cfg, &g_frame[0]);
     }
     
     hi_vgs_task_attr vgs_task_attr;
@@ -313,7 +323,7 @@ int VpssCapture::get_frame(cv::Mat &cv_mat)
     }
 
     if (memcpy_s(&vgs_task_attr.img_in, sizeof(hi_video_frame_info),
-        &g_frame, sizeof(hi_video_frame_info)) != EOK) {
+        &g_frame[0], sizeof(hi_video_frame_info)) != EOK) {
         printf("memcpy_s img_in failed\n");
         hi_mpi_vgs_cancel_job(g_handle);
         g_handle = -1;
@@ -340,42 +350,56 @@ int VpssCapture::get_frame(cv::Mat &cv_mat)
     }
     g_handle = -1;
       	
-    if (HI_DYNAMIC_RANGE_SDR8 == g_frame.video_frame.dynamic_range)
+    if (HI_DYNAMIC_RANGE_SDR8 == g_frame[0].video_frame.dynamic_range)
   	{
   		int ret = yuv2mat(&vgs_frame.video_frame, cv_mat);
   		if(ret < 0) return -1;
   	}
   }  
-	else if (HI_DYNAMIC_RANGE_SDR8 == g_frame.video_frame.dynamic_range)
+	else if (HI_DYNAMIC_RANGE_SDR8 == g_frame[0].video_frame.dynamic_range)
 	{
-		int ret = yuv2mat(&g_frame.video_frame, cv_mat);
+		int ret = yuv2mat(&g_frame[0].video_frame, cv_mat);
 		if(ret < 0) return -1;
 	}
 	
 	if(!frame_lock)
 	{
-	  hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, &g_frame);
+	  hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, &g_frame[0]);
   }
 
 	frame_id++;
 	return 0;
 }
 
-int VpssCapture::get_frame_lock(cv::Mat &cv_mat, hi_video_frame_info **hi_frame)
+int VpssCapture::get_frame_lock(cv::Mat &cv_mat, hi_video_frame_info **hi_frame, hi_video_frame_info **other_frame)
 {
   frame_lock = 1;
+  
+  if(g_both && other_frame)
+  {
+    if (hi_mpi_vpss_get_chn_frame(g_vpss_grp, !g_vpss_chn, &g_frame[1], milli_sec) != HI_SUCCESS) {
+        printf("Get vpss %d frame failed!\n", !g_vpss_chn);
+        usleep(1000); /* 1000 usleep */
+        return -1;
+    }
+    *other_frame = &g_frame[1];
+  }
+   
   int ret = get_frame(cv_mat);
-  *hi_frame = &g_frame;
+  *hi_frame = &g_frame[0];
+ 
   return ret;
 }
 
-int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame)
+int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame, hi_video_frame_info *other_frame)
 {
   if(frame_lock)
   {
     frame_lock = 0;
     //printf("hi_mpi_vpss_release_chn_frame hi_frame:%p\n", hi_frame);
     hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, hi_frame);
+    if(g_both && other_frame)
+      hi_mpi_vpss_release_chn_frame(g_vpss_grp, !g_vpss_chn, other_frame);
   }
   return 0;
 }
@@ -383,8 +407,10 @@ int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame)
 
 int VpssCapture::destroy()
 {
-	g_frame.pool_id = HI_VB_INVALID_POOL_ID;
 	vpss_restore(g_vpss_grp, g_vpss_chn);
+	g_frame[0].pool_id = HI_VB_INVALID_POOL_ID;
+	g_frame[1].pool_id = HI_VB_INVALID_POOL_ID;
+	
 	hi_mpi_sys_mmz_free(dst_img.phys_addr[0], (hi_void *)dst_img.virt_addr[0]);
 	dst_img.virt_addr[0] = 0;
 	return 0;

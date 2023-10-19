@@ -35,8 +35,9 @@ int yolov8_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *Mo
         if(vcap[i].fd <= 0)
         {
 
-          //vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i], 640, 640);
-          vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i]);
+		  //vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i]);//single
+          //vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i], 640, 640); //vgs
+		  vcap[i].fd = vcap[i].vcap.init(vpss_grp[i], vpss_chn[i], 0, 0, 1);  //both
           if(vcap[i].fd > 0)
           {
             vcap_cnt++;
@@ -95,7 +96,8 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         "hair drier", "toothbrush"
     };
 #endif
-    hi_video_frame_info *frame_info = NULL;
+    hi_video_frame_info *frame_info = NULL, *other_frame = NULL;
+    
     yolo_boxs_t *boxs = _boxs;
     int ret = 0;
     int maxfd = 0;
@@ -124,17 +126,25 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
     {
       if (FD_ISSET(vcap[i].fd, &read_fds))
       {
+        struct timespec ts1, ts2;
         //printf("vpss get ok! [fd:%d]\n", vcap[i].fd);
-        vcap[i].vcap.get_frame_lock(vcap[i].image, &frame_info);
+        
+        clock_gettime(CLOCK_MONOTONIC, &ts1);
+        vcap[i].vcap.get_frame_lock(vcap[i].image, &frame_info, &other_frame);
         //vcap[i].vcap.get_frame(vcap[i].image);
         if(vcap[i].image.empty())
         {
             std::cout << "vpss capture failed!!!\n";
             return -1;
         }
+        clock_gettime(CLOCK_MONOTONIC, &ts2);
+        printf("get_frame_lock chn:%d, cost:%d ms\n", i, (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
         
-        printf("vcap.get_frame_lock chn:%d, image:[%dx%d], frame_info[%dx%d]\n"
-            , i, vcap[i].image.cols, vcap[i].image.rows, frame_info->video_frame.width, frame_info->video_frame.height);
+        //if(frame_info->video_frame.pts != other_frame->video_frame.pts)
+        printf("vcap.get_frame_lock chn:%d, image:[%dx%d], frame_info[%dx%d:%llu], other_frame[%dx%d:%llu]\n"
+            , i, vcap[i].image.cols, vcap[i].image.rows
+            , frame_info->video_frame.width, frame_info->video_frame.height, frame_info->video_frame.pts
+            , other_frame->video_frame.width, other_frame->video_frame.height, other_frame->video_frame.pts);
         
         //cv::imwrite("test.jpg", vcap[i].image);
         //cv::Mat image = cv::imread("test.jpg");
@@ -178,7 +188,7 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
             memcpy(_image1.data+g_size, g_user_page_addr[1], g_c_size);
             
             cv::Mat _image;
-            cv::cvtColor(_image1, _image, CV_YUV2BGR_NV12);
+            cv::cvtColor(_image1, _image, CV_YUV2RGB_NV12);
             #endif
             
             HI_CHAR szJpgName[128];
@@ -191,7 +201,6 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
           }
         }
 
-        struct timespec ts1, ts2;
         clock_gettime(CLOCK_MONOTONIC, &ts1);
 
         std::vector<Object> bboxs;
@@ -230,11 +239,11 @@ int yolov8_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         }
         
         clock_gettime(CLOCK_MONOTONIC, &ts2);
-        #if 1
+        #if 0
         printf("boxs->size:%d, cost:%d ms\n", boxs->size, (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
         #endif
         
-        vcap[i].vcap.get_frame_unlock(frame_info);
+        vcap[i].vcap.get_frame_unlock(frame_info, other_frame);
         boxs++;
       }
     }
