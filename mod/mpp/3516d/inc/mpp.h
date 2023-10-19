@@ -246,6 +246,13 @@ typedef struct {
   int enPdtType; //DIS_PDT_TYPE_IPC = 0; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
 }gsf_mpp_img_dis_t;
 
+
+typedef struct {
+  int bEnable;
+  int s32DistortionRatio;
+}gsf_mpp_img_ldc_t;
+
+
 enum {
   GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
   GSF_MPP_ISP_CTL_IMG = 1,    // get gsf_mpp_img_all_t;
@@ -261,6 +268,7 @@ enum {
   GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
   GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
   GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
+  GSF_MPP_ISP_CTL_LDC    = 14,// set gsf_mpp_img_ldc_t;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 

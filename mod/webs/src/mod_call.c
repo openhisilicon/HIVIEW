@@ -58,6 +58,8 @@ sjb_cb_t sjb_maps[GSF_MOD_ID_END<<8|255] = {
   {GSF_ID_CODEC_IMGDRC, "GSF_ID_CODEC_IMGDRC", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_drc_t,   (sjb_cb*)sjb_bind_gsf_img_drc_t,sizeof(gsf_img_drc_t), sizeof(gsf_img_drc_t),0},
   {GSF_ID_CODEC_IMGLDCI, "GSF_ID_CODEC_IMGLDCI", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_ldci_t,   (sjb_cb*)sjb_bind_gsf_img_ldci_t,sizeof(gsf_img_ldci_t), sizeof(gsf_img_ldci_t),0},
   {GSF_ID_CODEC_IMG3DNR, "GSF_ID_CODEC_IMG3DNR", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_3dnr_t,   (sjb_cb*)sjb_bind_gsf_img_3dnr_t,sizeof(gsf_img_3dnr_t), sizeof(gsf_img_3dnr_t),0},
+  //warn: id with the same prefix
+  {GSF_ID_CODEC_IMGLDC, "GSF_ID_CODEC_IMGLDC", GSF_IPC_CODEC,(sjb_cb*)sjb_bind_gsf_img_ldc_t,   (sjb_cb*)sjb_bind_gsf_img_ldc_t,sizeof(gsf_img_ldc_t), sizeof(gsf_img_ldc_t),0},
   
 //rec;
   {GSF_ID_REC_CFG,  "GSF_ID_REC_CFG", GSF_IPC_REC  ,(sjb_cb*)sjb_bind_gsf_rec_cfg_t,(sjb_cb*)sjb_bind_gsf_rec_cfg_t,sizeof(gsf_rec_cfg_t),sizeof(gsf_rec_cfg_t),0},

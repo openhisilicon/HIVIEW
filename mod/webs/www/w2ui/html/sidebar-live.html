@@ -40,6 +40,7 @@ const RECID_LDCI      = 600;
 const RECID_3DNR      = 700;
 const RECID_DeHaze    = 800;
 const RECID_CSC       = 900;
+const RECID_LDC       = 1000;
 
 
 function tabIM_change(ev, save)
@@ -75,7 +76,7 @@ function tabIM_change(ev, save)
     var ae = w2ui[event.target].get(RECID_AE);
     var req = {
         "id": "GSF_ID_CODEC_IMGAE",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(ae.lname, 10), 
           "u8Speed": parseInt(ae.w2ui.children[0].lname, 10), 
           "u8Compensation": parseInt(ae.w2ui.children[1].lname, 10), 
@@ -124,7 +125,7 @@ function tabIM_change(ev, save)
     var sharpen = w2ui[event.target].get(RECID_Sharpen);
     var req = {
         "id": "GSF_ID_CODEC_IMGSHARPEN",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(sharpen.lname, 10),
           "u16TextureFreq": parseInt(sharpen.w2ui.children[0].lname, 10),
           "u16EdgeFreq": parseInt(sharpen.w2ui.children[1].lname, 10),
@@ -176,7 +177,7 @@ function tabIM_change(ev, save)
     var hlc = w2ui[event.target].get(RECID_HLC);
     var req = {
         "id": "GSF_ID_CODEC_IMGHLC",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(hlc.lname, 10), 
           "u8LumaThr": parseInt(hlc.w2ui.children[0].lname, 10),
           "u8LumaTarget": parseInt(hlc.w2ui.children[1].lname, 10)
@@ -213,7 +214,7 @@ function tabIM_change(ev, save)
     var gamma = w2ui[event.target].get(RECID_Gamma);
     var req = {
         "id": "GSF_ID_CODEC_IMGGAMMA",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(gamma.lname, 10), 
           "enCurveType": parseInt(gamma.w2ui.children[0].lname, 10),
           "TableNo": parseInt(gamma.w2ui.children[1].lname, 10)
@@ -250,7 +251,7 @@ function tabIM_change(ev, save)
     var drc = w2ui[event.target].get(RECID_DRC);
     var req = {
         "id": "GSF_ID_CODEC_IMGDRC",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(drc.lname, 10), 
           "u16Strength": parseInt(drc.w2ui.children[0].lname, 10),
           "u16StrengthMax": parseInt(drc.w2ui.children[1].lname, 10),
@@ -290,7 +291,7 @@ function tabIM_change(ev, save)
     var ldci = w2ui[event.target].get(RECID_LDCI);
     var req = {
         "id": "GSF_ID_CODEC_IMGLDCI",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(ldci.lname, 10), 
           "u16BlcCtrl": parseInt(ldci.w2ui.children[0].lname, 10),
           "stHePosWgt_u8Wgt": parseInt(ldci.w2ui.children[1].lname, 10),
@@ -330,7 +331,7 @@ function tabIM_change(ev, save)
     var _3dnr = w2ui[event.target].get(RECID_3DNR);
     var req = {
         "id": "GSF_ID_CODEC_IMG3DNR",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(_3dnr.lname, 10), 
           "u8strength": parseInt(_3dnr.w2ui.children[0].lname, 10)}
     }
@@ -363,7 +364,7 @@ function tabIM_change(ev, save)
     var dehaze = w2ui[event.target].get(RECID_DeHaze);
     var req = {
         "id": "GSF_ID_CODEC_IMGDEHAZE",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(dehaze.lname, 10), 
           "u8strength": parseInt(dehaze.w2ui.children[0].lname, 10)}
     }
@@ -396,7 +397,7 @@ function tabIM_change(ev, save)
     var csc = w2ui[event.target].get(RECID_CSC);
     var req = {
         "id": "GSF_ID_CODEC_IMGCSC",
-        "args":"G1C0S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"bEnable":  parseInt(csc.lname, 10), 
           "u8Hue": parseInt(csc.w2ui.children[0].lname, 10), 
           "u8Luma": parseInt(csc.w2ui.children[1].lname, 10), 
@@ -433,6 +434,40 @@ function tabIM_change(ev, save)
       }
     });
   }
+  if(changeFlags[RECID_LDC])
+  {
+    var ldc = w2ui[event.target].get(RECID_LDC);
+    var req = {
+        "id": "GSF_ID_CODEC_IMGLDC",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
+        "data":{"bEnable":  parseInt(ldc.lname, 10), 
+          "s32DistortionRatio": parseInt(ldc.w2ui.children[0].lname, 10)
+          }
+    }
+    for(i = 0; i < event.changes.length; i++)
+    {
+      if(event.changes[i].recid == RECID_LDC+0)
+        req.data.bEnable = parseInt(event.changes[i].lname, 10);
+      if(event.changes[i].recid == RECID_LDC+1)
+        req.data.s32DistortionRatio = parseInt(event.changes[i].lname, 10);
+    }
+    console.log(req);
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+  }  
 }
 
 $(function () {
@@ -664,6 +699,13 @@ function grid_load(grid_name)
                       { recid: RECID_CSC+2, fname: 'u8Luma', lname: data.data.csc.u8Luma.toString(10), nname: '[0,100]'},
                       { recid: RECID_CSC+3, fname: 'u8Contr', lname: data.data.csc.u8Contr.toString(10), nname: '[0,100]'},
                       { recid: RECID_CSC+4, fname: 'u8Satu', lname: data.data.csc.u8Satu.toString(10), nname: '[0,100]'}
+                  ]
+              } 
+            }, 
+            { recid: RECID_LDC, fname: 'LDC', lname: data.data.ldc.bEnable.toString(10), nname: 'bEnable' + rw,
+              w2ui: {
+                  children: [
+                      { recid: RECID_LDC+1, fname: 's32DistortionRatio', lname: data.data.ldc.s32DistortionRatio.toString(10), nname: '-300, 500]'}
                   ]
               } 
             }, 

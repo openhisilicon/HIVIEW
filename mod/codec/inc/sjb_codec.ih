@@ -144,6 +144,12 @@ STRUCT(gsf_img_ldci_t)
   FIELD(int, stHeNegWgt_u8Mean);
 };
 
+STRUCT(gsf_img_ldc_t)
+{
+  FIELD(int, bEnable);
+  FIELD(int, s32DistortionRatio);
+};
+
 
 STRUCT(gsf_img_3dnr_t)
 {
@@ -170,6 +176,7 @@ STRUCT(gsf_img_all_t)
    FIELD(gsf_img_drc_t, drc);
    FIELD(gsf_img_ldci_t, ldci);
    FIELD(gsf_img_3dnr_t, _3dnr);
+   FIELD(gsf_img_ldc_t, ldc);
 };
 
 STRUCT(gsf_scene_ae_t)

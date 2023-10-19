@@ -1359,7 +1359,26 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       
      }
      break;
-     
+     case GSF_MPP_ISP_CTL_LDC:
+     {
+      gsf_mpp_img_ldc_t *ldc = (gsf_mpp_img_ldc_t*)args;
+      
+      VI_LDC_ATTR_S stLDCAttr = {0};
+      stLDCAttr.bEnable = ldc->bEnable;
+      stLDCAttr.stAttr.bAspect = 1;              /* RW;Range: [0, 1];Whether aspect ration  is keep */
+      stLDCAttr.stAttr.s32XRatio = 100;          /* RW; Range: [0, 100]; field angle ration of  horizontal,valid when bAspect=0.*/
+      stLDCAttr.stAttr.s32YRatio = 100;          /* RW; Range: [0, 100]; field angle ration of  vertical,valid when bAspect=0.*/
+      stLDCAttr.stAttr.s32XYRatio = 100;         /* RW; Range: [0, 100]; field angle ration of  all,valid when bAspect=1.*/
+      stLDCAttr.stAttr.s32CenterXOffset = 0;     /* RW; Range: [-511, 511]; horizontal offset of the image distortion center relative to image center.*/
+      stLDCAttr.stAttr.s32CenterYOffset = 0;     /* RW; Range: [-511, 511]; vertical offset of the image distortion center relative to image center.*/
+      stLDCAttr.stAttr.s32DistortionRatio = ldc->s32DistortionRatio;  /* RW; Range: [-300, 500]; LDC Distortion ratio.When spread on,s32DistortionRatio range should be [0, 500]*/
+      
+      ret = HI_MPI_VI_SetChnLDCAttr(ViPipe, 0, &stLDCAttr);
+      printf("SetChnLDCAttr ret:0x%x, ViPipe:%d, bEnable:%d, s32DistortionRatio:%d\n"
+            , ret, ViPipe, stLDCAttr.bEnable, stLDCAttr.stAttr.s32DistortionRatio);
+      
+      //HI_S32 HI_MPI_VI_SetChnSpreadAttr(VI_PIPE ViPipe, VI_CHN ViChn, const SPREAD_ATTR_S *pstSpreadAttr);
+     } 
      default:
       break;
   }

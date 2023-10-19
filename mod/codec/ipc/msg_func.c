@@ -488,6 +488,30 @@ static void msg_func_imgldci(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
   } 
 }
 
+static void msg_func_imgldc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_img_ldc_t *ldc = (gsf_img_ldc_t*)req->data;
+    int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_LDC, ldc);
+    if(!ret)
+    {  
+      codec_ipc.img.ldc = *ldc;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
+    rsp->err  = 0;
+    rsp->size = 0;
+    printf("set LDC\n");
+  }
+  else
+  {
+    gsf_img_ldc_t *ldc = (gsf_img_ldc_t*)rsp->data;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_img_ldc_t);
+    printf("get LDC\n");
+  } 
+}
+
 static void msg_func_img3dnr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   if(req->set)
@@ -575,7 +599,8 @@ static msg_func_t *msg_func[GSF_ID_CODEC_END] = {
     [GSF_ID_CODEC_IMGDRC]= msg_func_imgdrc,
     [GSF_ID_CODEC_IMGLDCI]= msg_func_imgldci,
     [GSF_ID_CODEC_IMG3DNR]= msg_func_img3dnr,
-    [GSF_ID_CODEC_SCENEAE]= msg_func_sceneae,    
+    [GSF_ID_CODEC_SCENEAE]= msg_func_sceneae, 
+    [GSF_ID_CODEC_IMGLDC]= msg_func_imgldc,       
 #endif    
  };
 
