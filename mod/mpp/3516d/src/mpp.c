@@ -797,7 +797,11 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         VPSS_GRP VpssGrp = 0;        
         VPSS_GRP_ATTR_S stGrpAttr = {0};
         ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
-
+        
+        VI_LDC_ATTR_S stLDCAttr = {0};
+        ret = HI_MPI_VI_GetChnLDCAttr(ViPipe, 0, &stLDCAttr);
+        all->ldc.bEnable = stLDCAttr.bEnable;
+        all->ldc.s32DistortionRatio = stLDCAttr.stAttr.s32DistortionRatio;
       }
       break;
     case GSF_MPP_ISP_CTL_CSC:

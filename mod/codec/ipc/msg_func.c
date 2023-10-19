@@ -253,11 +253,19 @@ static void msg_func_lens(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 
 #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3403)
 
+
+#define GET_IMG(ch) \
+      gsf_img_all_t *_img = (ch == 0)?&codec_ipc.img:\
+      (ch == 1)?&codec_ipc.img1:\
+      (ch == 2)?&codec_ipc.img2:&codec_ipc.img3;
+
 static void msg_func_imgall(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   gsf_img_all_t *all = (gsf_img_all_t*)rsp->data;
   
-  *all = codec_ipc.img;
+  GET_IMG(req->ch);
+  *all = *_img;
+  
   gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_IMG, all);
   rsp->err  = 0;
   rsp->size = sizeof(gsf_img_all_t);
@@ -272,8 +280,9 @@ static void msg_func_imgcsc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
     
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_CSC, csc);
     if(!ret)
-    {  
-      codec_ipc.img.csc = *csc;
+    {
+      GET_IMG(req->ch);
+      _img->csc = *csc;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -284,7 +293,8 @@ static void msg_func_imgcsc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
   {
     gsf_img_csc_t *csc = (gsf_img_csc_t*)rsp->data;
     
-    *csc = codec_ipc.img.csc;
+    GET_IMG(req->ch);
+    *csc = _img->csc;
     rsp->err  = 0;
     rsp->size = sizeof(gsf_img_csc_t);
     printf("get csc\n");
@@ -299,7 +309,8 @@ static void msg_func_imgae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_AE, ae);
     if(!ret)
     {  
-      codec_ipc.img.ae = *ae;
+      GET_IMG(req->ch);
+      _img->ae = *ae;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -326,7 +337,8 @@ static void msg_func_imgdehaze(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *o
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_DEHAZE, dehaze);
     if(!ret)
     {  
-      codec_ipc.img.dehaze = *dehaze;
+      GET_IMG(req->ch);
+      _img->dehaze = *dehaze;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -352,7 +364,8 @@ static void msg_func_imgscene(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *os
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_SCENE, scene);
     if(!ret)
     {  
-      codec_ipc.img.scene = *scene;
+      GET_IMG(req->ch);
+      _img->scene = *scene;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -376,7 +389,8 @@ static void msg_func_imgsharpen(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_SHARPEN, sharpen);
     if(!ret)
     {  
-      codec_ipc.img.sharpen = *sharpen;
+      GET_IMG(req->ch);
+      _img->sharpen = *sharpen;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -400,7 +414,8 @@ static void msg_func_imghlc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_HLC, hlc);
     if(!ret)
     {  
-      codec_ipc.img.hlc = *hlc;
+      GET_IMG(req->ch);
+      _img->hlc = *hlc;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -424,7 +439,8 @@ static void msg_func_imggamma(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *os
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_GAMMA, gamma);
     if(!ret)
     {  
-      codec_ipc.img.gamma = *gamma;
+      GET_IMG(req->ch);
+      _img->gamma = *gamma;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -448,7 +464,8 @@ static void msg_func_imgdrc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_DRC, drc);
     if(!ret)
     {  
-      codec_ipc.img.drc = *drc;
+      GET_IMG(req->ch);
+      _img->drc = *drc;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -472,7 +489,8 @@ static void msg_func_imgldci(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_LDCI, ldci);
     if(!ret)
     {  
-      codec_ipc.img.ldci = *ldci;
+      GET_IMG(req->ch);
+      _img->ldci = *ldci;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -496,7 +514,8 @@ static void msg_func_imgldc(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osiz
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_LDC, ldc);
     if(!ret)
     {  
-      codec_ipc.img.ldc = *ldc;
+      GET_IMG(req->ch);
+      _img->ldc = *ldc;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;
@@ -520,7 +539,8 @@ static void msg_func_img3dnr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
     int ret = gsf_mpp_isp_ctl(req->ch, GSF_MPP_ISP_CTL_3DNR, _3dnr);
     if(!ret)
     {  
-      codec_ipc.img._3dnr = *_3dnr;
+      GET_IMG(req->ch);
+      _img->_3dnr = *_3dnr;
       json_parm_save(codec_parm_path, &codec_ipc);  
     }
     rsp->err  = 0;

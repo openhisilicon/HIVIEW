@@ -207,6 +207,9 @@ STRUCT(gsf_codec_ipc_t)
   
   //3
   FIELD(gsf_img_all_t, img);
+  FIELD(gsf_img_all_t, img1);
+  FIELD(gsf_img_all_t, img2);
+  FIELD(gsf_img_all_t, img3);
 };
 
 

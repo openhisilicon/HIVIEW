@@ -1228,24 +1228,35 @@ int mpp_start(gsf_bsp_def_t *def)
     {
       // First tested on Hi3516X;
       #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) ||  defined(GSF_CPU_3403)
-      printf("scene_auto is bEnable=0, set img(magic:0x%x) to isp.\n", codec_ipc.img.magic);
-      if(codec_ipc.img.magic == 0x55aa) 
+
+      #define GET_IMG(ch) \
+        gsf_img_all_t *_img = (ch == 0)?&codec_ipc.img:\
+        (ch == 1)?&codec_ipc.img1:\
+        (ch == 2)?&codec_ipc.img2:&codec_ipc.img3;
+      
+      for(i = 0; i < p_cfg->snscnt; i++)
       {
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_CSC, &codec_ipc.img.csc);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_AE, &codec_ipc.img.ae);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DEHAZE, &codec_ipc.img.dehaze);
-        //gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SCENE, &codec_ipc.img.scene);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_SHARPEN, &codec_ipc.img.sharpen);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_HLC, &codec_ipc.img.hlc);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_GAMMA, &codec_ipc.img.gamma);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DRC, &codec_ipc.img.drc);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_LDCI, &codec_ipc.img.ldci);
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_3DNR, &codec_ipc.img._3dnr);
-      }
-      else 
-      {
-        codec_ipc.img.magic = 0x55aa;
-        gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IMG, &codec_ipc.img);
+        GET_IMG(i);
+        printf("setimg i:%d, magic:0x%x to isp.\n", i, _img->magic);
+        
+        if(_img->magic == 0x55aa)
+        {
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_CSC, &_img->csc);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_AE, &_img->ae);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_DEHAZE, &_img->dehaze);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_SHARPEN, &_img->sharpen);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_HLC, &_img->hlc);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_GAMMA, &_img->gamma);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_DRC, &_img->drc);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_LDCI, &_img->ldci);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_3DNR, &_img->_3dnr);
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_LDC, &_img->ldc);
+        }
+        else 
+        {
+          _img->magic = 0x55aa;
+          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_IMG, _img);
+        }
       }
       #endif
     }

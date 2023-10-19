@@ -213,12 +213,19 @@ typedef struct {
 
 typedef struct {
   int bEnable;
+  int s32DistortionRatio;
+}gsf_mpp_img_ldc_t;
+
+
+typedef struct {
+  int bEnable;
   int u8strength;
 }gsf_mpp_img_3dnr_t;
 
 typedef struct {
   int bEnable;
 }gsf_mpp_img_scene_t;
+
 
 // gsf_mpp_img_all_t == gsf_img_all_t;
 typedef struct {
@@ -233,6 +240,7 @@ typedef struct {
   gsf_mpp_img_drc_t   drc;
   gsf_mpp_img_ldci_t  ldci;
   gsf_mpp_img_3dnr_t  _3dnr;
+  gsf_mpp_img_ldc_t   ldc;
 }gsf_mpp_img_all_t;
 
 typedef struct {
@@ -245,12 +253,6 @@ typedef struct {
   int enMode;    //DIS_MODE_4_DOF_GME = 0 ;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
   int enPdtType; //DIS_PDT_TYPE_IPC = 0; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
 }gsf_mpp_img_dis_t;
-
-
-typedef struct {
-  int bEnable;
-  int s32DistortionRatio;
-}gsf_mpp_img_ldc_t;
 
 
 enum {
