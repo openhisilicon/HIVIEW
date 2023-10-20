@@ -216,8 +216,20 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
 
+typedef struct { // ==gsf_scene_ae_t
+  float compensation_mul; // 0.5 - 1.5;
+}gsf_mpp_scene_ae_t;
+
+// gsf_mpp_scene_all_t == gsf_scene_all_t;
+typedef struct {
+  int magic;
+  gsf_mpp_scene_ae_t ae;
+}gsf_mpp_scene_all_t;
+
+
 enum {
-  GSF_MPP_SCENE_CTL_AE = 0, // gsf_scene_ae_t==HI_SCENE_CTL_AE_S
+  GSF_MPP_SCENE_CTL_ALL= 0, // gsf_mpp_scene_all_t
+  GSF_MPP_SCENE_CTL_AE = 1, // gsf_mpp_scene_ae_t==HI_SCENE_CTL_AE_S
 };
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args);
 
@@ -292,6 +304,11 @@ typedef struct {
 
 typedef struct {
   int bEnable;
+  int s32DistortionRatio;
+}gsf_mpp_img_ldc_t;
+
+typedef struct {
+  int bEnable;
   int u8strength;
 }gsf_mpp_img_3dnr_t;
 
@@ -312,6 +329,7 @@ typedef struct {
   gsf_mpp_img_drc_t   drc;
   gsf_mpp_img_ldci_t  ldci;
   gsf_mpp_img_3dnr_t  _3dnr;
+  gsf_mpp_img_ldc_t   ldc;
 }gsf_mpp_img_all_t;
 
 typedef struct {
@@ -340,6 +358,7 @@ enum {
   GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
   GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
   GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
+  GSF_MPP_ISP_CTL_LDC    = 14,// set gsf_mpp_img_ldc_t;
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 

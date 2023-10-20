@@ -185,6 +185,13 @@ STRUCT(gsf_scene_ae_t)
 };
 
 
+STRUCT(gsf_scene_all_t)
+{
+  FIELD(int, magic); // 0x55aa;
+  FIELD(gsf_scene_ae_t, ae);
+};
+
+
 STRUCT(gsf_vdec_t)
 {
   FIELD(int, en);  // enable
@@ -210,6 +217,8 @@ STRUCT(gsf_codec_ipc_t)
   FIELD(gsf_img_all_t, img1);
   FIELD(gsf_img_all_t, img2);
   FIELD(gsf_img_all_t, img3);
+  
+  ARRAY(gsf_scene_all_t, scene, GSF_CODEC_IPC_CHN);
 };
 
 

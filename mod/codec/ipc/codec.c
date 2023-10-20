@@ -892,23 +892,22 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
    if(strstr(cfg->snsname, "os04a10"))
    {
     // os04a10-0-0-4-30
-    //cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
-    cfg->lane = 2; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;  
+    cfg->lane = (cfg->snscnt>2)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_720P);
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_640P);
     
     if(cfg->snscnt > 1)
     for(int i = 1; i < cfg->snscnt; i++)
     {
-        VPSS_BIND_VI(i, i, 0, i, 1, 1, PIC_2688x1520, PIC_720P);
+        VPSS_BIND_VI(i, i, 0, i, 1, 1, PIC_2688x1520, PIC_640P);
         rgn_ini->ch_num++;
         venc_ini->ch_num++;
     } 
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
     }
     return;
    }
@@ -1257,6 +1256,17 @@ int mpp_start(gsf_bsp_def_t *def)
           _img->magic = 0x55aa;
           gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_IMG, _img);
         }
+        
+        printf("setscene i:%d, magic:0x%x to isp.\n", i, codec_ipc.scene[i].magic);
+        if(codec_ipc.scene[i].magic == 0x55aa)
+        {
+          gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_AE, &codec_ipc.scene[i].ae);
+        }
+        else 
+        {
+          codec_ipc.scene[i].magic = 0x55aa;
+          gsf_mpp_isp_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
+        }
       }
       #endif
     }
@@ -1403,9 +1413,9 @@ int vo_start()
         gsf_mpp_vo_bind(VOLAYER_HD0, 1, &src1);
       }
       else if(ly > VO_LAYOUT_2MUX)
-      for(int i = 2; i < ly; i++)
+      for(int i = 1; i < ly; i++)
       {
-        //win2 win3 win4 ...;
+        //win1 win2 win3;
         gsf_mpp_vo_src_t src1 = {i, 0};
         gsf_mpp_vo_bind(VOLAYER_HD0, i, &src1);
       }      

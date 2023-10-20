@@ -17,7 +17,7 @@
     <div style="height: 15px"></div>    
     <button class="w2ui-btn" onclick="lensCalClick()">LensCal</button>
     <div style="height: 15px"></div>
-    <input id="range" type="range" min="0.2" max="1.8" value="1" step="0.1" onchange="sceneAE()"/>
+    <input id="range" type="range" min="0.2" max="1.8" value="1" step="0.1" onchange="sceneAeSet()"/>
     </div>
     <div id="example_view"></div>
     <div id="example_code"></div>
@@ -573,7 +573,8 @@ $(function () {
     //$('#selected-tab').html('<br><br><H4> Welcome to OpenHisilicon </H4><br> <A HREF="https://github.com/openhisilicon">https://github.com/openhisilicon</A><br><br> <H5> When the video is paused or delayed, plase click [Play] </H5><br>');
     $('#selected-tab').html('<br><br><H4> Welcome to Xview </H4><br><br> <H5> When the video is paused or delayed, plase click [Play] </H5><br>');
     load_html('main', 'live');
-       
+    
+    sceneAeGet();
 });
 
 function grid_load(grid_name)
@@ -603,6 +604,9 @@ function grid_load(grid_name)
   }
   else if (grid_name == 'tabIM')
   {
+    
+    sceneAeGet();
+    
     var req = {
           "id": "GSF_ID_CODEC_IMGALL",
           "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
@@ -736,9 +740,6 @@ function grid_load(grid_name)
     w2ui[grid_name].add(records);
     w2ui[grid_name].refresh();       
   }
-  
-
-  
 }
 
 //GSF_LENS_IRC   = 1, // arg1: 0-day, 1-night
@@ -944,10 +945,10 @@ function lensCalClick() {
     })
 }
 
-function sceneAE() {
+function sceneAeSet() {
     const req = {
         "id": "GSF_ID_CODEC_SCENEAE",
-        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
+        "args":"G1C" + w2ui['main_layout'].get('channel').content + "S0",
         "data":{"compensation_mul": parseFloat(document.getElementById("range").value)}
     }
     
@@ -960,6 +961,30 @@ function sceneAE() {
       dataType: "json", // rsp body type;
       success: function (data) {
         console.log("rsp:"+ data );
+      },
+      error: function () {
+        //TODO;
+      }
+    });
+}
+
+function sceneAeGet() {
+    const req = {
+        "id": "GSF_ID_CODEC_SCENEAE",
+        "args":"G0C" + w2ui['main_layout'].get('channel').content + "S0",
+        "data":{}
+    }
+    
+    $.ajax({
+      async: true,
+      type: "post",
+      url:  '/config?id=' + req.id + '&' + 'args=' + req.args,
+      data: JSON.stringify(req.data),
+      contentType: 'application/json', // req body type;
+      dataType: "json", // rsp body type;
+      success: function (data) {
+        console.log("rsp:"+ data );
+        document.getElementById("range").value = data.data.compensation_mul;
       },
       error: function () {
         //TODO;

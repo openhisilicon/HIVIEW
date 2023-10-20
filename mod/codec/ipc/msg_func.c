@@ -558,13 +558,30 @@ static void msg_func_img3dnr(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osi
 
 
 static void msg_func_sceneae(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
-{
+{ 
+  //check ch;
+  req->ch = (req->ch < 0 || req->ch >= GSF_CODEC_IPC_CHN)?0:req->ch;
+
+  if(req->set)
   {
     gsf_scene_ae_t *ae = (gsf_scene_ae_t*)req->data;
     int ret = gsf_mpp_scene_ctl(req->ch, GSF_MPP_SCENE_CTL_AE, ae);
+    if(!ret)
+    {
+      codec_ipc.scene[req->ch].ae = *ae;
+      json_parm_save(codec_parm_path, &codec_ipc);  
+    }
     rsp->err  = ret;
     rsp->size = 0;
-    printf("gsf_mpp_scene_ctl scene_ae\n");
+    printf("set scene_ae ch:%d, err:%d\n", req->ch, rsp->err);
+  }
+  else
+  {
+    gsf_scene_ae_t *ae = (gsf_scene_ae_t*)rsp->data;
+    *ae = codec_ipc.scene[req->ch].ae;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_scene_ae_t);
+    printf("get scene_ae ch:%d, err:%d\n", req->ch, rsp->err);
   }
 }
 

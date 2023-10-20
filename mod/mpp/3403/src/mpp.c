@@ -252,21 +252,17 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       }
   }
 
-  //LANE_DIVIDE_MODE_3 for 4x2lane;
-
   // get vi param
   for(i = 0; i < snscnt; i++)
   {
     sample_comm_vi_get_default_vi_cfg(SENSOR0_TYPE, &vi_cfg[i]);
-    if(i != 0)
+    vi_cfg[i].mipi_info.divide_mode = LANE_DIVIDE_MODE_1;
+    
+    if(snscnt == 2 && i != 0)
     {
       const hi_vi_dev vi_dev = 2; /* dev2 for sensor1 */
       const hi_vi_pipe vi_pipe = 1; /* dev2 bind pipe1 */
       
-      printf("sample_vi_get_two_sensor_vi_cfg() beg.\n");
-      
-      vi_cfg[0].mipi_info.divide_mode = LANE_DIVIDE_MODE_1;
-
       vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
       vi_cfg[i].sns_info.sns_clk_src = 1;
       vi_cfg[i].sns_info.sns_rst_src = 1;
@@ -277,7 +273,26 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       vi_cfg[i].grp_info.grp_num = 1;
       vi_cfg[i].grp_info.fusion_grp[0] = 1;
       vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
-      printf("sample_vi_get_two_sensor_vi_cfg() end.\n");
+      printf("sample_vi_get_two_sensor_vi_cfg(%d) bus_id:%d\n", vi_dev, vi_cfg[i].sns_info.bus_id);
+    }
+    else if(snscnt > 2) 
+    {
+      const hi_vi_dev vi_dev = i; //0, 1, 2, 3
+      const hi_vi_pipe vi_pipe = i;
+      
+      vi_cfg[i].sns_info.bus_id = i+2; //2, 3, 4, 5
+      vi_cfg[i].sns_info.sns_clk_src = i;
+      vi_cfg[i].sns_info.sns_rst_src = i;
+      
+      sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, vi_dev, &vi_cfg[i].mipi_info);
+      vi_cfg[i].mipi_info.divide_mode = LANE_DIVIDE_MODE_3;
+      
+      vi_cfg[i].dev_info.vi_dev = vi_dev;
+      vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
+      vi_cfg[i].grp_info.grp_num = 1;
+      vi_cfg[i].grp_info.fusion_grp[0] = i;
+      vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
+      printf("sample_vi_get_four_sensor_vi_cfg(%d) divide_mode:%d, bus_id:%d\n", i, vi_cfg[i].mipi_info.divide_mode, vi_cfg[i].sns_info.bus_id);
     }
   }
   
@@ -735,6 +750,11 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         all->sharpen.u16EdgeFreq    = shp_attr.manual_attr.edge_freq;   
         all->sharpen.u8DetailCtrl   = shp_attr.manual_attr.detail_ctrl; 
         
+        hi_ldc_attr ldc_attr;
+        ret = hi_mpi_vi_get_chn_ldc_attr(ViPipe, 0, &ldc_attr);
+        all->ldc.bEnable = ldc_attr.enable;
+        all->ldc.s32DistortionRatio = ldc_attr.ldc_v1_attr.distortion_ratio;
+                
         printf("all->scene.bEnable:%d\n", all->scene.bEnable);
       }
       break;
@@ -795,6 +815,27 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
       }
       break;
+      case GSF_MPP_ISP_CTL_LDC:
+      {
+        gsf_mpp_img_ldc_t *ldc = (gsf_mpp_img_ldc_t*)args;
+
+        hi_ldc_attr ldc_attr;
+
+        ldc_attr.enable                       = ldc->bEnable;
+        ldc_attr.ldc_version                  = HI_LDC_V1;
+        ldc_attr.ldc_v1_attr.aspect           = 1;
+        ldc_attr.ldc_v1_attr.x_ratio          = 100; /* 100: x ratio */
+        ldc_attr.ldc_v1_attr.y_ratio          = 100; /* 100: y ratio */
+        ldc_attr.ldc_v1_attr.xy_ratio         = 100; /* 100: x y ratio */
+        ldc_attr.ldc_v1_attr.center_x_offset  = 0;
+        ldc_attr.ldc_v1_attr.center_y_offset  = 0;
+        ldc_attr.ldc_v1_attr.distortion_ratio = ldc->s32DistortionRatio; /* 500: distortion ratio */
+
+        ret = hi_mpi_vi_set_chn_ldc_attr(ViPipe, 0, &ldc_attr);
+        printf("vi_set_chn_ldc_attr ret:0x%x, ViPipe:%d, bEnable:%d, s32DistortionRatio:%d\n"
+            , ret, ViPipe, ldc_attr.enable, ldc_attr.ldc_v1_attr.distortion_ratio);
+      }
+      break;
 
      default:
      break;
@@ -802,22 +843,28 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   return ret;
 }
 
-
+extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
 
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
 {
   int ret = -1;
   
   if(ViPipe < 0 || ViPipe >= 4)
-    return ret;
-    
+    return ret;  
+
   switch(id)
   {
-    case GSF_MPP_SCENE_CTL_AE:
-      { 
-        extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
-        g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
+    case GSF_MPP_SCENE_CTL_ALL:
+      {
         ret = 0;
+        gsf_mpp_scene_all_t *all = (gsf_mpp_scene_all_t*)args;
+        all->ae.compensation_mul = g_scene_ctl_ae[ViPipe].compensation_mul;
+      }
+      break;
+    case GSF_MPP_SCENE_CTL_AE:
+      {
+        ret = 0; 
+        g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
         printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
       }
       break;

@@ -138,8 +138,21 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
 
+
+typedef struct { // ==gsf_scene_ae_t
+  float compensation_mul; // 0.5 - 1.5;
+}gsf_mpp_scene_ae_t;
+
+// gsf_mpp_scene_all_t == gsf_scene_all_t;
+typedef struct {
+  int magic;
+  gsf_mpp_scene_ae_t ae;
+}gsf_mpp_scene_all_t;
+
+
 enum {
-  GSF_MPP_SCENE_CTL_AE = 0, // gsf_scene_ae_t==HI_SCENE_CTL_AE_S
+  GSF_MPP_SCENE_CTL_ALL= 0, // gsf_mpp_scene_all_t
+  GSF_MPP_SCENE_CTL_AE = 1, // gsf_mpp_scene_ae_t==HI_SCENE_CTL_AE_S
 };
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args);
 
