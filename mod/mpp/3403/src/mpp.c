@@ -51,14 +51,12 @@ hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
   return SENSOR_OBJ;
 }
 
-static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
+static SAMPLE_MPP_SENSOR_T libsns_master[SNS_TYPE_BUTT] = {
     {OV_OS08A20_MIPI_8M_30FPS_12BIT,         "os08a20-0-0-8-30",  "libsns_os08a20.so",    "g_sns_os08a20_obj"},
     {OV_OS08A20_MIPI_8M_30FPS_12BIT_WDR2TO1, "os08a20-0-1-8-30",  "libsns_os08a20.so",    "g_sns_os08a20_obj"}, 
     {OV_OS04A10_MIPI_4M_30FPS_12BIT,         "os04a10-0-0-4-30",  "libsns_os04a10.so",    "g_sns_os04a10_obj"}, 
     {OV_OS08B10_MIPI_8M_30FPS_12BIT,         "os08b10-0-0-8-30",  "libsns_os08b10.so",    "g_sns_os08b10_obj"}, 
     {OV_OS08B10_MIPI_8M_30FPS_12BIT_WDR2TO1, "os08b10-0-1-8-30",  "libsns_os08b10.so",    "g_sns_os08b10_obj"},
-    {OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT,   "os05a10-0-0-4-30",  "libsns_os05a10_2l_slave.so", "g_sns_os05a10_2l_slave_obj"},
-    {SONY_IMX347_SLAVE_MIPI_4M_30FPS_12BIT,  "imx347-0-0-4-30",   "libsns_imx347_slave.so", "g_sns_imx347_slave_obj"},
     {SONY_IMX485_MIPI_8M_30FPS_12BIT,        "imx485-0-0-8-30",   "libsns_imx485.so",     "g_sns_imx485_obj"},
     {SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1,"imx485-0-1-8-30",   "libsns_imx485.so",     "g_sns_imx485_obj"},
     {SONY_IMX334_MIPI_8M_30FPS_12BIT,        "imx334-0-0-8-30",   "libsns_imx334.so",     "g_sns_imx334_obj"},
@@ -71,10 +69,18 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30",  "libsns_os04a10_2l.so",    "g_sns_os04a10_2l_obj"}, 
   };
 
+static SAMPLE_MPP_SENSOR_T libsns_slave[SNS_TYPE_BUTT] = {
+    {OV_OS05A10_SLAVE_MIPI_4M_30FPS_12BIT,   "os05a10-0-0-4-30",  "libsns_os05a10_2l_slave.so", "g_sns_os05a10_2l_slave_obj"},
+    {SONY_IMX347_SLAVE_MIPI_4M_30FPS_12BIT,  "imx347-0-0-4-30",   "libsns_imx347_slave.so", "g_sns_imx347_slave_obj"},
+    {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30",  "libsns_os04a10_2l_slave.so",    "g_sns_os04a10_2l_slave_obj"}, 
+  };
 
-static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
+static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name, int slave)
 {
   int i = 0;
+  
+  SAMPLE_MPP_SENSOR_T *libsns = (slave)?libsns_slave:libsns_master;
+  
   for(i = 0; i < SNS_TYPE_BUTT; i++)
   {
     //printf("libsns[%d].name:%s, name:%s\n", i, libsns[i].name, name);
@@ -138,7 +144,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 
   //mppex_hook_sns(cfg);
   
-  SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(snsstr);
+  SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(snsstr, cfg->slave);
   if(!sns)
   {
     printf("%s => snsstr:%s, unknow.\n", __func__, snsstr);

@@ -892,6 +892,7 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
    if(strstr(cfg->snsname, "os04a10"))
    {
     // os04a10-0-0-4-30
+    //cfg->slave = (cfg->snscnt>2)?1:0; //for slave;
     cfg->lane = (cfg->snscnt>2)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;

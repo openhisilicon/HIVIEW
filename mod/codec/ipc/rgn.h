@@ -6,6 +6,12 @@
 #include "fw/libfont/inc/gsf_character_conv.h"
 
 
+#if defined(GSF_CPU_3519d)
+#define FG_ALPHA_MAX 255
+#else
+#define FG_ALPHA_MAX 128
+#endif
+
 #if defined(GSF_CPU_3531d) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
 
 #define rgn_type        rgn_obj[handle].rgn.stRegion.type
@@ -77,6 +83,7 @@
 #define rgn_chattr_over_layer rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32Layer
 #define rgn_chattr_over_bgalpha rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32BgAlpha
 #define rgn_chattr_over_fgalpha rgn_obj[handle].rgn.stChnAttr.unChnAttr.stOverlayChn.u32FgAlpha
+
 
 #define rgn_chattr_cover_type    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.enCoverType
 #define rgn_chattr_cover_x    rgn_obj[handle].rgn.stChnAttr.unChnAttr.stCoverChn.stRect.s32X
