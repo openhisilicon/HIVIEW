@@ -973,7 +973,15 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
    if(strstr(cfg->snsname, "os04a10"))
    {
     // os04a10-0-0-4-30
-    cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    if(strstr(cfg->type, "3516d500"))
+    {  
+      cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    }
+    else 
+    {
+       cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    }
+
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
     VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2688x1520, PIC_640P);
