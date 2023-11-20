@@ -63,6 +63,8 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SONY_IMX515_MIPI_8M_30FPS_12BIT,        "imx515-0-0-8-30",  "libsns_imx515.so",      "g_sns_imx515_obj"},
     {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30", "libsns_os04a10_2l.so",  "g_sns_os04a10_2l_obj"},
     {OV_OS08A20_2L_MIPI_2M_30FPS_10BIT,      "os08a20-2-0-2-30", "libsns_os08a20_2l.so",  "g_sns_os08a20_2l_obj"},
+    {SONY_IMX482_MIPI_2M_30FPS_12BIT,        "imx482-0-0-2-30",  "libsns_imx482.so",      "g_sns_imx482_obj"},
+    {SONY_IMX664_MIPI_4M_30FPS_12BIT,        "imx664-0-0-4-30",  "libsns_imx664.so",      "g_sns_imx664_obj"},
   };
 
 
@@ -154,7 +156,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[256] = {0};
   char snsname[64] = {0};
   
-  strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
+  //hook sensor name;
+  if(strstr(cfg->snsname, "imx664") || strstr(cfg->snsname, "imx482"))
+    strncpy(snsname, "imx515", sizeof(snsname)-1);
+  else 
+    strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
     
   sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s", path, snsname);
 
@@ -719,6 +725,39 @@ int gsf_mpp_scene_stop()
   return ret;
 }
 
+
+
+int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
+{
+  int ret = -1;
+  
+  if(ViPipe < 0 || ViPipe >= 4)
+    return ret;  
+#if 0
+  extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
+  switch(id)
+  {
+    case GSF_MPP_SCENE_CTL_ALL:
+      {
+        ret = 0;
+        gsf_mpp_scene_all_t *all = (gsf_mpp_scene_all_t*)args;
+        all->ae.compensation_mul = g_scene_ctl_ae[ViPipe].compensation_mul;
+      }
+      break;
+    case GSF_MPP_SCENE_CTL_AE:
+      {
+        ret = 0; 
+        g_scene_ctl_ae[ViPipe].compensation_mul = ae->compensation_mul;
+        printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
+      }
+      break;
+  }
+#endif  
+  return ret;
+}
+
+
+
 static gsf_mpp_aenc_t _aenc;
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
@@ -790,18 +829,20 @@ int gsf_mpp_rgn_ctl(RGN_HANDLE Handle, int id, gsf_mpp_rgn_t *rgn)
       ret = hi_mpi_rgn_detach_from_chn(Handle, &rgn->stChn);
       break;
     case GSF_MPP_RGN_SETDISPLAY:
-      ret = hi_mpi_rgn_set_dev_display_attr(Handle, &rgn->stChn, &rgn->stChnAttr);
+      ret = hi_mpi_rgn_set_chn_display_attr(Handle, &rgn->stChn, &rgn->stChnAttr);
       break;
     case GSF_MPP_RGN_GETDISPLAY:
-      ret = hi_mpi_rgn_get_dev_display_attr(Handle, &rgn->stChn, &rgn->stChnAttr);
+      ret = hi_mpi_rgn_get_chn_display_attr(Handle, &rgn->stChn, &rgn->stChnAttr);
       break;
   }
+  //printf("id:%d, Handle:%d, ret:0x%x\n", id, Handle, ret);  
   return ret;
 }
 int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap)
 {
   int ret = 0;
   ret = hi_mpi_rgn_set_bmp(Handle, bitmap);
+  //printf("bitmap Handle:%d, ret:0x%x\n", Handle, ret);
   return ret;
 }
 int gsf_mpp_rgn_canvas_get(RGN_HANDLE Handle, RGN_CANVAS_INFO_S *pstRgnCanvasInfo)

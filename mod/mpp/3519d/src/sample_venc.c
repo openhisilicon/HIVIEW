@@ -362,7 +362,8 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     for (i = 0; (i < len) && (i < HI_VPSS_MAX_PHYS_CHN_NUM); i++) {
         vpss_chan_attr->output_size[i].width = enc_size[i].width;
         vpss_chan_attr->output_size[i].height = enc_size[i].height;
-        vpss_chan_attr->compress_mode[i] = (i == 0) ? HI_COMPRESS_MODE_SEG_COMPACT : HI_COMPRESS_MODE_NONE;
+        //vpss_chan_attr->compress_mode[i] = (i == 0) ? HI_COMPRESS_MODE_SEG_COMPACT : HI_COMPRESS_MODE_NONE;
+        vpss_chan_attr->compress_mode[i] = HI_COMPRESS_MODE_NONE;
         vpss_chan_attr->enable[i] = HI_TRUE;
         vpss_chan_attr->fmu_mode[i] = HI_FMU_MODE_OFF;
 

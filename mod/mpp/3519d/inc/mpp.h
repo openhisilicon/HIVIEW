@@ -216,6 +216,23 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
 
+
+typedef struct { // ==gsf_scene_ae_t
+  float compensation_mul; // 0.5 - 1.5;
+}gsf_mpp_scene_ae_t;
+
+// gsf_mpp_scene_all_t == gsf_scene_all_t;
+typedef struct {
+  int magic;
+  gsf_mpp_scene_ae_t ae;
+}gsf_mpp_scene_all_t;
+
+enum {
+  GSF_MPP_SCENE_CTL_ALL= 0, // gsf_mpp_scene_all_t
+  GSF_MPP_SCENE_CTL_AE = 1, // gsf_mpp_scene_ae_t==HI_SCENE_CTL_AE_S
+};
+int gsf_mpp_scene_ctl(int ViPipe, int id, void *args);
+
 enum {
   GSF_MPP_VENC_CTL_IDR = 0,
   GSF_MPP_VENC_CTL_RST = 1,
@@ -321,6 +338,9 @@ enum {
   GSF_MPP_ISP_CTL_DRC    = 9, // set gsf_mpp_img_drc_t;
   GSF_MPP_ISP_CTL_LDCI   = 10,// set gsf_mpp_img_ldci_t;  
   GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
+  GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
+  GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
+  GSF_MPP_ISP_CTL_LDC    = 14,// set gsf_mpp_img_ldc_t;  
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
