@@ -625,6 +625,18 @@ static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame
         }
         else 
         {
+          static const char* class_names[] = {
+              "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
+              "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
+              "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
+              "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+              "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
+              "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
+              "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
+              "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
+              "hair drier", "toothbrush"
+              };
+              
           int i = 0;
           hi_sample_svp_rect_info *rect_info = &g_svp_npu_rect_info;
           
@@ -639,10 +651,10 @@ static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame
             int x, y, w, h;
             boxs.box[i].x = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].x;
             boxs.box[i].y = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].y;
-            boxs.box[i].w = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_RIGHT_TOP].x - x;
-            boxs.box[i].h = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - y;
-            boxs.box[i].score = 1.0;
-            boxs.box[i].label = "_";
+            boxs.box[i].w = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_RIGHT_TOP].x - boxs.box[i].x;
+            boxs.box[i].h = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - boxs.box[i].y;
+            boxs.box[i].score = rect_info->score[i];
+            boxs.box[i].label = class_names[rect_info->id[i]];
           }
            
           ret = pub_send(&boxs);// sendmsg;
@@ -732,7 +744,9 @@ static hi_void *sample_svp_npu_acl_vdec_to_vo(hi_void *args)
         #if 0 //maohw
         ret = sample_common_svp_venc_vo_send_stream(&g_svp_npu_media_cfg.svp_switch, 0, vo_layer, vo_chn, &base_frame);
         sample_svp_check_exps_goto(ret != HI_SUCCESS, base_release, SAMPLE_SVP_ERR_LEVEL_ERROR,
-            "Error(%#x),sample_common_svp_venc_vo_send_stream failed!\n", ret);    
+            "Error(%#x),sample_common_svp_venc_vo_send_stream failed!\n", ret);
+        #else
+        usleep(1*1000);
         #endif
             
 base_release:

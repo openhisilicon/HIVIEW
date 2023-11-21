@@ -1308,6 +1308,7 @@ static hi_s32 sample_svp_npu_get_roi(const sample_svp_npu_task_info *task, const
     hi_float *y_min = HI_NULL;
     hi_float *x_max = HI_NULL;
     hi_float *y_max = HI_NULL;
+    
     hi_u32 roi_offset = info->roi_offset;
     hi_u32 i;
 
@@ -1328,8 +1329,16 @@ static hi_s32 sample_svp_npu_get_roi(const sample_svp_npu_task_info *task, const
     y_min = x_min + stride / sizeof(hi_float);
     x_max = y_min + stride / sizeof(hi_float);
     y_max = x_max + stride / sizeof(hi_float);
-
+    
+    //maohw
+    hi_float *score = y_max + stride / sizeof(hi_float);
+    hi_float *id = score + stride / sizeof(hi_float);
+    
     for (i = 0; i < rect_info->num; i++) {
+      
+        rect_info->id[i] = (hi_u32)id[roi_offset];
+        rect_info->score[i] = (hi_float)score[roi_offset];
+        
         rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].x = (hi_u32)((hi_float)x_min[roi_offset] /
             proc_frame->video_frame.width * show_frame->video_frame.width) & (~1);
         rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].y = (hi_u32)((hi_float)y_min[roi_offset] /

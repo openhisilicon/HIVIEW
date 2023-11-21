@@ -52,6 +52,9 @@ typedef struct {
 typedef struct {
     hi_u16 num;
     hi_sample_svp_rect rect[HI_SVP_RECT_NUM];
+    //maohw;
+    hi_u32 id[HI_SVP_RECT_NUM];
+    hi_float score[HI_SVP_RECT_NUM];
 } hi_sample_svp_rect_info;
 
 typedef struct {
