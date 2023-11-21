@@ -8,7 +8,7 @@
 
 //for CPU that not implement lensxxx.c
 #if !defined(GSF_CPU_3516d) && !defined(GSF_CPU_3559)
-#warning "lens not implement"
+#warning "xxx lens not implement"
 static int __lens_init(gsf_lens_ini_t *ini)         { return -1;}
 static int __lens_start(int ch, char *ttyAMA)       { return -1;}
 static int __lens_ircut(int ch, int dayNight)       { return -1;}
