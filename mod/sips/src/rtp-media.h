@@ -7,7 +7,7 @@
 
 struct rtp_media_t
 {
-  int (*get_sdp)(struct rtp_media_t* m, char *sdp, int fmt);
+  int (*get_sdp)(struct rtp_media_t* m, char *sdp, int fmt, int ssrc);
   int (*get_duration)(struct rtp_media_t* m, int64_t* duration);
   int (*play)(struct rtp_media_t* m);
   int (*pause)(struct rtp_media_t* m);

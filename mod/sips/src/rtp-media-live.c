@@ -14,6 +14,10 @@
 #include <stddef.h> // container_of
 #define CONTAINER_OF(ptr, struct_type, member) \
         (struct_type*)((char*)(ptr) - offsetof(struct_type, member))
+
+#define _AUDIO_ENABLE_ 0
+#define RTP_PAYLOAD_H264 98  // H264;
+#define RTP_PAYLOAD_PS   96  // PS;
         
 enum {
   MEDIA_TRACK_VIDEO = 0, // a=control:video
@@ -65,10 +69,10 @@ int SendRTCP(struct media_track_t *t)
 	{
 		char rtcp[1024] = {0};
 		size_t n = rtp_rtcp_report(t->m_rtp, rtcp, sizeof(rtcp));
-
 		t->m_transport->send(t->m_transport, 1, rtcp, n);
-
 		t->m_rtcp_clock = clock;
+		
+		printf("SendRTCP: track ts:%d\n", t->timestamp);
 	}
 	
 	return 0;
@@ -82,8 +86,11 @@ static void *live_send_task(void *arg)
   unsigned char* ptr = malloc(GSF_FRM_MAX_SIZE);
   struct rtp_media_live_t* m = (struct rtp_media_live_t*)arg;
   
-  struct cfifo_ex* a_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, m->track[MEDIA_TRACK_VIDEO].audio_shmid);
-  
+  struct cfifo_ex* a_reader = NULL;
+  #if _AUDIO_ENABLE_
+  a_reader = cfifo_shmat(cfifo_recsize, cfifo_rectag, m->track[MEDIA_TRACK_VIDEO].audio_shmid);
+  #endif
+
   if(m->track[MEDIA_TRACK_VIDEO].m_transport)
   {
     int r = m->track[MEDIA_TRACK_VIDEO].m_transport->conn(m->track[MEDIA_TRACK_VIDEO].m_transport);
@@ -164,9 +171,9 @@ static void *live_send_task(void *arg)
         if(m->track[MEDIA_TRACK_VIDEO].ps)
         {
           ps_muxer_input(m->track[MEDIA_TRACK_VIDEO].ps, m->track[MEDIA_TRACK_VIDEO].psvid
-                        , (rec->flag & GSF_FRM_FLAG_IDR)?0x01:0x00
+                        , ((rec->flag & GSF_FRM_FLAG_IDR)?0x0001:0x0000) | 0x8000 //H264_H265_WITH_AUD
                         , m->track[MEDIA_TRACK_VIDEO].timestamp * 90, m->track[MEDIA_TRACK_VIDEO].timestamp * 90
-                        , rec->data, rec->size);
+                        , rec->data, rec->size);            
           //printf("ps_muxer_input: VVV ts:%d, size:%d\n", m->track[MEDIA_TRACK_VIDEO].timestamp, rec->size);
         }
         else
@@ -174,8 +181,10 @@ static void *live_send_task(void *arg)
           //printf("send MEDIA_TRACK_VIDEO idr:%d, timestamp:%u, size:%d\n", rec->flag & GSF_FRM_FLAG_IDR, m->track[MEDIA_TRACK_VIDEO].timestamp, rec->size);
           rtp_payload_encode_input(m->track[MEDIA_TRACK_VIDEO].m_rtppacker, rec->data, rec->size, m->track[MEDIA_TRACK_VIDEO].timestamp * 90 /*kHz*/);
         }
+        
         // SendRTP() used st_writev();
         // SendRTCP(&m->track[MEDIA_TRACK_VIDEO]);
+        
       }while(1);
       
       //a_reader
@@ -301,7 +310,7 @@ static int ps_write(void* param, int stream, void* packet, size_t bytes)
 
 
 
-static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
+static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt, int ssrc)
 {
   char media[1024] = {0};
   struct rtp_media_live_t *m = (struct rtp_media_live_t*)_m;
@@ -316,7 +325,8 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
   	//"a=control:audio\n"
   	;
   snprintf(media, sizeof(media), pattern_audio, RTP_PAYLOAD_PCMU, RTP_PAYLOAD_PCMU, 8000, 1);
-  strcat(sdp, media);
+  if(sdp)
+    strcat(sdp, media);
   
   static const char* pattern_video =
     "m=video 9000 RTP/AVP %d\r\n"
@@ -329,9 +339,7 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
     //"sprop-parameter-sets=\r\n"
     ;
 
-  //#define RTP_PAYLOAD_H264 98  // GB28181 H264;
-  #define RTP_PAYLOAD_H264 96
-
+ 
   GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
   gsf_sdp->video_shmid = -1;
   gsf_sdp->audio_shmid = -1;
@@ -350,8 +358,11 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
     RTPPacket,
   };
   
-  extern uint32_t rtp_ssrc(void);
-  uint32_t ssrc = rtp_ssrc();
+  //extern uint32_t rtp_ssrc(void);
+  //uint32_t ssrc = rtp_ssrc();
+  
+  //void rtp_packet_setsize(int bytes);
+  //rtp_packet_setsize(1440);
 
   if(!fmt)
   {
@@ -370,9 +381,11 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
     handler.free = ps_free;
     m->track[MEDIA_TRACK_VIDEO].ps = ps_muxer_create(&handler, &m->track[MEDIA_TRACK_VIDEO]);
     m->track[MEDIA_TRACK_VIDEO].psvid = ps_muxer_add_stream(m->track[MEDIA_TRACK_VIDEO].ps, PSI_STREAM_H264, NULL, 0);
+    #if _AUDIO_ENABLE_
     m->track[MEDIA_TRACK_VIDEO].psaid = ps_muxer_add_stream(m->track[MEDIA_TRACK_VIDEO].ps, PSI_STREAM_AUDIO_G711A, NULL, 0);
+    #endif
     m->track[MEDIA_TRACK_VIDEO].m_rtppacker = 
-          rtp_payload_encode_create(RTP_PAYLOAD_H264, "MP2P", (uint16_t)ssrc, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
+          rtp_payload_encode_create(RTP_PAYLOAD_PS, "MP2P", 1/*(uint16_t)ssrc*/, ssrc, &s_rtpfunc, &m->track[MEDIA_TRACK_VIDEO]);
   }
   
 	struct rtp_event_t event;
@@ -411,10 +424,11 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt)
   }
   else
   {
-    snprintf(media, sizeof(media), pattern_video, RTP_PAYLOAD_H264, RTP_PAYLOAD_H264, "PS",
-            RTP_PAYLOAD_H264, 0,0,0);
-  }          
-  strcat(sdp, media);
+    snprintf(media, sizeof(media), pattern_video, RTP_PAYLOAD_PS, RTP_PAYLOAD_PS, "PS",
+            RTP_PAYLOAD_PS, 0,0,0);
+  }
+  if(sdp)          
+    strcat(sdp, media);
   
 
 

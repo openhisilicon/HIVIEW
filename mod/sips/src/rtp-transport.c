@@ -1,10 +1,14 @@
 #include "rtp-transport.h"
 
+#include "rtp-header.h"
+#include "rtp-util.h"
 
 struct rtp_tcp_transport_t 
 {
 	struct rtp_transport_t base;
+	int active;
 	st_netfd_t m_socket[2];
+	st_netfd_t m_child[2];
 	char dst[64];
 	unsigned short port[2];
 	uint8_t m_packet[2 + (1 << 16)];
@@ -28,9 +32,12 @@ static int rtp_tcp_transport_send(struct rtp_transport_t* t, int rtcp, const voi
 	transport->m_packet[0] = (bytes >> 8) & 0xFF;
 	transport->m_packet[1] = bytes & 0xff;
 	memcpy(transport->m_packet + 2, data, bytes);
-	return st_write(transport->m_socket[0], transport->m_packet, bytes + 2, ST_UTIME_NO_TIMEOUT);
+	
+	return st_write((transport->m_child[0])?transport->m_child[0]:transport->m_socket[0], transport->m_packet, bytes + 2, ST_UTIME_NO_TIMEOUT);
 }
 
+#include <sys/types.h>  
+#include <sys/socket.h>
 
 static int rtp_tcp_transport_conn(struct rtp_transport_t* t)
 {
@@ -41,10 +48,21 @@ static int rtp_tcp_transport_conn(struct rtp_transport_t* t)
   rmt_addr.sin_port = htons(transport->port[0]);
   rmt_addr.sin_addr.s_addr = inet_addr(transport->dst);
   
-  if(st_connect(transport->m_socket[0], (struct sockaddr*)&rmt_addr, sizeof(rmt_addr), ST_UTIME_NO_TIMEOUT) < 0)
+  if(transport->active)
+  {  
+    if(st_connect(transport->m_socket[0], (struct sockaddr*)&rmt_addr, sizeof(rmt_addr), ST_UTIME_NO_TIMEOUT) < 0)
+    {
+      printf("ACTIVE connect dst[%s:%d] err.\n", transport->dst, transport->port[0]);
+      return -1;
+    }
+  }
+  else
   {
-    printf("st_connect dst[%s:%d] err.\n", transport->dst, transport->port[0]);
-    return -1;
+    int addrlen = 0;
+    struct sockaddr_in  cli_addr;
+    listen(st_netfd_fileno(transport->m_socket[0]), 12);
+    transport->m_child[0] = st_accept(transport->m_socket[0], (struct sockaddr *)&cli_addr, &addrlen, ST_UTIME_NO_TIMEOUT);
+    printf("PASSIVE accept peer_port:%d, m_child:%d\n", transport->port[0], transport->m_child[0]);
   }
   
   return 0;
@@ -64,13 +82,17 @@ static void rtp_tcp_transport_free(struct rtp_transport_t* t)
   		if (transport->m_socket[i])
   			st_netfd_close(transport->m_socket[i]);
   		transport->m_socket[i] = NULL;
+  		
+  		if (transport->m_child[i])
+  			st_netfd_close(transport->m_child[i]);
+  		transport->m_child[i] = NULL;
   	}
   	free(transport);
   }
 }
 
 struct rtp_transport_t*
-    rtp_tcp_transport_new(const char* dst, unsigned short port[2])
+    rtp_tcp_transport_new(const char* dst, unsigned short port[2], int active)
 {
   struct rtp_tcp_transport_t* transport = calloc(1, sizeof(struct rtp_tcp_transport_t));
   
@@ -79,6 +101,7 @@ struct rtp_transport_t*
   transport->base.recv = rtp_tcp_transport_recv;
   transport->base.conn = rtp_tcp_transport_conn;
   transport->base.free = rtp_tcp_transport_free;
+  transport->active = active;
   
   strncpy(transport->dst, dst, sizeof(transport->dst)-1);
   transport->port[0] = port[0];
@@ -120,18 +143,30 @@ static int rtp_udp_transport_conn(struct rtp_transport_t* t)
   return 0;
 }
 
-
 static int rtp_udp_transport_send(struct rtp_transport_t* t, int rtcp, const void* data, size_t bytes)
 {
   struct rtp_udp_transport_t* transport = (struct rtp_udp_transport_t*)t; 
   
 	int i = rtcp ? 1 : 0;
+	
+	//dump rtp-pkt; 
+  #if 0
 	if(i)
 	{
   	char ip[SOCKET_ADDRLEN]; u_short port;
     socket_addr_to((struct sockaddr*)&transport->m_addr[i], transport->m_addrlen[i], ip, &port);
-    printf("%s => pid:%d, i:%d, bytes:%d to[%s:%d]\n", __func__, getpid(), i, bytes, ip, port);
+    printf("%s => RTCP pid:%d, i:%d, bytes:%d to [%s:%d]\n", __func__, getpid(), i, bytes, ip, port);
   }
+  else
+  {
+    rtp_header_t rtp;
+    const uint8_t *ptr = (const unsigned char *)data;
+    uint32_t v = nbo_r32(ptr);
+    
+    printf("%s => RTP pid:%d, rtp[m:%d,pt:%d,seq:%d,ts:%u,ssrc:%u,bytes:%d]\n"
+          , __func__, getpid(), RTP_M(v), RTP_PT(v), RTP_SEQ(v), nbo_r32(ptr+4), nbo_r32(ptr+8), bytes);
+  }
+  #endif
   
 	return st_sendto(transport->m_socket[i], data, bytes, (struct sockaddr*)&transport->m_addr[i], transport->m_addrlen[i], ST_UTIME_NO_TIMEOUT);
 }

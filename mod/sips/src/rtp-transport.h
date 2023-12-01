@@ -19,7 +19,7 @@ struct rtp_transport_t*
     rtp_udp_transport_new2(st_netfd_t rtp[2], const char* ip, unsigned short port[2]);
 
 struct rtp_transport_t*
-    rtp_tcp_transport_new(const char* dst, unsigned short port[2]);
+    rtp_tcp_transport_new(const char* dst, unsigned short port[2], int active);
 
 
 #endif /* !_rtp_transport_h_ */

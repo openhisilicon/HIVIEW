@@ -14,7 +14,7 @@ struct rtp_media_file_t
   struct rtp_transport_t* rtp_transport[MEDIA_TRACK_BUTT];
 };
 
-static int rtp_file_get_sdp(struct rtp_media_t* _m, char *sdp)
+static int rtp_file_get_sdp(struct rtp_media_t* _m, char *sdp, int fmt, int ssrc)
 {
   struct rtp_media_file_t *m = (struct rtp_media_file_t*)_m;
   return 0;

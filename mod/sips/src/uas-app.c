@@ -29,6 +29,7 @@ extern gsf_sips_t sips_parm;
 //for xml binding;
 #include "sxb_sips.h"
 
+static int listen_port = 5060;
 
 struct sip_uac_transport_address_t
 {
@@ -118,7 +119,7 @@ static int sip_uac_transport_via(void* transport, const char* destination, char 
 	// SIP server that the SIP request was delivered to.
 
 	// TODO: sips port
-	r = socket_addr_from(&t->addr, &t->addrlen, uri->host, uri->port ? uri->port : SIP_PORT);
+	r = socket_addr_from(&t->addr, &t->addrlen, uri->host, uri->port ? uri->port : listen_port);
 	if (0 == r)
 	{
 		socket_addr_to((struct sockaddr*)&t->addr, t->addrlen, ip, &port);
@@ -134,7 +135,7 @@ static int sip_uac_transport_via(void* transport, const char* destination, char 
 			if (0 == socket_addr_from(&ss, &len, local, port))
 				socket_addr_name((struct sockaddr*)&ss, len, dns, 128);
 
-			//if (SIP_PORT != port)
+			//if (listen_port != port)
 				snprintf(local + strlen(local), 128 - strlen(local), ":%hu", port);
 
 			//if (NULL == strchr(dns, '.'))
@@ -223,12 +224,28 @@ static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, stru
 	    		m->port[0] = m->medias[i].port[0];
 	        m->port[1] = m->medias[i].nport > 1 ? m->medias[i].port[1] : (m->medias[i].port[0] + 1);
 	          
+          //a=setup:active
+          //a=connection:new
+        	int active  = strstr(data, "a=setup:active")?0:1;
+        	  
 	        int ret = m->media->add_transport(m->media, "video"
-	                  , strstr(m->medias[i].proto, "TCP")?rtp_tcp_transport_new(m->medias[i].address, m->port):
+	                  , strstr(m->medias[i].proto, "TCP")?rtp_tcp_transport_new(m->medias[i].address, m->port, active):
 	                          rtp_udp_transport_new(m->medias[i].address, m->port));
+	                          
+		      printf("i:%d, media video local port[%d,%d]\n", i, m->port[0], m->port[1]);
 		   }
 		}
 		
+		
+    /* SSRC */
+  	char *_ssrc = strstr(data, "y=");
+  	uint32_t ssrc = 0x5F5E4E9; //"y=0100001001"
+  	if(_ssrc)
+  	{
+  		sscanf(_ssrc, "y=%d", &ssrc);
+	  }
+		
+
     // reply;
 	  const char* pattern_live = "v=0\r\n"
     "o=34020000001110000001 0 0 IN IP4 %s\r\n"
@@ -238,17 +255,47 @@ static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, stru
     ;
 
     char *name = "34020000001110000001";
-    char *host = strstr(req->to.uri.host.p, "@");
-    host = (host)?host+1:"0.0.0.0";
+    char *_host = strstr(req->to.uri.host.p, "@");
+    char *_port = (_host)?strstr(_host, ":"):NULL;
+    
+    char host[128] = {0};
+    char port[16] = {0};
+    if(_host && _port)
+      sscanf(_host, "@%127[^:]", host);
+    if(!strlen(host))
+    {
+      strcpy(host, "0.0.0.0");
+    }
+    if(_port)
+      sscanf(_port, ":%15[^>]", port);
+    if(!strlen(port))
+    {
+      strcpy(port, "5060");
+    }
     
     char sdp[2048] = {0};
     snprintf(sdp, sizeof(sdp), pattern_live, host, host);
     
-    //m->port[0-1];
-    m->media->get_sdp(m->media, sdp, strstr(data, "PS/9000")?1:0);
+    #if 0 //m->port[0-1];
+    m->media->get_sdp(m->media, sdp, strstr(data, "PS/90000")?1:0, ssrc);
+    #else
+    {
+      m->media->get_sdp(m->media, NULL, strstr(data, "PS/90000")?1:0, ssrc);
+        
+      const char* pattern_video =
+        "m=video %d RTP/AVP 96\r\n"
+        "a=sendonly\r\n"
+        "a=rtpmap:96 PS/90000\r\n"
+        "y=%d\r\n"
+        ;
+      char sdp_video[256] = {0};  
+      snprintf(sdp_video, sizeof(sdp_video), pattern_video, m->port[0], ssrc);
+      strcat(sdp, sdp_video);
+    }
+    #endif
     
     char contact[128];
-    sprintf(contact, "sip:%s@%s", name, host);
+    sprintf(contact, "sip:%s@%s:%s", name, host, port);
 		sip_uas_add_header(t, "Content-Type", "application/sdp");
 		sip_uas_add_header(t, "Contact", contact);
 		assert(0 == sip_uas_reply(t, 200, sdp, strlen(sdp)));
@@ -558,6 +605,13 @@ static void sip_uac_register_do(struct sip_uas_app_t *app)
   
   app->registed = 0;
   
+  if(1)
+  {
+    char contact[128];
+    sprintf(contact, "sip:%s@%s:%d", app->usr, app->transport.local, listen_port);
+		sip_uac_add_header(t, "Contact", contact);
+  }
+  
 	if (app->callid[0])
 	{
 		// All registrations from a UAC SHOULD use the same Call-ID
@@ -637,7 +691,8 @@ void sip_uas_app(void)
 	app.response = http_parser_create(HTTP_PARSER_SERVER);
 
   app.tcp = NULL;
-	app.udp = socket_listen_udp(SIP_PORT);
+  listen_port = sips_parm.port?sips_parm.port:listen_port;
+	app.udp = socket_listen_udp(listen_port);
 	
 	app.register_runing = 1;
   app.transport.udp = app.udp;
@@ -647,9 +702,11 @@ void sip_uas_app(void)
 	
 	sprintf(app.usr, "%s", strlen(sips_parm.device)?sips_parm.device:"34020000001110000001");
 	sprintf(app.pwd, "%s", strlen(sips_parm.password)?sips_parm.password:"12345678");
-	sprintf(app.host,"%s", strlen(sips_parm.host)?sips_parm.host:"sip:34020000002000000001@192.168.0.166:5060");
+	sprintf(app.host,"%s", strlen(sips_parm.host)?sips_parm.host:"sip:34020000002000000001@192.168.0.166:5061");
+	  
 	app.expired = sips_parm.expired?sips_parm.expired:3600;
 	app.keepalive = sips_parm.keepalive?sips_parm.keepalive:60;
+	  
   sprintf(app.from, "sip:%s@3402000000", app.usr);
 	
 	if(sips_parm.enable)
