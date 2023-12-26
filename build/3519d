@@ -2,7 +2,7 @@ export GSF_CPU_ARCH=3519d
 export GSF_DEV_TYPE=ipc
 export GSF_HOME=`pwd`
 export GSF_CC="aarch64-v01c01-linux-gnu-gcc -fPIC"
-export GSF_AR=aarch64-mix210-linux-ar
+export GSF_AR=aarch64-v01c01-linux-gnu-ar
 export GSF_CFLAGS="-fPIC -g -DGSF_CPU_3519d -fsigned-char -mcpu=cortex-a55 -fno-aggressive-loop-optimizations -ldl -ffunction-sections -fdata-sections  -fstack-protector-strong -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -DUSER_BIT_64 -DKERNEL_BIT_64 -Wno-date-time"
 export GSF_LDFLAGS="-fno-common -mcpu=cortex-a55 -fno-aggressive-loop-optimizations -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -ldl -rdynamic -shared -fPIC -DUSER_BIT_64 -DKERNEL_BIT_64 -Wno-date-time"
 export GSF_EXECFLAGS="-fPIE -pie -s -Wall"
