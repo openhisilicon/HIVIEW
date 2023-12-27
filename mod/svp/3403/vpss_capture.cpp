@@ -299,6 +299,8 @@ int VpssCapture::get_frame(cv::Mat &cv_mat)
       return -1;
   }
   
+  //printf("grp:%d, chn:%d, chn_fd:%d\n", g_vpss_grp, g_vpss_chn, hi_mpi_vpss_get_chn_fd(g_vpss_grp, g_vpss_chn));
+  
 	bool send_to_vgs = ((HI_COMPRESS_MODE_NONE != g_frame[0].video_frame.compress_mode) 
 	                  || (HI_VIDEO_FORMAT_LINEAR != g_frame[0].video_frame.video_format)
 	                  || (this->vgsW != 0 && this->vgsH != 0));
@@ -407,11 +409,18 @@ int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame, hi_video_frame_
 
 int VpssCapture::destroy()
 {
+  if(g_vpss_depth_flag == 0)
+  {
+    return -1;
+  }  
+  
 	vpss_restore(g_vpss_grp, g_vpss_chn);
 	g_frame[0].pool_id = HI_VB_INVALID_POOL_ID;
 	g_frame[1].pool_id = HI_VB_INVALID_POOL_ID;
-	
-	hi_mpi_sys_mmz_free(dst_img.phys_addr[0], (hi_void *)dst_img.virt_addr[0]);
-	dst_img.virt_addr[0] = 0;
+	if(dst_img.virt_addr[0])
+	{  
+  	hi_mpi_sys_mmz_free(dst_img.phys_addr[0], (hi_void *)dst_img.virt_addr[0]);
+  	dst_img.virt_addr[0] = 0;
+	}
 	return 0;
 }

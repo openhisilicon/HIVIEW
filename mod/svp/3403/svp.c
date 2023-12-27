@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
       {
         if(yolo_alg == 0 && svp_parm.svp.yolo_alg > 0)
         {
-          yolo_start(home_path, 1/*v8*/);
+          yolo_start(home_path, 0/*v8*/);
         }
         else if(yolo_alg > 0 && svp_parm.svp.yolo_alg == 0)
         {

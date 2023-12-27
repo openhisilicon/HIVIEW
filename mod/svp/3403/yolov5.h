@@ -22,7 +22,7 @@ typedef struct {
 }yolo_boxs_t;
 #endif
 
-#define YOLO_CHN_MAX 4
+#define YOLO_CHN_MAX 9
 int yolov5_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *ModelPath);
 int yolov5_detect(yolo_boxs_t boxs[YOLO_CHN_MAX]);
 int yolov5_deinit();

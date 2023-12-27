@@ -23,8 +23,15 @@ static int _v8 = 0;
 int yolo_load(char *home_path)
 {
   //for chn: ---------------- ch0 ch1 ch2 ch3---//
-  int VpssGrp[YOLO_CHN_MAX] = {0, -1, -1, -1};
-  int VpssChn[YOLO_CHN_MAX] = {1, -1, -1, -1};
+  #if defined(GSF_CPU_3403) && defined(GSF_DEV_NVR)
+  #warning "GSF_CPU_3403 && GSF_DEV_NVR"
+  int VpssGrp[YOLO_CHN_MAX] = {0, 1, 2, 3, 4, 5, 6, 7, -1};
+  int VpssChn[YOLO_CHN_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, -1};
+  #else
+  #warning "GSF_CPU_3403 && GSF_DEV_IPC"
+  int VpssGrp[YOLO_CHN_MAX] = {0, -1, -1, -1, -1, -1, -1, -1, -1};
+  int VpssChn[YOLO_CHN_MAX] = {1, -1, -1, -1, -1, -1, -1, -1, -1};
+  #endif
   
   if(svp_parm.svp.yolo_alg == 2)
   {
@@ -195,7 +202,9 @@ static void* yolo_task(void* p)
       int ret = _v8?yolov8_detect(boxs):yolov5_detect(boxs);
 
       for(int i = 0; i < ret; i++)
+      {
         pub_send(&boxs[i]);
+      } 
   }
   
   yolo_boxs_t boxs[YOLO_CHN_MAX] = {0};
