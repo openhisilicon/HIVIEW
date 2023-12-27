@@ -14,6 +14,7 @@ CFLAGS += -I${GSF_HOME}/fw/freetype/inc
 LDFLAGS ?= -lpthread -lfreetype
 BIN = liblvgl.a
 
+CFLAGS += $(GSF_CFLAGS)
 
 #Collect the files to compile
 MAINSRC = ./main.c ./mouse_ico.c
