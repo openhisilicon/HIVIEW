@@ -30,7 +30,7 @@
  * - 32: ARGB8888
  */
 
-#if 0
+#if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
 #warning "LV_COLOR_DEPTH == 32"
 #define LV_COLOR_DEPTH     32 //ARGB8888
 #define LV_COLOR_SCREEN_TRANSP    1
@@ -39,6 +39,7 @@
 #define LV_COLOR_DEPTH     16   //ARGB1555 maohw
 #define LV_COLOR_SCREEN_TRANSP    0
 #endif
+
 /* Swap the 2 bytes of RGB565 color.
  * Useful if the display has a 8 bit interface (e.g. SPI)*/
 #define LV_COLOR_16_SWAP   0

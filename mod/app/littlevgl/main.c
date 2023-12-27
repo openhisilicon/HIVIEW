@@ -12,6 +12,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/select.h>
+#include <errno.h>
 
 #include "mod/svp/inc/svp.h"
 #include "mod/app/inc/app.h"
@@ -19,12 +20,16 @@
 #include "mod/rec/inc/rec.h"
 
 #define __UI_LINES__  0
+#define __UI_IOU__    0
 
 #define __UI_LOGO__   1
 
 #define __UI_MOUSE__  0
 #define __UI_ZOOM__   0
 #define __UI_STAT__   0
+
+
+
 
 #define DISP_BUF_SIZE (80*LV_HOR_RES_MAX/*1280*/)
 
@@ -307,7 +312,7 @@ static void sceneae_event_handler(lv_obj_t * slider, lv_event_t event)
         int16_t v = lv_slider_get_value(slider);
         printf("%s => LV_EVENT_VALUE_CHANGED v:%d\n", __func__, v);
         ae->compensation_mul = v*0.1;
-        GSF_MSG_SENDTO(GSF_ID_CODEC_SCENEAE, 0, GET, 0
+        GSF_MSG_SENDTO(GSF_ID_CODEC_SCENEAE, 0, SET, 0
                           , sizeof(gsf_scene_ae_t)
                           , GSF_IPC_CODEC, 2000);
     }
@@ -522,12 +527,13 @@ static void* lvgl_main(void* p)
     mouse_hid_cb_set(zoom_hid_cb);
     #endif
 
+    #define OBJ_MAX_CHN  8
+    #define OBJ_MAX_CNT  8
+    int i = 0, cnt[OBJ_MAX_CHN] = {0,};
+    lv_obj_t *obj[OBJ_MAX_CNT*OBJ_MAX_CHN];
+    lv_obj_t *label[OBJ_MAX_CNT*OBJ_MAX_CHN];
     
-    int i = 0, cnt = 0;
-    lv_obj_t *obj[64];
-    lv_obj_t *label[64];
-    
-    for(i = 0; i < 64; i++)
+    for(i = 0; i < OBJ_MAX_CNT*OBJ_MAX_CHN; i++)
     {
       obj[i] = lv_obj_create(win, NULL);
       label[i] = lv_label_create(obj[i], NULL);
@@ -543,7 +549,15 @@ static void* lvgl_main(void* p)
     #endif
     
     // GSF_PUB_SVP
+    //msq;
     msq = msgget(111, IPC_CREAT | 0666);
+    struct msqid_ds queue_info;
+    msgctl(msq, IPC_STAT, &queue_info);
+    printf("msg_qbytes: %d\n", queue_info.msg_qbytes);
+    queue_info.msg_qbytes = 160*1024;
+    msgctl(msq, IPC_SET, &queue_info);
+    
+    // GSF_PUB_SVP
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     
     /*Handle LitlevGL tasks (tickless mode)*/
@@ -564,9 +578,14 @@ static void* lvgl_main(void* p)
         #endif
         
         if((ret = msgrcv(msq, _buf, sizeof(_buf), 0, IPC_NOWAIT)) > 0)
+        do  
         {
           gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*)mbuf->mtext;
           int chn = mbuf->mtype - 1;
+          if(chn >= OBJ_MAX_CHN)
+          {  
+            break;
+          }
           
           float xr = 0, yr = 0, wr = 0, hr = 0;
           
@@ -574,6 +593,18 @@ static void* lvgl_main(void* p)
           {
             xr = 0; yr = chn*(vres/2);
             wr = hres; wr/= yolos->w;
+            hr = vres/2; hr/= yolos->h;
+          }
+          else if(lt == 8) //for 8ch
+          {
+            xr = 0 + (chn%3)*(hres/3); yr = (chn/3)*(vres/3);
+            wr = hres/3; wr/= yolos->w;
+            hr = vres/3; hr/= yolos->h;
+          }
+          else if(lt == 4) //for 4ch
+          {
+            xr = 0 + (chn%2)*(hres/2); yr = (chn/2)*(vres/2);
+            wr = hres/2; wr/= yolos->w;
             hr = vres/2; hr/= yolos->h;
           }
           else if(lt == 2) //for 2ch
@@ -588,22 +619,26 @@ static void* lvgl_main(void* p)
             hr = vres; hr/= yolos->h;
           }
           
-          yolos->cnt = (yolos->cnt > 64)?64:yolos->cnt;
+          yolos->cnt = (yolos->cnt > OBJ_MAX_CNT)?OBJ_MAX_CNT:yolos->cnt;
           
-          for(i = yolos->cnt; i < cnt; i++)
+          for(i = yolos->cnt; i < cnt[chn]; i++)
           {
-            lv_obj_set_size(obj[i], 0, 0);
+            lv_obj_set_size(obj[i + chn*OBJ_MAX_CNT], 0, 0);
           }
           
           for(i = 0; i < yolos->cnt; i++)
           {
-            lv_label_set_text(label[i], yolos->box[i].label);
-            lv_obj_set_size(obj[i], yolos->box[i].rect[2] * wr, yolos->box[i].rect[3] * hr);
-            lv_obj_set_x(obj[i], xr + yolos->box[i].rect[0] *wr);
-            lv_obj_set_y(obj[i], yr + yolos->box[i].rect[1] *hr);
+            lv_label_set_text(label[i + chn*OBJ_MAX_CNT], yolos->box[i].label);
+            lv_obj_set_size(obj[i+ chn*OBJ_MAX_CNT], yolos->box[i].rect[2] * wr, yolos->box[i].rect[3] * hr);
+            lv_obj_set_x(obj[i+ chn*OBJ_MAX_CNT], xr + yolos->box[i].rect[0] *wr);
+            lv_obj_set_y(obj[i+ chn*OBJ_MAX_CNT], yr + yolos->box[i].rect[1] *hr);
+            #if 0
+            printf("chn:%d, cnt:%d, i:%d, boj(x:%.2f, y:%.2f, w:%.2f, h:%.2f)\n", chn, yolos->cnt
+                    , i, xr + yolos->box[i].rect[0] *wr, yr + yolos->box[i].rect[1] *hr, yolos->box[i].rect[2] * wr, yolos->box[i].rect[3] * hr);
+            #endif
           }
-          cnt = yolos->cnt;
-        }
+          cnt[chn] = yolos->cnt;
+        }while(0);
         else
         {
           usleep(5*1000);

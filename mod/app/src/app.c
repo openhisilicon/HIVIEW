@@ -35,7 +35,7 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 }
 
 //default lt;
-#if defined(GSF_CPU_3559a)
+#if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
 static int lt = 4;
 #else
 static int lt = 1;
@@ -43,7 +43,7 @@ static int lt = 1;
 
 int vo_ly(int num)
 {
-  static int voch[GSF_CODEC_NVR_CHN] = {0,1,2,3};
+  static int voch[GSF_CODEC_NVR_CHN] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
   GSF_MSG_DEF(gsf_layout_t, ly, 8*1024);
   
   if(num >= 1 && num <= 4)
@@ -64,7 +64,7 @@ int vo_ly(int num)
 
   ly->layout = lt;
   
-  #if defined(GSF_CPU_3559a)
+  #if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
   live_get_shmid(ly->layout, voch, 0, ly->shmid);
   #else
   live_get_shmid(ly->layout, voch, lt>1?1:0, ly->shmid);
@@ -214,23 +214,29 @@ int main(int argc, char *argv[])
     
     #ifdef GSF_DEV_NVR
     {
-      #warning "...... DDDDDDDD GSF_DEV_NVR DDDDDDDD ......"
-    
+      #warning "...... @@@@@@@@ GSF_DEV_NVR @@@@@@@@ ......"
+      printf("\n...... @@@@@@@@ GSF_DEV_NVR @@@@@@@@ ......\n");
+      
       //set ly to codec.exe;
+      lt = (app_nvr.gui.layout > 0 || app_nvr.gui.layout <= 8)?app_nvr.gui.layout:lt;
+      
       //kbd_mon("/dev/ttyAMA2");
       live_mon();
+      
+      lvgl_ctl(0, (void*)lt);
       lvgl_start(res.w, res.h, app_nvr.gui.push_osd);
     }
     #else
     {
-      #warning "...... DDDDDDDD GSF_DEV_IPC DDDDDDDD ......"
+      #warning "...... @@@@@@@@ GSF_DEV_IPC @@@@@@@@ ......"
+      printf("\n...... @@@@@@@@ GSF_DEV_IPC @@@@@@@@ ......\n");
       
       //get ly from codec.exe;
       gsf_layout_t ly = {0};
       voly_get(&ly);
       lt = ly.layout;
-      lvgl_ctl(0, (void*)lt);
       
+      lvgl_ctl(0, (void*)lt);
       lvgl_start(res.w, res.h, app_nvr.gui.push_osd);
     }  
     #endif
