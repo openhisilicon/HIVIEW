@@ -247,10 +247,9 @@ int main(int argc, char *argv[])
       json_parm_load(codec_parm_path, &codec_ipc);
     }
     
-    info("parm.venc[0].type:%d, width:%d\n"
-          , codec_ipc.venc[0].type
-          , codec_ipc.venc[0].width);
-          
+    #warning "...... @@@@@@@@ GSF_DEV_IPC @@@@@@@@ ......"
+    printf("\n...... @@@@@@@@ GSF_DEV_IPC @@@@@@@@ ......\n");
+
     // register to bsp && get bsp_def;
     if(reg2bsp() < 0)
       return -1;

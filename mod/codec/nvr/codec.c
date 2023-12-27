@@ -35,13 +35,15 @@
 
 GSF_LOG_GLOBAL_INIT("CODEC", 8*1024);
 
+//resolution;
 static gsf_resolu_t vores;
 #define vo_res_set(_w, _h) do{vores.w = _w; vores.h = _h;}while(0)
-int vo_res_get(gsf_resolu_t *res)
-{
-  *res = vores;
-  return 0;
-}
+int vo_res_get(gsf_resolu_t *res) { *res = vores; return 0;}
+
+//layout;
+static gsf_layout_t voly;
+int vo_ly_set(int ly) {voly.layout = ly; return 0;}
+int vo_ly_get(gsf_layout_t *ly) { *ly = voly; return 0;}
 
 static int req_recv(char *in, int isize, char *out, int *osize, int err)
 {
@@ -57,84 +59,55 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 
     rsp->err = (ret == TRUE)?rsp->err:GSF_ERR_MSG;
     *osize = sizeof(gsf_msg_t)+rsp->size;
-
+    printf("req->id:%d, set:%d, rsp->err:%d, size:%d\n", req->id, req->set, rsp->err, rsp->size);
     return 0;
 }
 
-static int osd_keepalive[GSF_CODEC_OSD_NUM] = {3,3,3,3,3,3,3,3};
+
 
 static int sub_recv(char *msg, int size, int err)
 {
   gsf_msg_t *pmsg = (gsf_msg_t*)msg;
   
   //printf("pmsg->id:%d\n", pmsg->id);
-  
-  if(pmsg->id == GSF_EV_SVP_MD)
+  if(pmsg->id == GSF_EV_SVP_YOLO)
   {
-    gsf_svp_mds_t *mds = (gsf_svp_mds_t*) pmsg->data;
+    gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*) pmsg->data;
     
     int i = 0;
-    for(i = 0; i < 4 && i < mds->cnt; i++)
-    {
-      
-      osd_keepalive[i] = 3;
-      
-      gsf_osd_t osd;
+    gsf_rgn_rects_t rects = {0};
 
-      osd.en = 1;
-      osd.type = 0;
-      osd.fontsize = 0;
-      osd.point[0] = (unsigned int)((float)mds->result[i].rect[0]/(float)mds->w*1920)&(-1);
-      osd.point[1] = (unsigned int)((float)mds->result[i].rect[1]/(float)mds->h*1080)&(-1);
-      osd.wh[0]    = (unsigned int)((float)mds->result[i].rect[2]/(float)mds->w*1920)&(-1);
-      osd.wh[1]    = (unsigned int)((float)mds->result[i].rect[3]/(float)mds->h*1080)&(-1);
-      
-      sprintf(osd.text, "ID: %d", i);
-      
-      printf("GSF_EV_SVP_MD idx: %d, osd: x:%d,y:%d,w:%d,h:%d\n"
-            , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1]);
-            
-      gsf_rgn_osd_set(0, i, &osd);
-    }
-  }
-  else if(pmsg->id == GSF_EV_SVP_LPR)
-  {
-    gsf_svp_lprs_t *lprs = (gsf_svp_lprs_t*) pmsg->data;
+    float xr = 0, yr = 0, wr = 1, hr = 1;
+    int chn = pmsg->ch;
+        
+    rects.size = yolos->cnt;
+    rects.w = yolos->w;
+    rects.h = yolos->h;
     
-    int i = 0;
-    //lprs->cnt = 1;
-    for(i = 0; i < 4 && i < lprs->cnt; i++)
+    int j = 0;
+    for(i = 0; i < yolos->cnt; i++)
     {
+      rects.box[j].rect[0] = xr + yolos->box[i].rect[0]/wr;
+      rects.box[j].rect[1] = yr + yolos->box[i].rect[1]/hr;
+      rects.box[j].rect[2] = yolos->box[i].rect[2]/wr;
+      rects.box[j].rect[3] = yolos->box[i].rect[3]/hr;
+      gsf_gb2312_to_utf8(yolos->box[i].label, strlen(yolos->box[i].label), rects.box[j].label);
       
-      osd_keepalive[i] = 3;
-      
-      gsf_osd_t osd;
-
-      osd.en = 1;
-      osd.type = 0;
-      osd.fontsize = 1;
-
-      osd.point[0] = 0;//(unsigned int)((float)lprs->result[i].rect[0]/(float)lprs->w*1920)&(-1);
-      osd.point[1] = 800+i*100;//(unsigned int)((float)lprs->result[i].rect[1]/(float)lprs->h*1080)&(-1);
-      osd.wh[0]    = (unsigned int)((float)lprs->result[i].rect[2]/(float)lprs->w*1920)&(-1);
-      osd.wh[1]    = (unsigned int)((float)lprs->result[i].rect[3]/(float)lprs->h*1080)&(-1);
-      
-      char utf8str[32] = {0};
-      gsf_gb2312_to_utf8(lprs->result[i].number, strlen(lprs->result[i].number), utf8str);
-      sprintf(osd.text, "%s", utf8str);
-      
-      printf("GSF_EV_SVP_LPR idx: %d, osd: rect: [%d,%d,%d,%d], utf8:[%s]\n"
-            , i, osd.point[0], osd.point[1], osd.wh[0], osd.wh[1], osd.text);
-            
-      gsf_rgn_osd_set(0, i, &osd);
-    }
+      j++;
+    } rects.size = j;
+    
+    // osd to sub-stream if main-stream > 1080P;
+    //printf("chn:%d, rects.size:%d\n", chn, rects.size);
+    gsf_rgn_rect_set(chn, 0, &rects, (codec_nvr.venc[0].width>1920)?2:1);
+    //gsf_rgn_nk_set(0, 0, &rects, (codec_nvr.venc[0].width>1920)?2:1);
+    
   }
 
   return 0;
 }
 
 static gsf_venc_ini_t *p_venc_ini = NULL;
-
+static gsf_rgn_ini_t *p_rgn_ini = NULL;
 
 int venc_start(int start)
 {
@@ -215,8 +188,6 @@ int main(int argc, char *argv[])
 {
     gsf_bsp_def_t bsp_def;  
     
-    #if 1
-      
     if(argc < 2)
     {
       printf("pls input: %s codec_parm.json\n", argv[0]);
@@ -235,14 +206,14 @@ int main(int argc, char *argv[])
       int ret = GSF_MSG_SENDTO(GSF_ID_BSP_DEF, 0, GET, 0, 0, GSF_IPC_BSP, 2000);
       gsf_bsp_def_t *def = (gsf_bsp_def_t*)__pmsg->data;
       printf("GET GSF_ID_BSP_DEF To:%s, ret:%d, model:%s\n", GSF_IPC_BSP, ret, def->board.model);
-    
       if(ret < 0)
         return 0;
         
       bsp_def = *def;
     }
     
-    #endif
+    #warning "...... @@@@@@@@ GSF_DEV_NVR @@@@@@@@ ......"
+    printf("\n...... @@@@@@@@ GSF_DEV_NVR @@@@@@@@ ......\n");
     
     char home_path[256] = {0};
     proc_absolute_path(home_path);
@@ -257,57 +228,67 @@ int main(int argc, char *argv[])
     cfg.res = (sync == VO_OUTPUT_1080P60)?2:8;
     gsf_mpp_cfg(home_path, &cfg);
     
-    #if defined(GSF_CPU_3559a)
-    
-    //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, sync, 0);
-    gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
-    gsf_mpp_fb_start(VOFB_GUI, sync, 0);
-    
-    live_mon();
-    
-    gsf_rgn_ini_t rgn_ini = {.ch_num = 8, .st_num = 1};
-    gsf_venc_ini_t venc_ini = {.ch_num = 8, .st_num = 1};
-    p_venc_ini = &venc_ini;
-    
-    #else
-    
-    if(mipi_800x1280)
+    #if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
     {
-      gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
-      gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
-      
-      //---- 800x640 -----//
-      //---- 800x640 -----//
-      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
-      vo_res_set(800, 1280);
-    }
-    else
-    {
+      //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_VGA|VO_INTF_HDMI, sync, 0);
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
       gsf_mpp_fb_start(VOFB_GUI, sync, 0);
-      
-      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      //gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      //vo_ly_set(VO_LAYOUT_1MUX);
       
       if(sync == VO_OUTPUT_1080P60)
         vo_res_set(1920, 1080);
       else
         vo_res_set(3840, 2160);
+          
+      gsf_rgn_ini_t rgn_ini = {.ch_num = 8, .st_num = 1};
+      gsf_venc_ini_t venc_ini = {.ch_num = 8, .st_num = 1};
+      p_venc_ini = &venc_ini;
+      p_rgn_ini  = &rgn_ini;
     }
-    
-    live_mon();
-    
-    gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 1};
-    gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 1};
-    p_venc_ini = &venc_ini;
-    
+    #else
+    {
+      if(mipi_800x1280)
+      {
+        gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
+        gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
+        
+        //---- 800x640 -----//
+        //---- 800x640 -----//
+        gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
+        vo_ly_set(VO_LAYOUT_2MUX);
+        vo_res_set(800, 1280);
+      }
+      else
+      {
+        gsf_mpp_vo_start(VODEV_HD0, VO_INTF_HDMI, sync, 0);
+        gsf_mpp_fb_start(VOFB_GUI, sync, 0);
+        
+        gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+        vo_ly_set(VO_LAYOUT_1MUX);
+        
+        if(sync == VO_OUTPUT_1080P60)
+          vo_res_set(1920, 1080);
+        else
+          vo_res_set(3840, 2160);
+      }
+
+      gsf_rgn_ini_t rgn_ini = {.ch_num = 2, .st_num = 1};
+      gsf_venc_ini_t venc_ini = {.ch_num = 2, .st_num = 1};
+      p_venc_ini = &venc_ini;
+      p_rgn_ini  = &rgn_ini;
+    }
     #endif
   
-    //internal-init rgn, venc;
-    gsf_rgn_init(&rgn_ini);
-    gsf_venc_init(&venc_ini);
+    //start live;
+    live_mon();
   
-    //test vdec => vpss => venc;
-    ///venc_start(1);
+    //internal-init rgn, venc;
+    gsf_rgn_init(p_rgn_ini);
+    gsf_venc_init(p_venc_ini);
+  
+    //vdec => vpss => venc;
+    venc_start(1);
     
     // regtister;
     while(1)
@@ -327,7 +308,7 @@ int main(int argc, char *argv[])
       sleep(1);
     }
     
-    GSF_LOG_CONN(1, 100);
+    GSF_LOG_CONN(0, 100);
     void* rep = nm_rep_listen(GSF_IPC_CODEC, NM_REP_MAX_WORKERS, NM_REP_OSIZE_MAX, req_recv);
     
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);

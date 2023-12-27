@@ -160,29 +160,40 @@ static int ir_cb(int ViPipe, int dayNight, void* uargs)
     return 0;
   }
   
-  if(_ircut_type)
+
+  else if(_ircut_type)
   {
     if(_ircut_ctl == IRCUT_CTL_LEVEL)
     {
-    if(dayNight) 
-      system("echo 1 > /sys/class/gpio/gpio83/value;echo 1 > /sys/class/gpio/gpio84/value");
-    else
-      system("echo 0 > /sys/class/gpio/gpio83/value;echo 0 > /sys/class/gpio/gpio84/value");
+      if(dayNight) 
+        system("echo 1 > /sys/class/gpio/gpio83/value;echo 1 > /sys/class/gpio/gpio84/value");
+      else
+        system("echo 0 > /sys/class/gpio/gpio83/value;echo 0 > /sys/class/gpio/gpio84/value");
     }
-    else 
-    {
-    if(dayNight) 
-      system("echo 0 > /sys/class/gpio/gpio83/value;echo 1 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio84/value");
     else
-      system("echo 1 > /sys/class/gpio/gpio83/value;echo 0 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio83/value");
+    {
+      if(dayNight) 
+        system("echo 0 > /sys/class/gpio/gpio83/value;echo 1 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio84/value");
+      else
+        system("echo 1 > /sys/class/gpio/gpio83/value;echo 0 > /sys/class/gpio/gpio84/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio83/value");
     }
   }
   else
   {
-    if(dayNight)
-      system("echo 0 > /sys/class/gpio/gpio27/value;echo 1 > /sys/class/gpio/gpio28/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio28/value;");
+    if(_ircut_ctl == IRCUT_CTL_LEVEL)
+    {
+      if(dayNight) 
+        system("echo 1 > /sys/class/gpio/gpio27/value;echo 1 > /sys/class/gpio/gpio28/value");
+      else
+        system("echo 0 > /sys/class/gpio/gpio27/value;echo 0 > /sys/class/gpio/gpio28/value");
+    }
     else
-      system("echo 1 > /sys/class/gpio/gpio27/value;echo 0 > /sys/class/gpio/gpio28/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio27/value;");
+    {
+      if(dayNight)
+        system("echo 0 > /sys/class/gpio/gpio27/value;echo 1 > /sys/class/gpio/gpio28/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio28/value;");
+      else
+        system("echo 1 > /sys/class/gpio/gpio27/value;echo 0 > /sys/class/gpio/gpio28/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio27/value;");
+    }  
   }
   
   printf("IR Lamp night:%d\n", dayNight);
@@ -897,7 +908,7 @@ static int zoom2led(int z)
 
 static int af_zoom_value(int z)
 {
-  printf("z: %d\n", z);
+  //printf("z: %d\n", z);
   _zoomValue = z;
   if(_dayNight)
   {

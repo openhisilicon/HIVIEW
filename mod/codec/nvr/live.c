@@ -127,7 +127,7 @@ static void* live_task(void *parm)
     int fds = cfifo_ep_wait(ep, 2000, result, 255);
     if(fds <= 0)
     {
-       printf("cfifo_ep_wait err fds:%d\n", fds);
+       //printf("cfifo_ep_wait err fds:%d\n", fds);
     }
     
     //printf("cfifo_ep_wait ok fds:%d\n", fds);
@@ -150,7 +150,7 @@ static void* live_task(void *parm)
           attr.etype  = PT_VENC(frm->video.encode);// PAYLOAD_TYPE_E;
           attr.width  = frm->video.width;   // width;
           attr.height = frm->video.height;  // height;
-          attr.pts    = frm->pts*1000; // pts ms*1000;
+          attr.pts    = frm->pts*1000;      // pts ms*1000;
           ret = gsf_mpp_vo_vsend(VOLAYER_HD0, (int)ch, data, &attr);
       }while(1);
     }

@@ -27,19 +27,19 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
     
   gsf_frm_t rec;
   rec.type = GSF_FRM_VIDEO;
-  rec.flag = (pstStream->u32PackCount > 1)?GSF_FRM_FLAG_IDR:0;
-  rec.seq  = pstStream->u32Seq;
+  rec.flag = (venc_pack_count > 1)?GSF_FRM_FLAG_IDR:0;
+  rec.seq  = venc_seq;
   rec.utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
-  rec.pts  = pstStream->pstPack[0].u64PTS/1000;
+  rec.pts  = venc_pts/1000;
   rec.video.encode = codec_nvr.venc[mgr->vst%GSF_CODEC_VENC_NUM].type;
   rec.video.width  = codec_nvr.venc[mgr->vst%GSF_CODEC_VENC_NUM].width;
   rec.video.height = codec_nvr.venc[mgr->vst%GSF_CODEC_VENC_NUM].height;
   rec.size = 0;
   
   
-  for (i = 0; i < pstStream->u32PackCount && i < GSF_FRM_NAL_NUM; i++)
+  for (i = 0; i < venc_pack_count && i < GSF_FRM_NAL_NUM; i++)
   {
-    rec.video.nal[i] = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;
+    rec.video.nal[i] = venc_pack_len - venc_pack_off;
     rec.size += rec.video.nal[i];
   }
   
@@ -58,10 +58,10 @@ unsigned int cfifo_recput(unsigned char *p1, unsigned int n1, unsigned char *p2,
   _n1-=l;_p1+=l;_p2+=a-l;
   //printf("a:%d, _n1:%d, _p1+:%d, _p2+:%d\n", a, _n1, l, a-l);
 
-  for (i = 0; i < pstStream->u32PackCount; i++)
+  for (i = 0; i < venc_pack_count; i++)
   {
-    p = pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset;
-    a = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;
+    p = venc_pack_addr + venc_pack_off;
+    a = venc_pack_len - venc_pack_off;
     
     l = CFIFO_MIN(a, _n1);
     memcpy(_p1, p, l);
@@ -81,21 +81,32 @@ static inline int _venc_sdp_fill(VENC_CHN VeChn, PAYLOAD_TYPE_E pt, VENC_PACK_S*
     case PT_H264:
       {
         
-        int sdp_val = (pstPack->DataType.enH264EType == H264E_NALU_SPS)? GSF_SDP_VAL_SPS:
-                      (pstPack->DataType.enH264EType == H264E_NALU_PPS)? GSF_SDP_VAL_PPS:
-                      (pstPack->DataType.enH264EType == H264E_NALU_SEI)? GSF_SDP_VAL_SEI: -1;
+        int sdp_val = (pack_264_type == H264E_NALU_SPS)? GSF_SDP_VAL_SPS:
+                      (pack_264_type == H264E_NALU_PPS)? GSF_SDP_VAL_PPS:
+                      (pack_264_type == H264E_NALU_SEI)? GSF_SDP_VAL_SEI: -1;
         if(sdp_val < 0)
         {
           break;
         }
         assert(pack_size <= sizeof(venc_mgr[VeChn].val[sdp_val].data));
         venc_mgr[VeChn].val[sdp_val].size =pack_size-4;
-        memcpy(venc_mgr[VeChn].val[sdp_val].data, pstPack->pu8Addr + pstPack->u32Offset+4, venc_mgr[VeChn].val[sdp_val].size);
+        memcpy(venc_mgr[VeChn].val[sdp_val].data, pack_addr + pack_off+4, venc_mgr[VeChn].val[sdp_val].size);
         break;
       }
     case PT_H265:
       {
-        break; 
+        int sdp_val = (pack_265_type == H265E_NALU_SPS)? GSF_SDP_VAL_SPS:
+                      (pack_265_type == H265E_NALU_PPS)? GSF_SDP_VAL_PPS:
+                      (pack_265_type == H265E_NALU_VPS)? GSF_SDP_VAL_VPS:
+                      (pack_265_type == H265E_NALU_SEI)? GSF_SDP_VAL_SEI: -1;
+        if(sdp_val < 0)
+        {
+          break;
+        }
+        assert(pack_size <= sizeof(venc_mgr[VeChn].val[sdp_val].data));
+        venc_mgr[VeChn].val[sdp_val].size =pack_size-4;
+        memcpy(venc_mgr[VeChn].val[sdp_val].data, pack_addr + pack_off+4, venc_mgr[VeChn].val[sdp_val].size);
+        break;
       }
     default:
       break;
@@ -106,15 +117,15 @@ static inline int _venc_sdp_fill(VENC_CHN VeChn, PAYLOAD_TYPE_E pt, VENC_PACK_S*
 int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, void* uargs)
 {
   HI_S32 i = 0, len = 0;
-  
-  for (i = 0; i < pstStream->u32PackCount; i++)
+    
+  for (i = 0; i < venc_pack_count; i++)
   {
-    int pack_size = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;
+    int pack_size = venc_pack_len - venc_pack_off;
     len += pack_size;
     
     //sdp fill;
-    if(pstStream->u32PackCount > 1)
-      _venc_sdp_fill(VeChn, PT, &pstStream->pstPack[i], pack_size);
+    if(venc_pack_count > 1)
+      _venc_sdp_fill(VeChn, PT, &venc_pack, pack_size);
   }
   
   if(len+sizeof(gsf_frm_t) > GSF_FRM_MAX_SIZE)

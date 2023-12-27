@@ -10,9 +10,12 @@
 #include "cfg.h"
 #include "msg_func.h"
 #include "mpp.h"
+#include "rgn.h"
 #include "live.h"
+#include "venc.h"
 
 extern int vo_res_get(gsf_resolu_t *res);
+extern int vo_ly_get(gsf_layout_t *ly);
 
 static void msg_func_vores(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
@@ -43,9 +46,10 @@ static void msg_func_voly(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   }
   else
   {
-    ;
+    gsf_layout_t *ly = (gsf_layout_t *)rsp->data;
+    vo_ly_get(ly);
     rsp->err  = 0;
-    rsp->size = 0;
+    rsp->size = sizeof(gsf_layout_t);
   }
 }
 
@@ -68,7 +72,7 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   sdp->val[1]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1];
   sdp->val[2]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2];
   sdp->val[3]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[3];
-  printf("sid:%d, val.size[%d,%d,%d,%d]\n", req->sid,
+  printf("sid:%d, type:%d, val.size[%d,%d,%d,%d]\n", req->sid, sdp->venc.type,
         venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0].size,
         venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1].size,
         venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2].size,
@@ -91,10 +95,10 @@ static int snap_cb(int idx, VENC_STREAM_S* pstStream, void* u)
   sprintf(name, "/tmp/snap_%02d_%01d.jpg", rsp->ch, rsp->sid);
   FILE* pFile = fopen(name, "wb");
   
-  for (i = 0; i < pstStream->u32PackCount; i++)
+  for (i = 0; i < venc_pack_count; i++)
   {
-    char *src = pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset;
-    int len = pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset;
+    char *src = venc_pack_addr + venc_pack_off;
+    int len = venc_pack_len - venc_pack_off;
     if(pFile)
     {
       //printf("len:%d, rsp->size:%d\n", len, rsp->size);
