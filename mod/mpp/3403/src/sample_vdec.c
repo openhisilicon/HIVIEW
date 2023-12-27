@@ -143,7 +143,7 @@ hi_s32 sample_init_module_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num,
     return ret;
 }
 
-static hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type,
+/*maohw static*/ hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type,
     hi_u32 len)
 {
     hi_vb_cfg vb_cfg;

@@ -228,12 +228,50 @@ __err:
   return -1;
 }
 
-int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
+
+
+hi_void sample_vdec_handle_sig2(hi_s32 signo)
 {
-  return gsf_mpp_cfg_sns(path, cfg);
+  int ret = 0;
+  
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
+  if (signo == SIGINT || signo == SIGTERM) 
+  {
+      //mppex_hook_destroy();
+      ret = sample_comm_vo_hdmi_stop();
+      printf("sample_comm_vo_hdmi_stop ret = %x\n", ret);
+      sample_comm_sys_exit();
+      printf("sample_comm_sys_exit\n");
+  }
+  exit(-1);
 }
 
-static hi_u32 vdec_chn_num = 8;
+
+
+int gsf_mpp_cfg_vdec(char *path, gsf_mpp_cfg_t *cfg)
+{
+  char loadstr[256];
+  sprintf(loadstr, "%s/ko/load_3403v100 -i", path);
+  printf("%s => loadstr: %s\n", __func__, loadstr);
+  system(loadstr);
+  
+  signal(SIGINT, sample_venc_handle_sig2);
+  signal(SIGTERM, sample_venc_handle_sig2);
+  
+  return 0;
+}
+
+
+int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
+{
+  if(cfg && cfg->snscnt > 0)
+    return gsf_mpp_cfg_sns(path, cfg);
+  else  
+    return gsf_mpp_cfg_vdec(path, cfg); 
+}
+
+static hi_u32 vdec_chn_num = 9;
 static sample_vdec_attr sample_vdec[HI_VDEC_MAX_CHN_NUM];
 static sample_venc_vpss_chn_attr vpss_param;
 static sample_venc_vb_attr vb_attr = {0};
@@ -870,7 +908,9 @@ int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
     case GSF_MPP_SCENE_CTL_AE:
       {
         ret = 0; 
-        g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
+        HI_SCENE_CTL_AE_S *ae = (HI_SCENE_CTL_AE_S*)args;
+        
+        g_scene_ctl_ae[ViPipe].compensation_mul = ae->compensation_mul;
         printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
       }
       break;
@@ -1047,24 +1087,29 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     
     hi_u32 vpss_grp_num = 0;
     
-    #if 0 // move to gsf_mpp_vi_start();
-    /************************************************
-    step1:  init SYS, init common VB(for VPSS and VO), init module VB(for VDEC)
-    *************************************************/
-    extern hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type, hi_u32 len);
-    ret = sample_init_sys_and_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
-    if (ret != HI_SUCCESS) {
-        return ret;
+    if(snscnt == 0)
+    {
+      // move to gsf_mpp_vi_start() when ipc;
+      /************************************************
+      step1:  init SYS, init common VB(for VPSS and VO), init module VB(for VDEC)
+      *************************************************/
+      extern hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type, hi_u32 len);
+      ret = sample_init_sys_and_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
+      if (ret != HI_SUCCESS) {
+          return ret;
+      }
     }
-    #else //init module VB(for VDEC)
-    extern hi_s32 sample_init_module_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type,
-              hi_u32 len);
-    ret = sample_init_module_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
-    if (ret != HI_SUCCESS) {
-        sample_print("init mod vb fail for %#x!\n", ret);
-        return ret;
+    else 
+    {
+      //init module VB(for VDEC)
+      extern hi_s32 sample_init_module_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type,
+                hi_u32 len);
+      ret = sample_init_module_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
+      if (ret != HI_SUCCESS) {
+          sample_print("init mod vb fail for %#x!\n", ret);
+          return ret;
+      }
     }
-    #endif
     
     /************************************************
     step4:  start VO
@@ -1215,8 +1260,8 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       //mod_param.pic_mod_param.progressive_en = g_progressive_en;
       hi_mpi_vdec_set_mod_param(&mod_param);
       
-      extern hi_void sample_comm_vdec_config_attr(hi_s32 i, hi_vdec_chn_attr *chn_attr, sample_vdec_attr *sample_vdec, hi_u32 arr_len);
-      sample_comm_vdec_config_attr(ch, &chn_attr[0], &sample_vdec[0], HI_VDEC_MAX_CHN_NUM);
+      extern hi_void sample_comm_vdec_config_attr(hi_vdec_chn_attr *chn_attr, sample_vdec_attr *sample_vdec);
+      sample_comm_vdec_config_attr(&chn_attr[ch], &sample_vdec[ch]);
 
       check_chn_return(hi_mpi_vdec_create_chn(ch, &chn_attr[ch]), ch, "hi_mpi_vdec_create_chn");
 
@@ -1230,7 +1275,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
       if (sample_vdec[ch].type == HI_PT_H264 || sample_vdec[ch].type == HI_PT_H265) {
           chn_param.video_param.dec_mode = sample_vdec[ch].sample_vdec_video.dec_mode;
           chn_param.video_param.compress_mode = HI_COMPRESS_MODE_NONE;
-          chn_param.video_param.video_format = HI_VIDEO_FORMAT_TILE_64x16;
+          chn_param.video_param.video_format = HI_VIDEO_FORMAT_LINEAR;
           if (chn_param.video_param.dec_mode == HI_VIDEO_DEC_MODE_IPB) {
               chn_param.video_param.out_order = HI_VIDEO_OUT_ORDER_DISPLAY;
           } else {
@@ -1268,7 +1313,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 
       for (vpss_chn = 0; vpss_chn < 2; ++vpss_chn) {
           chn_enable[vpss_chn] = HI_TRUE;
-          chn_attr[vpss_chn].border_en = HI_TRUE;
+          chn_attr[vpss_chn].border_en = HI_FALSE;
           chn_attr[vpss_chn].chn_mode = HI_VPSS_CHN_MODE_USER;
           chn_attr[vpss_chn].pixel_format = HI_PIXEL_FORMAT_YVU_SEMIPLANAR_420;
           chn_attr[vpss_chn].width = 1920;
