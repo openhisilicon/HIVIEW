@@ -527,8 +527,8 @@ static void* lvgl_main(void* p)
     mouse_hid_cb_set(zoom_hid_cb);
     #endif
 
-    #define OBJ_MAX_CHN  8
-    #define OBJ_MAX_CNT  8
+    #define OBJ_MAX_CHN  9
+    #define OBJ_MAX_CNT  10
     int i = 0, cnt[OBJ_MAX_CHN] = {0,};
     lv_obj_t *obj[OBJ_MAX_CNT*OBJ_MAX_CHN];
     lv_obj_t *label[OBJ_MAX_CNT*OBJ_MAX_CHN];
@@ -595,7 +595,7 @@ static void* lvgl_main(void* p)
             wr = hres; wr/= yolos->w;
             hr = vres/2; hr/= yolos->h;
           }
-          else if(lt == 8) //for 8ch
+          else if(lt >= 8) //for 8ch/9ch
           {
             xr = 0 + (chn%3)*(hres/3); yr = (chn/3)*(vres/3);
             wr = hres/3; wr/= yolos->w;

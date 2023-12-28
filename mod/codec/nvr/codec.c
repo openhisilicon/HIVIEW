@@ -241,8 +241,8 @@ int main(int argc, char *argv[])
       else
         vo_res_set(3840, 2160);
           
-      gsf_rgn_ini_t rgn_ini = {.ch_num = 8, .st_num = 1};
-      gsf_venc_ini_t venc_ini = {.ch_num = 8, .st_num = 1};
+      gsf_rgn_ini_t rgn_ini = {.ch_num = 9, .st_num = 1};
+      gsf_venc_ini_t venc_ini = {.ch_num = 9, .st_num = 1};
       p_venc_ini = &venc_ini;
       p_rgn_ini  = &rgn_ini;
     }

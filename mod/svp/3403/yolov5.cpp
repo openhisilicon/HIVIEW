@@ -27,9 +27,6 @@ int yolov5_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *Mo
    
     for(i = 0; i < YOLO_CHN_MAX; i++)
     {
-      if(vpss_grp[i] == -1 || vpss_chn[i] == -1)
-        break;
-
       vcap[i].vpss_grp = vpss_grp[i];
       vcap[i].vpss_chn = vpss_chn[i];
     }
@@ -65,6 +62,11 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
 
     for (int i = 0; i < YOLO_CHN_MAX; i++)
     {
+      if(vcap[i].vpss_grp == -1)
+      {  
+        continue;
+      }
+      
       if(check_fd)
       {
         _ts1 = _ts2;

@@ -28,7 +28,7 @@
 #define FHD_STREAN_HEIGHT 1080
 #define REF_NUM 2
 #define DISPLAY_NUM 2
-#define SAMPLE_VDEC_COMM_VB_CNT (4*1)
+#define SAMPLE_VDEC_COMM_VB_CNT (4*2)
 #define SAMPLE_VDEC_VPSS_LOW_DELAY_LINE_CNT 16
 
 static hi_payload_type g_cur_type = HI_PT_H265;

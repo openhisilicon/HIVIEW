@@ -25,8 +25,8 @@ int yolo_load(char *home_path)
   //for chn: ---------------- ch0 ch1 ch2 ch3---//
   #if defined(GSF_CPU_3403) && defined(GSF_DEV_NVR)
   #warning "GSF_CPU_3403 && GSF_DEV_NVR"
-  int VpssGrp[YOLO_CHN_MAX] = {0, 1, 2, 3, 4, 5, 6, 7, -1};
-  int VpssChn[YOLO_CHN_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, -1};
+  int VpssGrp[YOLO_CHN_MAX] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+  int VpssChn[YOLO_CHN_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   #else
   #warning "GSF_CPU_3403 && GSF_DEV_IPC"
   int VpssGrp[YOLO_CHN_MAX] = {0, -1, -1, -1, -1, -1, -1, -1, -1};
