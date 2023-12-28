@@ -365,7 +365,6 @@ __exit:
   return NULL;
 }
 
-
 char *rtsp_url_parse(char *in, char *host, int* port, char* path, char *user, char *pwd)
 {   
     char *p = strstr(in, "rtsp://");
@@ -381,7 +380,7 @@ char *rtsp_url_parse(char *in, char *host, int* port, char* path, char *user, ch
     
     char *ip = NULL;   
     /* goto @ after */
-    if(ip = strstr(h, "@"))
+    if(ip = strrchr(h, '@'))
     {
         if(user && pwd)
         {        
