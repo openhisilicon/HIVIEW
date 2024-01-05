@@ -26,6 +26,9 @@
 #include "mod/sips/inc/sjb_sips.h"
 extern gsf_sips_t sips_parm;
 
+#include "uas-device.h"
+
+
 //for xml binding;
 #include "sxb_sips.h"
 
@@ -387,7 +390,6 @@ static int sip_uas_onregister(void* param, const struct sip_message_t* req, stru
 	return sip_uas_reply(t, 200, NULL, 0);
 }
 
-
 static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struct sip_uas_transaction_t* t, void* session, const void* payload, int bytes)
 {
   struct sip_uas_app_t *app = (struct sip_uas_app_t *)param;
@@ -457,7 +459,33 @@ static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struc
   	mxmlDelete(xml);
     sip_uac_sendmessage(app, buf);
   }
- 
+  else if(strstr(payload, "<CmdType>DeviceControl</CmdType>"))
+  {
+    #define CTRL_RESP		"<?xml version=\"1.0\"?>\r\n" \
+						"<Response>\r\n" \
+						"<CmdType>DeviceControl</CmdType>\r\n" \
+						"<SN>%s</SN>\r\n" \
+						"<DeviceID>%s</DeviceID>\r\n" \
+						"<Result>%s</Result>\r\n" \
+						"</Response>\r\n"
+    
+    char *p = NULL;
+    
+    if(p = strstr(payload, "<SN>"))
+    {
+      ;
+    }
+    if(p = strstr(payload, "<DeviceID>"))
+    {
+      ;
+    }
+    
+    if(p = strstr(payload, "<PTZCmd>"))
+    {
+      ptzcmd_ctl(0, p+strlen("<PTZCmd>"));
+      //ptz and reboot is do not sendmsg;  
+    }
+  }  
   return 0;
 }
 
