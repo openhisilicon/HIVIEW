@@ -17,7 +17,7 @@
 #define SMALL_STREAM_SIZE PIC_1080P
 
 #define VI_VB_YUV_CNT (6*4) //maohw
-#define VPSS_VB_YUV_CNT 8
+#define VPSS_VB_YUV_CNT (8*2) //maohw
 
 #define ENTER_ASCII 10
 

@@ -65,6 +65,8 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {OV_OS08A20_2L_MIPI_2M_30FPS_10BIT,      "os08a20-2-0-2-30", "libsns_os08a20_2l.so",  "g_sns_os08a20_2l_obj"},
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,        "imx482-0-0-2-30",  "libsns_imx482.so",      "g_sns_imx482_obj"},
     {SONY_IMX664_MIPI_4M_30FPS_12BIT,        "imx664-0-0-4-30",  "libsns_imx664.so",      "g_sns_imx664_obj"},
+    {SONY_IMX335_MIPI_5M_30FPS_12BIT,        "imx335-0-0-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
+    {SONY_IMX335_2L_MIPI_5M_30FPS_10BIT,     "imx335-2-0-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
   };
 
 
@@ -129,10 +131,6 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
   exit(-1);
 }
 
-#define __CHECKME__ 0
-#if __CHECKME__
-#include "inc/checkme.h"
-#endif
 
 #define BT1120_DEV3 1
 
@@ -156,8 +154,9 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[256] = {0};
   char snsname[64] = {0};
   
+  
   //hook sensor name;
-  if(strstr(cfg->snsname, "imx664") || strstr(cfg->snsname, "imx482"))
+  if(strstr(cfg->snsname, "imx664") || strstr(cfg->snsname, "imx482") || strstr(cfg->snsname, "imx335"))  //37.125MHz
     strncpy(snsname, "imx515", sizeof(snsname)-1);
   else 
     strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
@@ -189,10 +188,6 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   g_3519d500 = strstr(cfg->type, "3519d500")?1:0;
   aiisp = cfg->aiisp;
-  
-  #if __CHECKME__
-  checkme("mpp");  
-  #endif
   
   if(dl)
   {
@@ -746,7 +741,9 @@ int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_SCENE_CTL_AE:
       {
-        ret = 0; 
+        ret = 0;
+        HI_SCENE_CTL_AE_S *ae = (HI_SCENE_CTL_AE_S*)args;
+         
         g_scene_ctl_ae[ViPipe].compensation_mul = ae->compensation_mul;
         printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
       }

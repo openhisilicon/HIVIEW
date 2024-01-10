@@ -45,6 +45,11 @@ static int avs = 0; // codec_ipc.vi.avs;
 #define PIC_640P PIC_512P
 #endif
 
+#ifndef HAVE_PIC_1536P
+#warning "PIC_2592x1536 => PIC_2592x1520"
+#define PIC_2592x1536 PIC_2592x1520
+#endif
+
 #define PIC_WIDTH(w, h) \
           (w >= 7680)?PIC_7680x4320:\
           (w >= 3840)?PIC_3840x2160:\
@@ -350,10 +355,10 @@ static char* _chipid()
 
 void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
 {
-   sprintf(cfg->type, "%s", _chipid());
-  
-   if(strstr(cfg->snsname, "os04a10") || strstr(cfg->snsname, "imx664"))
-   {
+  sprintf(cfg->type, "%s", _chipid());
+
+  if(strstr(cfg->snsname, "os04a10") || strstr(cfg->snsname, "imx664"))
+  {
     // os04a10-0-0-4-30
     if(strstr(cfg->type, "3516d500"))
     {
@@ -361,7 +366,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     }
     else 
     {
-       cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
     }
 
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
@@ -379,11 +384,40 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
     }
     return;
-   }
+  }
    
   if(strstr(cfg->snsname, "imx482"))
   {
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_640P);
+    if(cfg->snscnt > 1)
+    {
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    }
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        rgn_ini->st_num = venc_ini->st_num = 2;
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+    }
+    return;
+  }
+  
+  if(strstr(cfg->snsname, "imx335"))
+  {
+    if(strstr(cfg->type, "3516d500"))
+    {
+      cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
+    }
+    else 
+    {
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
+    }
+    
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
     venc_ini->ch_num = 1; venc_ini->st_num = 2;
     VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_640P);
