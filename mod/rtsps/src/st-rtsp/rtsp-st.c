@@ -366,7 +366,7 @@ static void conn_ctx_check(void)
       {
         rtsp_client_close(ctx->c);
       }
-      
+            
       struct st_rtsp_client_handler_t handler;
       handler.onframe = onframe;
       handler.onerr   = NULL;

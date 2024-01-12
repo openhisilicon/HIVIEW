@@ -275,7 +275,20 @@ void* handle_connect(void *arg)
   int r;
 	struct rtsp_client_handler_t handler;
   int packet_size = 1*1024*1024;
-	char *packet = malloc(packet_size);
+  char *packet = NULL;
+  
+  int sock = 0;
+  if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+    printf("socket err.\n");
+    goto __exit;
+  }
+  if ((ctx->socket = st_netfd_open_socket(sock)) == NULL) {
+    printf("st_netfd_open_socket err.\n");
+    close(sock);
+    goto __exit;
+  }
+
+	packet = malloc(packet_size);
 
 	handler.send = rtsp_client_send;
 	handler.rtpport = rtpport;
@@ -293,9 +306,10 @@ void* handle_connect(void *arg)
   rmt_addr.sin_family = AF_INET;
   rmt_addr.sin_port = htons(ctx->rtsp_port);
   rmt_addr.sin_addr.s_addr = inet_addr(ctx->host);
+  
   if(st_connect(ctx->socket, (struct sockaddr*)&rmt_addr, sizeof(rmt_addr), ST_UTIME_NO_TIMEOUT) < 0)
   {
-    printf("st_connect err.\n");
+    printf("st_connect err:%s, peer:%s, port:%d\n", strerror(errno), ctx->host, ctx->rtsp_port);
     goto __exit;
   }
 	
@@ -351,16 +365,18 @@ void* handle_connect(void *arg)
 	rtsp_client_destroy(ctx->rtsp);
 	
 __exit:
-  printf("%s => ctx:%p, exit.\n", __func__, ctx);
-  free(packet);
-	st_netfd_close(ctx->socket);
-  ctx->exited = 1;
+  printf("%s => exit ctx:%p\n", __func__, ctx);
+  if(packet)
+    free(packet);
+	if(ctx->socket)
+	  st_netfd_close(ctx->socket);
   
   if(ctx->handler.onerr)
   {
     ctx->handler.onerr(ctx->handler.param, -1);
   }
 
+  ctx->exited = 1;
   st_thread_exit(NULL);
   return NULL;
 }
@@ -424,27 +440,16 @@ void* rtsp_client_connect(const char* url, int protol, struct st_rtsp_client_han
 	clock_gettime(CLOCK_MONOTONIC, &_ts);
   ctx->last_keeptime = _ts.tv_sec;
   ctx->ses_timeout = 60;
-  printf("%s => ses_timeout:%d\n", __func__, ctx->ses_timeout);
+  //printf("%s => ses_timeout:%d\n", __func__, ctx->ses_timeout);
   
-  int sock = 0;
-  if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-    printf("socket err.\n");
-    return NULL;
-  }
-  if ((ctx->socket = st_netfd_open_socket(sock)) == NULL) {
-    printf("st_netfd_open_socket err.\n");
-    close(sock);
-    return NULL;
-  }
-    
   ctx->loop = 1; ctx->exited = !ctx->loop;
   if ((ctx->tid = st_thread_create(handle_connect, ctx, 0, 0)) == NULL) {
-    st_netfd_close(ctx->socket);
     free(ctx);
     printf("st_thread_create err.\n");
     return NULL;
   }
 
+  printf("%s => new ctx:%p\n", __func__, ctx);
   return (void*)ctx;  
 }
 
@@ -464,16 +469,15 @@ int rtsp_client_close(void* st)
   
   if(ctx->media)
     rtp_media_live_free(ctx->media);
-  
-  if(ctx->tid)
+
+  if(ctx->tid && !ctx->exited) //check tid is valid
   {
     st_thread_interrupt(ctx->tid);
     ctx->loop = 0;
     while(!ctx->exited)
       st_usleep(10*1000);
   }
-  
-  printf("%s => ctx:%p, free.\n", __func__, ctx);
+  printf("%s => interrupt && free ctx:%p\n", __func__, ctx);
   free(ctx);
   return 0;
 }

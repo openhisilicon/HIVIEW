@@ -233,8 +233,8 @@ void  rtp_udp_receiver_destroy(struct rtp_context_t* ctx)
 {
   if(!ctx)
     return;
-  
-  if(ctx->tid)
+
+  if(ctx->tid && !ctx->exited) //check tid is valid
   {
     st_thread_interrupt(ctx->tid);
     ctx->loop = 0;

@@ -141,7 +141,7 @@ int rtsp_server_unlisten(void* st)
 {
   struct rtsp_server_listen_t *l = (struct rtsp_server_listen_t *)st;
   
-  if(l->tid)
+  if(l->tid && !l->exited) //check tid is valid
   {
     st_thread_interrupt(l->tid);
     l->loop = 0;
