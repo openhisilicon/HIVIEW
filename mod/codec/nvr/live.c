@@ -115,6 +115,12 @@ static void* live_task(void *parm)
           {
             continue;
           }
+          
+          #if 1 //reset venc channel;
+          gsf_mpp_venc_ctl(i*GSF_CODEC_VENC_NUM+0, GSF_MPP_VENC_CTL_RST, NULL);
+          gsf_mpp_venc_ctl(i*GSF_CODEC_VENC_NUM+1, GSF_MPP_VENC_CTL_RST, NULL);
+          #endif
+          
           cfifo_set_u(gmng.cfifo[i], (void*)i);
           cfifo_newest(gmng.cfifo[i], 1);
           cfifo_ep_ctl(ep, CFIFO_EP_ADD, gmng.cfifo[i]);

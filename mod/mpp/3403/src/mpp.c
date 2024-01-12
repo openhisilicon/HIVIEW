@@ -648,7 +648,40 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
 
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
 {
-  int ret = 0;
+  int ret = -1;
+  
+  switch(id)
+  {
+    case GSF_MPP_VENC_CTL_IDR:
+      ret = hi_mpi_venc_request_idr(VencChn, HI_TRUE);
+      break;
+    case GSF_MPP_VENC_CTL_RST:
+      ret = hi_mpi_venc_stop_chn(VencChn);
+      if (ret != HI_SUCCESS)
+      {
+        printf("hi_mpi_venc_stop_chn err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      ret = hi_mpi_venc_reset_chn(VencChn);
+      if (ret != HI_SUCCESS)
+      {
+        printf("hi_mpi_venc_reset_chn err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+
+      hi_venc_start_param start_param;
+      start_param.recv_pic_num = -1;
+      ret = hi_mpi_venc_start_chn(VencChn,&start_param);
+      if (ret != HI_SUCCESS)
+      {
+        printf("hi_mpi_venc_start_chn err 0x%x\n",ret);
+        return HI_FAILURE;
+      }
+      break;
+    default:
+      break;
+  }
+  printf("VencChn:%d, id:%d, ret:%d\n", VencChn, id, ret);
   return ret;
 }
 
