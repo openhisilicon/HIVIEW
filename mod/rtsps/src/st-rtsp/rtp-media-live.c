@@ -270,10 +270,7 @@ static void *live_send_task(void *arg)
     
     i++;
   }
-  
-  free(m->cur_frm);
-  m->exited = 1;
-  
+
   for(j = 0; j < MEDIA_TRACK_BUTT; j++)
   {
     if(m_evfd[j])
@@ -282,7 +279,12 @@ static void *live_send_task(void *arg)
       st_netfd_close(m_evfd[j]);
     }
   }
+  
+  if(m->cur_frm)
+    free(m->cur_frm);
+  
   printf("%s => exit m:%p .\n", __func__, m);
+  m->exited = 1;
   st_thread_exit(NULL);
   return NULL;
 }
@@ -560,7 +562,7 @@ int rtp_media_live_free(struct rtp_media_t* m)
   struct rtp_media_live_t *ml = (struct rtp_media_live_t*)m;
   if(ml)
   {
-    if(ml->tid)
+    if(ml->tid && !ml->exited) //check tid is valid
     {
       // stop thread;
       st_thread_interrupt(ml->tid);

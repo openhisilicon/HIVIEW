@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-
+#include "cfg.h"
 
 static void *handle_request(void *arg)
 {
@@ -32,6 +32,7 @@ static void *handle_request(void *arg)
   }
   
   rtsp_session_ondestroy(s);
+  printf("st_netfd_close cli_nfd:%d\n", s->socket);
   st_netfd_close(s->socket);
   st_mutex_destroy(s->lock);
   s->exited = 1;
