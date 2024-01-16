@@ -236,9 +236,9 @@ static int rtsp_onsetup(void* ptr, rtsp_server_t* rtsp, const char* uri, const c
 			transport->destination[0] ? ";destination=" : "",
 			transport->destination[0] ? transport->destination : "");
 	}
-	
-  char sessionid[64] = {0};
-  sprintf(sessionid, "%p", ptr);
+	// Session: 813629027556073;timeout=60
+  char sessionid[128] = {0};
+  sprintf(sessionid, "%p;timeout=%d", ptr, sess->timeout);
 	return rtsp_server_reply_setup(rtsp, 200, sessionid, rtsp_transport);
 }
 

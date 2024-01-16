@@ -84,21 +84,28 @@ void rtsp_session_onrecv(struct rtsp_session_t* sess, int code, size_t bytes)
 	if (0 != code || 0 == bytes)
 	{
 		session->handler.onerror(session, code ? code : ECONNRESET);
+		session->loop = 0; //exit loop;
 	}
 }
 
 
 static int rtsp_session_send(void* ptr, const void* data, size_t bytes)
 {
-  int ret = 0;
+  int ret = 0, eto = 0;
 	struct rtsp_session_t *session;
 	session = (struct rtsp_session_t *)ptr;
 	
+	#define WRITE_TIMEOUT 10 //sec
   st_mutex_lock(session->lock);
-	ret = (bytes == st_write(session->socket, data, bytes, ST_UTIME_NO_TIMEOUT)) ? 0 : -1;
+	ret = st_write(session->socket, data, bytes, WRITE_TIMEOUT*1000000LL/*ST_UTIME_NO_TIMEOUT*/);
+	eto = (ret < 0 && errno == ETIME)?1:0;
 	st_mutex_unlock(session->lock);
 	
-	return ret;
+	if(eto)
+	{
+	  printf("session:%p, st_write timeout %d sec.\n", session, WRITE_TIMEOUT);
+	}
+	return (ret == bytes)?0:-1;
 }
 
 

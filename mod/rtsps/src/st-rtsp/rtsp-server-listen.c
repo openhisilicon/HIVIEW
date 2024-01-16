@@ -12,9 +12,15 @@ static void *handle_request(void *arg)
   while(s->loop)
   {
     int bytes = 0;
-    int code = st_read(s->socket, s->buffer, sizeof(s->buffer), ST_UTIME_NO_TIMEOUT);
+    // RFC2326 12.37 Session (p57)
+	  // The timeout is measured in seconds, with a default of 60 seconds (1 minute).
+    int code = st_read(s->socket, s->buffer, sizeof(s->buffer), s->timeout*1.1*1000000LL/*ST_UTIME_NO_TIMEOUT*/);
     if (code <= 0)
   	{
+  	  if(errno == ETIME)
+  	  {
+  	    printf("session:%p, st_read timeout %d sec.\n", s, s->timeout);
+  	  }
   	  bytes = 0;
       code = -1;
   	}
@@ -25,6 +31,7 @@ static void *handle_request(void *arg)
   	}
     
     rtsp_session_onrecv(s, code, bytes);
+    
     if(code < 0)
     {
       break;
@@ -32,11 +39,11 @@ static void *handle_request(void *arg)
   }
   
   rtsp_session_ondestroy(s);
-  printf("st_netfd_close cli_nfd:%d\n", s->socket);
+  printf("st_netfd_close sess:%p, cli_nfd:%d, timeout:%d\n", s, s->socket, s->timeout);
   st_netfd_close(s->socket);
   st_mutex_destroy(s->lock);
-  s->exited = 1;
   free(s);
+  s->exited = 1;
   st_thread_exit(NULL);
   return NULL;
 }
@@ -62,7 +69,6 @@ static void *handle_accept(void *arg)
       printf("st_accept err.\n");
       break;
     }
-    printf("st_accept rtsp:%p, cli_nfd:%d\n", rtsp, cli_nfd);
     struct rtsp_session_t* sess;
   	sess = (struct rtsp_session_t*)calloc(1, sizeof(*sess));
   	  	
@@ -73,7 +79,8 @@ static void *handle_accept(void *arg)
 
   	memcpy(&sess->handler, handler, sizeof(sess->handler));
   	sess->param = param;
-  	
+  	sess->timeout = 60; // default 60 sec;
+    printf("st_accept sess:%p, cli_nfd:%d, timeout:%d\n", sess, cli_nfd, sess->timeout);
     sess->loop = 1; sess->exited = !sess->loop;
     if ((sess->tid = st_thread_create(handle_request, sess, 0, 0)) == NULL) {
       sess->loop = 0; sess->exited = !sess->loop;

@@ -29,7 +29,7 @@ struct media_track_t
   struct cfifo_ex* m_reader;
   int m_evfd;
   int sendcnt;
-  int pollcnt;
+  int senderr;
   uint32_t m_rtp_clock;
   time64_t m_rtcp_clock;
 };
@@ -166,6 +166,12 @@ static int live_sendto(struct rtp_media_live_t* m)
     // SendRTP() used st_writev();
     // SendRTCP(&m->track[j]); 
   }
+  
+  if(m->track[j].senderr)
+  {
+    m->loop = 0;
+    printf("m:%p, loop = %d\n", m, m->loop);
+  }  
   return 0;
 }
 
@@ -176,12 +182,17 @@ static unsigned int cfifo_recgut_me(unsigned char *p1, unsigned int n1, unsigned
     
     struct rtp_media_live_t* m = (struct rtp_media_live_t*)u;
     
+    //copy video frame;
     char *p = (char*)m->cur_frm;
     memcpy(p, p1, l);
     memcpy(p+l, p2, len-l);
     
-    //noblock;
+    #ifdef __FRM_PHY__
+    #warning "DEFINED __FRM_PHY__ DEFINED"
+    //when the network is unavailable, cfifo is blocked;
+    //About __DMA_COPY__, please refrence /mod/webs/src/http.c;
     live_sendto(m);
+    #endif
     
     return len;
 }
@@ -246,12 +257,17 @@ static void *live_send_task(void *arg)
       printf("%s => st_poll err.\n", __func__);
       continue;
     }
+    //printf("%s => st_poll ts:%llu ms\n", __func__, time64_now());
 
     for(j = 0; j < MEDIA_TRACK_BUTT; j++)
     {
       if ((fds[j].revents & POLLIN)
           && m->track[j].m_transport)
       {
+        #if defined(GSF_CPU_3519d)
+        cfifo_fd_resume(fds[j].fd);
+        #endif
+
         if(i%60 == 0)
         {
           char rr[1024] = {0};
@@ -260,11 +276,18 @@ static void *live_send_task(void *arg)
         
         // get data;
         m->cur_track = j;
-        do{
+        while(m->loop)
+        {
           int ret = cfifo_get(m->track[j].m_reader, cfifo_recgut_me, (void*)m);
           if(ret <= 0)
+          {
             break;
-        }while(1);
+          }  
+          #ifndef __FRM_PHY__
+          //The video frame has been copied to cur_frm;
+          live_sendto(m);
+          #endif
+        }
       }
     }
     
@@ -308,8 +331,18 @@ void RTPPacket(void* param, const void *packet, int bytes, uint32_t timestamp, i
 	struct media_track_t *t = (struct media_track_t*)param;
 	assert(t->m_packet == packet);
 	
+	if(t->senderr)
+	{  
+	  return;
+	}
+	
 	int r = t->m_transport->send(t->m_transport, 0, packet, bytes);
 	// r <= 0 when peer close; assert(r == (int)bytes);
+	if(r <= 0)
+	{
+	  printf("send t:%p, r:%d\n", t, r);
+	  t->senderr = 1;
+	}
 	
 	#if 0
 	if(!t->m_transport->istcp && ++t->sendcnt > 50)
