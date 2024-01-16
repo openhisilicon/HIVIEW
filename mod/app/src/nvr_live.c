@@ -136,7 +136,7 @@ static void* live_task(void *parm)
         {
           printf("close >>>>>> i:%d, st1[%s]\n", i, gmng.chsrc[i].st1);
           GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
-          rtsp_url->transp = 0;
+          rtsp_url->transp = gmng.chsrc[i].transp;
           strcpy(rtsp_url->url, gmng.chsrc[i].st1);
           int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_CLOSE, 0, SET, 0
                                 , sizeof(gsf_rtsp_url_t)
@@ -147,7 +147,7 @@ static void* live_task(void *parm)
         {
           printf("close >>>>>> i:%d, st2[%s]\n", i, gmng.chsrc[i].st2);
           GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
-          rtsp_url->transp = 0;
+          rtsp_url->transp = gmng.chsrc[i].transp;
           strcpy(rtsp_url->url, gmng.chsrc[i].st2);
           int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_CLOSE, 0, SET, 0
                                 , sizeof(gsf_rtsp_url_t)
@@ -220,7 +220,7 @@ static void* live_task(void *parm)
         if(strlen(gmng.chsrc[i].st1) > 0 && gmng.rtsp[i][0] == 0)
         {
           GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
-          rtsp_url->transp = 0;
+          rtsp_url->transp = gmng.chsrc[i].transp;
           strcpy(rtsp_url->url, gmng.chsrc[i].st1);
           int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
                                 , sizeof(gsf_rtsp_url_t)
@@ -242,7 +242,7 @@ static void* live_task(void *parm)
         if(strlen(gmng.chsrc[i].st2) > 0 && gmng.rtsp[i][1] == 0)
         {
           GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024);
-          rtsp_url->transp = 0;
+          rtsp_url->transp = gmng.chsrc[i].transp;
           strcpy(rtsp_url->url, gmng.chsrc[i].st2);
           int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
                                 , sizeof(gsf_rtsp_url_t)

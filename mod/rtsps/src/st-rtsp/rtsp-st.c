@@ -27,6 +27,7 @@ struct rtsp_conn_ctx_t
   gsf_frm_t *video_frm; // gsf_frm_t + __data_size__;
   int packet_cnt;
   int last_time;
+  int protol;
 };
 
 struct rtsp_push_ctx_t
@@ -37,6 +38,7 @@ struct rtsp_push_ctx_t
   void* c;
   int err;
   int last_time;
+  int protol;
 };
 
 
@@ -341,7 +343,7 @@ static void push_ctx_check(void)
       handler.onframe = NULL;
       handler.onerr   = push_err;
       handler.param   = (void*)ctx;
-      ctx->c = rtsp_client_connect(ctx->name, RTSP_TRANSPORT_RTP_UDP, &handler);         
+      ctx->c = rtsp_client_connect(ctx->name, ctx->protol, &handler);         
       
       ctx->last_time = _ts.tv_sec;
     }
@@ -371,7 +373,7 @@ static void conn_ctx_check(void)
       handler.onframe = onframe;
       handler.onerr   = NULL;
       handler.param   = (void*)ctx;
-      ctx->c = rtsp_client_connect(ctx->name, RTSP_TRANSPORT_RTP_UDP, &handler);         
+      ctx->c = rtsp_client_connect(ctx->name, ctx->protol, &handler);         
       
       ctx->last_time = _ts.tv_sec;
     }
@@ -383,6 +385,7 @@ static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
   gsf_rtsp_url_t *ru = (gsf_rtsp_url_t*)ctl->data;
   
   char *name = ru->url;
+
   if(strlen(name) == 0 || strlen(name) > 255)
   {
     printf("id: GSF_ID_RTSPS_C_OPEN err name [%s]\n", name);
@@ -421,9 +424,9 @@ static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
                   &ctx->audio_shmid,
                   0);
                   
-  strncpy(ctx->name, name, sizeof(ctx->name)-1);          
-  printf("id: GSF_ID_RTSPS_C_OPEN [%s] video_shmid:%d, audio_shmid:%d\n"
-        , name, ctx->video_shmid, ctx->audio_shmid);
+  strncpy(ctx->name, name, sizeof(ctx->name)-1);
+  ctx->protol = (ru->transp == 0)?RTSP_TRANSPORT_RTP_UDP:RTSP_TRANSPORT_RTP_TCP;
+  printf("id: GSF_ID_RTSPS_C_OPEN protol:%s, url:[%s]\n", ctx->protol==RTSP_TRANSPORT_RTP_UDP?"UDP":"TCP", name);
   
   struct timespec _ts;  
   clock_gettime(CLOCK_MONOTONIC, &_ts);
@@ -433,7 +436,7 @@ static void conn_ctx_open(struct rtsp_st_ctl_t *ctl)
   handler.onframe = onframe;
   handler.onerr   = NULL;
   handler.param   = (void*)ctx;
-  ctx->c = rtsp_client_connect(name, RTSP_TRANSPORT_RTP_UDP, &handler);
+  ctx->c = rtsp_client_connect(name, ctx->protol, &handler);
   HASH_ADD_STR(conn_ctxs, name, ctx);
   
   gsf_shmid_t *shmid = (gsf_shmid_t*)ctl->data;
@@ -551,8 +554,9 @@ static void push_ctx_open(struct rtsp_st_ctl_t *ctl)
   
   ctx = calloc(1, sizeof(*ctx));
   ctx->refcnt++;
-  strncpy(ctx->name, name, sizeof(ctx->name)-1);          
-  printf("id: GSF_ID_RTSPS_P_OPEN [%s] \n", name);
+  strncpy(ctx->name, name, sizeof(ctx->name)-1);
+  ctx->protol = (pu->transp == 0)?RTSP_TRANSPORT_RTP_UDP:RTSP_TRANSPORT_RTP_TCP;
+  printf("id: GSF_ID_RTSPS_P_OPEN protol:%s, url:[%s] \n", ctx->protol==RTSP_TRANSPORT_RTP_UDP?"UDP":"TCP", name);
   
   struct timespec _ts;  
   clock_gettime(CLOCK_MONOTONIC, &_ts);
@@ -564,7 +568,7 @@ static void push_ctx_open(struct rtsp_st_ctl_t *ctl)
   handler.onframe = NULL; // pusher;
   handler.onerr   = push_err;
   handler.param   = (void*)ctx;
-  ctx->c = rtsp_client_connect(name, RTSP_TRANSPORT_RTP_UDP, &handler);
+  ctx->c = rtsp_client_connect(name, ctx->protol, &handler);
   HASH_ADD_STR(push_ctxs, name, ctx);
   
   ctl->size = 0;

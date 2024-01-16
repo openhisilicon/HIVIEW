@@ -4,7 +4,7 @@ STRUCT(gsf_chsrc_t)
 {
   FIELD(bool, en);  // enable
   STRING(host,256); // onvif://user:pwd@192.168.1.60:80 
-  FIELD(int,  transp); // tcp/udp/mc
+  FIELD(int,  transp); // udp:0/tcp:1/mc:2
   STRING(st1, 256);    // rtsp://user:pwd@192.168.1.60:554/st1
   STRING(st2, 256);    // rtsp://user:pwd@192.168.1.60:554/st2
 };

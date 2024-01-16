@@ -34,6 +34,7 @@ $(function () {
         columns: [                
             { field: 'recid', caption: 'CH', size: '50px', resizable: true, sortable: true},
             { field: 'fname', caption: 'EN', size:'50px',  resizable: true, sortable: true, editable: { type: 'text' }},
+            { field: 'transp', caption: 'TCP', size:'50px',  resizable: true, sortable: true, editable: { type: 'text' }},
             { field: 'lname', caption: 'RTSP', size:'50%', resizable: true, sortable: true, editable: { type: 'text' }},
         ],
         onSave: function (event) {
@@ -54,11 +55,17 @@ $(function () {
             var chsrc = w2ui['grid_chs'].get(event.changes[i].recid);
             
             req.data.en = chsrc.fname === 'true';
+            req.data.transp = parseInt(chsrc.transp);
             req.data.st1 = chsrc.lname;
             
             if (typeof event.changes[i].fname !== "undefined") {
               req.data.en = event.changes[i].fname === 'true';
             }
+
+            if (typeof event.changes[i].transp !== "undefined") {
+              req.data.transp = parseInt(event.changes[i].transp);
+            }
+
             if (typeof event.changes[i].lname !== "undefined") {
               req.data.st1 = event.changes[i].lname;
             }
@@ -119,15 +126,15 @@ $(function () {
         console.log(data);
         //update grid data;
         var records = [
-            { recid: 0, fname: data.data[0].en.toString(), lname: data.data[0].st1},
-            { recid: 1, fname: data.data[1].en.toString(), lname: data.data[1].st1},
-            { recid: 2, fname: data.data[2].en.toString(), lname: data.data[2].st1},
-            { recid: 3, fname: data.data[3].en.toString(), lname: data.data[3].st1},
-            { recid: 4, fname: data.data[4].en.toString(), lname: data.data[4].st1},
-            { recid: 5, fname: data.data[5].en.toString(), lname: data.data[5].st1},
-            { recid: 6, fname: data.data[6].en.toString(), lname: data.data[6].st1},
-            { recid: 7, fname: data.data[7].en.toString(), lname: data.data[7].st1},
-            { recid: 8, fname: data.data[8].en.toString(), lname: data.data[8].st1},
+            { recid: 0, fname: data.data[0].en.toString(), transp: data.data[0].transp.toString(), lname: data.data[0].st1},
+            { recid: 1, fname: data.data[1].en.toString(), transp: data.data[1].transp.toString(), lname: data.data[1].st1},
+            { recid: 2, fname: data.data[2].en.toString(), transp: data.data[2].transp.toString(), lname: data.data[2].st1},
+            { recid: 3, fname: data.data[3].en.toString(), transp: data.data[3].transp.toString(), lname: data.data[3].st1},
+            { recid: 4, fname: data.data[4].en.toString(), transp: data.data[4].transp.toString(), lname: data.data[4].st1},
+            { recid: 5, fname: data.data[5].en.toString(), transp: data.data[5].transp.toString(), lname: data.data[5].st1},
+            { recid: 6, fname: data.data[6].en.toString(), transp: data.data[6].transp.toString(), lname: data.data[6].st1},
+            { recid: 7, fname: data.data[7].en.toString(), transp: data.data[7].transp.toString(), lname: data.data[7].st1},
+            { recid: 8, fname: data.data[8].en.toString(), transp: data.data[8].transp.toString(), lname: data.data[8].st1},
           ];
           w2ui['grid_chs'].clear(); 
           w2ui['grid_chs'].add(records);
