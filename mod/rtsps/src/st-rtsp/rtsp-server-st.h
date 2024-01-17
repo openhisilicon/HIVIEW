@@ -67,7 +67,7 @@ struct rtsp_session_t
   
   struct st_rtsp_handler_t handler;
 	void* param;
-	int timeout;
+	int timeout, snderr;
 	int loop, exited;
 	st_thread_t tid;
 };

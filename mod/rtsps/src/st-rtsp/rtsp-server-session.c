@@ -95,6 +95,9 @@ static int rtsp_session_send(void* ptr, const void* data, size_t bytes)
 	struct rtsp_session_t *session;
 	session = (struct rtsp_session_t *)ptr;
 	
+	if(session->snderr)
+	  return -1;
+	
 	#define WRITE_TIMEOUT 10 //sec
   st_mutex_lock(session->lock);
 	ret = st_write(session->socket, data, bytes, WRITE_TIMEOUT*1000000LL/*ST_UTIME_NO_TIMEOUT*/);
@@ -103,6 +106,7 @@ static int rtsp_session_send(void* ptr, const void* data, size_t bytes)
 	
 	if(eto)
 	{
+	  session->snderr = 1;
 	  printf("session:%p, st_write timeout %d sec.\n", session, WRITE_TIMEOUT);
 	}
 	return (ret == bytes)?0:-1;

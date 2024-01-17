@@ -8,18 +8,26 @@ static void *handle_request(void *arg)
 {
   struct rtsp_session_t* s = (struct rtsp_session_t*)arg;
   rtsp_session_oncreate(s);
+
+  int tcnt = 0;
+  #define READ_TIMEOUT 10
   
   while(s->loop)
   {
     int bytes = 0;
-    // RFC2326 12.37 Session (p57)
-	  // The timeout is measured in seconds, with a default of 60 seconds (1 minute).
-    int code = st_read(s->socket, s->buffer, sizeof(s->buffer), s->timeout*1.1*1000000LL/*ST_UTIME_NO_TIMEOUT*/);
+    int code = st_read(s->socket, s->buffer, sizeof(s->buffer), READ_TIMEOUT*1000000LL/*ST_UTIME_NO_TIMEOUT*/);
+    
     if (code <= 0)
   	{
   	  if(errno == ETIME)
   	  {
-  	    printf("session:%p, st_read timeout %d sec.\n", s, s->timeout);
+  	    tcnt += READ_TIMEOUT;
+  	    if(!s->snderr && (tcnt < s->timeout*1.1)) //check snderr;
+  	    {
+  	      printf("session:%p, st_read snderr:%d, tcnt:%d < timeout:%d sec.\n", s, s->snderr, tcnt, s->timeout);
+  	      continue;
+  	    }
+  	    printf("session:%p, st_read snderr:%d, tcnt:%d > timeout:%d exit.\n", s, s->snderr, tcnt, s->timeout);
   	  }
   	  bytes = 0;
       code = -1;
@@ -30,6 +38,7 @@ static void *handle_request(void *arg)
   	  code = 0;
   	}
     
+    tcnt = 0;
     rtsp_session_onrecv(s, code, bytes);
     
     if(code < 0)
