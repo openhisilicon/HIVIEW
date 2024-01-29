@@ -207,7 +207,7 @@ HI_S32 HI_SCENE_SetStaticAE_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index)
 
     s32Ret = HI_MPI_ISP_GetExposureAttr(ViPipe, &stExposureAttr);
     CHECK_SCENE_RET(s32Ret);
-    #if 1
+    #if 0
     printf("HI_MPI_ISP_GetExposureAttr: bAERouteExValid:%d, u8AERunInterval:%d, stExpTimeRange.u32Max:%d, stSysGainRange.u32Max:%d, u8Speed:%d, u8Tolerance:%d\n"
           , stExposureAttr.bAERouteExValid, stExposureAttr.u8AERunInterval, stExposureAttr.stAuto.stExpTimeRange.u32Max
           , stExposureAttr.stAuto.stSysGainRange.u32Max, stExposureAttr.stAuto.u8Speed, stExposureAttr.stAuto.u8Tolerance);
@@ -1484,13 +1484,14 @@ HI_S32 HI_SCENE_SetDynamicThreeDNR_AutoGenerate(VI_PIPE ViPipe, VPSS_GRP VpssGrp
     return HI_SUCCESS;
 }
 
-
 HI_SCENE_CTL_AE_S g_scene_ctl_ae[4] = {
-  {.compensation_mul = 1},
-  {.compensation_mul = 1},
-  {.compensation_mul = 1},
-  {.compensation_mul = 1},
+  {.compensation_mul = 1, .dgain_max =  10*1024, .igain_max =  10*1024, .strategy = AE_EXP_HIGHLIGHT_PRIOR, .mode = AE_MODE_FIX_FRAME_RATE},
+  {.compensation_mul = 1, .dgain_max =  10*1024, .igain_max =  10*1024, .strategy = AE_EXP_HIGHLIGHT_PRIOR, .mode = AE_MODE_FIX_FRAME_RATE},
+  {.compensation_mul = 1, .dgain_max =  10*1024, .igain_max =  10*1024, .strategy = AE_EXP_HIGHLIGHT_PRIOR, .mode = AE_MODE_FIX_FRAME_RATE},
+  {.compensation_mul = 1, .dgain_max =  10*1024, .igain_max =  10*1024, .strategy = AE_EXP_HIGHLIGHT_PRIOR, .mode = AE_MODE_FIX_FRAME_RATE},
   };
+
+#define _LOW_LIGHT_ 1
 
 HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI_U64 u64LastExposure, HI_U8 u8Index)
 {
@@ -1500,7 +1501,12 @@ HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI
     }
 
     static HI_SCENE_CTL_AE_S _scene_ctl_ae[4];
-
+    
+	#if _LOW_LIGHT_
+    g_scene_ctl_ae[ViPipe].strategy = (u64Exposure > 40000000)?AE_EXP_LOWLIGHT_PRIOR:AE_EXP_HIGHLIGHT_PRIOR;
+    g_scene_ctl_ae[ViPipe].mode = (u64Exposure > 40000000)?AE_MODE_SLOW_SHUTTER:AE_MODE_FIX_FRAME_RATE;
+	#endif
+    
     HI_U32 u32ExpLevel = 0;
     HI_S32 s32Ret = HI_SUCCESS;
     ISP_SMART_EXPOSURE_ATTR_S stSmartExpAttr;
@@ -1559,7 +1565,23 @@ HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI
         CHECK_SCENE_PAUSE();
         
         stExposureAttr.stAuto.u8Compensation *= _scene_ctl_ae[ViPipe].compensation_mul;
-        printf("%s => set ViPipe:%d, u8Compensation:%d, u8MaxHistOffset:%d\n", __func__, ViPipe, stExposureAttr.stAuto.u8Compensation, stExposureAttr.stAuto.u8MaxHistOffset);
+		#if _LOW_LIGHT_
+        stExposureAttr.stAuto.stDGainRange.u32Max    = _scene_ctl_ae[ViPipe].dgain_max;
+        if(stExposureAttr.stAuto.stDGainRange.u32Min > stExposureAttr.stAuto.stDGainRange.u32Max)
+          stExposureAttr.stAuto.stDGainRange.u32Min = stExposureAttr.stAuto.stDGainRange.u32Max;
+          
+        stExposureAttr.stAuto.stISPDGainRange.u32Max = _scene_ctl_ae[ViPipe].igain_max;
+        if(stExposureAttr.stAuto.stISPDGainRange.u32Min > stExposureAttr.stAuto.stISPDGainRange.u32Max)
+          stExposureAttr.stAuto.stISPDGainRange.u32Min = stExposureAttr.stAuto.stISPDGainRange.u32Max;
+          
+        stExposureAttr.stAuto.enAEStrategyMode    = _scene_ctl_ae[ViPipe].strategy;
+        stExposureAttr.stAuto.enAEMode            =  _scene_ctl_ae[ViPipe].mode;
+		#endif
+        #if 0
+        printf("%s =>ViPipe:%d, u64Exposure:%llu, u8Compensation:%d, lowlight:%d\n"
+              , __func__, ViPipe, u64Exposure, stExposureAttr.stAuto.u8Compensation, stExposureAttr.stAuto.enAEStrategyMode);
+        #endif
+        
         s32Ret = HI_MPI_ISP_SetExposureAttr(ViPipe, &stExposureAttr);
         CHECK_SCENE_RET(s32Ret);
 
@@ -1730,7 +1752,8 @@ HI_S32 HI_SCENE_SetDynamicLDCI_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, 
 
         u32ExpLevel = SCENE_GetLevelLtoH(u64Exposure, g_astScenePipeParam[u8Index].stDynamicLDCI.u32EnableCnt, g_astScenePipeParam[u8Index].stDynamicLDCI.au64EnableExpThreshLtoH);
         stLDCIAttr.bEnable = g_astScenePipeParam[u8Index].stDynamicLDCI.au8Enable[u32ExpLevel];
-
+        stLDCIAttr.enOpType = OP_TYPE_MANUAL; //maohw
+        
         CHECK_SCENE_PAUSE();
         s32Ret = HI_MPI_ISP_SetLDCIAttr(ViPipe, &stLDCIAttr);
         CHECK_SCENE_RET(s32Ret);

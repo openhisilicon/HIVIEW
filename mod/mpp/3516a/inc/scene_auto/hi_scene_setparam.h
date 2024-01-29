@@ -542,6 +542,10 @@ typedef struct hiSCENE_PIPE_PARAM_S
 //maohw;
 typedef struct {
   float compensation_mul; // 0.5 - 1.5;
+  unsigned int dgain_max;
+  unsigned int igain_max;
+  unsigned int strategy;
+  unsigned int mode;
 }HI_SCENE_CTL_AE_S;
 
 

@@ -705,8 +705,10 @@ int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_SCENE_CTL_AE:
       {
-        ret = 0; 
-        g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
+        ret = 0;
+        HI_SCENE_CTL_AE_S *ae = (HI_SCENE_CTL_AE_S*)args;
+        
+        g_scene_ctl_ae[ViPipe].compensation_mul = ae->compensation_mul;
         printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
       }
       break;
