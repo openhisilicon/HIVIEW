@@ -7,6 +7,7 @@ char sips_parm_path[128] = {0};
 gsf_sips_t sips_parm = {
   .auth = 0,
   .port = 5060,
+  .chnum = 1,
   .host = "sip:34020000002000000001@192.168.0.166:5060",
   .device = "34020000001110000001",
   .password = "12345678",

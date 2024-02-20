@@ -4,6 +4,7 @@ STRUCT(gsf_sips_t)
 {
   FIELD(int, port);
   FIELD(int, auth);
+  FIELD(int, chnum);
 
   STRING(host, 128);    // "sip:34020000002000000001@192.168.0.166:5060"
   STRING(device, 64);   // "34020000001110000001" 
@@ -11,6 +12,7 @@ STRUCT(gsf_sips_t)
   FIELD(int, expired);  // 3600
   FIELD(int, keepalive);// 60
   FIELD(int, enable);   // 0:disable, 1: register to sipserver;
+  
 };
 
 

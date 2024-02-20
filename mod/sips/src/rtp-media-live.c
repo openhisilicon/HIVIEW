@@ -15,7 +15,7 @@
 #define CONTAINER_OF(ptr, struct_type, member) \
         (struct_type*)((char*)(ptr) - offsetof(struct_type, member))
 
-#define _AUDIO_ENABLE_ 0
+#define _AUDIO_ENABLE_   0
 #define RTP_PAYLOAD_H264 98  // H264;
 #define RTP_PAYLOAD_PS   96  // PS;
         
@@ -135,7 +135,12 @@ static void *live_send_task(void *arg)
       if(m_evfd)
       {
         //gettimeofday(&tv1, NULL);
+        #if defined(GSF_CPU_3519d)
+        int ret = st_netfd_poll(m_evfd, POLLIN, 1000*1000);
+        cfifo_fd_resume(m->track[MEDIA_TRACK_VIDEO].m_evfd);
+        #else
         int ret = st_netfd_poll(m_evfd, POLLIN|POLLET, 1000*1000);
+        #endif
         //gettimeofday(&tv2, NULL);
         //if(++m->track[MEDIA_TRACK_VIDEO].pollcnt%30 == 0)
         //  printf("pid:%d, m:%p => st_netfd_poll ret:%d, cost:%d\n", getpid(), m, ret, (tv2.tv_sec*1000+tv2.tv_usec/1000)-(tv1.tv_sec*1000+tv1.tv_usec/1000));

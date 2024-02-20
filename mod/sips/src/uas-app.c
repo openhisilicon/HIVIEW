@@ -196,9 +196,25 @@ static int sip_uas_transport_send(void* param, const struct cstring_t* protocol,
 	return r == bytes ? 0 : -1;
 }
 
+static int sip_uas_parse_chn(const struct sip_message_t* req)
+{
+  //34020000001310000001@192.168.0.13:5060
+  for(int i = 0; i < sips_parm.chnum; i++)
+  {
+    char token[64];
+    sprintf(token, "34020000001310%06d", i+1);
+    if(strstr(req->u.c.uri.host.p, token))
+      return i;
+  }
+
+  return 0; 
+}
+
+
 static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, struct sip_uas_transaction_t* t, struct sip_dialog_t* dialog, const void* data, int bytes)
 {
-  printf("%s => t:%p, bytes:%d\n[%s]\n", __func__, t, bytes, data);
+  int chn = sip_uas_parse_chn(req);
+  printf("%s => t:%p, request:[%s], chn:%d\n", __func__, t, req->u.c.uri.host.p, chn);
   
 	char reply[1024];
 	const struct cstring_t* h = sip_message_get_header_by_name(req, "Content-Type");
@@ -212,7 +228,7 @@ static void* sip_uas_oninvite(void* param, const struct sip_message_t* req, stru
 		assert(m->nmedia > 0);
 		assert(0 == strcasecmp("IP4", m->medias[0].addrtype) || 0 == strcasecmp("IP6", m->medias[0].addrtype));
 
-    m->media = rtp_media_live_new(0, 0);
+    m->media = rtp_media_live_new(chn, 0);
 		
 		int i;
 		for(i = 0; i < m->nmedia; i++)
@@ -427,18 +443,31 @@ static int sip_uas_onmessage(void* param, const struct sip_message_t* req, struc
     mxml_node_t* xml = mxmlNewXML("1.0");
     mxml_node_t* root = mxmlNewElement(xml, "Response");
     
+    //四个码段共20位十进制数字字符构成,即系统编码 =中心编码(8) + 行业编码(2) + 类型编码(3) + 序号(7)
+    //类型编码(3): 111 - DVR, 131 - camera, 134 - alarm-in, 135 - alarm-out;
+    
     Catalog catalog;
     memset(&catalog, 0, sizeof(catalog));
     strncpy(catalog.CmdType, "Catalog", sizeof(catalog.CmdType)-1);
     catalog.SN = 2;
     strncpy(catalog.DeviceID, "34020000001110000001", sizeof(catalog.DeviceID)-1);
-    catalog.SumNum = 2;
-    ELE_NUM_SET(catalog.DeviceList) = 2;
+    
+    catalog.SumNum = sips_parm.chnum+1;
+    ELE_NUM_SET(catalog.DeviceList) = sips_parm.chnum+1;
     int i = 0;
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < sips_parm.chnum+1; i++)
     {
-      strncpy(catalog.DeviceList[i].DeviceID, i==0?"34020000001310000001":"34020000001340000001", sizeof(catalog.DeviceList[i].DeviceID)-1);
-      strncpy(catalog.DeviceList[i].Name, i==0?"IPC":"Alarm", sizeof(catalog.DeviceList[i].Name)-1);
+      if(i==0)
+      {
+        snprintf(catalog.DeviceList[i].DeviceID, sizeof(catalog.DeviceList[i].DeviceID), "%s", "34020000001340000001");
+        snprintf(catalog.DeviceList[i].Name, sizeof(catalog.DeviceList[i].Name), "%s", "Alarm");
+      }
+      else
+      {
+        snprintf(catalog.DeviceList[i].DeviceID, sizeof(catalog.DeviceList[i].DeviceID), "34020000001310%06d", i);
+        snprintf(catalog.DeviceList[i].Name, sizeof(catalog.DeviceList[i].Name), "IPC%02d", i);
+      }
+      
       strncpy(catalog.DeviceList[i].Manufacturer, "HIVIEW-TECH.CN", sizeof(catalog.DeviceList[i].Manufacturer)-1);
       strncpy(catalog.DeviceList[i].Model, "Model", sizeof(catalog.DeviceList[i].Model)-1);
       strncpy(catalog.DeviceList[i].Owner, "Owner", sizeof(catalog.DeviceList[i].Owner)-1);
@@ -628,6 +657,9 @@ static int sip_uac_onregister(void* param, const struct sip_message_t* reply, st
 static void sip_uac_register_do(struct sip_uas_app_t *app)
 {
 	char buffer[256];
+	
+	//printf("%s => host:[%s], from[%s]\n", __func__, app->host, app->from);
+	
 	//t = sip_uac_register(uac, "Bob <sip:bob@biloxi.com>", "sip:registrar.biloxi.com", 7200, sip_uac_message_onregister, app);
 	struct sip_uac_transaction_t *t = sip_uac_register(app->sip, app->from, app->host, app->expired, sip_uac_onregister, app);
   
