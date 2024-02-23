@@ -18,7 +18,7 @@ extern int (*gsf_lens_stop)(int ch);
 extern int (*gsf_lens_cal)(int ch);
 /////////////////////////////////////////////
 extern int (*gsf_uart_open)(char *ttyAMA, int baudrate);
-extern int (*gsf_uart_write)(char *buf, int size);
+extern int (*gsf_uart_write)(unsigned char *buf, int size);
 /////////////////////////////////////////////
 extern int (*gsf_lens_ptz)(int ch, gsf_lens_t *lens);
 

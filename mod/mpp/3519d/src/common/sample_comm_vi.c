@@ -1472,7 +1472,13 @@ static hi_s32 sample_comm_vi_start_one_pipe_isp(hi_vi_pipe vi_pipe, hi_u8 pipe_i
 
     ret = hi_mpi_isp_set_pub_attr(vi_pipe, &vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr);
     if (ret != HI_SUCCESS) {
-        printf("HI_MPI_ISP_SetPubAttr failed with 0x%x!\n", ret);
+        printf("HI_MPI_ISP_SetPubAttr(vi_pipe:%d, isp_pub_attr[%d,%d - %d,%d]) failed with 0x%x!\n"
+              , vi_pipe
+              , vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr.wnd_rect.x
+              , vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr.wnd_rect.y
+              , vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr.wnd_rect.width
+              , vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr.wnd_rect.height
+              , ret);
         goto exit1;
     }
 

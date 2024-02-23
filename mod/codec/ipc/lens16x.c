@@ -250,7 +250,7 @@ int lens16x_lens_ircut(int ch, int dayNight)
   return 0;
 }
 
-int lens16x_uart_write(char *buf, int size)
+int lens16x_uart_write(unsigned char *buf, int size)
 {
   int ret = 0;
 
@@ -273,6 +273,65 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
 {
   char buf[8];
   HI_U32 Fv = Fv1 + Fv2;
+
+#if 0
+  if(Gain <= 20*1000 && Fv1) //is daylight;
+  {
+    enum {
+      SMT_NONE = 0,
+      SMT_TIME = 1,
+      SMT_QUIET= 2,
+    }; static int smt = SMT_NONE;
+    
+    static HI_U32 _cnt = 0, _Fv1 = 0;
+    static struct timespec _ts = {0,}, ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+  
+    _ts = (_ts.tv_sec == 0)?ts:_ts;
+    //printf("Gain:%d*1000, Fv1:%d*1000\n", Gain/1000, Fv1/1000);
+    switch(smt)
+    {
+      case SMT_NONE:
+          smt = (ts.tv_sec - _ts.tv_sec >= 10*60)?SMT_TIME:smt; //is 10 minutes
+          if(smt == SMT_TIME)
+          {
+            printf("SMT_NONE => SMT_TIME Gain:%d\n", Gain);
+          }
+          break;
+      case SMT_TIME:
+          if(abs(Fv1-_Fv1) >= Gain*4) // is motion
+          {
+            printf("SMT_TIME => motion Gain:%d*1000, Fv1:%d*1000\n", Gain/1000, Fv1/1000);
+            _cnt = 0;
+          }
+          else if(++_cnt >= 60) // is quiet
+          {
+            printf("SMT_TIME => SMT_QUIET Fv1:%d\n", Fv1);
+            smt = SMT_QUIET;
+          }
+          _Fv1 = Fv1;
+          break;
+       case SMT_QUIET:
+          {
+            
+            int ret = 0;
+            char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c};
+            char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c};
+            char stop[8]= {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c};
+            static char *buf = NULL;
+            
+            buf = (buf==add)?sub:add;
+            ret = gsf_uart_write(buf, 8);
+            usleep(10*1000);
+            ret = gsf_uart_write(stop, 8);
+            printf("SMT_QUIET => trigger focus\n");
+            smt = SMT_NONE;
+            _ts = ts;
+          }
+          break;
+    }
+  }
+#endif
 
   //FV: A5+4字节AF数据（高位在前）+ 2字节增益(模拟增益)+ 1字节颜色（彩色/黑白）
   buf[0] = 0xa5;
@@ -969,7 +1028,7 @@ int (*gsf_lens_focus)(int ch, int dir, int speed) = lens16x_lens_focus;
 int (*gsf_lens_stop)(int ch) = lens16x_lens_stop;
 int (*gsf_lens_cal)(int ch) = lens16x_lens_cal;
 int (*gsf_uart_open)(char *ttyAMA, int baudrate) = lens16x_uart_open;
-int (*gsf_uart_write)(char *buf, int size) = lens16x_uart_write;
+int (*gsf_uart_write)(unsigned char *buf, int size) = lens16x_uart_write;
 int (*gsf_lens_init)(gsf_lens_ini_t *ini) = lens16x_lens_init;
 int (*gsf_lens_ptz)(int ch, gsf_lens_t *lens) = lens16x_lens_ptz;
 

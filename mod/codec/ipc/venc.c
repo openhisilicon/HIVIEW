@@ -265,6 +265,12 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
       _venc_sdp_fill(VeChn, PT, &venc_pack, pack_size);
   }
   
+  #if 0
+  if(VeChn == 0)
+  printf("VeChn:%d, PT:%d, PTS:%llu ms, u32Len:%d, uargs:%p\n"
+      , VeChn, PT, venc_pts/1000, len, uargs);
+  #endif
+  
   //USEI SIZE;
   venc_mgr[VeChn].usei_len = 0;
   if(PT == PT_H264 && _sei_fill)

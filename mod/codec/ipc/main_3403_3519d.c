@@ -116,9 +116,10 @@ static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 //second sdp hook, fixed venc cfg;
-#define SECOND_WIDTH(second) ((second) == 1?1920:(second) == 2?720:640)
-#define SECOND_HEIGHT(second) ((second) == 1?1080:(second) == 2?480:512)
-#define SECOND_HIRES(second) ((second) == 1?PIC_1080P:(second) == 2?PIC_D1_NTSC:PIC_512P)
+#define SECOND_WIDTH(second) ((second) == 1?1920:(second) == 2?640:640)
+#define SECOND_HEIGHT(second) ((second) == 1?1080:(second) == 2?512:512)
+#define SECOND_HIRES(second) ((second) == 1?PIC_1080P:(second) == 2?PIC_512P:PIC_512P)  
+#define SECOND_LORES(second) ((second) == 1?PIC_640P :(second) == 2?PIC_512P:PIC_512P)
 
 int second_sdp(int i, gsf_sdp_t *sdp)
 {
@@ -129,14 +130,14 @@ int second_sdp(int i, gsf_sdp_t *sdp)
     {
       sdp->venc.width = SECOND_WIDTH(p_cfg->second);
       sdp->venc.height = SECOND_HEIGHT(p_cfg->second);
-      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>720)?8000:2000;
+      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>640)?8000:2000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
     else // sub
     {
-      sdp->venc.width = (SECOND_WIDTH(p_cfg->second)>720)?720:352;
-      sdp->venc.height = (SECOND_WIDTH(p_cfg->second)>720)?480:288;
-      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>720)?2000:1000;
+      sdp->venc.width = (SECOND_WIDTH(p_cfg->second)>640)?640:640;
+      sdp->venc.height = (SECOND_WIDTH(p_cfg->second)>640)?360:512;
+      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>640)?1000:1000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
     return 0; 
@@ -271,7 +272,7 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_D1_NTSC);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
     }
     return;
    }
@@ -296,7 +297,7 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
     }
     return;
    }
@@ -317,7 +318,7 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
   {
       rgn_ini->ch_num = venc_ini->ch_num = 2;
       rgn_ini->st_num = venc_ini->st_num = 2;
-      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
   }
 }
 #endif
@@ -381,8 +382,8 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     else if(cfg->second)
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
-    }
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
+    }    
     return;
   }
    
@@ -402,7 +403,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
         rgn_ini->st_num = venc_ini->st_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
     }
     return;
   }
@@ -431,7 +432,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
         rgn_ini->st_num = venc_ini->st_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
     }
     return;
   }
@@ -453,7 +454,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     {
         rgn_ini->ch_num = venc_ini->ch_num = 2;
         rgn_ini->st_num = venc_ini->st_num = 2;
-        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
     }
     return;
   }
@@ -474,7 +475,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   {
       rgn_ini->ch_num = venc_ini->ch_num = 2;
       rgn_ini->st_num = venc_ini->st_num = 2;
-      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+      VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
   }
 }
 #endif
@@ -553,7 +554,7 @@ int mpp_start(gsf_bsp_def_t *def)
       
     gsf_mpp_vi_start(&vi);
     
-    #if 0
+    #if 1
     {
       //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
       char uart_name[32] = {0};
@@ -619,7 +620,7 @@ int mpp_start(gsf_bsp_def_t *def)
         else 
         {
           codec_ipc.scene[i].magic = 0x55aa;
-          gsf_mpp_isp_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
+          gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
         }
       }
     }
@@ -670,16 +671,24 @@ int vo_start()
       inf = HI_VO_INTF_BT1120;
       #endif
       
-      int sync = (codec_ipc.vo.sync == 3)?VO_OUTPUT_7680x4320_30:
+      int sync = (codec_ipc.vo.sync == 4)?HI_VO_OUT_1080P30:
+            (codec_ipc.vo.sync == 3)?VO_OUTPUT_7680x4320_30:
             (codec_ipc.vo.sync == 2)?VO_OUTPUT_3840x2160_60:
             (codec_ipc.vo.sync == 1)?VO_OUTPUT_3840x2160_30:
             VO_OUTPUT_1080P60;
+
       printf("codec_ipc.vo.sync:%d\n", codec_ipc.vo.sync);
       gsf_mpp_vo_start(VODEV_HD0, inf, sync, 0);
       
       int ly = VO_LAYOUT_1MUX;
 
       ly = (p_cfg->second || avs == 1)?VO_LAYOUT_2MUX:p_cfg->snscnt;
+      
+      //for AHD;
+      if(sync == HI_VO_OUT_1080P30)
+      {
+        ly = VO_LAYOUT_1MUX;
+      }
       
       gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
       vo_ly_set(ly);
@@ -696,7 +705,7 @@ int vo_start()
         if(p_cfg->second)
     	  {
     	    gsf_sdp_t sdp;
-          RECT_S rect = {20, 0, 720, 576};
+          RECT_S rect = {20, 0, 640, 512};
           if(second_sdp(0, &sdp) == 0)
           {
             rect_w = sdp.venc.width;
@@ -753,10 +762,87 @@ int main_start(gsf_bsp_def_t *bsp_def)
     return 0;
 }
 
+int dzoom_plus = 0;
+
 int main_loop(void)
 {
-  usleep(10*1000);
-  return 0;
+    usleep(10*1000);
+    
+    #if defined(__TEST_ASPECT__)
+    hi_aspect_ratio aspect;
+    aspect.mode = OT_ASPECT_RATIO_AUTO;
+    aspect.bg_color = 0xff0000;
+    gsf_mpp_vpss_ctl(0, GSF_MPP_VPSS_CTL_ASPECT, &aspect);
+    printf("GSF_MPP_VPSS_CTL_ASPECT ASPECT_RATIO_AUTO\n");
+    sleep(6);
+    
+    aspect.mode = OT_ASPECT_RATIO_NONE;
+    aspect.bg_color = 0xff0000;
+    printf("GSF_MPP_VPSS_CTL_ASPECT ASPECT_RATIO_NONE\n");
+    gsf_mpp_vpss_ctl(0, GSF_MPP_VPSS_CTL_ASPECT, &aspect);
+    sleep(6);
+    #endif
+
+    //#define __TEST_DIS__
+    #if defined(__TEST_DIS__)
+    gsf_mpp_img_dis_t dis;
+    
+    dis.bEnable = 0;
+    dis.enMode = HI_DIS_MODE_6_DOF_GME;
+    dis.enPdtType = 0;
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
+    sleep(6);
+    
+    dis.bEnable = 1;
+    dis.enMode = HI_DIS_MODE_6_DOF_GME;
+    dis.enPdtType = 1;
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
+    sleep(6);
+    #endif
+    
+    {
+      #define ZOOM_STEPS 100
+      #define STEP_X  (MAX_W-MIN_W)/ZOOM_STEPS/2
+      #define STEP_Y  (MAX_H-MIN_H)/ZOOM_STEPS/2
+      
+      static int MAX_W = 0;//3840;
+      static int MAX_H = 0;//2160;
+      static int MIN_W = 0;//MAX_W/4;
+      static int MIN_H = 0;//MAX_H/4;
+      static int cnt = 0, vpssGrp = 0;
+      if(!MAX_W)
+      {
+        hi_vpss_grp_attr grp_attr = {0};
+        gsf_mpp_vpss_ctl(vpssGrp, GSF_MPP_VPSS_CTL_ATTR, &grp_attr);
+        MAX_W = grp_attr.max_width;
+        MAX_H = grp_attr.max_height;
+        MIN_W = MAX_W/3.0;
+        MIN_H = MAX_H/3.0;
+      }
+      
+      if(dzoom_plus > 0)
+      {
+        if(cnt < ZOOM_STEPS-1)
+          cnt++;
+      }
+      else if(dzoom_plus < 0)
+      {
+        if(cnt > 0)
+          --cnt;
+      }
+      if(dzoom_plus)
+      {
+        int step = cnt%ZOOM_STEPS;
+        hi_vpss_crop_info stcrop;
+        stcrop.enable = step?1:0;
+        stcrop.crop_mode = OT_COORD_ABS;
+        stcrop.crop_rect.x = HI_ALIGN_UP((int)step*STEP_X, 2);
+        stcrop.crop_rect.y = HI_ALIGN_UP((int)step*STEP_Y, 2);
+        stcrop.crop_rect.width = HI_ALIGN_UP((int)(MAX_W/2 - stcrop.crop_rect.x)*2, 2);
+        stcrop.crop_rect.height = HI_ALIGN_UP((int)(MAX_H/2 - stcrop.crop_rect.y)*2, 2);
+        gsf_mpp_vpss_ctl(vpssGrp, GSF_MPP_VPSS_CTL_CROP, &stcrop);
+      }
+    }
 }
 
 

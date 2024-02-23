@@ -113,6 +113,7 @@ int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int 
 
 
 typedef struct {
+  int  ViPipe;
   void *uargs;
   int (*cb)(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs);
 }gsf_mpp_af_t;
@@ -150,9 +151,21 @@ enum {
   GSF_MPP_VPSS_CTL_ASPECT = 3, //HI_MPI_VPSS_SetChnAttr(VpssGrp, ASPECT_RATIO_S *args);
   GSF_MPP_VPCH_CTL_ENABLE = 4, //HI_MPI_VPSS_EnableChn(VpssGrp, VpssChn *args);
   GSF_MPP_VPCH_CTL_DISABLE= 5, //HI_MPI_VPSS_DisableChn(VpssGrp, VpssChn *args);
+  GSF_MPP_VPSS_CTL_ATTR   = 6, //HI_MPI_VPSS_GetGrpAttr(VpssGrp, VPSS_GRP_ATTR_S *args);
 };
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
+
+
+//mcf;
+typedef struct {
+  ;
+}gsf_mpp_mcf_t;
+
+int gsf_mpp_mcf_start(gsf_mpp_mcf_t *mcf);
+int gsf_mpp_mcf_stop(gsf_mpp_mcf_t *mcf);
+
+
 
 
 //venc;
@@ -323,6 +336,17 @@ typedef struct {
   gsf_mpp_img_ldci_t  ldci;
   gsf_mpp_img_3dnr_t  _3dnr;
 }gsf_mpp_img_all_t;
+
+typedef struct {
+  int bFlip;
+  int bMirror;
+}gsf_mpp_img_flip_t;
+    
+typedef struct {
+  int bEnable;
+  int enMode;    //DIS_MODE_4_DOF_GME = 0 ;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+  int enPdtType; //DIS_PDT_TYPE_IPC = 0; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+}gsf_mpp_img_dis_t;
 
 enum {
   GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t

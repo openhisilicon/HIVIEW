@@ -48,4 +48,11 @@ int mppex_comm_isp_get_pub_attr_by_sns(sample_sns_type sns_type, hi_isp_pub_attr
 
 hi_wdr_mode mppex_comm_vi_get_wdr_mode_by_sns_type(sample_sns_type sns_type);
 
+int mppex_comm_vi_bb(int snscnt, sample_vi_cfg vi_cfg[HI_VI_MAX_DEV_NUM]);
+int mppex_comm_vi_ee(int snscnt, sample_vi_cfg vi_cfg[HI_VI_MAX_DEV_NUM]);
+int mppex_comm_vi_tt(int snscnt, sample_vi_cfg vi_cfg[HI_VI_MAX_DEV_NUM]);
+
+int mppex_comm_vpss_bb(gsf_mpp_vpss_t *vpss, sample_venc_vpss_chn_attr *vpss_param);
+int mppex_comm_vpss_ee(gsf_mpp_vpss_t *vpss, sample_venc_vpss_chn_attr *vpss_param);
+
 #endif //__mppex_h__

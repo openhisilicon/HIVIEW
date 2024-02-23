@@ -6,8 +6,12 @@
 #include "lens.h"
 #include "mpp.h"
 
-//for CPU that not implement lensxxx.c
-#if !defined(GSF_CPU_3516d) && !defined(GSF_CPU_3559)
+#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+//The 3516dv300 implement is lens16x.c
+#elif defined(GSF_CPU_3519d)
+//The 3516dv500 implement is lens19d.c
+#else
+//The xxx not implement lensxxx.c
 #warning "xxx lens not implement"
 static int __lens_init(gsf_lens_ini_t *ini)         { return -1;}
 static int __lens_start(int ch, char *ttyAMA)       { return -1;}
@@ -30,7 +34,6 @@ int (*gsf_uart_open)(char *ttyAMA, int baudrate) = __uart_open;
 int (*gsf_uart_write)(char *buf, int size) = __uart_write;
 int (*gsf_lens_init)(gsf_lens_ini_t *ini) = __lens_init;
 int (*gsf_lens_ptz)(int ch, gsf_lens_t *lens) = __lens_ptz;
-
 #endif
 
 

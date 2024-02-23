@@ -457,6 +457,8 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
             vpss_chn_attr.chn_attr[vpss_chn].mirror_en = 0;
             vpss_chn_attr.chn_attr[vpss_chn].flip_en = 0;
             vpss_chn_attr.chn_attr[vpss_chn].aspect_ratio.mode = HI_ASPECT_RATIO_NONE;
+            printf("@@@@@@@@@@ vpss_grp:%d, vpss_chn:%d, width:%d, height:%d\n"
+              , vpss_grp, vpss_chn, vpss_chn_attr.chn_attr[vpss_chn].width, vpss_chn_attr.chn_attr[vpss_chn].height);
         }
     }
 

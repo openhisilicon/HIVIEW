@@ -676,7 +676,7 @@ int mpp_start(gsf_bsp_def_t *def)
         else 
         {
           codec_ipc.scene[i].magic = 0x55aa;
-          gsf_mpp_isp_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
+          gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
         }
       }
     }

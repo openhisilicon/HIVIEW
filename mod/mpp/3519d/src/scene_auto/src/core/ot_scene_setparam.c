@@ -2305,6 +2305,8 @@ hi_s32 ot_scene_set_dynamic_aibnr(hi_vi_pipe vi_pipe, hi_u64 iso, hi_u64 last_is
         ret = hi_mpi_aibnr_get_attr(vi_pipe_id, &aibnr_attr);
         check_scene_ret(ret);
         iso_level = scene_get_level_ltoh_u32((hi_u32)iso, iso_count, piso_level_thresh);
+        printf("%s => EN vi_pipe:%d, iso_level:%u, iso:%u, iso_count:%u, piso_level_thresh:%u\n"
+              , __func__, vi_pipe, iso_level, iso, iso_count, piso_level_thresh);
         ot_scenecomm_expr_true_return(iso_level >= HI_SCENE_ISO_STRENGTH_NUM, HI_FAILURE);
         if (iso_level == 0) {
             sfs = get_pipe_params()[index].dynamic_aibnr.sfs[iso_level];
@@ -2320,6 +2322,8 @@ hi_s32 ot_scene_set_dynamic_aibnr(hi_vi_pipe vi_pipe, hi_u64 iso, hi_u64 last_is
     }
 
     if ((iso <= aibnr_iso_thresh[0]) && (aibnr_chg_en == HI_TRUE)) {
+        printf("%s => DI vi_pipe:%d, iso:%u, aibnr_iso_thresh:%u\n"
+              , __func__, vi_pipe, iso, aibnr_iso_thresh[0]);
         hi_mpi_aibnr_disable(vi_pipe_id);
     }
 

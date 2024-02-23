@@ -30,12 +30,12 @@
 #include "aiisp/sample_aidrc.h"
 #include "aiisp/sample_ai3dnr.h"
 
-
 #include "hifb.h"
 #include "mpp.h"
+#include "mppex.h"
 
 //#include "mppex.h"
-hi_s32 g_3519d500  = 0;
+int CHIP_3519D  = 0;
 static hi_s32 aiisp = 0;
 
 typedef struct {
@@ -132,8 +132,6 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
 }
 
 
-#define BT1120_DEV3 1
-
 int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 {
   int i = 0;
@@ -168,9 +166,13 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, snsname);
   }
   
-  if(cfg->second == 1 && cfg->snscnt == 1)
+  if(cfg->snscnt == 1)
   {
-    sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor1 %s -sensor3 bt1120", path, snsname);
+    if(cfg->second == 1)
+      sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor1 %s -sensor3 bt1120", path, snsname);
+    else if(cfg->second == 2)
+      //sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 bt656", path, snsname);
+      sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 %s", path, snsname, snsname);
   }
   
   printf("%s => loadstr: %s\n", __func__, loadstr);
@@ -186,7 +188,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
                                       BT1120_YUV422_2M_60FPS_8BIT;
   }
   
-  g_3519d500 = strstr(cfg->type, "3519d500")?1:0;
+  CHIP_3519D = strstr(cfg->type, "3519d500")?1:0;
   aiisp = cfg->aiisp;
   
   if(dl)
@@ -265,14 +267,14 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   for(i = 0; i < snscnt; i++)
   {
     sample_comm_vi_get_default_vi_cfg(SENSOR0_TYPE, &vi_cfg[i]);
-    vi_cfg[i].mipi_info.divide_mode = ((g_3519d500)||(snscnt>1))?LANE_DIVIDE_MODE_1:LANE_DIVIDE_MODE_0;
+    vi_cfg[i].mipi_info.divide_mode = ((CHIP_3519D)||(snscnt>1))?LANE_DIVIDE_MODE_1:LANE_DIVIDE_MODE_0;
 
     if(i != 0)
     {
-      const hi_vi_dev vi_dev = g_3519d500?2:1; /* dev2 for sensor1 */
+      const hi_vi_dev vi_dev = CHIP_3519D?2:1; /* dev2 for sensor1 */
       const hi_vi_pipe vi_pipe = 1; /* dev2 bind pipe1 */
       
-      printf("sample_vi_get_two_sensor_vi_cfg() beg.\n");
+      printf("sample_vi_get_two_sensor_vi_cfg()\n");
       vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
       vi_cfg[i].sns_info.sns_clk_src = 1;
       vi_cfg[i].sns_info.sns_rst_src = 1;
@@ -283,51 +285,10 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       vi_cfg[i].grp_info.grp_num = 1;
       vi_cfg[i].grp_info.fusion_grp[0] = 1;
       vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
-      printf("sample_vi_get_two_sensor_vi_cfg() end.\n");
     }
   }
   
-  if(SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    {
-      i = 0;
-      const hi_vi_dev vi_dev = 2;   /* dev2 for sensor1 */
-      const hi_vi_pipe vi_pipe = 0; /* dev2 bind pipe0 */
-      
-      printf("sample_vi_get_sensor1_with_bt1120() beg.\n");
-      vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
-      vi_cfg[i].sns_info.sns_clk_src = 1;//sensor1;
-      vi_cfg[i].sns_info.sns_rst_src = 1;
-
-      sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, vi_dev, &vi_cfg[i].mipi_info);
-      vi_cfg[i].dev_info.vi_dev = vi_dev;
-      vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
-      vi_cfg[i].grp_info.grp_num = 1;
-      vi_cfg[i].grp_info.fusion_grp[0] = 1;
-      vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
-      printf("sample_vi_get_sensor1_with_bt1120() end.\n");
-    }
-    
-    {
-      i = 1;
-      sample_comm_vi_get_default_vi_cfg(SENSOR1_TYPE, &vi_cfg[i]);
-
-      const hi_vi_dev vi_dev = 3; /* dev3 for bt1120 */
-      const hi_vi_pipe vi_pipe = 3; /* dev3 bind pipe3 */
-      
-      printf("sample_vi_get_bt1120_vi_cfg() beg.\n");
-      vi_cfg[i].sns_info.bus_id = 6; /* i2c5 */
-      vi_cfg[i].sns_info.sns_clk_src = 1;
-      vi_cfg[i].sns_info.sns_rst_src = 1;
-      vi_cfg[i].mipi_info.mipi_dev = -1;
-      vi_cfg[i].dev_info.vi_dev = vi_dev;
-      vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
-      vi_cfg[i].grp_info.grp_num = 1;
-      vi_cfg[i].grp_info.fusion_grp[0] = 1;
-      vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
-      printf("sample_vi_get_bt1120_vi_cfg() end.\n");
-    }
-  }
+  mppex_comm_vi_bb(snscnt, vi_cfg);
   
   // get vpss param
   vi_size = vi_cfg[0].dev_info.dev_attr.in_size;
@@ -402,16 +363,10 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     }
   }
   
-  if(SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    i = 1;
-    extern hi_s32 sample_venc_vi_init(sample_vi_cfg *vi_cfg);
-    
-    ret = sample_venc_vi_init(&vi_cfg[i]);
-    if (ret != HI_SUCCESS) {
-        sample_print("Init VI i:%d ret:%#x!\n", i, ret);
-        goto EXIT_SYS_STOP;
-    }
+  ret = mppex_comm_vi_ee(snscnt, vi_cfg);
+  if (ret != HI_SUCCESS) {
+      sample_print("Init VI i:%d ret:%#x!\n", i, ret);
+      goto EXIT_SYS_STOP;
   }
 
   return ret;
@@ -442,12 +397,8 @@ int gsf_mpp_vi_stop()
       sample_venc_vi_deinit(&vi_cfg[i]);
     }  
   }
-  
-  if(SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    i = 1;
-    sample_venc_vi_deinit(&vi_cfg[i]);
-  }
+
+  mppex_comm_vi_tt(snscnt, vi_cfg);
 
   sample_comm_sys_exit();
   return ret;
@@ -460,6 +411,16 @@ int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int 
   return ret;
 }
 
+//from sample_af.c;
+extern int sample_af_main(gsf_mpp_af_t *af);
+
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af)
+{
+  return sample_af_main(af);
+}
+
+
 //vpss;
 extern hi_void sample_venc_vpss_deinit(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vpss_chan_cfg);
 
@@ -470,21 +431,8 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   hi_vi_pipe vi_pipe  = master_pipe[vpss->ViPipe];//vpss->ViPipe;
   hi_vi_chn vi_chn    = vpss->ViChn;
   hi_vpss_grp vpss_grp= vpss->VpssGrp;
-  
-  if(vi_pipe == 1 && SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    vi_pipe = vpss->ViPipe = 3;//bt1120 use pipe3
     
-    for(int i = 0; i < HI_VPSS_MAX_PHYS_CHN_NUM; i++)
-    {
-      hi_size enc_size = {0};
-      ret = sample_comm_sys_get_pic_size(vpss->enSize[i], &enc_size);
-      vpss_param.enable[i] = vpss->enable[i]; 
-      vpss_param.output_size[i].width = enc_size.width;
-      vpss_param.output_size[i].height = enc_size.height;
-    }
-    vpss_param.pixel_format = HI_PIXEL_FORMAT_YVU_SEMIPLANAR_422;
-  }
+  vi_pipe = mppex_comm_vpss_bb(vpss, &vpss_param);
   
   extern hi_s32 sample_venc_vpss_init(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vpss_chan_cfg);
   if ((ret = sample_venc_vpss_init(vpss_grp, &vpss_param)) != HI_SUCCESS) {
@@ -498,7 +446,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
       goto EXIT_VPSS_STOP;
   }
   
-  
+  mppex_comm_vpss_ee(vpss, &vpss_param);
 EXIT:
   return ret;
   
@@ -524,6 +472,65 @@ int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideo
   int ret = 0;
   return ret;
 }
+
+int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
+{
+  int ret = -1;
+  switch(id)
+  {
+    case GSF_MPP_VPSS_CTL_PAUSE:
+      ret = hi_mpi_vpss_stop_grp(VpssGrp);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_PAUSE VpssGrp:%d, err 0x%x\n", VpssGrp, ret);    
+      break;
+    case GSF_MPP_VPSS_CTL_RESUM:  
+      ret = hi_mpi_vpss_start_grp(VpssGrp);
+      if(ret)  
+        printf("GSF_MPP_VPSS_CTL_RESUM VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_CROP:
+      ret = hi_mpi_vpss_set_grp_crop(VpssGrp, (hi_vpss_crop_info*)args);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_CROP VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_ASPECT:
+      {
+        int i = 0;
+        hi_vpss_chn_attr chn_attr;
+    
+        for(i = 0; i < 2; i++)
+        {
+          if(hi_mpi_vpss_get_chn_attr(VpssGrp, i, &chn_attr) == HI_SUCCESS)
+          {
+            chn_attr.aspect_ratio = *((hi_aspect_ratio*)args);
+            ret = hi_mpi_vpss_set_chn_attr(VpssGrp, i, &chn_attr);
+            if(ret)
+              printf("GSF_MPP_VPSS_CTL_ASPECT VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, i, ret);
+          }
+        }
+      }
+      break;
+    case  GSF_MPP_VPCH_CTL_ENABLE:
+      ret = hi_mpi_vpss_enable_chn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_ENABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPCH_CTL_DISABLE:
+      ret = hi_mpi_vpss_disable_chn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_DISABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPSS_CTL_ATTR:
+      ret = hi_mpi_vpss_get_grp_attr(VpssGrp, (hi_vpss_grp_attr*)args);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_ATTR VpssGrp:%d, err 0x%x\n", VpssGrp, ret); 
+      break;
+  }
+  return ret;
+}
+
+
+
 
 //Æô¶¯±àÂëÍ¨µÀ
 
@@ -600,9 +607,82 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   return ret;
 }
 
+//from sample_ir_auto.c;
+extern hi_s32 isp_ir_switch_to_ir(hi_vi_pipe vi_pipe);
+extern hi_s32 isp_ir_switch_to_normal(hi_vi_pipe vi_pipe);
+extern hi_s32 isp_ir_switch_to_auto(hi_vi_pipe vi_pipe);
+extern hi_s32 isp_ir_mode(gsf_mpp_ir_t *ir);
+
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
 {
-  int ret = 0;
+  int ret = -1;
+  
+  switch(id)
+  {
+  case GSF_MPP_ISP_CTL_IR:
+    switch((int)args)
+    {
+      case 0:
+          isp_ir_mode((gsf_mpp_ir_t*)NULL);
+          ret = isp_ir_switch_to_normal(ViPipe);
+        break;
+      case 1:
+          isp_ir_mode((gsf_mpp_ir_t*)NULL);
+          ret = isp_ir_switch_to_ir(ViPipe);
+        break;
+      default:
+          isp_ir_mode((gsf_mpp_ir_t*)args);
+          ret = isp_ir_switch_to_auto(ViPipe);
+        break;
+    }
+    printf("GSF_MPP_ISP_CTL_IR, args:%p\n", args);
+    break;
+  case GSF_MPP_ISP_CTL_DIS:
+    {
+      gsf_mpp_img_dis_t *dis = (gsf_mpp_img_dis_t*)args;
+
+      hi_dis_cfg dis_cfg    = {0};
+      hi_dis_attr dis_attr  = {0};
+
+      hi_mpi_vi_get_chn_dis_attr(ViPipe, 0, &dis_attr);
+      if(dis_attr.enable)
+      {
+        dis_attr.enable = HI_FALSE;
+        hi_mpi_vi_set_chn_dis_attr(ViPipe, 0, &dis_attr);
+      }
+
+      dis_cfg.mode              = dis->enMode;//DIS_MODE_4_DOF_GME;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+      dis_cfg.motion_level       = HI_DIS_MOTION_LEVEL_NORM;
+      dis_cfg.crop_ratio        = 80;
+      dis_cfg.buf_num           = 5;
+      dis_cfg.frame_rate        = 30;
+      dis_cfg.pdt_type          = dis->enPdtType;//DIS_PDT_TYPE_DV;//DIS_PDT_TYPE_IPC; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+      dis_cfg.scale             = HI_TRUE; //HI_FALSE;
+      dis_cfg.camera_steady     = HI_FALSE;
+
+      dis_attr.enable               = dis->bEnable; //HI_TRUE;
+      dis_attr.moving_subject_level = 0;
+      dis_attr.rolling_shutter_coef = 0;
+      dis_attr.timelag              = 0;
+      dis_attr.still_crop           = HI_FALSE;
+      dis_attr.hor_limit            = 512;
+      dis_attr.ver_limit            = 512;
+      dis_attr.gdc_bypass           = HI_FALSE;
+      dis_attr.strength             = 1024;
+          
+      dis_cfg.frame_rate  = 30;
+      dis_attr.timelag    = 33333;
+
+      ret = hi_mpi_vi_set_chn_dis_cfg(ViPipe, 0, &dis_cfg);
+      printf("SET dis config ret:0x%x, enMode:%d, enPdtType:%d\n", ret, dis_cfg.mode, dis_cfg.pdt_type);
+
+      ret = hi_mpi_vi_set_chn_dis_attr(ViPipe, 0, &dis_attr);
+      printf("SET dis attr ret:0x%x, bEnable:%d\n", ret, dis_attr.enable);
+    }
+    break;
+  default:
+    break;
+  }
   return ret;
 }
 
@@ -952,7 +1032,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     //maohw
     vo_mng[vodev].vo_config.vo_intf_type      = type;
     vo_mng[vodev].vo_config.intf_sync         = sync;
-    vo_mng[vodev].vo_config.pic_size          = (sync == HI_VO_OUT_1080P60)?PIC_1080P:PIC_3840X2160;
+    vo_mng[vodev].vo_config.pic_size          = (sync >= HI_VO_OUT_1080P24 && sync <= HI_VO_OUT_1080P60)?PIC_1080P:PIC_3840X2160;
     
     extern hi_s32 sample_start_vo(sample_vo_cfg *vo_config, hi_u32 vpss_grp_num, hi_bool is_pip);
     ret = sample_start_vo(&vo_mng[vodev].vo_config, vpss_grp_num, HI_FALSE);
