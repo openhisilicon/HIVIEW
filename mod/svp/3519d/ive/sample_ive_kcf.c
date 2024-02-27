@@ -1,20 +1,8 @@
 /*
   Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
  */
-//#include "sample_ive_main.h"
 
-#include "hi_buffer.h"
-#include "hi_common.h"
-#include "hi_common_sys.h"
-#include "hi_common_svp.h"
-#include "hi_common_vpss.h"
-#include "sample_comm.h"
-#include "sample_common_svp.h"
-#include "sample_common_svp_npu.h"
-#include "sample_common_svp_npu_model.h"
-#include "sample_common_ive.h"
-#include "sample_ive_queue.h"
-#include "svp_acl_ext.h"
+#include "sample_ive_kcf.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,9 +45,11 @@
 #define HI_SAMPLE_IVE_KCF_STOP_SIGNAL               2
 #define HI_SAMPLE_IVE_KCF_NO_STOP_SIGNAL            3
 
+#if 0 //maohw
 #define HI_SAMPLE_IVE_KCF_SVP_NPU_MAX_ROI_NUM_OF_CLASS     50
 #define HI_SAMPLE_IVE_KCF_SVP_NPU_MAX_CLASS_NUM            50
 #define HI_SAMPLE_IVE_KCF_SVP_NPU_MIN_CLASS_NUM            1
+#endif
 
 #define sample_ive_mutex_init_lock(mutex)       \
     do {                                        \
@@ -92,12 +82,14 @@ typedef enum {
     HI_CNN_PROC_BUTT
 } hi_sample_ive_cnn_proc_status;
 
+#if 0 //maohw
 typedef struct {
     hi_u32 class_num;
     hi_u32 total_num;
     hi_u32 roi_num_array[HI_SAMPLE_IVE_KCF_SVP_NPU_MAX_CLASS_NUM];
     hi_sample_svp_rect rect[HI_SAMPLE_IVE_KCF_SVP_NPU_MAX_CLASS_NUM][HI_SAMPLE_IVE_KCF_SVP_NPU_MAX_ROI_NUM_OF_CLASS];
 } hi_sample_svp_ive_rect_arr;
+#endif
 
 typedef struct {
     hi_ive_roi_info roi_info[HI_SAMPLE_IVE_KCF_ROI_NUM];
@@ -136,6 +128,7 @@ typedef struct {
     hi_ive_kcf_bbox bbox[HI_SAMPLE_IVE_KCF_ROI_NUM];
     hi_u32 bbox_num;
 } hi_sample_ive_kcf_bbox_info;
+
 
 typedef struct {
     hi_u32 class_idx;
@@ -678,9 +671,10 @@ static hi_s32 sample_ive_kcf_updata_bbox_info(hi_bool is_suppressed, hi_ive_roi_
             bbox->roi_info.roi.width = roi->roi.width;
             bbox->roi_info.roi.height = roi->roi.height;
             bbox->is_roi_refresh = HI_TRUE;
-
+            //printf("trace HI_TRUE roi_id:%d [%d,%d,%d,%d]\n", bbox->roi_info.roi_id, bbox->roi_info.roi.x, bbox->roi_info.roi.y, bbox->roi_info.roi.width, bbox->roi_info.roi.height);
             roi->roi_id = 0;
         } else {
+            //printf("trace HI_FALSE roi_id:%d [%d,%d,%d,%d]\n", bbox->roi_info.roi_id, bbox->roi_info.roi.x, bbox->roi_info.roi.y, bbox->roi_info.roi.width, bbox->roi_info.roi.height);
             bbox->is_track_ok = HI_FALSE;
         }
     }
@@ -735,7 +729,13 @@ static hi_s32 sample_ive_kcf_obj_iou(hi_sample_ive_kcf_roi_info *roi_info,
         }
 
         /* u32RoiId!=0, means it hasn't been suppressed */
-        if (roi_info->roi[i].roi_id != 0) {
+        if (roi_info->roi[i].roi_id != 0) 
+        {
+            static hi_u32 g_roi_id = 0;
+            roi_info->roi[i].roi_id = ++g_roi_id;
+            
+            printf("u32RoiId: %d, [%d,%d,%d,%d]\n", roi_info->roi[i].roi_id, roi_info->roi[i].roi.x, roi_info->roi[i].roi.y, roi_info->roi[i].roi.width, roi_info->roi[i].roi.height);
+            
             ret = memcpy_s(&new_roi_info->roi[num++], sizeof(hi_ive_roi_info),
                 &roi_info->roi[i], sizeof(hi_ive_roi_info));
             sample_svp_check_exps_return(ret != EOK, HI_ERR_IVE_ILLEGAL_PARAM, SAMPLE_SVP_ERR_LEVEL_ERROR,
@@ -795,7 +795,8 @@ static hi_void sample_ive_rect_to_point(hi_ive_kcf_bbox bbox[], hi_u32 bbox_obj_
         rect->rect[i].point[HI_SAMPLE_IDX_THREE].x = rect->rect[i].point[0].x;
         rect->rect[i].point[HI_SAMPLE_IDX_THREE].y = rect->rect[i].point[0].y +
             (bbox[i].roi_info.roi.height & (~1));
-
+            
+        rect->id[i] = bbox[i].roi_info.roi_id;
         rect->num++;
     }
 }
@@ -940,8 +941,72 @@ static hi_void *sample_ive_kcf_tracking(hi_void *args)
     return HI_NULL;
 }
 
-static hi_void sample_ive_kcf_deinit(hi_sample_ive_kcf_info *kcf_info)
+hi_sample_svp_rect_info *sample_ive_kcf_tracking2(const hi_video_frame_info *frame, hi_sample_svp_ive_rect_arr *rect_arr)
 {
+    static hi_sample_ive_kcf_roi_info roi_info = {0};
+    static hi_sample_ive_kcf_roi_info new_roi_info = {0};
+    static hi_sample_ive_kcf_bbox_info bbox_info = {0};
+    static hi_sample_svp_rect_info rect = {0};
+    static hi_ive_handle handle;
+    static hi_svp_img src;
+    static hi_s32 ret;
+    
+    sample_ive_rect_to_roi_info(rect_arr, frame->video_frame.width, frame->video_frame.height, &g_ive_kcf_info);
+    if (g_ive_kcf_info.roi_num != 0)
+    {
+      g_ive_kcf_info.is_new_det = HI_TRUE;
+    }
+    
+    sample_ive_fill_image(frame, &src);
+
+    if (g_ive_kcf_info.is_new_det == HI_TRUE) 
+    {
+        ret = sample_ive_kcf_update_kcf_info(&roi_info);
+        sample_svp_check_failed_err_level_goto(ret, fail, "Err(%#x),update_kcf_info failed!\n", ret);
+
+        ret = sample_ive_kcf_obj_iou(&roi_info, &bbox_info, HI_SAMPLE_IVE_KCF_ROI_NUM, &new_roi_info);
+        sample_svp_check_failed_err_level_goto(ret, fail, "Err(%#x),sample_ive_kcf_obj_iou failed!\n", ret);
+
+        ret = hi_mpi_ive_kcf_obj_update(&g_ive_kcf_info.obj_list, bbox_info.bbox, bbox_info.bbox_num);
+        sample_svp_check_failed_err_level_goto(ret, fail, "Err(%#x),hi_mpi_ive_kcf_obj_update failed!\n", ret);
+
+        ret = hi_mpi_ive_kcf_get_train_obj(g_ive_kcf_info.padding, new_roi_info.roi, new_roi_info.roi_num,
+            &g_ive_kcf_info.cos_win_x, &g_ive_kcf_info.cos_win_y, &g_ive_kcf_info.gauss_peak,
+            &g_ive_kcf_info.obj_list);
+        sample_svp_check_failed_err_level_goto(ret, fail, "Err(%#x),hi_mpi_ive_kcf_get_train_obj failed!\n", ret);
+    }
+    
+    if (g_ive_kcf_info.obj_list.track_obj_num != 0 || g_ive_kcf_info.obj_list.train_obj_num != 0)
+    {
+        ret = hi_mpi_ive_kcf_proc(&handle, &src, &g_ive_kcf_info.obj_list, &g_ive_kcf_info.kcf_proc_ctrl, HI_TRUE);
+        sample_svp_check_failed_err_level_goto(ret, fail, "Err(%#x),hi_mpi_ive_kcf_proc failed!\n", ret);
+
+        ret = sample_ive_kcf_query_task(handle);
+        sample_svp_check_failed_err_level_goto(ret, fail, "ive query task failed");
+
+        ret = hi_mpi_ive_kcf_get_obj_bbox(&g_ive_kcf_info.obj_list, bbox_info.bbox, &bbox_info.bbox_num,
+            &g_ive_kcf_info.kcf_bbox_ctrl);
+        sample_svp_check_failed_err_level_trace(ret, "Err(%#x),hi_mpi_ive_kcf_get_obj_bbox failed!\n", ret);
+
+        sample_ive_rect_to_point(bbox_info.bbox, bbox_info.bbox_num, &rect);
+        //printf("roi_info.roi_num:%d, bbox_num:%d, rect.num:%d\n", roi_info.roi_num, bbox_info.bbox_num, rect.num);
+    } 
+    else 
+    {
+        rect.num = 0;
+    }
+
+    //ret = sample_ive_disp_process(&queue_node->frame_info, &rect);
+    //sample_svp_check_failed_err_level_trace(ret, "Err(%#x),sampel_disp_process failed!\n", ret);
+fail:
+    return &rect;
+}
+
+
+
+
+static hi_void sample_ive_kcf_deinit(hi_sample_ive_kcf_info *kcf_info)
+{   
     hi_sample_ive_node *queue_node = HI_NULL;
     sample_svp_check_exps_return_void(kcf_info == HI_NULL, SAMPLE_SVP_ERR_LEVEL_ERROR, "kcf_info can't be null\n");
 
@@ -970,6 +1035,13 @@ static hi_void sample_ive_kcf_deinit(hi_sample_ive_kcf_info *kcf_info)
 
     return;
 }
+
+hi_void sample_ive_kcf_deinit2(void)
+{
+  return sample_ive_kcf_deinit(&g_ive_kcf_info);
+}
+
+
 
 static hi_void sample_ive_kcf_info_common_init(hi_sample_ive_kcf_info *kcf_info, hi_u32 size)
 {
@@ -1009,7 +1081,7 @@ static hi_void sample_ive_kcf_info_common_init(hi_sample_ive_kcf_info *kcf_info,
 }
 
 static hi_s32 sample_ive_kcf_init(hi_sample_ive_kcf_info *kcf_info)
-{
+{   
     hi_s32 ret = HI_ERR_IVE_NULL_PTR;
     hi_u32 size;
     hi_u32 total_size;
@@ -1068,6 +1140,12 @@ fail_1:
 fail_0:
     return ret;
 }
+
+hi_s32 sample_ive_kcf_init2(void)
+{
+  return sample_ive_kcf_init(&g_ive_kcf_info);
+}
+
 
 static hi_s32 sample_ive_svp_npu_acl_dataset_init(sample_svp_npu_task_info *task_info)
 {

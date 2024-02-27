@@ -17,6 +17,8 @@
 #include "sample_common_svp_npu.h"
 #include "sample_common_svp_npu_model.h"
 
+#include "sample_ive_kcf.h"
+
 #define SAMPLE_SVP_NPU_RESNET50_INPUT_FILE_NUM 1
 #define SAMPLE_SVP_NPU_LSTM_INPUT_FILE_NUM     4
 #define SAMPLE_SVP_NPU_SHAERD_WORK_BUF_NUM     1
@@ -25,6 +27,9 @@
 
 #define SAMPLE_SVP_NPU_PREEMPTION_SLEEP_SECOND    30
 #define SAMPLE_SVP_NPU_PATH_LEN 0x100
+
+
+#define __KCF_ENABLE__ 0
 
 ////////////////////////////////////////////
 
@@ -81,6 +86,9 @@ static int pub_send(yolo_boxs_t *boxs)
   yolos->cnt = boxs->size;
   yolos->cnt = (yolos->cnt > sizeof(yolos->box)/sizeof(yolos->box[0]))?sizeof(yolos->box)/sizeof(yolos->box[0]):yolos->cnt;
 
+
+  //printf("\n\n===\n");
+
   for(i = 0; i< yolos->cnt; i++)
 	{
     //person filter;
@@ -134,8 +142,13 @@ static int pub_send(yolo_boxs_t *boxs)
 		yolos->box[j].rect[1] = boxs->box[i].y;
 		yolos->box[j].rect[2] = boxs->box[i].w;
 		yolos->box[j].rect[3] = boxs->box[i].h;
+		#if __KCF_ENABLE__
+		sprintf(yolos->box[j].label, "%.0f",  boxs->box[i].score);
+		#else
 		strncpy(yolos->box[j].label, boxs->box[i].label, sizeof(yolos->box[j].label)-1);
 		yolos->box[j].label[sizeof(yolos->box[j].label)-1] = '\0';//warn: strncpy without eof;
+
+		#endif
 		
     #if 0
 	  printf("chn:%d, j: %d w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
@@ -148,7 +161,7 @@ static int pub_send(yolo_boxs_t *boxs)
 	  #endif
 	  j++;
 	} yolos->cnt = j;
-	
+	//printf("===\n\n\n");
   return nm_pub_send(svp_pub, (char*)msg, sizeof(*msg)+msg->size);
 }
 
@@ -581,6 +594,18 @@ static hi_void sample_svp_npu_acl_unload_multi_model(hi_u32 model_num)
     }
 }
 
+static const char* class_names[] = {
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
+    "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
+    "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
+    "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+    "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
+    "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
+    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
+    "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
+    "hair drier", "toothbrush"
+    };
+
 static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame,
     const hi_video_frame_info *base_frame, hi_void *args)
 {
@@ -625,20 +650,24 @@ static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame
         }
         else 
         {
-          static const char* class_names[] = {
-              "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
-              "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
-              "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-              "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-              "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-              "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-              "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
-              "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-              "hair drier", "toothbrush"
-              };
-              
           int i = 0;
           hi_sample_svp_rect_info *rect_info = &g_svp_npu_rect_info;
+          
+          //maohw
+          #if __KCF_ENABLE__
+          //if(rect_info->num > 0)
+          if(1)
+          {
+            hi_sample_svp_ive_rect_arr rect_arr;
+            
+            rect_arr.class_num = 1;
+            rect_arr.roi_num_array[0] = rect_info->num;
+            rect_arr.total_num = rect_arr.roi_num_array[0];
+            memcpy_s(rect_arr.rect, sizeof(hi_sample_svp_rect) * 64, rect_info->rect, sizeof(hi_sample_svp_rect) * rect_info->num);
+       
+            rect_info = sample_ive_kcf_tracking2(base_frame, &rect_arr);
+          }
+          #endif
           
           yolo_boxs_t boxs = {0};
           boxs.chn = 0;
@@ -653,8 +682,12 @@ static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame
             boxs.box[i].y = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].y;
             boxs.box[i].w = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_RIGHT_TOP].x - boxs.box[i].x;
             boxs.box[i].h = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - boxs.box[i].y;
+            #if __KCF_ENABLE__ //maohw
+            boxs.box[i].score = rect_info->id[i];
+            #else
             boxs.box[i].score = rect_info->score[i];
             boxs.box[i].label = class_names[rect_info->id[i]];
+            #endif
           }
            
           ret = pub_send(&boxs);// sendmsg;
@@ -1307,6 +1340,8 @@ static hi_void _handle_sig(hi_s32 signo)
         (hi_void)sample_common_svp_npu_unload_model(model_idx);
         (hi_void)sample_svp_npu_acl_deinit();
         (hi_void)sample_svp_npu_acl_terminate();
+        
+        sample_ive_kcf_deinit2();
     }
     exit(-1);
 }
@@ -1327,6 +1362,8 @@ hi_void sample_svp_npu_acl_e2e_yolo(hi_u32 index)
     hi_s32 ret;
     const hi_u32 model_idx = 0;
     hi_char om_model_path[SAMPLE_SVP_NPU_PATH_LEN] = {0};
+    
+    sample_ive_kcf_init2();
     
     //maohw for return;
     static sample_svp_npu_detection_info detection_info = {0};
