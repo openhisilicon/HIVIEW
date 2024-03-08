@@ -8,7 +8,7 @@
 #include "cfg.h"
 #include "msg_func.h"
 
-#include "sample_svp_npu_process.h"
+#include "yolov5.h"
 
 void* svp_pub = NULL;
 GSF_LOG_GLOBAL_INIT("SVP", 8*1024);
@@ -50,6 +50,29 @@ static int reg2bsp()
   }
   return 0;
 }
+
+#include <signal.h>
+
+static void _handle_sig(int signo)
+{
+    if (signo == SIGINT || signo == SIGTERM) 
+    {
+       extern int yolo_stop(); yolo_stop();
+    }
+    exit(-1);
+}
+
+int sample_svp_reg_signal()
+{
+  struct sigaction sa;
+  sa.sa_handler = _handle_sig;
+  sa.sa_flags = 0;
+  sigaction(SIGINT, &sa, NULL);
+  sigaction(SIGTERM, &sa, NULL);
+  return 0;
+}
+
+
 int main(int argc, char *argv[])
 {
     if(argc < 2)
@@ -73,14 +96,12 @@ int main(int argc, char *argv[])
     sprintf(home_path, "%s/../", home_path);
     printf("home_path:[%s]\n", home_path);
     
+    sample_svp_reg_signal();
     printf("init algorithm library...\n");
-        
-	// start sample_svp_npu_xxx();	
-    sample_svp_model_path(home_path);
-    sample_svp_npu_handle_signal();
     
-    sample_svp_npu_acl_e2e_yolo(5);
-	// ========================= //
+    extern int yolo_start(char *home_path, int v8); 
+    extern int yolo_stop();
+    // for test yolo_start(home_path, 1/*v8*/);
     
     //init listen;
     GSF_LOG_CONN(0, 100);
@@ -89,9 +110,22 @@ int main(int argc, char *argv[])
                     , NM_REP_OSIZE_MAX
                     , req_recv);
     //reg2bsp();
-
+    
+    int yolo_alg = 0;
     while(1)
     {                        
+      if(yolo_alg != svp_parm.svp.yolo_alg)
+      {
+        if(yolo_alg == 0 && svp_parm.svp.yolo_alg > 0)
+        {
+          yolo_start(home_path, 0/*v8*/);
+        }
+        else if(yolo_alg > 0 && svp_parm.svp.yolo_alg == 0)
+        {
+          yolo_stop();
+        }
+        yolo_alg = svp_parm.svp.yolo_alg;  
+      }
       sleep(1);
     }
     

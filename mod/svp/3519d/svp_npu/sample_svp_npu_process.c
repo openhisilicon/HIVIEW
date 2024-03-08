@@ -28,12 +28,12 @@
 #define SAMPLE_SVP_NPU_PREEMPTION_SLEEP_SECOND    30
 #define SAMPLE_SVP_NPU_PATH_LEN 0x100
 
+#if 1 //maohw
+#define __KCF_ENABLE__ 0 //vpss0 must Less than 1080p;
 
-#define __KCF_ENABLE__ 0
-
-////////////////////////////////////////////
-
-char* sample_svp_model_path(char *path)
+static sample_svp_npu_thread_args *__args = NULL;
+static yolo_boxs_t *__boxs = NULL;
+static char* sample_svp_model_path(char *path)
 {
   static char _path[256];
   if(path)
@@ -42,131 +42,7 @@ char* sample_svp_model_path(char *path)
   }
   return _path;
 }
-
-#include "cfg.h"
-#include "polyiou.h"
-
-extern void* svp_pub;
-
-#define YOLO_BOX_MAX 64
-typedef struct {
-  int chn;
-  int w, h;
-  int size;
-  struct{
-    float score;
-    float x;
-    float y;
-    float w;
-    float h;
-    const char *label;
-    }box[YOLO_BOX_MAX];
-}yolo_boxs_t;
-
-static int pub_send(yolo_boxs_t *boxs)
-{
-  int i = 0, j = 0;
-  char buf[sizeof(gsf_msg_t) + sizeof(gsf_svp_yolos_t)];
-  gsf_msg_t *msg = (gsf_msg_t*)buf;
-  
-  memset(msg, 0, sizeof(*msg));
-  msg->id = GSF_EV_SVP_YOLO;
-  msg->ts = time(NULL)*1000;
-  msg->sid = 0;
-  msg->err = 0;
-  msg->size = sizeof(gsf_svp_yolos_t);
-  msg->ch = boxs->chn;
-  
-  gsf_svp_yolos_t *yolos = (gsf_svp_yolos_t*)msg->data;
-  
-  yolos->pts = 0;
-  yolos->w = boxs->w;
-  yolos->h = boxs->h;
-  
-  yolos->cnt = boxs->size;
-  yolos->cnt = (yolos->cnt > sizeof(yolos->box)/sizeof(yolos->box[0]))?sizeof(yolos->box)/sizeof(yolos->box[0]):yolos->cnt;
-
-
-  //printf("\n\n===\n");
-
-  for(i = 0; i< yolos->cnt; i++)
-	{
-    //person filter;
-    if(svp_parm.svp.yolo_alg == 2 && !strstr(boxs->box[i].label, "person"))
-	  {
-      continue;
-	  } 
-	  
-	//only used polygons[0];
-    double iou = 0.1;
-	  if(svp_parm.yolo.det_polygon.polygon_num && svp_parm.yolo.det_polygon.polygons[0].point_num)
-	  {
-	    int pn = svp_parm.yolo.det_polygon.polygons[0].point_num;
-	    
-	    double P[10*2] = {0};
-	    double Q[4*2] = {0};
-	    
-	    for(int p = 0; p < pn; p++)
-	    {
-	      P[p*2+0] = svp_parm.yolo.det_polygon.polygons[0].points[p].x * yolos->w;
-	      P[p*2+1] = svp_parm.yolo.det_polygon.polygons[0].points[p].y * yolos->h;
-	    }
-	    
-	    Q[0] = boxs->box[i].x;
-	    Q[1] = boxs->box[i].y;
-	    
-	    Q[2] = (boxs->box[i].x + boxs->box[i].w);
-	    Q[3] = boxs->box[i].y;
-	    
-	    Q[4] = (boxs->box[i].x + boxs->box[i].w);
-	    Q[5] = (boxs->box[i].y + boxs->box[i].h);
-	    
-	    Q[6] = boxs->box[i].x;
-	    Q[7] = (boxs->box[i].y + boxs->box[i].h);
-
-	    #if 0
-	    printf("P(%d)[%.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f]\n"           
-	           , pn, P[0],P[1], P[2],P[3], P[4],P[5], P[6],P[7], P[8],P[9], P[10],P[11], P[12],P[13], P[14],P[15]);
-	    printf("Q(%d)[ %.4f %.4f, %.4f %.4f, %.4f %.4f, %.4f %.4f]\n"
-	          , 4, Q[0],Q[1], Q[2],Q[3], Q[4],Q[5], Q[6],Q[7]);
-      #endif
-      
-	    iou = poly_iou(P, pn*2, Q, 4*2);
-	    
-	    if(iou < 0.001)
-	      continue;
-	  }
-	  
-	  yolos->box[j].score   = boxs->box[i].score;
-		yolos->box[j].rect[0] = boxs->box[i].x;
-		yolos->box[j].rect[1] = boxs->box[i].y;
-		yolos->box[j].rect[2] = boxs->box[i].w;
-		yolos->box[j].rect[3] = boxs->box[i].h;
-		#if __KCF_ENABLE__
-		sprintf(yolos->box[j].label, "%.0f",  boxs->box[i].score);
-		#else
-		strncpy(yolos->box[j].label, boxs->box[i].label, sizeof(yolos->box[j].label)-1);
-		yolos->box[j].label[sizeof(yolos->box[j].label)-1] = '\0';//warn: strncpy without eof;
-
-		#endif
-		
-    #if 0
-	  printf("chn:%d, j: %d w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
-	        , msg->ch, j, yolos->w, yolos->h
-	        , yolos->box[j].rect[0]
-	        , yolos->box[j].rect[1]
-	        , yolos->box[j].rect[2]
-	        , yolos->box[j].rect[3]
-	        , yolos->box[j].label, yolos->box[j].score);
-	  #endif
-	  j++;
-	} yolos->cnt = j;
-	//printf("===\n\n\n");
-  return nm_pub_send(svp_pub, (char*)msg, sizeof(*msg)+msg->size);
-}
-
-
-////////////////////////////////////////////
+#endif
 
 static hi_bool g_svp_npu_terminate_signal = HI_FALSE;
 static hi_s32 g_svp_npu_dev_id = 0;
@@ -668,29 +544,29 @@ static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame
             rect_info = sample_ive_kcf_tracking2(base_frame, &rect_arr);
           }
           #endif
-          
-          yolo_boxs_t boxs = {0};
-          boxs.chn = 0;
-          boxs.w = base_frame->video_frame.width;
-          boxs.h = base_frame->video_frame.height;
-          boxs.size = rect_info->num;
-          
-          for (i = 0; i < rect_info->num; i++) {
+         
+          if(__boxs)
+          {
+            __boxs->chn = 0;
+            __boxs->w = base_frame->video_frame.width;
+            __boxs->h = base_frame->video_frame.height;
+            __boxs->size = rect_info->num;          
             
-            int x, y, w, h;
-            boxs.box[i].x = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].x;
-            boxs.box[i].y = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].y;
-            boxs.box[i].w = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_RIGHT_TOP].x - boxs.box[i].x;
-            boxs.box[i].h = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - boxs.box[i].y;
-            #if __KCF_ENABLE__ //maohw
-            boxs.box[i].score = rect_info->id[i];
-            #else
-            boxs.box[i].score = rect_info->score[i];
-            boxs.box[i].label = class_names[rect_info->id[i]];
-            #endif
+            for (i = 0; i < rect_info->num; i++) {
+              
+              int x, y, w, h;
+              __boxs->box[i].x = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].x;
+              __boxs->box[i].y = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].y;
+              __boxs->box[i].w = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_RIGHT_TOP].x - __boxs->box[i].x;
+              __boxs->box[i].h = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - __boxs->box[i].y;
+              #if __KCF_ENABLE__ //maohw
+              __boxs->box[i].score = rect_info->id[i];
+              #else
+              __boxs->box[i].score = rect_info->score[i];
+              __boxs->box[i].label = class_names[rect_info->id[i]];
+              #endif
+            }
           }
-           
-          ret = pub_send(&boxs);// sendmsg;
         }
     } else if (thread_args->model_name == SAMPLE_SVP_NPU_HRNET) {
         ret = sample_common_svp_npu_get_joint_coords(&g_svp_npu_task[0], ext_frame, base_frame, &g_svp_npu_coords_info);
@@ -779,7 +655,7 @@ static hi_void *sample_svp_npu_acl_vdec_to_vo(hi_void *args)
         sample_svp_check_exps_goto(ret != HI_SUCCESS, base_release, SAMPLE_SVP_ERR_LEVEL_ERROR,
             "Error(%#x),sample_common_svp_venc_vo_send_stream failed!\n", ret);
         #else
-        usleep(1*1000);
+        usleep(10*1000);
         #endif
             
 base_release:
@@ -791,11 +667,6 @@ ext_release:
         sample_svp_check_exps_trace(ret != HI_SUCCESS, SAMPLE_SVP_ERR_LEVEL_ERROR,
             "Error(%#x),release_frame failed,grp(%d) chn(%d)!\n", ret, vpss_grp, vpss_chn[1]);
     }
-    
-    #if 1 //sendmsg(end.);
-    yolo_boxs_t boxs = {0};
-    pub_send(&boxs);
-    #endif
     
     ret = sample_common_svp_npu_update_input_data_buffer_info(data, size, stride, 0, &g_svp_npu_task[0]);
     sample_svp_check_exps_trace(ret != HI_SUCCESS, SAMPLE_SVP_ERR_LEVEL_ERROR, "update buffer failed!\n");
@@ -1326,35 +1197,6 @@ static hi_void sample_svp_npu_acl_set_detection_info(sample_svp_npu_detection_in
     g_svp_npu_terminate_signal = HI_FALSE;
 }
 
-static hi_void _handle_sig(hi_s32 signo)
-{
-    if (signo == SIGINT || signo == SIGTERM) {
-        sample_svp_npu_acl_handle_sig();
-        
-        g_svp_npu_thread_stop = HI_TRUE;
-        pthread_join(g_svp_npu_thread, HI_NULL);
-        
-        const hi_u32 model_idx = 0;
-        (hi_void)sample_svp_npu_acl_deinit_task(1, 0);
-        //(hi_void)sample_common_svp_destroy_vb_stop_vi_vpss_vo(&g_vi_config, &g_svp_npu_media_cfg, &g_svp_npu_vo_cfg);
-        (hi_void)sample_common_svp_npu_unload_model(model_idx);
-        (hi_void)sample_svp_npu_acl_deinit();
-        (hi_void)sample_svp_npu_acl_terminate();
-        
-        sample_ive_kcf_deinit2();
-    }
-    exit(-1);
-}
-
-int sample_svp_npu_handle_signal()
-{
-  struct sigaction sa;
-  sa.sa_handler = _handle_sig;
-  sa.sa_flags = 0;
-  sigaction(SIGINT, &sa, NULL);
-  sigaction(SIGTERM, &sa, NULL);
-  return 0;
-}
 
 /* function : show the sample of e2e(vi -> vpss -> npu -> vo) yolo */
 hi_void sample_svp_npu_acl_e2e_yolo(hi_u32 index)
@@ -1367,14 +1209,15 @@ hi_void sample_svp_npu_acl_e2e_yolo(hi_u32 index)
     
     //maohw for return;
     static sample_svp_npu_detection_info detection_info = {0};
-    static sample_svp_npu_thread_args args; 
-
+    static sample_svp_npu_thread_args args;
+    
+    __args = &args;
     args.model_name = SAMPLE_SVP_NPU_YOLO;
     args.detection_info = &detection_info;
 
     g_svp_npu_terminate_signal = HI_FALSE;
     
-    ret = sprintf_s(om_model_path, SAMPLE_SVP_NPU_PATH_LEN - 1, "%s%s%u%s", sample_svp_model_path(NULL), "/model/yolov", index, "_original.om");
+    ret = sprintf_s(om_model_path, SAMPLE_SVP_NPU_PATH_LEN - 1, "%s", sample_svp_model_path(NULL));
     sample_svp_check_exps_return_void(ret <= 0, SAMPLE_SVP_ERR_LEVEL_ERROR, "sprintf_s failed!\n");
 
     sample_svp_npu_acl_set_detection_info(&detection_info, index);
@@ -1411,23 +1254,25 @@ hi_void sample_svp_npu_acl_e2e_yolo(hi_u32 index)
     }
     /* process */
     if (g_svp_npu_terminate_signal == HI_FALSE) {
+
         ret = sample_common_svp_npu_set_threshold(&g_svp_npu_yolo_threshold[index], SAMPLE_SVP_NPU_YOLO_THRESHOLD_NUM,
             &g_svp_npu_task[0]);
         sample_svp_check_exps_goto(ret != HI_SUCCESS, process_end3, SAMPLE_SVP_ERR_LEVEL_ERROR,
             "set threshold failed!\n");
 
         g_svp_npu_thread_stop = HI_FALSE;
+        
+      #if 0 //maohw  
         ret = pthread_create(&g_svp_npu_thread, 0, sample_svp_npu_acl_vdec_to_vo, (hi_void*)&args);
         sample_svp_check_exps_goto(ret != 0, process_end3, SAMPLE_SVP_ERR_LEVEL_ERROR, "create thread failed!\n");
-        
-        #if 0 //maohw _handle_sig
+          
         (hi_void)sample_svp_npu_acl_pause();
 
         g_svp_npu_thread_stop = HI_TRUE;
         pthread_join(g_svp_npu_thread, HI_NULL);
-        #else
-        return;
-        #endif
+      #else 
+       return;
+      #endif
     }
 
 process_end3:
@@ -1450,7 +1295,7 @@ hi_void sample_svp_npu_acl_yolo(hi_u32 index)
     sample_svp_npu_detection_info detection_info = {0};
     sample_svp_npu_thread_args args = {SAMPLE_SVP_NPU_YOLO, &detection_info};
 
-    ret = sprintf_s(om_model_path, SAMPLE_SVP_NPU_PATH_LEN - 1, "%s%s%u%s", sample_svp_model_path(NULL), "/model/yolov", index, "_original.om");
+    ret = sprintf_s(om_model_path, SAMPLE_SVP_NPU_PATH_LEN - 1, "%s", sample_svp_model_path(NULL));    
     sample_svp_check_exps_return_void(ret <= 0, SAMPLE_SVP_ERR_LEVEL_ERROR, "sprintf_s failed!\n");
 
     sample_svp_npu_acl_set_detection_info(&detection_info, index);
@@ -1570,3 +1415,60 @@ process_end0:
     (hi_void)sample_svp_npu_acl_deinit();
     (hi_void)sample_svp_npu_acl_terminate();
 }
+
+#if 1 //maohw
+int sample_svp_npu_init(char *model_path)
+{
+  sample_svp_model_path(model_path);
+  sample_svp_npu_acl_e2e_yolo(5);
+  return 0;
+}
+
+int sample_svp_npu_detect(hi_video_frame_info *ext_frame, hi_video_frame_info *base_frame, yolo_boxs_t *boxs)
+{
+    hi_s32 ret;
+    hi_u32 size, stride;
+    hi_u8 *data = HI_NULL;
+    static int _init = 0;
+    
+    __boxs = boxs;
+    
+    if(_init == 0)
+    {
+      _init = 1;
+      
+      (hi_void)prctl(PR_SET_NAME, "svp_npu_vdec_to_vo", 0, 0, 0);
+
+      ret = svp_acl_rt_set_device(g_svp_npu_dev_id);
+      sample_svp_check_exps_return(ret != HI_SUCCESS, HI_NULL, SAMPLE_SVP_ERR_LEVEL_ERROR, "open device failed!\n");
+      
+      ret = sample_common_svp_npu_get_input_data_buffer_info(&g_svp_npu_task[0], 0, &data, &size, &stride);
+      sample_svp_check_exps_goto(ret != HI_SUCCESS, fail_0, SAMPLE_SVP_ERR_LEVEL_ERROR,
+          "Error(%#x),get_input_data_buffer_info failed!\n", ret);
+    }
+
+    ret = sample_svp_npu_acl_frame_proc(ext_frame, base_frame, __args);
+    sample_svp_check_exps_goto(ret != HI_SUCCESS, fail_0, SAMPLE_SVP_ERR_LEVEL_ERROR,
+        "Error(%#x),sample_svp_npu_acl_frame_proc failed!\n", ret);
+fail_0:
+    return ret;
+}
+
+
+int sample_svp_npu_destroy(void)
+{
+    sample_svp_npu_acl_handle_sig();
+  
+    (hi_void)svp_acl_rt_reset_device(g_svp_npu_dev_id);
+
+    const hi_u32 model_idx = 0;
+    (hi_void)sample_svp_npu_acl_deinit_task(1, 0);
+    //(hi_void)sample_common_svp_destroy_vb_stop_vi_vpss_vo(&g_vi_config, &g_svp_npu_media_cfg, &g_svp_npu_vo_cfg);
+    (hi_void)sample_common_svp_npu_unload_model(model_idx);
+    (hi_void)sample_svp_npu_acl_deinit();
+    (hi_void)sample_svp_npu_acl_terminate();
+
+    sample_ive_kcf_deinit2();
+    return 0;
+}
+#endif

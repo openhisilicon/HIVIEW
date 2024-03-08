@@ -8,8 +8,17 @@
 #include "hi_type.h"
 
 //maohw//
-char* sample_svp_model_path(char *path);
-int sample_svp_npu_handle_signal();
+#include "sample_comm.h"
+#include "yolov5.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+
+int sample_svp_npu_init(char *model_path);
+int sample_svp_npu_detect(hi_video_frame_info *ext_frame, hi_video_frame_info *base_frame, yolo_boxs_t *boxs);
+int sample_svp_npu_destroy(void);
+
 //=====//
 
 /* function : show the sample of acl resnet50 */
@@ -47,5 +56,11 @@ hi_void sample_svp_npu_acl_e2e_hrnet(hi_void);
 
 /* function : show the sample of sign handle */
 hi_void sample_svp_npu_acl_handle_sig(hi_void);
+
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */
+
+
 
 #endif
