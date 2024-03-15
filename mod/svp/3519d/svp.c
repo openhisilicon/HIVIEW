@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #include "fw/comm/inc/proc.h"
-
+#include "mod/codec/inc/codec.h"
 #include "svp.h"
 #include "cfg.h"
 #include "msg_func.h"
@@ -72,6 +72,27 @@ int sample_svp_reg_signal()
   return 0;
 }
 
+static int vores_get(gsf_resolu_t *res)
+{
+  while(1)
+  {
+    //register To;
+    GSF_MSG_DEF(gsf_resolu_t, _res, 8*1024);
+    int ret = GSF_MSG_SENDTO(GSF_ID_CODEC_VORES, 0, GET, 0, 0, GSF_IPC_CODEC, 2000);
+    printf("GSF_ID_CODEC_VORES To:%s, ret:%d, size:%d\n", GSF_IPC_CODEC, ret, __rsize);
+    static int cnt = 6;
+    if(ret == 0)
+    {
+      *res = *_res;
+      break;
+    }
+    if(cnt-- < 0)
+      return -1;
+    sleep(1);
+  }
+  return 0;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -90,6 +111,10 @@ int main(int argc, char *argv[])
     }
  
     svp_pub = nm_pub_listen(GSF_PUB_SVP);
+     
+    //wait codec.exe startup
+    gsf_resolu_t res = {0};
+    vores_get(&res); 
      
     char home_path[256] = {0};
     proc_absolute_path(home_path);
