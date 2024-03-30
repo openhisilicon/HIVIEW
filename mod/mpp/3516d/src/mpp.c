@@ -207,10 +207,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT: //PAL
-                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT://NTSC
-                   (cfg->second == 3)?BT656_YUV_512P_60FPS_8BIT://640x512
-                                      BT656_YUV_288P_60FPS_8BIT;//384x288
+    SENSOR1_TYPE = (cfg->second == SECOND_BT656_PAL)?BT656_YUV_0M_60FPS_8BIT: //PAL
+                   (cfg->second == SECOND_BT656_NTSC)?BT656N_YUV_0M_60FPS_8BIT://NTSC
+                   (cfg->second == SECOND_BT656_512P)?BT656_YUV_512P_60FPS_8BIT://640x512
+                   (cfg->second == SECOND_BT656_288P)?BT656_YUV_288P_60FPS_8BIT://384x288
+                                                      SECOND_BT656_600P;//800x600
   }
   
   if(dl)
@@ -679,8 +680,10 @@ int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
       break;
     case GSF_MPP_SCENE_CTL_AE:
       {
-        ret = 0; 
-        g_scene_ctl_ae[ViPipe] = *((HI_SCENE_CTL_AE_S*)args);
+        ret = 0;
+        HI_SCENE_CTL_AE_S *ae = (HI_SCENE_CTL_AE_S*)args;
+        
+        g_scene_ctl_ae[ViPipe].compensation_mul = ae->compensation_mul;
         printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
       }
       break;
@@ -721,7 +724,7 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
     default:
       break;
   }
-  printf("VencChn:%d, id:%d, ret:%d\n", VencChn, id, ret);
+  printf("%s => VencChn:%d, id:%d, ret:%d\n", __func__, VencChn, id, ret);
   return ret;
 }
 

@@ -3,6 +3,17 @@
 
 #include "sample_comm.h"
 
+//second channel;
+typedef enum {
+  SECOND_DISABLE    = 0,
+  SECOND_BT656_PAL  = 1,
+  SECOND_BT656_NTSC = 2,
+  SECOND_BT656_512P = 3,
+  SECOND_BT656_288P = 4, 
+  SECOND_BT656_600P = 5,
+  SECOND_USB_GD     = 6
+}SECOND_TYPE;
+
 //cfg;
 typedef struct {
   char  snsname[32];  // sensor imx335

@@ -262,7 +262,8 @@ HI_S32 HI_SCENE_SetStaticAWBEX_AutoGenerate(VI_PIPE ViPipe, HI_U8 u8Index)
 
     s32Ret = HI_MPI_ISP_GetAWBAttrEx(ViPipe, &stAwbAttrEx);
     CHECK_SCENE_RET(s32Ret);
-
+    
+    //printf("%s => ViPipe:%d, u8Index:%d, u16CurveLLimit:0x%x\n", __func__, ViPipe, u8Index, stAwbAttrEx.u16CurveLLimit);
 
     s32Ret = HI_MPI_ISP_SetAWBAttrEx(ViPipe, &stAwbAttrEx);
     CHECK_SCENE_RET(s32Ret);
@@ -1501,10 +1502,12 @@ HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI
   	}
 
     static HI_SCENE_CTL_AE_S _scene_ctl_ae[4];
+    
 	#if _LOW_LIGHT_
     g_scene_ctl_ae[ViPipe].strategy = (u64Exposure > 40000000)?AE_EXP_LOWLIGHT_PRIOR:AE_EXP_HIGHLIGHT_PRIOR;
     g_scene_ctl_ae[ViPipe].mode = (u64Exposure > 40000000)?AE_MODE_SLOW_SHUTTER:AE_MODE_FIX_FRAME_RATE;
 	#endif
+    
     HI_U32 u32ExpLevel = 0;
     HI_S32 s32Ret = HI_SUCCESS;
     //printf("%s => check u64Exposure:%lld, u64LastExposure:%lld\n", __func__, u64Exposure, u64LastExposure);
@@ -1564,13 +1567,22 @@ HI_S32 HI_SCENE_SetDynamicAE_AutoGenerate(VI_PIPE ViPipe, HI_U64 u64Exposure, HI
         stExposureAttr.stAuto.u8Compensation *= _scene_ctl_ae[ViPipe].compensation_mul;
 		#if _LOW_LIGHT_
         stExposureAttr.stAuto.stDGainRange.u32Max    = _scene_ctl_ae[ViPipe].dgain_max;
+        if(stExposureAttr.stAuto.stDGainRange.u32Min > stExposureAttr.stAuto.stDGainRange.u32Max)
+          stExposureAttr.stAuto.stDGainRange.u32Min = stExposureAttr.stAuto.stDGainRange.u32Max;
+          
         stExposureAttr.stAuto.stISPDGainRange.u32Max = _scene_ctl_ae[ViPipe].igain_max;
+        if(stExposureAttr.stAuto.stISPDGainRange.u32Min > stExposureAttr.stAuto.stISPDGainRange.u32Max)
+          stExposureAttr.stAuto.stISPDGainRange.u32Min = stExposureAttr.stAuto.stISPDGainRange.u32Max;
+          
         stExposureAttr.stAuto.enAEStrategyMode    = _scene_ctl_ae[ViPipe].strategy;
         stExposureAttr.stAuto.enAEMode            =  _scene_ctl_ae[ViPipe].mode;
         #endif
-		#if 0
-        printf("%s =>ViPipe:%d, u64Exposure:%llu, u8Compensation:%d, lowlight:%d\n"
-              , __func__, ViPipe, u64Exposure, stExposureAttr.stAuto.u8Compensation, stExposureAttr.stAuto.enAEStrategyMode);
+        
+		    #if 0
+        printf("%s =>ViPipe:%d, u64Exposure:%llu, u8Compensation:%d, lowlight:%d, stDGainRange[%d-%d], stISPDGainRange[%d-%d]\n"
+              , __func__, ViPipe, u64Exposure, stExposureAttr.stAuto.u8Compensation, stExposureAttr.stAuto.enAEStrategyMode
+              , stExposureAttr.stAuto.stDGainRange.u32Min, stExposureAttr.stAuto.stDGainRange.u32Max
+              , stExposureAttr.stAuto.stISPDGainRange.u32Min, stExposureAttr.stAuto.stISPDGainRange.u32Max);
         #endif
         
         s32Ret = HI_MPI_ISP_SetExposureAttr(ViPipe, &stExposureAttr);

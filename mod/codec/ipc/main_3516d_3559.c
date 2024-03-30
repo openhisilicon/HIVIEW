@@ -27,6 +27,10 @@
 static int avs = 0; // codec_ipc.vi.avs;
 
 // if compile error, please add PIC_XXX to sample_comm.h:PIC_SIZE_E;
+#ifndef HAVE_PIC_600P
+#warning "PIC_600P => PIC_D1_PAL"
+#define PIC_600P PIC_D1_PAL
+#endif
 #ifndef HAVE_PIC_288P
 #warning "PIC_288P => PIC_CIF"
 #define PIC_288P PIC_CIF
@@ -63,6 +67,7 @@ static int avs = 0; // codec_ipc.vi.avs;
           (w >= 2448 && h >= 2048)?PIC_2448x2048:\
           (w >= 1920)?PIC_1080P:\
           (w >= 1280)?PIC_720P: \
+          (w >= 800)?PIC_600P:  \
           (w >= 720 && h >= 576)?PIC_D1_PAL: \
           (w >= 720 && h >= 480)?PIC_D1_NTSC: \
           (w >= 640 && h >= 640)?PIC_640P: \
@@ -82,6 +87,7 @@ static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_2448x2048] = {0, 2448, 2048},
       [PIC_1080P]     = {0, 1920, 1080},
       [PIC_720P]      = {0, 1280, 720},
+      [PIC_600P]      = {0, 800, 600},
       [PIC_D1_PAL]    = {0, 720, 576},
       [PIC_D1_NTSC]   = {0, 720, 480},
       [PIC_640P]      = {0, 640, 640},
@@ -119,9 +125,21 @@ static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 //second sdp hook, fixed venc cfg;
-#define SECOND_WIDTH(second) ((second) == 1?720:(second) == 2?720:(second) == 4?384:640)
-#define SECOND_HEIGHT(second) ((second) == 1?576:(second) == 2?480:(second) == 4?288:512)
-#define SECOND_HIRES(second) ((second) == 1?PIC_D1_PAL:(second) == 2?PIC_D1_NTSC:(second) == 4?PIC_288P:PIC_512P)
+#define SECOND_WIDTH(second) ((second) == SECOND_BT656_PAL?720: \
+                              (second) == SECOND_BT656_NTSC?720:\
+                              (second) == SECOND_BT656_288P?384:\
+                              (second) == SECOND_BT656_600P?800:\
+                              640)
+#define SECOND_HEIGHT(second) ((second) == SECOND_BT656_PAL?576: \
+                               (second) == SECOND_BT656_NTSC?480:\
+                               (second) == SECOND_BT656_288P?288:\
+                               (second) == SECOND_BT656_600P?600:\
+                              512)
+#define SECOND_HIRES(second) ((second) == SECOND_BT656_PAL?PIC_D1_PAL:\
+                              (second) == SECOND_BT656_NTSC?PIC_D1_NTSC:\
+                              (second) == SECOND_BT656_288P?PIC_288P:\
+                              (second) == SECOND_BT656_600P?PIC_600P:\
+                              PIC_512P)
 
 int second_sdp(int i, gsf_sdp_t *sdp)
 {
@@ -132,14 +150,14 @@ int second_sdp(int i, gsf_sdp_t *sdp)
     {
       sdp->venc.width = SECOND_WIDTH(p_cfg->second);
       sdp->venc.height = SECOND_HEIGHT(p_cfg->second);
-      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>720)?8000:2000;
+      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>=1920)?8000:2000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
     else // sub
     {
-      sdp->venc.width = (SECOND_WIDTH(p_cfg->second)>720)?720:352;
-      sdp->venc.height = (SECOND_WIDTH(p_cfg->second)>720)?480:288;
-      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>720)?2000:1000;
+      sdp->venc.width = (SECOND_WIDTH(p_cfg->second)>=1920)?720:352;
+      sdp->venc.height = (SECOND_WIDTH(p_cfg->second)>=1920)?480:288;
+      sdp->venc.bitrate = (SECOND_WIDTH(p_cfg->second)>=1920)?2000:1000;
       sdp->venc.fps = p_cfg->fps; // fps: venc = vi;
     }
     return 0; 
@@ -565,7 +583,7 @@ int mpp_start(gsf_bsp_def_t *def)
         printf("chipid[%s]\n", chipid);
         strcpy(cfg.type, def->board.type);
         chipid = !strlen(chipid)?NULL:strcpy(cfg.type, chipid);
-        //second channel from bsp_def.json; [0: disable, 1: BT656.PAL, 2:BT656.NTSC, 3: BT656.512P, 4:BT656.288P, 5:USB.GD]
+        //second channel from bsp_def.json; mpp.h:SECOND_TYPE;
         cfg.second = (cfg.snscnt > 1)?0:
                      (def->board.second <= 0)?0:def->board.second;
         printf("BOARD [type:%s, second:%d]\n", cfg.type, cfg.second);
