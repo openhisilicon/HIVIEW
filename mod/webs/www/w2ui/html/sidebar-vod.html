@@ -37,9 +37,9 @@ function formatNum(num, strlength) {
 function playVideo(obj){ 
   var info =  w2ui['grid-video'].get($(obj).data('id')); 
   vUrl = '/rec/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.channel,3)+'.mp4'; 
-  if (flvjs.isSupported()) { 
+  if (mpegts.isSupported()) { 
   var videoElement = document.getElementById('videoElement');
-  var flvPlayer = flvjs.createPlayer({
+  var flvPlayer = mpegts.createPlayer({
 	  type: 'mp4',
 	  url: vUrl
   });
@@ -102,7 +102,9 @@ function loadVideo(){
           }
       });
      // console.log(JSON.stringify(query));
-      $.post('//'+ window.location.hostname + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) {
+      //$.post('//'+ window.location.hostname + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) 
+      $.post('//'+ window.location.hostname ':' + window.location.port + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) 
+      {
         if (status == "success") {
     			if (result['code'] == 0){
     				$(result['data']).each(function(index,data){ 

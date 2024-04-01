@@ -83,7 +83,7 @@ function uploadFile() {
   
   var timer;
   $.ajax({
-  	url: 'http://' + window.location.hostname + '/upload',
+  	url: 'http://' + window.location.hostname + ':' + window.location.port + '/upload',
   	type: "POST",
   	data: file_data,
   	processData: false,

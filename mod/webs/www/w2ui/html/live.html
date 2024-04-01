@@ -15,17 +15,18 @@ var streamx = 1
 var audio = false
 
 function flv_load() {
-    console.log('isSupported: ' + flvjs.isSupported());
+    console.log('isSupported: ' + mpegts.isSupported());
 
     var ishttps = ('https:' == document.location.protocol)?true:false
 
     var mediaDataSource = {
-        type: "flv",
+        type: 'mse', //type: "flv",
         isLive: true,
-        //cors: true,
         hasAudio: audio,
         autoCleanupSourceBuffer:true,
-        url: (ishttps == true?'wss://':'ws://') + window.location.hostname + (ishttps == true?':443/flv':':80/flv') + streamx,
+        liveBufferLatencyChasing: true,
+        
+        url: (ishttps == true?'wss://':'ws://') + window.location.hostname + ':' + window.location.port + '/flv' + streamx,
     }
         console.log('MediaDataSource', mediaDataSource);
         var element = document.getElementsByName('videoElement')[0];
@@ -44,14 +45,12 @@ function flv_load() {
                 console.log("flv_load => destroy player!");
             }
         }
-        player = flvjs.createPlayer(mediaDataSource, {
-            // enableWorker: false,
-            // lazyLoadMaxDuration: 3 * 60,
-            // seekType: 'range',
+        player = mpegts.createPlayer(mediaDataSource, {
             isLive: true,
             enableWorker: true,
             enableStashBuffer: false,
             stashInitialSize: 128,
+            liveBufferLatencyChasing: true,
         });
         player.attachMediaElement(element);
         player.load();

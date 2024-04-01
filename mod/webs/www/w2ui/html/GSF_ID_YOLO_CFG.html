@@ -535,17 +535,18 @@
 
   // 加载视频流
   function flv_load() {
-    console.log('cfg flv isSupported: ' + flvjs.isSupported());
+    console.log('cfg flv isSupported: ' + mpegts.isSupported());
 
     var ishttps = ('https:' == document.location.protocol) ? true : false
 
     var mediaDataSource = {
-      type: "flv",
-      isLive: true,
-      //cors: true,
-      hasAudio: audio,
-      autoCleanupSourceBuffer: true,
-      url: (ishttps == true ? 'wss://' : 'ws://') + window.location.hostname + (ishttps == true ? ':443/flv' : ':80/flv') + streamx,
+        type: 'mse', //type: "flv",
+        isLive: true,
+        hasAudio: audio,
+        autoCleanupSourceBuffer:true,
+        liveBufferLatencyChasing: true,
+        
+        url: (ishttps == true?'wss://':'ws://') + window.location.hostname + ':' + window.location.port + '/flv' + streamx,
     }
     console.log('cfg MediaDataSource', mediaDataSource);
     var element = document.getElementById('videoElement');
@@ -564,14 +565,12 @@
         console.log("cfg flv_load => destroy player!");
       }
     }
-    player = flvjs.createPlayer(mediaDataSource, {
-      // enableWorker: false,
-      // lazyLoadMaxDuration: 3 * 60,
-      // seekType: 'range',
-      isLive: true,
-      enableWorker: true,
-      enableStashBuffer: false,
-      stashInitialSize: 128,
+    player = mpegts.createPlayer(mediaDataSource, {
+        isLive: true,
+        enableWorker: true,
+        enableStashBuffer: false,
+        stashInitialSize: 128,
+        liveBufferLatencyChasing: true,
     });
     player.attachMediaElement(element);
     player.load();
