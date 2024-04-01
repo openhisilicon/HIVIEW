@@ -20,6 +20,27 @@ static int vcap_save_yuv   = 0;
 static int vcap_save_image = 0;
 static int vcap_cnt = 0;
 
+extern "C" hi_s32 sample_comm_venc_save_stream(FILE *fd, hi_venc_stream *stream);
+static int venc_cb(VENC_STREAM_S* pstStream, void* u)
+{  
+  char* szJpgName = (char*)u;
+  
+  if(!pstStream)
+    return 0;
+
+  FILE* pFile = fopen(szJpgName, "wb");
+  if(pFile)
+  {
+    sample_comm_venc_save_stream(pFile, pstStream); 
+    fclose(pFile);
+  }
+  
+  fprintf(stderr, "save jpeg [%s] done!\n", szJpgName);
+  fflush(stderr);
+  return 0;
+}
+
+
 int yolov5_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *ModelPath)
 {
     int i = 0;
@@ -110,7 +131,7 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         vcap[i].vcap.get_frame_lock(NULL, &hi_frame, &other_frame);
         clock_gettime(CLOCK_MONOTONIC, &ts2);
 
-        if(0)
+        if(1)
         {
           char info[256] = {0};
           sprintf(info, "get_frame_lock chn:%d, cost:%d ms", i, (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
@@ -123,13 +144,62 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
           
           printf("%s\n\n", info);
           
-          if(0)//if(!vcap[i].image.empty())
+          if(vcap_save_image)
           {
-            static int j = 0;
-            char filename[256];
-            sprintf(filename, "ch%02d_%08d.jpg", i, j++);
-            cv::imwrite(filename, vcap[i].image);
-          }  
+            clock_gettime(CLOCK_MONOTONIC, &ts1);
+            
+            #if 0 // opencv:imwrite;
+            if(!vcap[i].image.empty())
+            {
+              static int j = 0;
+              char filename[256];
+              sprintf(filename, "vcap/ch%02d_%08d.jpg", i, j++);
+              cv::imwrite(filename, vcap[i].image);
+            }
+            #else // venc:jpeg;
+            if(hi_frame)
+            {
+              static int j = 0;
+              char filename[256];
+              sprintf(filename, "vcap/ch%02d_%08d.jpg", i, j++);
+              
+              static int VeChn = 0;
+              if(!VeChn)
+              {  
+                VeChn = (HI_VENC_MAX_CHN_NUM-1);
+                gsf_mpp_venc_t venc;
+                venc.VencChn    = VeChn;
+                venc.srcModId   = HI_ID_VPSS;
+                venc.VpssGrp    = -1;
+                venc.VpssChn    = -1;
+                venc.enPayLoad  = PT_JPEG;
+                venc.enSize     = PIC_2688X1520;
+                venc.enRcMode   = 0;
+                venc.u32Profile = 0;
+                venc.bRcnRefShareBuf = HI_TRUE;
+                venc.enGopMode  = VENC_GOPMODE_NORMALP;
+                venc.u32FrameRate = 30;
+                venc.u32Gop       = 30;
+                venc.u32BitRate   = 2000;
+                venc.u32LowDelay  = 0;
+                gsf_mpp_venc_start(&venc);
+                //gsf_mpp_venc_stop(gsf_mpp_venc_t *venc);
+              }
+              
+              gsf_mpp_venc_get_t vget;
+              vget.cb = venc_cb;
+              vget.u = (void*)filename;
+     
+              if(gsf_mpp_venc_send(VeChn, hi_frame, 100, &vget) < 0)
+              {
+                printf("gsf_mpp_venc_send error.\n");
+              }
+            }
+            #endif
+
+            clock_gettime(CLOCK_MONOTONIC, &ts2);
+            printf("save cost:%d ms\n", (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
+          }
         }
         
         sample_svp_npu_detect(hi_frame, other_frame, boxs);

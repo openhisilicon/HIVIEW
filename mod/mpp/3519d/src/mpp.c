@@ -570,13 +570,15 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
       sample_print("Venc Start failed for %#x!\n", ret);
       goto EXIT;
   }
-
-  if ((ret = sample_comm_vpss_bind_venc(vpss_grp, vpss_chn, venc_chn)) != HI_SUCCESS) {
-      sample_print("sample_comm_vpss_bind_venc failed for %#x!\n", ret);
-      goto EXIT_VENC_H264_STOP;
+  if(vpss_grp >= 0)
+  {
+    if ((ret = sample_comm_vpss_bind_venc(vpss_grp, vpss_chn, venc_chn)) != HI_SUCCESS) {
+        sample_print("sample_comm_vpss_bind_venc failed for %#x!\n", ret);
+        goto EXIT_VENC_H264_STOP;
+    }
   }
   
-          
+  printf("%s => venc_chn:%d, type:%d, vpss_grp:%d, vpss_chn:%d\n", __func__, venc_chn, venc_create_param.type, vpss_grp, vpss_chn);
   
   return ret;
 
@@ -595,8 +597,8 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
   hi_vpss_grp vpss_grp = venc->VpssGrp;
   hi_vpss_chn vpss_chn = venc->VpssChn;
   hi_venc_chn venc_chn = venc->VencChn;
-
-  sample_comm_vpss_un_bind_venc(vpss_grp, vpss_chn, venc_chn);
+  if(vpss_grp >= 0)
+    sample_comm_vpss_un_bind_venc(vpss_grp, vpss_chn, venc_chn);
   sample_comm_venc_stop(venc_chn);
   return ret;
 }
@@ -606,6 +608,69 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
   int ret = 0;
   return ret;
 }
+
+int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, gsf_mpp_venc_get_t *get)
+{
+  int ret = 0;
+  
+  if(!pstFrame)
+    return -1;
+    
+  hi_venc_chn_attr stChnAttr;
+  
+  ret = hi_mpi_venc_get_chn_attr(VeChn, &stChnAttr);
+  if(ret != 0)
+    return -1;
+
+  if(pstFrame->video_frame.width > stChnAttr.venc_attr.max_pic_width
+    || pstFrame->video_frame.height > stChnAttr.venc_attr.max_pic_height)
+    return -1;
+   
+  if(get && get->cb)
+  {
+    stChnAttr.venc_attr.pic_width = pstFrame->video_frame.width;
+    stChnAttr.venc_attr.pic_height = pstFrame->video_frame.height;
+    ret = hi_mpi_venc_set_chn_attr(VeChn, &stChnAttr);
+    
+    hi_venc_start_param  stRecvParam;
+    stRecvParam.recv_pic_num = 1;
+    ret = hi_mpi_venc_start_chn(VeChn, &stRecvParam);
+ 
+    ret = hi_mpi_venc_send_frame(VeChn, pstFrame, s32MilliSec);
+ 
+    hi_venc_stream stStream;
+    hi_venc_pack   packs[4];
+    stStream.pack_cnt = 4;
+    stStream.pack = &packs;
+    
+    ret = hi_mpi_venc_get_stream(VeChn, &stStream, s32MilliSec);
+    if(ret == 0)
+    {
+      get->cb(&stStream, get->u);
+      ret = hi_mpi_venc_release_stream(VeChn, &stStream);
+    }
+    
+    ret = hi_mpi_venc_stop_chn(VeChn);
+    return ret;
+  }
+    
+  if(pstFrame->video_frame.width != stChnAttr.venc_attr.pic_width
+    || pstFrame->video_frame.height != stChnAttr.venc_attr.pic_height)
+  {
+    ret = hi_mpi_venc_stop_chn(VeChn);
+    
+    stChnAttr.venc_attr.pic_width = pstFrame->video_frame.width;
+    stChnAttr.venc_attr.pic_height = pstFrame->video_frame.height;
+    ret = hi_mpi_venc_set_chn_attr(VeChn, &stChnAttr);
+    
+    hi_venc_start_param  stRecvParam;
+    stRecvParam.recv_pic_num = 1;
+    ret = hi_mpi_venc_start_chn(VeChn, &stRecvParam);
+  }
+  ret = hi_mpi_venc_send_frame(VeChn, pstFrame, s32MilliSec);
+  return ret;
+}
+
 
 //from sample_ir_auto.c;
 extern hi_s32 isp_ir_switch_to_ir(hi_vi_pipe vi_pipe);
