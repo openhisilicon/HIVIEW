@@ -162,9 +162,101 @@ static int onframe(void* param, const char*encoding, const void *packet, int byt
 	else if (0 == strcmp("H265", encoding))
 	{
 		uint8_t type = (*(uint8_t*)packet >> 1) & 0x3f;
-		if (type > 32) // !vcl;
+		
+		if(type >= 0 && type <= 9) //PB;
 		{
+		  //NAL_TRAIL_N = 0,
+      //NAL_TRAIL_R = 1,
+      //NAL_TSA_N = 2,
+      //NAL_TSA_R = 3,
+      //NAL_STSA_N = 4,
+      //NAL_STSA_R = 5,
+      //NAL_RADL_N = 6,
+      //NAL_RADL_R = 7,
+      //NAL_RASL_N = 8,
+      //NAL_RASL_R = 9,
+		  ;
+		}
+		else if(type >= 16 && type <= 21) //I;
+		{
+      //NAL_BLA_W_LP = 16,
+      //NAL_BLA_W_RADL = 17,
+      //NAL_BLA_N_LP = 18,
+      //NAL_IDR_W_RADL = 19,
+      //NAL_IDR_N_LP = 20,
+      //NAL_CRA_NUT = 21,
+      ;
+		}
+		else if (type >= 32) // !vcl;
+		{
+      //NAL_VPS = 32,
+      //NAL_SPS = 33,
+      //NAL_PPS = 34,
+      //NAL_AUD = 35,
+      //NAL_EOS_NUT = 36,
+      //NAL_EOB_NUT = 37,
+      //NAL_FD_NUT = 38,
+      //NAL_SEI_PREFIX = 39,
+      //NAL_SEI_SUFFIX = 40,
 			printf("%s => encoding:%s, time:%08u, flags:%08d, bytes:%d\n", ctx->name, encoding, time, flags, bytes);
+		}
+		
+		if(!ctx->video_frm)
+		{
+		  ctx->video_frm = (gsf_frm_t*)malloc(sizeof(gsf_frm_t)+GSF_FRM_MAX_SIZE);
+		  memset(ctx->video_frm, 0, sizeof(gsf_frm_t));
+		  ctx->packet_cnt = 0;
+		}
+		
+    if (type == 33) // sps;
+		{
+      h26x_parse_sps_wh((char*)packet
+          , type
+          , bytes
+          , &ctx->video_frm->video.width
+          , &ctx->video_frm->video.height);
+		}
+
+    if(ctx->video_frm->size + 4 + bytes <= GSF_FRM_MAX_SIZE)
+    {
+      ctx->video_frm->data[ctx->video_frm->size+0] = 00;
+      ctx->video_frm->data[ctx->video_frm->size+1] = 00;
+      ctx->video_frm->data[ctx->video_frm->size+2] = 00;
+      ctx->video_frm->data[ctx->video_frm->size+3] = 01;
+      
+	    memcpy(ctx->video_frm->data + ctx->video_frm->size + 4, packet, bytes);
+	    ctx->video_frm->video.nal[ctx->packet_cnt] = bytes + 4;
+	    ctx->video_frm->size += bytes + 4;
+	    ctx->packet_cnt++;
+	  }
+	  else
+	  {
+	    ctx->video_frm->size = 0;
+	    ctx->packet_cnt = 0;
+      return 0;
+	  }
+
+		if(type >= 0 && type <= 21)
+		{
+      ctx->video_frm->type = GSF_FRM_VIDEO;
+      ctx->video_frm->flag = (type >= 16)?GSF_FRM_FLAG_IDR:0;
+      ctx->video_frm->seq  = ctx->video_frm->seq + 1;
+      ctx->video_frm->utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
+      ctx->video_frm->pts  = ctx->video_frm->utc;
+      ctx->video_frm->video.encode = GSF_ENC_H265;
+
+      int ret = cfifo_put(ctx->video_fifo,  
+                      ctx->video_frm->size+sizeof(gsf_frm_t),
+                      cfifo_recput, 
+                      (unsigned char*)ctx->video_frm);
+      if(0)                
+      printf("%s => encoding:%s, time:%08u, type:%d, flags:%08d, w:%d, h:%d, packet_cnt:%d\n"
+			      , ctx->name, encoding, time, type, flags
+			      , ctx->video_frm->video.width, ctx->video_frm->video.height
+			      , ctx->packet_cnt);
+			      
+      ctx->video_frm->size = 0;
+	    ctx->packet_cnt = 0;
 		}
 	}
   else if (0 == strcmp("mpeg4-generic", encoding))
