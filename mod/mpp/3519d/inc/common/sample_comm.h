@@ -725,6 +725,7 @@ typedef struct {
     hi_venc_gop_attr gop_attr;
     hi_payload_type type;
     sample_rc rc_mode;
+    hi_u32 bitrate;//maohw;
 } sample_comm_venc_chn_param;
 
 typedef struct {
