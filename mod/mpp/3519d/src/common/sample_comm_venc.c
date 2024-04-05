@@ -1058,6 +1058,13 @@ static hi_s32 sample_comm_venc_h264_param_init(hi_venc_chn_attr *chn_attr, sampl
     chn_attr->venc_attr.h264_attr.frame_buf_ratio = SAMPLE_FRAME_BUF_RATIO_MIN;
     if (rc_mode == SAMPLE_RC_CBR) {
         sample_comm_venc_h264_cbr_param_init(chn_attr, gop, stats_time, frame_rate);
+        if(1) //maohw
+        {
+          chn_attr->rc_attr.h264_cbr.src_frame_rate = 30; //vi
+          chn_attr->rc_attr.h264_cbr.dst_frame_rate = frame_rate;//target
+          if(chn_param->bitrate > 0)
+            chn_attr->rc_attr.h264_cbr.bit_rate = chn_param->bitrate;
+        }  
     } else if (rc_mode == SAMPLE_RC_FIXQP) {
         sample_comm_venc_h264_fixqp_param_init(chn_attr, gop, frame_rate);
     } else if (rc_mode == SAMPLE_RC_VBR) {
@@ -1090,6 +1097,13 @@ static hi_s32 sample_comm_venc_h265_param_init(hi_venc_chn_attr *chn_attr, sampl
     chn_attr->venc_attr.h265_attr.frame_buf_ratio = SAMPLE_FRAME_BUF_RATIO_MIN;
     if (rc_mode == SAMPLE_RC_CBR) {
         sample_comm_venc_h265_cbr_param_init(chn_attr, gop, stats_time, frame_rate);
+        if(1) //maohw
+        {
+          chn_attr->rc_attr.h265_cbr.src_frame_rate = 30; //vi
+          chn_attr->rc_attr.h265_cbr.dst_frame_rate = frame_rate;//target
+          if(chn_param->bitrate > 0)
+            chn_attr->rc_attr.h265_cbr.bit_rate = chn_param->bitrate;
+        }    
     } else if (rc_mode == SAMPLE_RC_FIXQP) {
         sample_comm_venc_h265_fixqp_param_init(chn_attr, gop, frame_rate);
     } else if (rc_mode == SAMPLE_RC_VBR) {

@@ -563,6 +563,7 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
   venc_create_param.is_rcn_ref_share_buf      = HI_TRUE;
   venc_create_param.frame_rate                = venc->u32FrameRate; /* 30 is a number */
   venc_create_param.gop                       = venc->u32Gop; /* 30 is a number */
+  venc_create_param.bitrate                   = venc->u32BitRate;
   
   /* encode h.264 */
   ret = sample_comm_venc_start(venc_chn, &venc_create_param);
