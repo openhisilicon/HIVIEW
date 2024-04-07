@@ -142,12 +142,15 @@ int main(int argc, char *argv[])
     system(cmdstr);
   }
   
+  #if 0
   //nanomsg port; you can use chrome to open index.html to test;
   web_pub  = nm_pub_listen("ws://*:7789");
   web_rep  = nm_rep_listen("ws://*:7790"
                   , NM_REP_MAX_WORKERS
                   , NM_REP_OSIZE_MAX
                   , ws_recv); 
+  #endif
+                  
   web_sub = nm_sub_conn("ipc:///tmp/bsp_pub"
                   , sub_recv);
 

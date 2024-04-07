@@ -232,6 +232,10 @@ static void *send_thread_func(void *param) {
        printf("cfifo_ep_wait err cnt:%d\n", cnt);
        continue;
     }
+
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    //printf("%s => cfifo_ep_wait ts:%llu ms\n", __func__, (ts.tv_sec*1000 + ts.tv_nsec/1000000));
     
     for(i = 0; i < cnt; i++)
     {
@@ -256,7 +260,7 @@ static void *send_thread_func(void *param) {
         else if (ret > 0 && sess->idr)
         {
           //printf("cfifo frame ret:%d\n", ret);
-          if(rec->type == GSF_FRM_VIDEO && rec->video.encode == GSF_ENC_H264)
+          if(rec->type == GSF_FRM_VIDEO /*&& rec->video.encode == GSF_ENC_H264*/)
           {
             if(!sess->vpts)
             {
@@ -264,16 +268,39 @@ static void *send_thread_func(void *param) {
               flv_send_header(sess);
               sess->vpts = rec->pts;
             }
-
-            if(flv_muxer_avc(sess->flv // sps-pps-vcl
-                    , rec->data
-                    , rec->size
-                    , rec->pts - sess->vpts
-                    , rec->pts - sess->vpts) < 0)
-            {
-              printf("flv_muxer_avc err.\n");
-            }
             
+            //struct timespec ts1, ts2;  
+            //clock_gettime(CLOCK_MONOTONIC, &ts1);
+            
+            if(rec->video.encode == GSF_ENC_H264)
+            {
+              if(flv_muxer_avc(sess->flv // sps-pps-vcl
+                      , rec->data
+                      , rec->size
+                      , rec->pts - sess->vpts
+                      , rec->pts - sess->vpts) < 0)
+              {
+                printf("flv_muxer_avc err.\n");
+              }
+            }
+            else 
+            {
+              if(flv_muxer_hevc(sess->flv // sps-pps-vcl
+                      , rec->data
+                      , rec->size
+                      , rec->pts - sess->vpts
+                      , rec->pts - sess->vpts) < 0)
+              {
+                printf("flv_muxer_hevc err.\n");
+              }
+            }
+             
+            //clock_gettime(CLOCK_MONOTONIC, &ts2);
+            //int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+            //if(cost > 6)
+            //{ 
+            //  printf("flv_muxer_avc size:%d, cost:%d ms\n", rec->size, cost);
+            //}
           }
           else if(rec->type == GSF_FRM_AUDIO && rec->audio.encode == GSF_ENC_AAC)
           {
@@ -286,6 +313,10 @@ static void *send_thread_func(void *param) {
               sess->apts = rec->pts;
             }
             
+            //struct timespec ts1, ts2;  
+            //clock_gettime(CLOCK_MONOTONIC, &ts1);
+            
+            
             if(flv_muxer_aac(sess->flv // sps-pps-vcl
                     , rec->data
                     , rec->size
@@ -294,6 +325,14 @@ static void *send_thread_func(void *param) {
             {
               printf("flv_muxer_aac err.\n");
             }
+            
+            //clock_gettime(CLOCK_MONOTONIC, &ts2);
+            //int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+            //if(cost > 3)
+            //{ 
+            //  printf("flv_muxer_aac size:%d, cost:%d ms\n", rec->size, cost);
+            //}
+            
           }
         }
       }
@@ -483,7 +522,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
                               , GSF_IPC_CODEC
                               , 2000);
         //When the width of the main stream is greater than 2592, the second stream is used;
-        if(sdp->venc.width > 2592)
+        if(sdp->venc.width > 2688)
         {
           sdp->video_shmid = sdp->audio_shmid = -1;
           ret = GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, channel, GET, sid = 1
@@ -801,9 +840,6 @@ void handle_upload(struct mg_connection *nc, int ev, void *p) {
   }
 }
 
-
-
-
 void handle_config(struct mg_connection *nc, int ev, void *pp) 
 {
   struct http_message* hm = (struct http_message*)pp;
@@ -887,6 +923,7 @@ void handle_config(struct mg_connection *nc, int ev, void *pp)
   nc->flags |= MG_F_SEND_AND_CLOSE;
 }
 
+
 void handle_snap(struct mg_connection *nc, int ev, void *pp)
 {
   struct http_message* hm = (struct http_message*)pp;
@@ -903,7 +940,7 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
     mg_http_send_digest_auth_request(nc, s_http_server_opts.auth_domain);
     return;
     }
-    
+
   // GET /snap?args=G0C0S0
   int ret = 0;
   int channel = -1, gset = -1, sid = -1;
@@ -918,6 +955,24 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
                         , 3000);
                         
   printf("send => To:%s, ret:%d, msg->size:%d\n", GSF_IPC_CODEC, ret, __pmsg->size);
+  
+  char qs_buf[256] = {0};
+  int qs_len = (hm->query_string.len < sizeof(qs_buf)-1)?hm->query_string.len:(sizeof(qs_buf)-1);
+  sprintf(qs_buf, "%.*s", qs_len, hm->query_string.p);
+  char *target = strstr(qs_buf, "target=");
+  
+  if(target) //GSF_ID_SVP_FEATURE  
+  {
+    GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t) + 256);
+    target += strlen("target=");
+    strcpy(msgdata, target);
+    
+    ret = GSF_MSG_SENDTO(GSF_ID_SVP_FEATURE, channel, 1, sid
+                          , strlen(target)+1
+                          , GSF_IPC_SVP
+                          , 1000);
+    printf("GSF_ID_SVP_FEATURE target=%s, ret:%d\n", target, ret);
+  }
   
   if(ret == 0 && __pmsg->size > 0)
   {
