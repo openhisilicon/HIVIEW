@@ -67,6 +67,7 @@ STRUCT(gsf_lenscfg_t)
   FIELD(int, lens); // lens-type 0: ldm lens, 1: sony lens, 2: computar, 3: hiview;
   STRING(uart, 32); // uart-name "ttyAMA2" or "ttyAMA4";
   FIELD(int, ircut);// 0: manual, 1: auto, 2: cds;
+  FIELD(int, ircut_rev);// 0: none, 1: ircut reversed;
 };
 
 STRUCT(gsf_lens_t)

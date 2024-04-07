@@ -394,6 +394,7 @@ hi_s32 sample_comm_vo_bt1120_start(hi_vo_pub_attr *pub_attr)
 }
 #endif
 
+#if 0 //maohw HI_VO_OUT_USER BT656 720P25fps;
 
 /* dhd0: 1080P60, dhd1: 1080P60 */
 static const hi_vo_sync_info g_sample_comm_vo_timing[HI_VO_MAX_PHYS_DEV_NUM] = {
@@ -432,6 +433,43 @@ static const hi_vo_user_sync_info g_sample_comm_vo_sync_info[HI_VO_MAX_PHYS_DEV_
         .op_mode = HI_OP_MODE_MANUAL,
     }
 };
+
+#else
+
+/* dhd0: 1080P60, dhd1: 1080P60 */
+static const hi_vo_sync_info g_sample_comm_vo_timing[HI_VO_MAX_PHYS_DEV_NUM] = {
+    /*
+     * |--INTFACE---||-----TOP-----||----HORIZON--------||----BOTTOM-----||-PULSE-||-INVERSE-|
+     * syncm, iop, itf,   vact, vbb,  vfb,  hact,  hbb,  hfb, hmid,bvact,bvbb, bvfb, hpw, vpw,idv, ihs, ivs
+     */
+    {     0,   1,   1,    720,   25,   5,   1280,  260,  440,  1,    1,   1,  1,  40, 5, 0, 0, 0 }, /* 1080P@60_hz */
+    // { 0, 1, 1, 1080, 41, 4, 1920, 192, 88,  1,    1,   1,  1,  44, 5, 0, 0, 0 }, /* 1080P@60_hz */
+};
+
+const hi_vo_sync_info *vo_get_dev_timing(hi_vo_dev dev)
+{
+    if ((dev < 0) || (dev >= HI_VO_MAX_PHYS_DEV_NUM)) {
+        return HI_NULL;
+    }
+    return &(g_sample_comm_vo_timing[dev]);
+}
+
+/* dhd0: 1080P60, dhd1: 1080P60 */
+static const hi_vo_user_sync_info g_sample_comm_vo_sync_info[HI_VO_MAX_PHYS_DEV_NUM] = {
+    {
+        .manual_user_sync_info.user_sync_attr = {
+            .clk_src = HI_VO_CLK_SRC_FIXED,
+            .fixed_clk = OT_VO_FIXED_CLK_74_25M
+        },
+        .manual_user_sync_info.pre_div = 1, /* if bt1120, set it by pixel clk */
+        .manual_user_sync_info.dev_div = 2, /* if rgb, set it by serial mode */
+        .clk_reverse_en = HI_FALSE,
+        .op_mode = HI_OP_MODE_MANUAL,
+    }
+};
+
+#endif
+
 
 const hi_vo_user_sync_info *vo_get_dev_user_sync_info(hi_vo_dev dev)
 {

@@ -1075,15 +1075,18 @@ static hi_void sample_comm_vi_stop_mipi_rx(const sample_sns_info *sns_info, cons
     if (ret != HI_SUCCESS) {
         sample_print("devno %d disable mipi rx clock failed!\n", mipi_info->mipi_dev);
     }
+    
+    if(sns_info->sns_clk_rst_en)
+    {
+      ret = sample_comm_vi_mipi_ctrl_cmd(sns_info->sns_rst_src, HI_MIPI_RESET_SENSOR);
+      if (ret != HI_SUCCESS) {
+          sample_print("devno %u reset sensor failed!\n", sns_info->sns_rst_src);
+      }
 
-    ret = sample_comm_vi_mipi_ctrl_cmd(sns_info->sns_rst_src, HI_MIPI_RESET_SENSOR);
-    if (ret != HI_SUCCESS) {
-        sample_print("devno %u reset sensor failed!\n", sns_info->sns_rst_src);
-    }
-
-    ret = sample_comm_vi_mipi_ctrl_cmd(sns_info->sns_clk_src, HI_MIPI_DISABLE_SENSOR_CLOCK);
-    if (ret != HI_SUCCESS) {
-        sample_print("devno %u disable sensor clock failed!\n", sns_info->sns_clk_src);
+      ret = sample_comm_vi_mipi_ctrl_cmd(sns_info->sns_clk_src, HI_MIPI_DISABLE_SENSOR_CLOCK);
+      if (ret != HI_SUCCESS) {
+          sample_print("devno %u disable sensor clock failed!\n", sns_info->sns_clk_src);
+      }
     }
 }
 

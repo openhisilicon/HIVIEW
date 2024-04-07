@@ -376,9 +376,10 @@ unsigned int cfifo_recput_a(unsigned char *p1, unsigned int n1, unsigned char *p
   rec.utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
   rec.pts  = aenc_pts/1000;
   
-  rec.audio.encode = codec_ipc.aenc.type;//GSF_ENC_AAC;
-  rec.audio.chn = (codec_ipc.aenc.type == GSF_ENC_AAC)?2:1;//1<<codec_ipc.aenc.stereo;
-  rec.audio.sp  = codec_ipc.aenc.sprate;//48; //k;
+  rec.audio.encode = codec_ipc.aenc.type;
+  //rec.audio.chn = 1<<codec_ipc.aenc.stereo;
+  rec.audio.chn = (codec_ipc.aenc.type == GSF_ENC_AAC)?2:1;
+  rec.audio.sp  = codec_ipc.aenc.sprate;//k;
   rec.audio.bps = 16;
   rec.size = 0;
   
@@ -479,11 +480,15 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
     int size = (j == 0)? 32*(sizeof(gsf_frm_t)+sizeof(venc_phyaddr_t)):
                (j == 1)? 32*(sizeof(gsf_frm_t)+sizeof(venc_phyaddr_t)):
                (j == 2)? 32*(sizeof(gsf_frm_t)+sizeof(venc_phyaddr_t)): 0;
+
     #else
     // The Video frame data is in CIFO
-    int size = (j == 0)? 6*GSF_FRM_MAX_SIZE:
-               (j == 1)? 3*GSF_FRM_MAX_SIZE:
-               (j == 2)? 1*GSF_FRM_MAX_SIZE: 0;
+    
+    #define _MUL_ 1 //
+    
+    int size = (j == 0)? 6*GSF_FRM_MAX_SIZE/_MUL_:
+               (j == 1)? 3*GSF_FRM_MAX_SIZE/_MUL_:
+               (j == 2)? 1*GSF_FRM_MAX_SIZE/_MUL_: 0;
     #endif
     
     if(size > 0)

@@ -32,6 +32,12 @@ enum {
   IRCUT_CTL_LEVEL, // 1: [0_0 -> 1_1]
 }; static int _ircut_ctl  = IRCUT_CTL_EDGE;
 
+enum {
+  IRCUT_REV_0,
+  IRCUT_REV_1,
+}; static int _ircut_rev = IRCUT_REV_0;
+
+
 static gsf_lens_ini_t _ini;
 static pthread_t serial_tid;
 static int serial_fd = -1;
@@ -52,14 +58,14 @@ static int ptz_led_set(int stat);
     system("echo low > /sys/class/gpio/gpio41/direction;echo low > /sys/class/gpio/gpio16/direction");\
   }while(0)
 
-#define IRCUT0_DAY(ctl) do {\
+#define __IRCUT0_DAY(ctl) do {\
     if(ctl == IRCUT_CTL_LEVEL)\
       system("echo 0 > /sys/class/gpio/gpio41/value;echo 0 > /sys/class/gpio/gpio16/value;");\
     else \
       system("echo 0 > /sys/class/gpio/gpio41/value;echo 1 > /sys/class/gpio/gpio16/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio16/value");\
   }while(0)
 
-#define IRCUT0_NIGHT(ctl) do {\
+#define __IRCUT0_NIGHT(ctl) do {\
     if(ctl == IRCUT_CTL_LEVEL)\
       system("echo 1 > /sys/class/gpio/gpio41/value;echo 1 > /sys/class/gpio/gpio16/value;");\
     else \
@@ -72,20 +78,36 @@ static int ptz_led_set(int stat);
     system("echo low > /sys/class/gpio/gpio82/direction;echo low > /sys/class/gpio/gpio36/direction");\
   }while(0)
 
-#define IRCUT1_DAY(ctl) do {\
+#define __IRCUT1_DAY(ctl) do {\
     if(ctl == IRCUT_CTL_LEVEL)\
       system("echo 0 > /sys/class/gpio/gpio82/value;echo 0 > /sys/class/gpio/gpio36/value;");\
     else \
       system("echo 0 > /sys/class/gpio/gpio82/value;echo 1 > /sys/class/gpio/gpio36/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio36/value");\
   }while(0)
 
-#define IRCUT1_NIGHT(ctl) do {\
+#define __IRCUT1_NIGHT(ctl) do {\
     if(ctl == IRCUT_CTL_LEVEL)\
       system("echo 1 > /sys/class/gpio/gpio82/value;echo 1 > /sys/class/gpio/gpio36/value;");\
     else \
       system("echo 1 > /sys/class/gpio/gpio82/value;echo 0 > /sys/class/gpio/gpio36/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio82/value");\
   }while(0)
 
+//ircut reversed
+#define IRCUT0_DAY(ctl) do{ \
+    if(_ircut_rev) __IRCUT0_NIGHT(ctl); else __IRCUT0_DAY(ctl);\
+  }while(0)
+
+#define IRCUT0_NIGHT(ctl) do{ \
+    if(_ircut_rev) __IRCUT0_DAY(ctl); else __IRCUT0_NIGHT(ctl);\
+  }while(0)
+
+#define IRCUT1_DAY(ctl) do{ \
+    if(_ircut_rev) __IRCUT1_NIGHT(ctl); else __IRCUT1_DAY(ctl);\
+  }while(0)
+
+#define IRCUT1_NIGHT(ctl) do{ \
+    if(_ircut_rev) __IRCUT1_DAY(ctl); else __IRCUT1_NIGHT(ctl);\
+  }while(0)
 
 //#1-4  Lamp0
 #define LAMP0_INIT() do {\
@@ -124,8 +146,10 @@ int lens19d_lens_init(gsf_lens_ini_t *ini)
   _lens_type   = codec_ipc.lenscfg.lens;
   _ircut_type  = codec_ipc.lenscfg.ircut;
   _ircut_ctl   = (strstr(_ini.sns, "imx585") || strstr(_ini.sns, "imx482"))?IRCUT_CTL_LEVEL:IRCUT_CTL_EDGE;
+  _ircut_rev   = codec_ipc.lenscfg.ircut_rev;
   
-  printf("_sensor_flag:%d, _flash_emmc:%d, _lens_type:%d, _ircut_type:%d\n", _sensor_flag, _flash_emmc, _lens_type, _ircut_type);
+  printf("_sensor_flag:%d, _flash_emmc:%d, _lens_type:%d, _ircut_type:%d, _ircut_rev:%d\n"
+        , _sensor_flag, _flash_emmc, _lens_type, _ircut_type, _ircut_rev);
     
   if(!_sensor_flag)
   {

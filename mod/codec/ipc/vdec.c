@@ -1,4 +1,4 @@
-#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
+#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3519d)
 
 #include "fw/comm/inc/proc.h"
 #include "mod/rtsps/inc/rtsps.h"
@@ -15,7 +15,13 @@
             PT_H264  
 
 #include "inc/frm.h"
-  
+
+#if defined(GSF_CPU_3519d)
+static int aodev = SAMPLE_AUDIO_INNER_AO_DEV;
+#else
+static int aodev = SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
+#endif
+
 int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
   gsf_shmid_t shmid = {-1, -1};
@@ -90,7 +96,7 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
       if(frm[i]->audio.encode == GSF_ENC_AAC)
       {
         attr.etype  = PT_AAC;
-        ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, 0, data, &attr);
+        ret = gsf_mpp_ao_asend(aodev, ch, 0, data, &attr);
       }
     }
   };
@@ -130,8 +136,8 @@ void* adec_task(void *param)
   HI_U32 u32Len = 640;
   HI_U8 u8Data[640];
   
-  sleep(5);//wait hdmi-display screen;
-
+  //wait hdmi-display screen;
+  sleep(5);
 
   while(_task_runing)
   {
@@ -142,13 +148,13 @@ void* adec_task(void *param)
     if (u32ReadLen <= 0)
     {
       attr.size = 0;
-      s32Ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, 1, u8Data, &attr);
+      s32Ret = gsf_mpp_ao_asend(aodev, ch, 1, u8Data, &attr);
       printf("file EOF.\n");
       break;
     }
     
     attr.size = u32ReadLen;
-    s32Ret = gsf_mpp_ao_asend(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, ch, 1, u8Data, &attr);
+    s32Ret = gsf_mpp_ao_asend(aodev, ch, 1, u8Data, &attr);
     if (HI_SUCCESS != s32Ret)
     {
       printf("asend err ret:%d\n", s32Ret);
@@ -165,13 +171,13 @@ static pthread_t pid;
 
 int vdec_start()
 {
-  //////// test hdmi-audio //////// 
+  //////// test audio dec => ao //////// 
   static char adec_filename[256] = {0};
   proc_absolute_path(adec_filename);
   sprintf(adec_filename, "%s/../cfg/audio2ch48k.mpa", adec_filename); //aac-lc;
   if (access(adec_filename, 0) != -1)
   {
-    printf("test hdmi-audio decode from adec_filename:[%s]\n", adec_filename);
+    printf("test audio dec => ao from adec_filename:[%s]\n", adec_filename);
     return pthread_create(&pid, 0, adec_task, (void*)adec_filename);
   }
   //////////////////////////////// 

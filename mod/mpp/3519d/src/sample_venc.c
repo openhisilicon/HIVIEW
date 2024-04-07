@@ -310,14 +310,14 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     }
 
     pic_buf_attr.width = size->width;
-    pic_buf_attr.height = size->height;
+    pic_buf_attr.height = size->height + 20;
     pic_buf_attr.align = HI_DEFAULT_ALIGN;
     pic_buf_attr.bit_width = HI_DATA_BIT_WIDTH_8;
     pic_buf_attr.pixel_format = format;
     pic_buf_attr.compress_mode = compress_mode;
     vb_attr->blk_size[vb_attr->valid_num] = hi_common_get_pic_buf_size(&pic_buf_attr);
     vb_attr->blk_cnt[vb_attr->valid_num] = blk_cnt;
-
+    printf("vb_attr(%d): %d x %d, blk_size:%d, blk_cnt:%d\n", vb_attr->valid_num, pic_buf_attr.width, pic_buf_attr.height, vb_attr->blk_size[vb_attr->valid_num], vb_attr->blk_cnt[vb_attr->valid_num]);
     vb_attr->valid_num++;
 }
 
@@ -327,7 +327,11 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     hi_s32 i;
 
     /* vb for vi-vpss */
-    update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_422, HI_COMPRESS_MODE_NONE, VI_VB_YUV_CNT);
+    extern int SENSOR0_TYPE;
+    extern int SENSOR1_TYPE;
+    extern int CHIP_3519D;
+    int vi_vb_cnt = (SENSOR0_TYPE == MIPI_YUV422_2M_30FPS_8BIT_4CH)?(VI_VB_YUV_CNT*2):VI_VB_YUV_CNT;
+    update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_422, HI_COMPRESS_MODE_NONE, vi_vb_cnt);
 
     // vb for vpss-venc(big stream)
     if (vb_attr->valid_num >= HI_VB_MAX_COMMON_POOLS) {

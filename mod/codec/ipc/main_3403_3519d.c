@@ -325,39 +325,11 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
 
 #if defined(GSF_CPU_3519d)
 
-static char* _chipid()
-{
-  static char chipid[64] = {0};
-  sprintf(chipid, "%s", "3519d500");
-  
-  char str[128];
-  sprintf(str, "%s", "bspmd.l 0x011020EE0 | grep 3516d500");
-  FILE* fd = popen(str, "r");
-  if(!fd)
-    return chipid;
-
-  while(1)
-  {
-    if (fgets(str, sizeof(str), fd))
-  	{
-  		if(strstr(str, "3516d500"))
-        sprintf(chipid, "%s", "3516d500");
-  		else if(strstr(str, "3519d500"))
-  		  sprintf(chipid, "%s", "3519d500");
-  	}
-  	else
-  	{
-  	  break;
-  	}
-  }
-  pclose(fd);
-  return chipid;
-}
-
 void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
 {
-  sprintf(cfg->type, "%s", _chipid());
-
+  sprintf(cfg->type, "%s", sstat_chipid()); // libcomm.so
+  printf("@@@@@@ %s @@@@@@\n", cfg->type);
+  
   if(strstr(cfg->snsname, "os04a10") || strstr(cfg->snsname, "imx664"))
   {
     // os04a10-0-0-4-30
@@ -408,15 +380,15 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     return;
   }
   
-  if(strstr(cfg->snsname, "imx335"))
+  if(strstr(cfg->snsname, "imx335") || strstr(cfg->snsname, "imx327"))
   {
     if(strstr(cfg->type, "3516d500"))
     {
-      cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
+      cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = strstr(cfg->snsname, "imx335")?5:2; cfg->fps = 30;
     }
     else 
     {
-      cfg->lane = 0; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = strstr(cfg->snsname, "imx335")?5:2; cfg->fps = 30;
     }
     
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
@@ -434,6 +406,20 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
         rgn_ini->st_num = venc_ini->st_num = 2;
         VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
     }
+    return;
+  }
+  
+  if(strstr(cfg->snsname, "yuv422"))
+  {
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
+    
+    rgn_ini->ch_num = 4; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 4; venc_ini->st_num = 2;
+    
+    VPSS_BIND_VI(0, 3, 0, 0, 1, 1, PIC_1080P, PIC_640P);
+    VPSS_BIND_VI(1, 4, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+    VPSS_BIND_VI(2, 5, 0, 2, 1, 1, PIC_1080P, PIC_640P);
+    VPSS_BIND_VI(3, 6, 0, 3, 1, 1, PIC_1080P, PIC_640P);
     return;
   }
   
@@ -647,14 +633,15 @@ int vo_start()
         .AeChn = 0,
         .enPayLoad = AU_PT(codec_ipc.aenc.type),
         .adtype = 0, // 0:INNER, 1:I2S, 2:PCM;
-        .stereo = (codec_ipc.aenc.type == GSF_ENC_AAC)?1:0, //codec_ipc.aenc.stereo
+        .stereo = (codec_ipc.aenc.type == GSF_ENC_AAC)?1:0, 
+        //.stereo = codec_ipc.aenc.stereo,
         .sp = codec_ipc.aenc.sprate*1000, //sampleRate
         .br = 0,    //bitRate;
         .uargs = NULL,
         .cb = gsf_aenc_recv,
       };
       
-      gsf_mpp_audio_start(NULL);
+      gsf_mpp_audio_start(&aenc);
     }
 
     if(codec_ipc.vo.intf < 0)
@@ -665,17 +652,19 @@ int vo_start()
     
     // start vo;
     {
-      
       int inf = VO_INTF_HDMI;
-      #if defined(GSF_CPU_3519d)
-      inf = HI_VO_INTF_BT1120;
-      #endif
       
-      int sync = (codec_ipc.vo.sync == 4)?HI_VO_OUT_1080P30:
+      int sync = 
+            (codec_ipc.vo.sync == 5)?HI_VO_OUT_USER: 
+            (codec_ipc.vo.sync == 4)?HI_VO_OUT_1080P30:
             (codec_ipc.vo.sync == 3)?VO_OUTPUT_7680x4320_30:
             (codec_ipc.vo.sync == 2)?VO_OUTPUT_3840x2160_60:
             (codec_ipc.vo.sync == 1)?VO_OUTPUT_3840x2160_30:
             VO_OUTPUT_1080P60;
+
+      #if defined(GSF_CPU_3519d)
+      inf = (sync == HI_VO_OUT_USER)?HI_VO_INTF_BT656:HI_VO_INTF_BT1120;
+      #endif
 
       printf("codec_ipc.vo.sync:%d\n", codec_ipc.vo.sync);
       gsf_mpp_vo_start(VODEV_HD0, inf, sync, 0);
@@ -685,10 +674,9 @@ int vo_start()
       ly = (p_cfg->second || avs == 1)?VO_LAYOUT_2MUX:p_cfg->snscnt;
       
       //for AHD;
-      if(sync == HI_VO_OUT_1080P30)
-      {
-        ly = VO_LAYOUT_1MUX;
-      }
+      ly = (sync == HI_VO_OUT_USER)?VO_LAYOUT_4MUX: //ahd_dvr;
+           (sync == HI_VO_OUT_1080P30)?VO_LAYOUT_1MUX://ahd_cam;
+           ly;
       
       gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
       vo_ly_set(ly);
@@ -724,8 +712,10 @@ int vo_start()
         gsf_mpp_vo_bind(VOLAYER_HD0, i, &src1);
       }
       
-      if(sync == VO_OUTPUT_1080P60)
+      if(sync == VO_OUTPUT_1080P60 || sync == HI_VO_OUT_1080P30)
         vo_res_set(1920, 1080);
+      else if(sync == HI_VO_OUT_USER)  
+        vo_res_set(1280, 720);
       else
         vo_res_set(3840, 2160);
     }
@@ -751,13 +741,11 @@ int main_start(gsf_bsp_def_t *bsp_def)
       #endif
     }
     
-    #if defined(GSF_CPU_3403)
     //flip&mirror;
     gsf_mpp_img_flip_t flip;
     flip.bFlip = codec_ipc.vi.flip;
     flip.bMirror = codec_ipc.vi.flip;
     gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
-    #endif
     
     return 0;
 }

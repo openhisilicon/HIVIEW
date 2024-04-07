@@ -41,6 +41,8 @@ typedef hi_vdec_chn VDEC_CHN;
 #define PT_AAC HI_PT_AAC
 #define PT_G711A HI_PT_G711A
 #define PT_G711U HI_PT_G711U
+#define PT_BUTT  HI_PT_BUTT
+
 #define VO_INTF_MIPI HI_VO_INTF_MIPI
 #define VO_INTF_HDMI HI_VO_INTF_HDMI
 #define VO_OUTPUT_USER HI_VO_OUT_USER
@@ -245,9 +247,16 @@ enum {
 };
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args);
 
+
+typedef struct {
+  int fps;
+  int bitrate;
+}gsf_mpp_venc_rc_t;
+
 enum {
   GSF_MPP_VENC_CTL_IDR = 0,
   GSF_MPP_VENC_CTL_RST = 1,
+  GSF_MPP_VENC_CTL_RC  = 2, //gsf_mpp_venc_rc_t;
 };
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
 
@@ -468,10 +477,11 @@ typedef struct {
 }gsf_mpp_frm_attr_t;
 
 //发送视频数据到显示通道(创建VDEC通道)
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //发送音频数据到 audio 解码输出;
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
+
 
 //解码状态;
 typedef struct {

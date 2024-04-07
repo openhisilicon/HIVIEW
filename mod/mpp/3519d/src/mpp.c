@@ -29,6 +29,7 @@
 #include "aiisp/sample_aibnr.h"
 #include "aiisp/sample_aidrc.h"
 #include "aiisp/sample_ai3dnr.h"
+#include "hi_audio_aac_adp.h"
 
 #include "hifb.h"
 #include "mpp.h"
@@ -37,6 +38,8 @@
 //#include "mppex.h"
 int CHIP_3519D  = 0;
 static hi_s32 aiisp = 0;
+static int _audio_init = 0;
+static gsf_mpp_aenc_t _aenc;
 
 typedef struct {
   int   type;
@@ -67,6 +70,9 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SONY_IMX664_MIPI_4M_30FPS_12BIT,        "imx664-0-0-4-30",  "libsns_imx664.so",      "g_sns_imx664_obj"},
     {SONY_IMX335_MIPI_5M_30FPS_12BIT,        "imx335-0-0-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
     {SONY_IMX335_2L_MIPI_5M_30FPS_10BIT,     "imx335-2-0-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
+    {SONY_IMX327_MIPI_2M_30FPS_12BIT,        "imx327-0-0-2-30",  "libsns_imx327.so",      "g_sns_imx327_obj"},
+    {SONY_IMX327_2L_MIPI_2M_30FPS_12BIT,     "imx327-2-0-2-30",  "libsns_imx327.so",      "g_sns_imx327_obj"},
+    {MIPI_YUV422_2M_30FPS_8BIT_4CH,           "yuv422-0-0-2-30",  NULL,  NULL}, //mipi_ad_4ch
   };
 
 
@@ -102,7 +108,7 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
       ret = gsf_mpp_venc_dest();
       printf("gsf_mpp_venc_dest ret = %x\n", ret);
       
-      for(int i = 0; i < 8; i++)
+      for(int i = 0; i < 3*4; i++) // 4channels;
       {
         hi_mpp_chn src_chn;
         hi_mpp_chn dst_chn;
@@ -117,8 +123,10 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
         }  
       }  
       
-      ret = sample_comm_audio_destory_all_thread();
-      printf("sample_comm_audio_destory_all_thread ret = %x\n", ret);
+      extern hi_s32 sample_audio_ai_aenc_stop(gsf_mpp_aenc_t *aenc);
+      ret = sample_audio_ai_aenc_stop(&_aenc);
+      printf("sample_audio_ai_aenc_stop ret = %x\n", ret);
+      
       sample_comm_all_isp_stop();
       printf("sample_comm_all_isp_stop\n");
       
@@ -154,8 +162,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   
   //hook sensor name;
-  if(strstr(cfg->snsname, "imx664") || strstr(cfg->snsname, "imx482") || strstr(cfg->snsname, "imx335"))  //37.125MHz
+  if(strstr(cfg->snsname, "imx664") || strstr(cfg->snsname, "imx482") 
+    || strstr(cfg->snsname, "imx335") || strstr(cfg->snsname, "imx327"))  //37.125MHz
     strncpy(snsname, "imx515", sizeof(snsname)-1);
+  else if(strstr(cfg->snsname, "yuv422"))
+    strncpy(snsname, "mipi_ad", sizeof(snsname)-1);
   else 
     strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
     
@@ -175,6 +186,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
       sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 %s", path, snsname, snsname);
   }
   
+  sprintf(loadstr, "%s -vo_intf bt656", loadstr);
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
@@ -239,8 +251,8 @@ static sample_vdec_attr sample_vdec[HI_VDEC_MAX_CHN_NUM];
 static sample_venc_vpss_chn_attr vpss_param;
 static sample_venc_vb_attr vb_attr = {0};
 static sample_vi_cfg vi_cfg[HI_VI_MAX_DEV_NUM];
-static hi_vi_pipe master_pipe[HI_VI_MAX_DEV_NUM] = {0, 1, 2, 3};
-static hi_vi_pipe aiisp_pipe[4] = {0, 1, 2, 3};
+static hi_vi_pipe master_pipe[HI_VI_MAX_PIPE_NUM] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+static hi_vi_pipe aiisp_pipe[HI_VI_MAX_PIPE_NUM] =  {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
 static sample_aibnr_param aibnr_param = {.is_wdr_mode = HI_FALSE, .ref_mode = HI_AIBNR_REF_MODE_NORM, .is_blend = HI_TRUE};
 
@@ -607,6 +619,13 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
 {
   int ret = 0;
+  
+  #if 0
+  hi_venc_chn_attr venc_attr;
+  ret = hi_mpi_venc_get_chn_attr(VencChn, &venc_attr);
+  ret = hi_mpi_venc_set_chn_attr(VencChn, &venc_attr);
+  #endif
+  
   return ret;
 }
 
@@ -746,6 +765,21 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       printf("SET dis attr ret:0x%x, bEnable:%d\n", ret, dis_attr.enable);
     }
     break;
+  case GSF_MPP_ISP_CTL_FLIP:
+    {
+      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+
+      hi_vi_chn_attr chn_attr;
+      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
+      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+
+      chn_attr.flip_en = flip->bFlip;
+      chn_attr.mirror_en = flip->bMirror;
+
+      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
+      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+    }
+    break;    
   default:
     break;
   }
@@ -900,37 +934,32 @@ int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
 }
 
 
-
-static gsf_mpp_aenc_t _aenc;
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
-  int ret = 0;
-  static int init = 0;
-  
-  if(!init)
+  if(!_audio_init)
   {
-    init = 1;
+    _audio_init = 1;
     extern hi_s32 sample_audio_init();
     sample_audio_init();
-  }  
+  }
+ 
   if(aenc == NULL)
   {
-    printf("test sample_audio_ai_ao\n");
+    printf("sample_audio_ai_ao start \n");
     static pthread_t aio_pid;
     extern hi_s32 sample_audio_ai_ao(hi_void);
     return pthread_create(&aio_pid, 0, (void*(*)(void*))sample_audio_ai_ao, NULL);
   }
   else
   {
-    //extern hi_s32 sample_audio_ai_aenc(gsf_mpp_aenc_t *aenc);
-    //_aenc = *aenc;
-    //return sample_audio_ai_aenc(aenc);
-    printf("unimplemented sample_audio_ai_aenc\n");
+    printf("sample_audio_ai_aenc start \n");
+    _aenc = *aenc;
+    extern hi_s32 sample_audio_ai_aenc(gsf_mpp_aenc_t *aenc);
+    return sample_audio_ai_aenc(aenc);
   }
   return 0;
-  
-  return ret;
 }
+
 int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
 {
   int ret = 0;
@@ -940,9 +969,8 @@ int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
   }
   else
   {
-    //extern hi_s32 sample_audio_ai_aenc_stoop(gsf_mpp_aenc_t *aenc);
-    //return sample_audio_ai_aenc_stoop(aenc);
-    printf("unimplemented sample_audio_ai_aenc_stoop\n");
+    extern hi_s32 sample_audio_ai_aenc_stop(gsf_mpp_aenc_t *aenc);
+    return sample_audio_ai_aenc_stop(aenc);
   }
   return ret;
 }
@@ -1073,6 +1101,19 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     
     hi_u32 vpss_grp_num = 0;
     
+    if(type == HI_VO_INTF_BT1120)
+    {
+      system("bspmm 0x0102600B0 0x1132 > /dev/null;"
+             "bspmm 0x0102600B4 0x1122 > /dev/null;"
+             "bspmm 0x0102600AC 0x1122 > /dev/null;"
+             "bspmm 0x0102600A4 0x1122 > /dev/null;"
+             "bspmm 0x0102600A0 0x1122 > /dev/null;"
+             "bspmm 0x0102600A8 0x1122 > /dev/null;"
+             "bspmm 0x010260078 0x1204 > /dev/null;"
+             "bspmm 0x01026009C 0x1202 > /dev/null;"
+             "bspmm 0x010260070 0x1322 > /dev/null;");
+    }
+    
     #if 0 // move to gsf_mpp_vi_start();
     /************************************************
     step1:  init SYS, init common VB(for VPSS and VO), init module VB(for VDEC)
@@ -1096,9 +1137,17 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     step4:  start VO
     *************************************************/
     //maohw
+    extern hi_s32 sample_comm_vo_get_def_config(sample_vo_cfg *vo_config);
+    sample_comm_vo_get_def_config(&vo_mng[vodev].vo_config);
     vo_mng[vodev].vo_config.vo_intf_type      = type;
     vo_mng[vodev].vo_config.intf_sync         = sync;
     vo_mng[vodev].vo_config.pic_size          = (sync >= HI_VO_OUT_1080P24 && sync <= HI_VO_OUT_1080P60)?PIC_1080P:PIC_3840X2160;
+    
+    if(sync == HI_VO_OUT_USER)
+    {
+      vo_mng[vodev].vo_config.pic_size  = PIC_720P;
+      vo_mng[vodev].vo_config.dev_frame_rate = 25;
+    }
     
     extern hi_s32 sample_start_vo(sample_vo_cfg *vo_config, hi_u32 vpss_grp_num, hi_bool is_pip);
     ret = sample_start_vo(&vo_mng[vodev].vo_config, vpss_grp_num, HI_FALSE);
@@ -1176,7 +1225,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 
 
 //发送视频数据到指定ch;
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
   int err = 0;
   HI_S32 s32Ret = HI_SUCCESS;
@@ -1346,10 +1395,53 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 }
 
 
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
-  //audio dec bind vo;
-  return 0;
+  if(!_audio_init)
+  {
+    _audio_init = 1;
+    extern hi_s32 sample_audio_init();
+    sample_audio_init();
+  }
+  
+  HI_S32 s32Ret = 0;
+  HI_S32 adch = 0;
+    
+  static gsf_mpp_frm_attr_t _attr = {.etype = PT_BUTT, };
+  
+  if(_attr.etype != attr->etype)
+  {
+    //reset;
+    _attr = *attr;
+    extern hi_s32 sample_audio_adec_ao(gsf_mpp_frm_attr_t *attr);
+    sample_audio_adec_ao(attr);
+  }
+  
+  if(attr->size == 0)
+  {
+    return hi_mpi_adec_send_end_of_stream(adch, HI_FALSE);
+  }
+  
+  hi_audio_stream stAudioStream = {0};
+  stAudioStream.stream = data;
+  stAudioStream.len = attr->size;
+  stAudioStream.time_stamp = 0;
+  stAudioStream.seq = 0;
+  
+  /* here only demo adec streaming sending mode, but pack sending mode is commended */
+  s32Ret = hi_mpi_adec_send_stream(adch, &stAudioStream, flag);
+  if (HI_SUCCESS != s32Ret)
+  {
+    printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \
+           __FUNCTION__, adch, stAudioStream.len);
+  }
+  else
+  {
+    //printf("%s: HI_MPI_ADEC_SendStream(%d) OK len:%d, time_stamp:%llu\n", \
+    //       __FUNCTION__, adch, stAudioStream.len, stAudioStream.time_stamp);
+  }
+
+  return s32Ret;
 }
 
 //设置当前音频数据通道号(!=ch的数据不送解码)
@@ -1432,8 +1524,66 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
 //audio ao_bind_ai;
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
 {
-  int ret = 0;
-  return ret;
+  //ao bind ai;
+  hi_s32    s32Ret;
+  hi_ai_chn AiChn = aich;
+  hi_ao_chn AoChn = ch;
+  hi_s32    s32AoChnCnt;
+
+  hi_aio_attr stAioAttr;
+  
+  hi_audio_dev   AiDev = aidev;//SAMPLE_AUDIO_INNER_AI_DEV;
+  hi_audio_dev   AoDev = aodev;//SAMPLE_AUDIO_INNER_AO_DEV; SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
+
+  hi_bool bAioReSample = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?0:
+                         (_aenc.sp != HI_AUDIO_SAMPLE_RATE_48000)?1:0;
+  hi_audio_sample_rate enInSampleRate = _aenc.sp;
+  
+  if(bAioReSample && AoDev != SAMPLE_AUDIO_INNER_AO_DEV)
+    return 0;
+
+  stAioAttr.sample_rate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_aenc.sp:HI_AUDIO_SAMPLE_RATE_48000;
+  stAioAttr.bit_width     = HI_AUDIO_BIT_WIDTH_16;
+  stAioAttr.work_mode     = HI_AIO_MODE_I2S_MASTER;
+  stAioAttr.snd_mode      = _aenc.stereo;//HI_AUDIO_SOUND_MODE_STEREO;
+  stAioAttr.expand_flag   = 0;
+  stAioAttr.frame_num     = 5;
+  stAioAttr.point_num_per_frame = (_aenc.enPayLoad==PT_AAC)?HI_AACLC_SAMPLES_PER_FRAME:80*6;//HI_AACLC_SAMPLES_PER_FRAME;
+  stAioAttr.chn_cnt       = 1<<_aenc.stereo;
+  stAioAttr.clk_share     = 1;
+  stAioAttr.i2s_type      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?HI_AIO_I2STYPE_INNERCODEC:HI_AIO_I2STYPE_INNERHDMI;
+
+  s32AoChnCnt = stAioAttr.chn_cnt;
+  s32Ret = sample_comm_audio_start_ao(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, bAioReSample);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("sample_comm_audio_start_ao err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
+    return s32Ret;
+  }
+  
+  int aoVol = 6;
+  s32Ret = hi_mpi_ao_set_volume(AoDev, aoVol); //[-121, 6]
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("hi_mpi_ao_set_volume err:%d, AoDev:%d, aoVol:%d\n", s32Ret, AoDev, aoVol);
+  }
+  
+  s32Ret = sample_comm_audio_ao_bind_ai(AiDev, AiChn, AoDev, AoChn);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("sample_comm_audio_ao_bind_ai err:%d, AoDev:%d, AiDev:%d\n", s32Ret, AoDev, AiDev);
+    goto __err;
+  }
+
+  return 0;
+  
+__err:
+  s32Ret = sample_comm_audio_stop_ao(AoDev, s32AoChnCnt, bAioReSample);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("sample_comm_audio_stop_ao err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
+  }
+  return -1;
 }
 
 //设置通道源图像裁剪区域(用于局部放大)
