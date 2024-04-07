@@ -30,7 +30,7 @@
  * - 32: ARGB8888
  */
 
-#if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
+#if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
 #warning "LV_COLOR_DEPTH == 32"
 #define LV_COLOR_DEPTH     32 //ARGB8888
 #define LV_COLOR_SCREEN_TRANSP    1
