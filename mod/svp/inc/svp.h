@@ -21,6 +21,7 @@ enum {
     GSF_ID_SVP_YOLO   = 4,  // ch, gsf_svp_yolo_t
     GSF_ID_SVP_CFACE  = 5,  // ch, gsf_svp_cface_t
     GSF_ID_SVP_FACE   = 6,  // ch, /path/xxx.jpg;
+    GSF_ID_SVP_FEATURE= 7,  //
     GSF_ID_SVP_END
 };
 
