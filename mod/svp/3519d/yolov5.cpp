@@ -131,7 +131,7 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         vcap[i].vcap.get_frame_lock(NULL, &hi_frame, &other_frame);
         clock_gettime(CLOCK_MONOTONIC, &ts2);
 
-        if(1)
+        if(0)
         {
           char info[256] = {0};
           sprintf(info, "get_frame_lock chn:%d, cost:%d ms", i, (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
@@ -214,13 +214,15 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
 
 int yolov5_deinit()
 {
-  sample_svp_npu_destroy();
-  
+  int ret = sample_svp_npu_destroy();
+  printf("sample_svp_npu_destroy ret:%d\n\n", ret);
+
   for(int i = 0; i < YOLO_CHN_MAX; i++)
   {
     if(vcap[i].fd > 0)
     {  
-      vcap[i].vcap.destroy();  
+      ret = vcap[i].vcap.destroy();
+      printf("vcap[%d].destroy ret:%d\n\n", i, ret);
     }  
   }
   return 0;

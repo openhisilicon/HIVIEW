@@ -688,12 +688,14 @@ static hi_s32 sample_ive_kcf_obj_iou(hi_sample_ive_kcf_roi_info *roi_info,
     hi_u32 num = 0;
     hi_u32 i, j;
 
+#if 0 //maohw g_roi_id
     if (bbox_info->bbox_num == 0) {
         ret = memcpy_s(new_roi_info, sizeof(hi_sample_ive_kcf_roi_info), roi_info, sizeof(hi_sample_ive_kcf_roi_info));
         sample_svp_check_exps_return(ret != EOK, HI_ERR_IVE_ILLEGAL_PARAM, SAMPLE_SVP_ERR_LEVEL_ERROR,
             "memcpy_s roi_info failed!\n");
         return ret;
     }
+#endif
 
     if (roi_info->roi_num == 0) {
         new_roi_info->roi_num = 0;
@@ -978,6 +980,7 @@ hi_sample_svp_rect_info *sample_ive_kcf_tracking2(const hi_video_frame_info *fra
     
     if (g_ive_kcf_info.obj_list.track_obj_num != 0 || g_ive_kcf_info.obj_list.train_obj_num != 0)
     {
+        //printf("track_obj_num:%d, train_obj_num:%d\n", g_ive_kcf_info.obj_list.track_obj_num, g_ive_kcf_info.obj_list.train_obj_num);
         ret = hi_mpi_ive_kcf_proc(&handle, &src, &g_ive_kcf_info.obj_list, &g_ive_kcf_info.kcf_proc_ctrl, HI_TRUE);
         sample_svp_check_failed_err_level_goto(ret, fail, "Err(%#x),hi_mpi_ive_kcf_proc failed!\n", ret);
 

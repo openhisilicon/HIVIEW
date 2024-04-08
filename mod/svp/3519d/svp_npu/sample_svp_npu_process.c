@@ -561,6 +561,7 @@ static hi_s32 sample_svp_npu_acl_frame_proc(const hi_video_frame_info *ext_frame
               __boxs->box[i].h = rect_info->rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - __boxs->box[i].y;
               #if __KCF_ENABLE__ //maohw
               __boxs->box[i].score = rect_info->id[i];
+              __boxs->box[i].label = NULL;
               #else
               __boxs->box[i].score = rect_info->score[i];
               __boxs->box[i].label = class_names[rect_info->id[i]];

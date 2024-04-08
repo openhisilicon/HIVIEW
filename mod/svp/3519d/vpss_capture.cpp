@@ -41,9 +41,7 @@ hi_void VpssCapture::vpss_restore(hi_vpss_grp vpss_grp, hi_vpss_chn vpss_chn)
     {
       if (g_frame[i].pool_id != HI_VB_INVALID_POOL_ID) {
           ret = hi_mpi_vpss_release_chn_frame(vpss_grp, vpss_chn, &g_frame[i]);
-          if (ret != HI_SUCCESS) {
-              printf("Release Chn Frame error!!!\n");
-          }
+          printf("vpss_release_chn_frame(grp:%d, chn:%d) ret:%d\n", vpss_grp, vpss_chn, ret);
           g_frame[i].pool_id = HI_VB_INVALID_POOL_ID;
       }
     }
@@ -370,6 +368,7 @@ int VpssCapture::get_frame(cv::Mat *cv_mat)
 	if(!frame_lock)
 	{
 	  hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, &g_frame[0]);
+	  g_frame[0].pool_id = HI_VB_INVALID_POOL_ID;
   }
 
 	frame_id++;
@@ -408,11 +407,13 @@ int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame, hi_video_frame_
     {  
       //printf("hi_mpi_vpss_release_chn_frame hi_frame:%p\n", hi_frame);
       hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, hi_frame);
+      hi_frame->pool_id = HI_VB_INVALID_POOL_ID;
     }
     
     if(g_both && other_frame)
     {  
       hi_mpi_vpss_release_chn_frame(g_vpss_grp, !g_vpss_chn, other_frame);
+      other_frame->pool_id = HI_VB_INVALID_POOL_ID;
     }  
   }
   return 0;
@@ -422,10 +423,11 @@ int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame, hi_video_frame_
 int VpssCapture::destroy()
 {
 	vpss_restore(g_vpss_grp, g_vpss_chn);
-	g_frame[0].pool_id = HI_VB_INVALID_POOL_ID;
-	g_frame[1].pool_id = HI_VB_INVALID_POOL_ID;
 	
-	hi_mpi_sys_mmz_free(dst_img.phys_addr[0], (hi_void *)dst_img.virt_addr[0]);
-	dst_img.virt_addr[0] = 0;
+	if(dst_img.virt_addr[0])
+	{
+  	hi_mpi_sys_mmz_free(dst_img.phys_addr[0], (hi_void *)dst_img.virt_addr[0]);
+  	dst_img.virt_addr[0] = 0;
+  }
 	return 0;
 }

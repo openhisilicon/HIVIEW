@@ -19,19 +19,19 @@ static void* pHand = NULL;
 static void* yolo_task(void* p);
 static int _v8 = 0;
 
+//for chn: ---------------- ch0 ch1 ch2 ch3---//
+#if defined(GSF_DEV_NVR)
+#warning "GSF_DEV_NVR"
+int VpssGrp[YOLO_CHN_MAX] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+int VpssChn[YOLO_CHN_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+#else
+#warning "GSF_DEV_IPC"
+int VpssGrp[YOLO_CHN_MAX] = {0, -1, -1, -1, -1, -1, -1, -1, -1};
+int VpssChn[YOLO_CHN_MAX] = {1, -1, -1, -1, -1, -1, -1, -1, -1};
+#endif
+
 int yolo_load(char *home_path)
 {
-  //for chn: ---------------- ch0 ch1 ch2 ch3---//
-  #if defined(GSF_DEV_NVR)
-  #warning "GSF_DEV_NVR"
-  int VpssGrp[YOLO_CHN_MAX] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-  int VpssChn[YOLO_CHN_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-  #else
-  #warning "GSF_DEV_IPC"
-  int VpssGrp[YOLO_CHN_MAX] = {0, -1, -1, -1, -1, -1, -1, -1, -1};
-  int VpssChn[YOLO_CHN_MAX] = {1, -1, -1, -1, -1, -1, -1, -1, -1};
-  #endif
-  
   if(svp_parm.svp.yolo_alg == 2)
   {
     //for second channel;
@@ -105,7 +105,9 @@ static int pub_send(yolo_boxs_t *boxs)
   for(i = 0; i< yolos->cnt; i++)
 	{
     //person filter;
-    if(svp_parm.svp.yolo_alg == 2 && !strstr(boxs->box[i].label, "person"))
+    if(svp_parm.svp.yolo_alg == 2 
+      && boxs->box[i].label
+      && !strstr(boxs->box[i].label, "person"))
 	  {
       continue;
 	  } 
@@ -155,8 +157,15 @@ static int pub_send(yolo_boxs_t *boxs)
 		yolos->box[j].rect[1] = boxs->box[i].y;
 		yolos->box[j].rect[2] = boxs->box[i].w;
 		yolos->box[j].rect[3] = boxs->box[i].h;
-		strncpy(yolos->box[j].label, boxs->box[i].label, sizeof(yolos->box[j].label)-1);
-		yolos->box[j].label[sizeof(yolos->box[j].label)-1] = '\0';//warn: strncpy without eof;
+		if(boxs->box[i].label)
+		{  
+		  strncpy(yolos->box[j].label, boxs->box[i].label, sizeof(yolos->box[j].label)-1);
+		  yolos->box[j].label[sizeof(yolos->box[j].label)-1] = '\0';//warn: strncpy without eof;
+		}
+		else 
+    {
+      sprintf(yolos->box[j].label, "%.0f", boxs->box[i].score);
+    }
 		
     #if 0
 	  printf("chn:%d, j: %d w:%d,h:%d, rect[%d,%d,%d,%d], label[%s], score:%f\n"
@@ -196,8 +205,11 @@ static void* yolo_task(void* p)
   yolo_boxs_t boxs[YOLO_CHN_MAX] = {0};
   for(int i = 0; i < YOLO_CHN_MAX; i++)
   {
-    boxs[i].chn = i;
-    pub_send(&boxs[i]);
+    if(VpssGrp[i] >= 0)
+    {  
+      boxs[i].chn = i;
+      pub_send(&boxs[i]);
+    }
   }
   yolov5_deinit();
   return NULL;
