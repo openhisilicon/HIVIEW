@@ -22,7 +22,7 @@ static int vcap_cnt = 0;
 
 extern "C" hi_s32 sample_comm_venc_save_stream(FILE *fd, hi_venc_stream *stream);
 static int venc_cb(VENC_STREAM_S* pstStream, void* u)
-{  
+{
   char* szJpgName = (char*)u;
   
   if(!pstStream)
@@ -31,7 +31,16 @@ static int venc_cb(VENC_STREAM_S* pstStream, void* u)
   FILE* pFile = fopen(szJpgName, "wb");
   if(pFile)
   {
-    sample_comm_venc_save_stream(pFile, pstStream); 
+  	//sample_comm_venc_save_stream(pFile, pstStream); 
+	{
+	    hi_u32 i;
+	    for (i = 0; i < pstStream->pack_cnt; i++) {
+	        fwrite(pstStream->pack[i].addr + pstStream->pack[i].offset,
+	               pstStream->pack[i].len - pstStream->pack[i].offset, 1, pFile);
+
+	        fflush(pFile);
+	    }
+	}
     fclose(pFile);
   }
   
