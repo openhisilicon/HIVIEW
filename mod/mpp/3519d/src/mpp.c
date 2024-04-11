@@ -246,7 +246,7 @@ int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg)
   return gsf_mpp_cfg_sns(path, cfg);
 }
 
-static hi_u32 vdec_chn_num = 8;
+static hi_u32 vdec_chn_num = 0;//8;
 static sample_vdec_attr sample_vdec[HI_VDEC_MAX_CHN_NUM];
 static sample_venc_vpss_chn_attr vpss_param;
 static sample_venc_vb_attr vb_attr = {0};
@@ -315,10 +315,13 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
             sample_venc_vb_attr *vb_attr);
   get_vb_attr(&vi_size, &vpss_param, &vb_attr);
 
-  //init common VB(for VPSS and VO) from sample_init_sys_and_vb();
-  extern hi_s32 get_vb_attr_vdec(hi_u32 vdec_chn_num, sample_venc_vb_attr *vb_attr);
-  get_vb_attr_vdec(vdec_chn_num, &vb_attr);
- 
+  if(vdec_chn_num > 0)
+  {  
+    //init common VB(for VPSS and VO) from sample_init_sys_and_vb();
+    extern hi_s32 get_vb_attr_vdec(hi_u32 vdec_chn_num, sample_venc_vb_attr *vb_attr);
+    get_vb_attr_vdec(vdec_chn_num, &vb_attr);
+  }
+  
   //HI_VB_SUPPLEMENT_BNR_MOT_MASK
   extern hi_s32 sample_venc_sys_init(sample_venc_vb_attr *vb_attr);
   if ((ret = sample_venc_sys_init(&vb_attr)) != HI_SUCCESS) {
@@ -661,7 +664,7 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
     hi_venc_stream stStream;
     hi_venc_pack   packs[4];
     stStream.pack_cnt = 4;
-    stStream.pack = &packs;
+    stStream.pack = packs;
     
     ret = hi_mpi_venc_get_stream(VeChn, &stStream, s32MilliSec);
     if(ret == 0)
@@ -688,101 +691,6 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
     ret = hi_mpi_venc_start_chn(VeChn, &stRecvParam);
   }
   ret = hi_mpi_venc_send_frame(VeChn, pstFrame, s32MilliSec);
-  return ret;
-}
-
-
-//from sample_ir_auto.c;
-extern hi_s32 isp_ir_switch_to_ir(hi_vi_pipe vi_pipe);
-extern hi_s32 isp_ir_switch_to_normal(hi_vi_pipe vi_pipe);
-extern hi_s32 isp_ir_switch_to_auto(hi_vi_pipe vi_pipe);
-extern hi_s32 isp_ir_mode(gsf_mpp_ir_t *ir);
-
-int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
-{
-  int ret = -1;
-  
-  switch(id)
-  {
-  case GSF_MPP_ISP_CTL_IR:
-    switch((int)args)
-    {
-      case 0:
-          isp_ir_mode((gsf_mpp_ir_t*)NULL);
-          ret = isp_ir_switch_to_normal(ViPipe);
-        break;
-      case 1:
-          isp_ir_mode((gsf_mpp_ir_t*)NULL);
-          ret = isp_ir_switch_to_ir(ViPipe);
-        break;
-      default:
-          isp_ir_mode((gsf_mpp_ir_t*)args);
-          ret = isp_ir_switch_to_auto(ViPipe);
-        break;
-    }
-    printf("GSF_MPP_ISP_CTL_IR, args:%p\n", args);
-    break;
-  case GSF_MPP_ISP_CTL_DIS:
-    {
-      gsf_mpp_img_dis_t *dis = (gsf_mpp_img_dis_t*)args;
-
-      hi_dis_cfg dis_cfg    = {0};
-      hi_dis_attr dis_attr  = {0};
-
-      hi_mpi_vi_get_chn_dis_attr(ViPipe, 0, &dis_attr);
-      if(dis_attr.enable)
-      {
-        dis_attr.enable = HI_FALSE;
-        hi_mpi_vi_set_chn_dis_attr(ViPipe, 0, &dis_attr);
-      }
-
-      dis_cfg.mode              = dis->enMode;//DIS_MODE_4_DOF_GME;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
-      dis_cfg.motion_level       = HI_DIS_MOTION_LEVEL_NORM;
-      dis_cfg.crop_ratio        = 80;
-      dis_cfg.buf_num           = 5;
-      dis_cfg.frame_rate        = 30;
-      dis_cfg.pdt_type          = dis->enPdtType;//DIS_PDT_TYPE_DV;//DIS_PDT_TYPE_IPC; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
-      dis_cfg.scale             = HI_TRUE; //HI_FALSE;
-      dis_cfg.camera_steady     = HI_FALSE;
-
-      dis_attr.enable               = dis->bEnable; //HI_TRUE;
-      dis_attr.moving_subject_level = 0;
-      dis_attr.rolling_shutter_coef = 0;
-      dis_attr.timelag              = 0;
-      dis_attr.still_crop           = HI_FALSE;
-      dis_attr.hor_limit            = 512;
-      dis_attr.ver_limit            = 512;
-      dis_attr.gdc_bypass           = HI_FALSE;
-      dis_attr.strength             = 1024;
-          
-      dis_cfg.frame_rate  = 30;
-      dis_attr.timelag    = 33333;
-
-      ret = hi_mpi_vi_set_chn_dis_cfg(ViPipe, 0, &dis_cfg);
-      printf("SET dis config ret:0x%x, enMode:%d, enPdtType:%d\n", ret, dis_cfg.mode, dis_cfg.pdt_type);
-
-      ret = hi_mpi_vi_set_chn_dis_attr(ViPipe, 0, &dis_attr);
-      printf("SET dis attr ret:0x%x, bEnable:%d\n", ret, dis_attr.enable);
-    }
-    break;
-  case GSF_MPP_ISP_CTL_FLIP:
-    {
-      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
-
-      hi_vi_chn_attr chn_attr;
-      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
-      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
-
-      chn_attr.flip_en = flip->bFlip;
-      chn_attr.mirror_en = flip->bMirror;
-
-      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
-      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
-    }
-    break;    
-  default:
-    break;
-  }
   return ret;
 }
 
@@ -900,6 +808,214 @@ int gsf_mpp_scene_stop()
   return ret;
 }
 
+
+//from sample_ir_auto.c;
+extern hi_s32 isp_ir_switch_to_ir(hi_vi_pipe vi_pipe);
+extern hi_s32 isp_ir_switch_to_normal(hi_vi_pipe vi_pipe);
+extern hi_s32 isp_ir_switch_to_auto(hi_vi_pipe vi_pipe);
+extern hi_s32 isp_ir_mode(gsf_mpp_ir_t *ir);
+
+int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
+{
+  int ret = -1;
+  
+  switch(id)
+  {
+  case GSF_MPP_ISP_CTL_IR:
+    switch((int)args)
+    {
+      case 0:
+          isp_ir_mode((gsf_mpp_ir_t*)NULL);
+          ret = isp_ir_switch_to_normal(ViPipe);
+        break;
+      case 1:
+          isp_ir_mode((gsf_mpp_ir_t*)NULL);
+          ret = isp_ir_switch_to_ir(ViPipe);
+        break;
+      default:
+          isp_ir_mode((gsf_mpp_ir_t*)args);
+          ret = isp_ir_switch_to_auto(ViPipe);
+        break;
+    }
+    printf("GSF_MPP_ISP_CTL_IR, args:%p\n", args);
+    break;
+  case GSF_MPP_ISP_CTL_IMG:
+    {
+      gsf_mpp_img_all_t *all = (gsf_mpp_img_all_t*)args;
+      
+      all->scene.bEnable = g_scenebEnable;
+      
+      hi_isp_exposure_attr exp_attr;
+      ret = hi_mpi_isp_get_exposure_attr(ViPipe, &exp_attr);
+      all->ae.u8Speed         = exp_attr.auto_attr.speed;
+      all->ae.u8Compensation  = exp_attr.auto_attr.compensation;
+      all->ae.SysGainRangeMax = exp_attr.auto_attr.sys_gain_range.max;
+      all->ae.SysGainRangeMin = exp_attr.auto_attr.sys_gain_range.min;
+      all->ae.ExpTimeRangeMax = exp_attr.auto_attr.exp_time_range.max;
+      all->ae.ExpTimeRangeMin = exp_attr.auto_attr.exp_time_range.min;
+
+      hi_isp_sharpen_attr shp_attr;
+      ret = hi_mpi_isp_get_sharpen_attr(ViPipe, &shp_attr);
+      all->sharpen.u16TextureFreq = shp_attr.manual_attr.texture_freq;
+      all->sharpen.u16EdgeFreq    = shp_attr.manual_attr.edge_freq;   
+      all->sharpen.u8DetailCtrl   = shp_attr.manual_attr.detail_ctrl; 
+      
+      hi_ldc_attr ldc_attr;
+      ret = hi_mpi_vpss_get_grp_ldc(0, &ldc_attr);
+      all->ldc.bEnable = ldc_attr.enable;
+      all->ldc.s32DistortionRatio = ldc_attr.ldc_v1_attr.distortion_ratio;
+
+      hi_isp_ldci_attr ldci_attr;
+      ret = hi_mpi_isp_get_ldci_attr(ViPipe, &ldci_attr);
+      
+      all->ldci.u16BlcCtrl = ldci_attr.manual_attr.blc_ctrl;
+      all->ldci.stHePosWgt_u8Wgt = ldci_attr.manual_attr.he_wgt.he_pos_wgt.wgt;
+      all->ldci.stHeNegWgt_u8Mean = ldci_attr.manual_attr.he_wgt.he_neg_wgt.mean;
+
+      printf("all->scene.bEnable:%d\n", all->scene.bEnable);
+    }
+    break;
+  case GSF_MPP_ISP_CTL_AE:
+    {
+      gsf_mpp_img_ae_t *ae = (gsf_mpp_img_ae_t*)args;
+      
+      printf("ae->bEnable:%d, u8Compensation:%d\n", ae->bEnable, ae->u8Compensation);  
+      if(!ae->bEnable)
+      {
+        ret = 0;  
+        break;
+      }
+
+      hi_isp_exposure_attr exp_attr;
+      ret = hi_mpi_isp_get_exposure_attr(ViPipe, &exp_attr);
+
+      //exp_attr.bypass = 0;
+      exp_attr.auto_attr.speed              = ae->u8Speed;
+      exp_attr.auto_attr.compensation       = ae->u8Compensation;
+      exp_attr.auto_attr.sys_gain_range.max = ae->SysGainRangeMax;
+      exp_attr.auto_attr.sys_gain_range.min = ae->SysGainRangeMin;
+      exp_attr.auto_attr.exp_time_range.max = ae->ExpTimeRangeMax;
+      exp_attr.auto_attr.exp_time_range.min = ae->ExpTimeRangeMin;
+      
+      ret = hi_mpi_isp_set_exposure_attr(ViPipe, &exp_attr);
+    }
+    break;
+  case GSF_MPP_ISP_CTL_SHARPEN:
+    {
+      gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
+
+      printf("sharpen->bEnable:%d,u16TextureFreq:%d\n", sharpen->bEnable, sharpen->u16TextureFreq);  
+
+      hi_isp_sharpen_attr shp_attr;
+      ret = hi_mpi_isp_get_sharpen_attr(ViPipe, &shp_attr);
+      
+      //shp_attr.en = HI_TRUE;
+      shp_attr.op_type = (sharpen->bEnable)?HI_OP_MODE_MANUAL:HI_OP_MODE_AUTO;
+      shp_attr.manual_attr.texture_freq   = sharpen->u16TextureFreq;
+      shp_attr.manual_attr.edge_freq      = sharpen->u16EdgeFreq;
+      shp_attr.manual_attr.detail_ctrl    = sharpen->u8DetailCtrl;
+      ret = hi_mpi_isp_set_sharpen_attr(ViPipe, &shp_attr);
+    }
+    break;    
+  case GSF_MPP_ISP_CTL_FLIP:
+    {
+      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+
+      hi_vi_chn_attr chn_attr;
+      ret = hi_mpi_vi_get_chn_attr(ViPipe, 0, &chn_attr);
+      printf("GET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+
+      chn_attr.flip_en = flip->bFlip;
+      chn_attr.mirror_en = flip->bMirror;
+
+      ret = hi_mpi_vi_set_chn_attr(ViPipe, 0, &chn_attr);
+      printf("SET ret:0x%x, flip_en:%d, mirror_en:%d\n", ret, chn_attr.flip_en, chn_attr.mirror_en);
+    }
+    break;
+  case GSF_MPP_ISP_CTL_LDC:
+    {
+      gsf_mpp_img_ldc_t *ldc = (gsf_mpp_img_ldc_t*)args;
+
+      hi_ldc_attr ldc_attr;
+
+      ldc_attr.enable                       = ldc->bEnable;
+      ldc_attr.ldc_version                  = HI_LDC_V1;
+      ldc_attr.ldc_v1_attr.aspect           = 1;
+      ldc_attr.ldc_v1_attr.x_ratio          = 100; /* 100: x ratio */
+      ldc_attr.ldc_v1_attr.y_ratio          = 100; /* 100: y ratio */
+      ldc_attr.ldc_v1_attr.xy_ratio         = 100; /* 100: x y ratio */
+      ldc_attr.ldc_v1_attr.center_x_offset  = 0;
+      ldc_attr.ldc_v1_attr.center_y_offset  = 0;
+      ldc_attr.ldc_v1_attr.distortion_ratio = ldc->s32DistortionRatio; /* 500: distortion ratio */
+
+      ret = hi_mpi_vpss_set_grp_ldc(0, &ldc_attr);
+      printf("vi_set_chn_ldc_attr ret:0x%x, ViPipe:%d, bEnable:%d, s32DistortionRatio:%d\n"
+          , ret, ViPipe, ldc_attr.enable, ldc_attr.ldc_v1_attr.distortion_ratio);
+    }
+    break;
+  case GSF_MPP_ISP_CTL_DIS:
+    {
+      gsf_mpp_img_dis_t *dis = (gsf_mpp_img_dis_t*)args;
+
+      hi_dis_cfg dis_cfg    = {0};
+      hi_dis_attr dis_attr  = {0};
+
+      hi_mpi_vi_get_chn_dis_attr(ViPipe, 0, &dis_attr);
+      if(dis_attr.enable)
+      {
+        dis_attr.enable = HI_FALSE;
+        hi_mpi_vi_set_chn_dis_attr(ViPipe, 0, &dis_attr);
+      }
+
+      dis_cfg.mode              = dis->enMode;//DIS_MODE_4_DOF_GME;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+      dis_cfg.motion_level       = HI_DIS_MOTION_LEVEL_NORM;
+      dis_cfg.crop_ratio        = 80;
+      dis_cfg.buf_num           = 5;
+      dis_cfg.frame_rate        = 30;
+      dis_cfg.pdt_type          = dis->enPdtType;//DIS_PDT_TYPE_DV;//DIS_PDT_TYPE_IPC; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+      dis_cfg.scale             = HI_TRUE; //HI_FALSE;
+      dis_cfg.camera_steady     = HI_FALSE;
+
+      dis_attr.enable               = dis->bEnable; //HI_TRUE;
+      dis_attr.moving_subject_level = 0;
+      dis_attr.rolling_shutter_coef = 0;
+      dis_attr.timelag              = 0;
+      dis_attr.still_crop           = HI_FALSE;
+      dis_attr.hor_limit            = 512;
+      dis_attr.ver_limit            = 512;
+      dis_attr.gdc_bypass           = HI_FALSE;
+      dis_attr.strength             = 1024;
+          
+      dis_cfg.frame_rate  = 30;
+      dis_attr.timelag    = 33333;
+
+      ret = hi_mpi_vi_set_chn_dis_cfg(ViPipe, 0, &dis_cfg);
+      printf("SET dis config ret:0x%x, enMode:%d, enPdtType:%d\n", ret, dis_cfg.mode, dis_cfg.pdt_type);
+
+      ret = hi_mpi_vi_set_chn_dis_attr(ViPipe, 0, &dis_attr);
+      printf("SET dis attr ret:0x%x, bEnable:%d\n", ret, dis_attr.enable);
+    }
+    break;
+  case GSF_MPP_ISP_CTL_LDCI:
+    {
+      gsf_mpp_img_ldci_t *ldci = (gsf_mpp_img_ldci_t*)args;
+
+      hi_isp_ldci_attr ldci_attr;
+      ret = hi_mpi_isp_get_ldci_attr(ViPipe, &ldci_attr);
+            
+      ldci_attr.enable = 1; //ldci->bEnable;
+      ldci_attr.op_type = (ldci->bEnable)?HI_OP_MODE_MANUAL:HI_OP_MODE_AUTO;
+      ldci_attr.manual_attr.blc_ctrl = ldci->u16BlcCtrl;
+      ldci_attr.manual_attr.he_wgt.he_pos_wgt.wgt = ldci->stHePosWgt_u8Wgt;
+      ldci_attr.manual_attr.he_wgt.he_neg_wgt.mean = ldci->stHeNegWgt_u8Mean;        
+      ret = hi_mpi_isp_set_ldci_attr(ViPipe, &ldci_attr);
+    }
+    break;
+  default:
+    break;
+  }
+  return ret;
+}
 
 
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
@@ -1114,25 +1230,27 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
              "bspmm 0x010260070 0x1322 > /dev/null;");
     }
     
-    #if 0 // move to gsf_mpp_vi_start();
-    /************************************************
-    step1:  init SYS, init common VB(for VPSS and VO), init module VB(for VDEC)
-    *************************************************/
-    extern hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type, hi_u32 len);
-    ret = sample_init_sys_and_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
-    if (ret != HI_SUCCESS) {
-        return ret;
+    if(vdec_chn_num > 0)
+    {  
+      #if 0 // move to gsf_mpp_vi_start();
+      /************************************************
+      step1:  init SYS, init common VB(for VPSS and VO), init module VB(for VDEC)
+      *************************************************/
+      extern hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type, hi_u32 len);
+      ret = sample_init_sys_and_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
+      if (ret != HI_SUCCESS) {
+          return ret;
+      }
+      #else //init module VB(for VDEC)
+      extern hi_s32 sample_init_module_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type,
+                hi_u32 len);
+      ret = sample_init_module_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
+      if (ret != HI_SUCCESS) {
+          sample_print("init mod vb fail for %#x!\n", ret);
+          return ret;
+      }
+      #endif
     }
-    #else //init module VB(for VDEC)
-    extern hi_s32 sample_init_module_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_chn_num, hi_payload_type type,
-              hi_u32 len);
-    ret = sample_init_module_vb(&sample_vdec[0], vdec_chn_num, HI_PT_H264, HI_VDEC_MAX_CHN_NUM);
-    if (ret != HI_SUCCESS) {
-        sample_print("init mod vb fail for %#x!\n", ret);
-        return ret;
-    }
-    #endif
-    
     /************************************************
     step4:  start VO
     *************************************************/

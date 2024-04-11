@@ -267,7 +267,7 @@ typedef struct {
 }gsf_mpp_ir_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
   int u8Hue;
   int u8Luma;
   int u8Contr;
@@ -275,7 +275,7 @@ typedef struct {
 }gsf_mpp_img_csc_t;
 
 typedef struct {
-  int  byPass;
+  int  bEnable;
   int  u8Speed;
   int  u8Compensation;
   int  SysGainRangeMax;
@@ -285,50 +285,55 @@ typedef struct {
 }gsf_mpp_img_ae_t;
 
 typedef struct {
-  int  byPass;
+  int  bEnable;
   int  u8strength;
 }gsf_mpp_img_dehaze_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
   int u16TextureFreq;
   int u16EdgeFreq;
   int u8DetailCtrl;
 }gsf_mpp_img_sharpen_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
   int u8LumaThr;
   int u8LumaTarget;
 }gsf_mpp_img_hlc_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
   int enCurveType;
   int TableNo;
 }gsf_mpp_img_gamma_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
   int u16Strength;
   int u16StrengthMax;
   int u16StrengthMin;
 }gsf_mpp_img_drc_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
   int u16BlcCtrl;
   int stHePosWgt_u8Wgt;
   int stHeNegWgt_u8Mean;
 }gsf_mpp_img_ldci_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
+  int s32DistortionRatio;
+}gsf_mpp_img_ldc_t;
+
+typedef struct {
+  int bEnable;
   int u8strength;
 }gsf_mpp_img_3dnr_t;
 
 typedef struct {
-  int byPass;
+  int bEnable;
 }gsf_mpp_img_scene_t;
 
 // gsf_mpp_img_all_t == gsf_img_all_t;
@@ -344,6 +349,7 @@ typedef struct {
   gsf_mpp_img_drc_t   drc;
   gsf_mpp_img_ldci_t  ldci;
   gsf_mpp_img_3dnr_t  _3dnr;
+  gsf_mpp_img_ldc_t   ldc;
 }gsf_mpp_img_all_t;
 
 typedef struct {

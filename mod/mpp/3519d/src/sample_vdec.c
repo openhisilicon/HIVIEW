@@ -212,7 +212,11 @@ static hi_s32 sample_init_sys_and_vb(sample_vdec_attr *sample_vdec, hi_u32 vdec_
 hi_s32 get_vb_attr_vdec(hi_u32 vdec_chn_num, sample_venc_vb_attr *vb_attr)
 {
     hi_pic_buf_attr buf_attr = {0};
-    hi_s32 ret;
+    hi_s32 ret = 0;
+    
+    if(vdec_chn_num == 0)
+      return ret;
+    
     //sample_vdec_get_diplay_cfg();
     ret = sample_comm_sys_get_pic_size(g_vdec_display_cfg.pic_size, &g_disp_size);
     if (ret != HI_SUCCESS) {
