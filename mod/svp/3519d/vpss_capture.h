@@ -44,7 +44,7 @@ private:
 	hi_u32 g_orig_depth      = 0;
 	hi_vpss_chn_mode g_orig_chn_mode = HI_VPSS_CHN_MODE_USER;
 	hi_u32 g_vpss_depth_flag = 0;
-	hi_video_frame_info g_frame[2] = { {{0},HI_VB_INVALID_POOL_ID,0}, {{0},HI_VB_INVALID_POOL_ID,0}};
+	hi_video_frame_info g_frame[2] = { {{0},HI_VB_INVALID_POOL_ID,}, {{0},HI_VB_INVALID_POOL_ID,}};
 	
 	//vgs;
   int vgsW = 0;
