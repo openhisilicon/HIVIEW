@@ -583,6 +583,65 @@ int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideo
   return ret;
 }
 
+
+int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
+{
+  int ret = -1;
+  switch(id)
+  {
+    case GSF_MPP_VPSS_CTL_PAUSE:
+      ret = hi_mpi_vpss_stop_grp(VpssGrp);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_PAUSE VpssGrp:%d, err 0x%x\n", VpssGrp, ret);    
+      break;
+    case GSF_MPP_VPSS_CTL_RESUM:  
+      ret = hi_mpi_vpss_start_grp(VpssGrp);
+      if(ret)  
+        printf("GSF_MPP_VPSS_CTL_RESUM VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_CROP:
+      ret = hi_mpi_vpss_set_grp_crop(VpssGrp, (hi_vpss_crop_info*)args);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_CROP VpssGrp:%d, err 0x%x\n", VpssGrp, ret);
+      break;
+    case GSF_MPP_VPSS_CTL_ASPECT:
+      {
+        int i = 0;
+        hi_vpss_chn_attr chn_attr;
+    
+        for(i = 0; i < 2; i++)
+        {
+          if(hi_mpi_vpss_get_chn_attr(VpssGrp, i, &chn_attr) == HI_SUCCESS)
+          {
+            chn_attr.aspect_ratio = *((hi_aspect_ratio*)args);
+            ret = hi_mpi_vpss_set_chn_attr(VpssGrp, i, &chn_attr);
+            if(ret)
+              printf("GSF_MPP_VPSS_CTL_ASPECT VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, i, ret);
+          }
+        }
+      }
+      break;
+    case  GSF_MPP_VPCH_CTL_ENABLE:
+      ret = hi_mpi_vpss_enable_chn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_ENABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPCH_CTL_DISABLE:
+      ret = hi_mpi_vpss_disable_chn(VpssGrp, (int)args);
+      if(ret)
+        printf("GSF_MPP_VPCH_CTL_DISABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
+      break;
+    case GSF_MPP_VPSS_CTL_ATTR:
+      ret = hi_mpi_vpss_get_grp_attr(VpssGrp, (hi_vpss_grp_attr*)args);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_ATTR VpssGrp:%d, err 0x%x\n", VpssGrp, ret); 
+      break;
+  }
+  return ret;
+}
+
+
+
 //Æô¶¯±àÂëÍ¨µÀ
 int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
 {

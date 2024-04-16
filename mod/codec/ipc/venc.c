@@ -4,7 +4,7 @@
 #include <time.h>
 
 #include "venc.h"
-
+#include "rgn.h"
 #include "inc/frm.h"
 
 #define AFRAME_MAX_SIZE (2*1024)
