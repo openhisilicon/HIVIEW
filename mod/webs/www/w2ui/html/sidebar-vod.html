@@ -103,7 +103,7 @@ function loadVideo(){
       });
      // console.log(JSON.stringify(query));
       //$.post('//'+ window.location.hostname + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) 
-      $.post('//'+ window.location.hostname ':' + window.location.port + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) 
+      $.post('//'+ window.location.hostname + ':' + window.location.port + '/config?id=GSF_ID_REC_QREC&args=G0C0S0', JSON.stringify(query), function (result, status) 
       {
         if (status == "success") {
     			if (result['code'] == 0){

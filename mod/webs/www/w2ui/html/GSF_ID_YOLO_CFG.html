@@ -593,8 +593,10 @@
   function flv_seektoend() {
     // console.log("cfg seek to end", player.buffered.end(0));
     // player.currentTime = player.buffered.end(0) - 0.01;
-
-    if (player.buffered.length) {
+    
+    //https://www.cnblogs.com/xiahj/p/flvExtend.html
+    if (player.buffered.length) 
+    {
       let end = player.buffered.end(0);//获取当前buffered值
       let diff = end - player.currentTime;//获取buffered与currentTime的差值
       if (diff >= 0.5) {//如果差值大于等于0.5 手动跳帧 这里可根据自身需求来定
