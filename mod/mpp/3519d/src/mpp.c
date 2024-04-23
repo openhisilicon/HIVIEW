@@ -157,6 +157,9 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   } 
   
   snscnt = cfg->snscnt;
+  aiisp = cfg->aiisp;
+  CHIP_3519D = strstr(cfg->type, "3519d500")?1:0;
+    
   char loadstr[256] = {0};
   char snsname[64] = {0};
   
@@ -187,6 +190,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   }
   
   sprintf(loadstr, "%s -vo_intf bt656", loadstr);
+  sprintf(loadstr, "%s -mmz_size %s", loadstr, CHIP_3519D?"1518M":"494M");
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
   
@@ -199,9 +203,6 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
                    (cfg->second == 3)?BT601_YUV422_0M_60FPS_8BIT:
                                       BT1120_YUV422_2M_60FPS_8BIT;
   }
-  
-  CHIP_3519D = strstr(cfg->type, "3519d500")?1:0;
-  aiisp = cfg->aiisp;
   
   if(dl)
   {
