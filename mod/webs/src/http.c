@@ -285,6 +285,8 @@ static void *send_thread_func(void *param) {
             }
             else 
             {
+              // https://github.com/ksvc/FFmpeg/wiki
+              // https://ott.dolby.com/codec_test/index.html
               if(flv_muxer_hevc(sess->flv // sps-pps-vcl
                       , rec->data
                       , rec->size
@@ -974,6 +976,7 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
     printf("GSF_ID_SVP_FEATURE target=%s, ret:%d\n", target, ret);
   }
   
+  
   if(ret == 0 && __pmsg->size > 0)
   {
     FILE* fpJpg = NULL;
@@ -996,7 +999,8 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
       {
         mg_send(nc, buf, n);
       }
-
+      fclose(fpJpg);
+      
       //响应完毕，关闭连接
       nc->flags |= MG_F_SEND_AND_CLOSE;
       return;
