@@ -111,6 +111,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
+    {BT1120_YUV_1M_60FPS_8BIT,                    "bt1120-0-0-1-60", NULL,                NULL},
     {SONY_IMX385_MIPI_2M_30FPS_12BIT,           "imx385-0-0-2-30", "libsns_imx385.so", "stSnsImx385Obj"},
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,           "imx482-0-0-2-30", "libsns_imx482.so", "stSnsImx482Obj"},
     {OV426_OV6946_DC_0M_30FPS_12BIT,            "ov426-0-0-0-30", "libsns_ov426.so", "stSnsOv426Obj"},
@@ -211,7 +212,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
                    (cfg->second == SECOND_BT656_NTSC)?BT656N_YUV_0M_60FPS_8BIT://NTSC
                    (cfg->second == SECOND_BT656_512P)?BT656_YUV_512P_60FPS_8BIT://640x512
                    (cfg->second == SECOND_BT656_288P)?BT656_YUV_288P_60FPS_8BIT://384x288
-                                                      SECOND_BT656_600P;//800x600
+                                                      BT656_YUV_600P_60FPS_8BIT;//800x600
   }
   
   if(dl)
@@ -534,6 +535,7 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
   SAMPLE_COMM_VENC_Stop(venc->VencChn);
   return s32Ret;
 }
+
 int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, gsf_mpp_venc_get_t *get)
 {
   int ret = 0;
@@ -556,7 +558,7 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
   if(pstFrame->stVFrame.u32Width > stChnAttr.stVencAttr.u32MaxPicWidth
     || pstFrame->stVFrame.u32Height > stChnAttr.stVencAttr.u32MaxPicHeight)
     return -1;
-    
+   
   if(get && get->cb)
   {
     stChnAttr.stVencAttr.u32PicWidth = pstFrame->stVFrame.u32Width;
@@ -570,11 +572,17 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
     ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
  
     VENC_STREAM_S stStream;
+    VENC_PACK_S stPack[4];
+    stStream.u32PackCount = 4;
+    stStream.pstPack = &stPack;
+    
     ret = HI_MPI_VENC_GetStream(VeChn, &stStream, s32MilliSec);
     if(ret == 0)
     {
       get->cb(&stStream, get->u);
+      ret = HI_MPI_VENC_ReleaseStream(VeChn, &stStream);
     }
+    
     ret = HI_MPI_VENC_StopRecvFrame(VeChn);
     return ret;
   }
@@ -595,8 +603,6 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
   ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
   return ret;
 }
-
-
 
 
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv)
