@@ -52,6 +52,18 @@ function flv_load() {
             stashInitialSize: 128,
             liveBufferLatencyChasing: true,
         });
+        
+        player.on(mpegts.Events.ERROR, (e) => {
+            console.log("player ERROR");
+        });
+        
+        w2ui['live-toolbar'].set('tips', { html: '<div style="color:red;">' 
+                                          + ' Browser MSE ['
+                                          + ' H264: ' + mpegts.getFeatureList().mseLivePlayback 
+                                          + ' H265: ' + mpegts.getFeatureList().mseH265Playback 
+                                          + '] </div>' });
+        w2ui['live-toolbar'].refresh();
+        
         player.attachMediaElement(element);
         player.load();
         
@@ -114,7 +126,8 @@ $(function () {
                 { type: 'radio', id: 'stream2', text: 'Stream2', icon: 'fa-star' },
                 { type: 'radio', id: 'stream3', text: 'Stream3', icon: 'fa-star' },
                 { type: 'break' },
-                { type: 'check', id: 'audio', text: 'audio', icon: 'fa-check', checked: false }
+                { type: 'check', id: 'audio', text: 'audio', icon: 'fa-check', checked: false },
+                { type: 'html',  id: 'tips', html: ''}
             ],
             onClick: function (event) {
                 console.log('Target: '+ event.target, event);
