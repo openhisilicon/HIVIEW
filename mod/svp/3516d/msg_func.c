@@ -96,9 +96,9 @@ static void msg_func_yolo(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
     if(1)//sync lines to app.exe;
     {    
       GSF_MSG_DEF(gsf_polygons_t, lines, 8*1024);
-      lines->polygon_num = 4;
-      lines->polygons[3].point_num = yolocfg->det_polygon.polygons[0].point_num;
-      memcpy(lines->polygons[3].points, yolocfg->det_polygon.polygons[0].points, sizeof(lines->polygons[3].points));
+      lines->polygon_num = 1;
+      lines->polygons[0].point_num = yolocfg->det_polygon.polygons[0].point_num;
+      memcpy(lines->polygons[0].points, yolocfg->det_polygon.polygons[0].points, sizeof(lines->polygons[0].points));
       int ret = GSF_MSG_SENDTO(GSF_ID_APP_LINES, 0, SET, 0, sizeof(gsf_polygons_t), GSF_IPC_APP, 2000);
     }
     rsp->err  = 0;
