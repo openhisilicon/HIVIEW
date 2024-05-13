@@ -57,11 +57,31 @@ static void msg_func_gui(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 }
 
 
+static void msg_func_lines(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
+{
+  if(req->set)
+  {
+    gsf_polygons_t *lines = (gsf_polygons_t*)req->data;
+    app_nvr.lines = *lines;
+    json_parm_save(app_parm_path, &app_nvr);
+    rsp->err  = 0;
+    rsp->size = 0;
+  }
+  else
+  {
+    gsf_polygons_t *lines = (gsf_polygons_t*)rsp->data;
+    *lines = app_nvr.lines;
+    rsp->err  = 0;
+    rsp->size = sizeof(gsf_polygons_t);
+  }
+}
+
 
 static msg_func_t *msg_func[GSF_ID_APP_END] = {
     [GSF_ID_MOD_CLI]      = NULL,
     [GSF_ID_APP_CHSRC]    = msg_func_chsrc,
     [GSF_ID_APP_GUI]      = msg_func_gui,
+    [GSF_ID_APP_LINES]    = msg_func_lines,
  };
 
 

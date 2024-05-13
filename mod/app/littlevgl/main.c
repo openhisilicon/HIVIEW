@@ -207,6 +207,71 @@ static int stat_draw(lv_coord_t hres, lv_coord_t vres)
 }
 #endif
 
+#if __UI_IOU__
+
+static int lines_iou(lv_coord_t hres, lv_coord_t vres)
+{
+  int i = 0, j = 0;
+  
+  extern gsf_app_nvr_t app_nvr;
+  static gsf_polygons_t lines = {0};
+    
+  if(!memcmp(&lines, &app_nvr.lines, sizeof(gsf_polygons_t)))
+  {  
+    return -1;
+  }
+  lines = app_nvr.lines;
+  
+  #define IOU_LINES_NUM 1
+  
+  //init;
+  static lv_obj_t* lines_hdl[IOU_LINES_NUM] = {NULL};
+  static lv_style_t style_line[IOU_LINES_NUM];
+  static lv_point_t line_points[IOU_LINES_NUM][16] = {0};
+  if(lines_hdl[0] == NULL)
+  {
+    for(i = 0; i < (IOU_LINES_NUM); i++)
+    {
+      lines_hdl[i] = lv_line_create(lv_scr_act(), NULL);
+      lv_style_copy(&style_line[i], &lv_style_plain);
+      style_line[i].line.color = LV_COLOR_CYAN;
+      style_line[i].line.width = 4;
+      style_line[i].line.rounded = 0;
+    }
+  }
+  
+  //clear;
+  for(i = 0; i < (IOU_LINES_NUM); i++)
+  {
+    lv_obj_set_style(lines_hdl[i], &style_line[i]);
+    lv_line_set_points(lines_hdl[i], line_points[i], 0);
+  }
+  
+  //draw;
+  for(i = 0; i < lines.polygon_num && i < IOU_LINES_NUM; i++)
+  {
+    if(lines.polygons[i].point_num == 0)
+      continue;
+
+    style_line[i].line.color = LV_COLOR_LIME;
+      
+    for(j = 0; j < lines.polygons[i].point_num; j++)
+    {
+      line_points[i][j].x = lines.polygons[i].points[j].x*hres;
+      line_points[i][j].y = lines.polygons[i].points[j].y*vres; 
+    }
+    line_points[i][j].x = lines.polygons[i].points[0].x*hres;
+    line_points[i][j].y = lines.polygons[i].points[0].y*vres; 
+    lv_obj_set_style(lines_hdl[i], &style_line[i]);
+    lv_line_set_points(lines_hdl[i], line_points[i], lines.polygons[i].point_num + 1);
+  }
+  
+  return 0;
+}
+#endif
+
+
+
 #if __UI_ZOOM__
 
 static lv_obj_t *btn_zoomplus, *btn_zoomminus, *btn_snap, *slider_ae;
@@ -571,6 +636,10 @@ static void* lvgl_main(void* p)
 
         #if __UI_LINES__
         lines_draw(hres, vres);
+        #endif
+        
+        #if __UI_IOU__
+        lines_iou(hres, vres);
         #endif
         
         #if __UI_STAT__
