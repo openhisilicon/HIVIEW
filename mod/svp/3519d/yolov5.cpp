@@ -28,19 +28,23 @@ static int venc_cb(VENC_STREAM_S* pstStream, void* u)
   if(!pstStream)
     return 0;
 
+  if(!szJpgName)
+    return 0;
+  
   FILE* pFile = fopen(szJpgName, "wb");
   if(pFile)
   {
-  	//sample_comm_venc_save_stream(pFile, pstStream); 
-	{
-	    hi_u32 i;
-	    for (i = 0; i < pstStream->pack_cnt; i++) {
-	        fwrite(pstStream->pack[i].addr + pstStream->pack[i].offset,
-	               pstStream->pack[i].len - pstStream->pack[i].offset, 1, pFile);
+    flock(fileno(pFile), LOCK_EX);
+  	{
+  	    hi_u32 i;
+  	    for (i = 0; i < pstStream->pack_cnt; i++) {
+  	        fwrite(pstStream->pack[i].addr + pstStream->pack[i].offset,
+  	               pstStream->pack[i].len - pstStream->pack[i].offset, 1, pFile);
 
-	        fflush(pFile);
-	    }
-	}
+  	        fflush(pFile);
+  	    }
+  	}
+    flock(fileno(pFile), LOCK_UN);
     fclose(pFile);
   }
   
@@ -67,6 +71,9 @@ int yolov5_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *Mo
     }
     return ret;
 }
+
+
+gsf_mpp_venc_t* __venc_yuv2jpeg = NULL;
 
 int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
 {
@@ -174,9 +181,9 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
               
               static int VeChn = 0;
               if(!VeChn)
-              {  
+              {
                 VeChn = (HI_VENC_MAX_CHN_NUM-1);
-                gsf_mpp_venc_t venc;
+                static gsf_mpp_venc_t venc;
                 venc.VencChn    = VeChn;
                 venc.srcModId   = HI_ID_VPSS;
                 venc.VpssGrp    = -1;
@@ -192,13 +199,19 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
                 venc.u32BitRate   = 2000;
                 venc.u32LowDelay  = 0;
                 gsf_mpp_venc_start(&venc);
-                //gsf_mpp_venc_stop(gsf_mpp_venc_t *venc);
+                __venc_yuv2jpeg = &venc;
               }
               
               gsf_mpp_venc_get_t vget;
               vget.cb = venc_cb;
               vget.u = (void*)filename;
      
+     
+              static td_u64 __pts = 0;
+              static td_u32 __time_ref = 0;         
+              hi_frame->video_frame.pts = __pts+= 33000;
+              hi_frame->video_frame.time_ref = __time_ref+=2;
+              
               if(gsf_mpp_venc_send(VeChn, hi_frame, 100, &vget) < 0)
               {
                 printf("gsf_mpp_venc_send error.\n");
@@ -212,8 +225,9 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
         }
         
         sample_svp_npu_detect(hi_frame, other_frame, boxs);
-        
         vcap[i].vcap.get_frame_unlock(hi_frame, other_frame);
+        
+        boxs->chn = i;
         boxs++;
       }
     }
@@ -225,6 +239,13 @@ int yolov5_deinit()
 {
   int ret = sample_svp_npu_destroy();
   printf("sample_svp_npu_destroy ret:%d\n\n", ret);
+
+
+  if(__venc_yuv2jpeg)
+  {
+    gsf_mpp_venc_stop(__venc_yuv2jpeg);
+    __venc_yuv2jpeg = NULL;
+  }  
 
   for(int i = 0; i < YOLO_CHN_MAX; i++)
   {
