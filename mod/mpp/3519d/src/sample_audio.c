@@ -1074,9 +1074,9 @@ hi_s32 sample_audio_ai_aenc(gsf_mpp_aenc_t *aenc)
     hi_aenc_chn ae_chn;
     hi_adec_chn ad_chn;
    
-    #if 1 //for single-ended MIC;
+    #ifdef HIVIEW_MINI_BOARD //for single-ended MIC;
     //IN1R => IN1L_R
-    hi_audio_track_mode track_mode = HI_AUDIO_TRACK_BOTH_RIGHT; // HI_AUDIO_TRACK_EXCHANGE;
+    hi_audio_track_mode track_mode = HI_AUDIO_TRACK_BOTH_RIGHT; // maohw HI_AUDIO_TRACK_EXCHANGE;
     ret = hi_mpi_ai_set_track_mode(ai_dev, track_mode);
     #endif
     
@@ -1300,6 +1300,17 @@ static hi_void sample_audio_ai_ao_init_param(hi_aio_attr *aio_attr, hi_audio_dev
     aio_attr->i2s_type   = HI_AIO_I2STYPE_EXTERN;
 #endif
 
+
+#ifdef OT_ACODEC_TYPE_NVP6188
+    aio_attr->sample_rate   = HI_AUDIO_SAMPLE_RATE_8000;
+    aio_attr->bit_width     = HI_AUDIO_BIT_WIDTH_16;
+    aio_attr->work_mode     = HI_AIO_MODE_I2S_SLAVE;
+    aio_attr->snd_mode      = HI_AUDIO_SOUND_MODE_MONO;
+    //aio_attr->frame_num = 10;
+    //aio_attr->point_num_per_frame = 320;
+#endif
+
+
     g_aio_resample = HI_FALSE;
     /* config ao resample attr if needed */
     if (g_aio_resample == HI_TRUE) {
@@ -1362,7 +1373,13 @@ static hi_void sample_audio_ai_ao_inner(hi_audio_dev ai_dev, hi_ai_chn ai_chn,
     hi_s32 ret;
 
     /* bind AI to AO channel */
+    #ifdef OT_ACODEC_TYPE_NVP6188
+    ret = sample_audio_ao_bind_ai(ai_dev, 0, ao_dev, 0);
+    ret = sample_audio_ao_bind_ai(ai_dev, 0, ao_dev, 1);
+    #else
     ret = sample_audio_ao_bind_ai(ai_dev, ai_chn, ao_dev, ao_chn);
+    #endif
+    
     if (ret != HI_SUCCESS) {
         return;
     }
@@ -1408,21 +1425,31 @@ hi_s32 sample_audio_ai_ao(hi_void)
     sample_audio_ai_ao_init_param(&aio_attr, &ai_dev, &ao_dev);
 
     /* enable AI channel */
+    #ifdef OT_ACODEC_TYPE_NVP6188
+    ai_chn_cnt = aio_attr.chn_cnt = 8;
+    #else
     ai_chn_cnt = aio_attr.chn_cnt;
+    #endif
     sample_audio_set_ai_vqe_param(&ai_vqe_param, g_out_sample_rate, g_aio_resample, HI_NULL, 0);
     ret = sample_comm_audio_start_ai(ai_dev, ai_chn_cnt, &aio_attr, &ai_vqe_param, -1);
     if (ret != HI_SUCCESS) {
         sample_dbg(ret);
         goto ai_ao_err3;
     }
-
+ 
+  
     /* enable AO channel */
+    #ifdef OT_ACODEC_TYPE_NVP6188
+    ao_chn_cnt = aio_attr.chn_cnt = 2;
+    #else
     ao_chn_cnt = aio_attr.chn_cnt;
+    #endif
     ret = sample_comm_audio_start_ao(ao_dev, ao_chn_cnt, &aio_attr, g_in_sample_rate, g_aio_resample);
     if (ret != HI_SUCCESS) {
         sample_dbg(ret);
         goto ai_ao_err2;
     }
+
 
     /* config internal audio codec */
     ret = sample_comm_audio_cfg_acodec(&aio_attr);
@@ -1430,6 +1457,12 @@ hi_s32 sample_audio_ai_ao(hi_void)
         sample_dbg(ret);
         goto ai_ao_err1;
     }
+
+    #ifdef HIVIEW_MINI_BOARD //for single-ended MIC;
+    //IN1R => IN1L_R
+    hi_audio_track_mode track_mode = HI_AUDIO_TRACK_BOTH_RIGHT; // maohw HI_AUDIO_TRACK_EXCHANGE;
+    ret = hi_mpi_ai_set_track_mode(ai_dev, track_mode);
+    #endif
 
     sample_audio_ai_ao_inner(ai_dev, ai_chn, ao_dev, ao_chn);
 

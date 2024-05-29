@@ -488,6 +488,9 @@ int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr
 //发送音频数据到 audio 解码输出;
 int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
+//send pcm to ao;
+int gsf_mpp_ao_send_pcm(int aodev, int ch, int flag, unsigned char *data, int size);
+
 
 //解码状态;
 typedef struct {
@@ -533,7 +536,9 @@ extern int SENSOR0_TYPE;
 extern int SENSOR1_TYPE;
 extern hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type);
 
-#define OT_ACODEC_TYPE_INNER //for audio;
+#define OT_ACODEC_TYPE_INNER //for inner audio;
+#define HIVIEW_MINI_BOARD //for hiview mini board;
+//#define OT_ACODEC_TYPE_NVP6188 //for extern nvp6188 audio;
 
 ///////////////////
 

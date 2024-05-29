@@ -13,6 +13,8 @@
 
 var streamx = 1
 var audio = false
+var ws = null;
+var record = null;
 
 function flv_load() {
     console.log('isSupported: ' + mpegts.isSupported());
@@ -60,7 +62,7 @@ function flv_load() {
         w2ui['live-toolbar'].set('tips', { html: '<div style="color:red;">' 
                                           + ' Browser MSE ['
                                           + ' H264: ' + mpegts.getFeatureList().mseLivePlayback 
-                                          + ' H265: ' + mpegts.getFeatureList().mseH265Playback 
+                                          + ',H265: ' + mpegts.getFeatureList().mseH265Playback 
                                           + '] </div>' });
         w2ui['live-toolbar'].refresh();
         
@@ -127,6 +129,7 @@ $(function () {
                 { type: 'radio', id: 'stream3', text: 'Stream3', icon: 'fa-star' },
                 { type: 'break' },
                 { type: 'check', id: 'audio', text: 'audio', icon: 'fa-check', checked: false },
+                { type: 'break' },
                 { type: 'html',  id: 'tips', html: ''}
             ],
             onClick: function (event) {
@@ -158,6 +161,154 @@ $(function () {
                 else if (event.target == 'audio')
                 {
                   audio = !event.object.checked;
+                  
+                  function init(rec) {
+                      record = rec;
+                  }
+
+                  var Recorder = function(stream) {
+                      var sampleBits = 16;    //输出采样数位 8, 16
+                      var sampleRate = 48000; //输出采样率
+                      var context = new AudioContext();
+                      var audioInput = context.createMediaStreamSource(stream);
+                      var recorder = context.createScriptProcessor(2048, 1, 1);
+                      var audioData = {
+                          size: 0,
+                          buffer: [],
+                          inputSampleRate: 48000,
+                          inputSampleBits: 16,
+                          outputSampleRate: sampleRate,
+                          oututSampleBits: sampleBits,
+                          clear: function() {
+                              this.buffer = [];
+                              this.size = 0;
+                          },
+                          input: function(data) {
+                              this.buffer.push(new Float32Array(data));
+                              this.size += data.length;
+                          },
+                          compress: function() { 
+
+                              var data = new Float32Array(this.size);
+                              var offset = 0;
+                              for (var i = 0; i < this.buffer.length; i++) {
+                                  data.set(this.buffer[i], offset);
+                                  offset += this.buffer[i].length;
+                              }
+
+                              var compression = parseInt(this.inputSampleRate / this.outputSampleRate);
+                              var length = data.length / compression;
+                              var result = new Float32Array(length);
+                              var index = 0,
+                              j = 0;
+                              while (index < length) {
+                                  result[index] = data[j];
+                                  j += compression;
+                                  index++;
+                              }
+                              return result;
+                          },
+                          encodePCM: function() { 
+                              var sampleRate = Math.min(this.inputSampleRate, this.outputSampleRate);
+                              var sampleBits = Math.min(this.inputSampleBits, this.oututSampleBits);
+                              var bytes = this.compress();
+                              var dataLength = bytes.length * (sampleBits / 8);
+                              var buffer = new ArrayBuffer(dataLength);
+                              var data = new DataView(buffer);
+                              var offset = 0;
+                              for (var i = 0; i < bytes.length; i++, offset += 2) {
+                              var s = Math.max(-1, Math.min(1, bytes[i]));
+                                  data.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                              }
+                              return new Blob([data]);
+                          }
+                      };
+                      var sendData = function() { 
+                          //console.log(record.getBlob());
+                          ws.send(record.getBlob());
+                          audioData.clear();
+                      };
+                      this.start = function() {
+                          audioInput.connect(recorder);
+                          recorder.connect(context.destination);
+                      }
+                      this.stop = function() {
+                          recorder.disconnect();
+                      }
+                      this.getBlob = function() {
+                          return audioData.encodePCM();
+                      }
+                      this.clear = function() {
+                          audioData.clear();
+                      }
+                      recorder.onaudioprocess = function(e) {
+                          var inputBuffer = e.inputBuffer.getChannelData(0);
+                          audioData.input(inputBuffer);
+                          sendData();
+                      }
+                  }
+
+                  function useWebSocket() {
+                      ws = new WebSocket('wss://' + window.location.hostname + ':' + window.location.port);
+                      ws.binaryType = 'arraybuffer'; 
+                      ws.onopen = function() {
+                          console.log('ws open');
+                          if (ws.readyState == 1) {
+                              record.start();
+                          }
+                      };
+                      ws.onmessage = function(msg) {
+                          console.log(msg)
+                      }
+                      ws.onerror = function(err) {
+                          console.log(err)
+                      }
+                  }
+                  
+                  if(audio == true)
+                  {
+                    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+                    if (!navigator.getUserMedia) {
+                        alert('The browser not support audio input');
+                    } else {
+                        navigator.getUserMedia({
+                        audio: true
+                    },
+                    function(mediaStream) {
+                        init(new Recorder(mediaStream));
+                        console.log('start');
+                        useWebSocket();
+                    },
+                    function(error) {
+                        console.log(error);
+                        switch (error.message || error.name) {
+                            case 'PERMISSION_DENIED':
+                            case 'PermissionDeniedError':
+                                console.log('PermissionDeniedError');
+                                break;
+                            case 'NOT_SUPPORTED_ERROR':
+                            case 'NotSupportedError':
+                                console.log('NotSupportedError');
+                                break;
+                            case 'MANDATORY_UNSATISFIED_ERROR':
+                            case 'MandatoryUnsatisfiedError':
+                                console.log('MandatoryUnsatisfiedError');
+                                break;
+                                default:
+                                console.log('Exception message:' + (error.code || error.name));
+                                break;
+                                }
+                            }
+                        )
+                    }
+                  }
+                  else {
+                    if (ws) {
+                        ws.close();
+                        record.stop();
+                        console.log('stop');
+                    }
+                  }
                 }
             }
             

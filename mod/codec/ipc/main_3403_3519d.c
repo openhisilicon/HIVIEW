@@ -387,7 +387,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   {
     if(strstr(cfg->type, "3516d500"))
     {
-      cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = 0; cfg->res = strstr(cfg->snsname, "imx335")?5:2; cfg->fps = 30;
+      cfg->lane = (cfg->snscnt>1)?2:0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = strstr(cfg->snsname, "imx335")?5:2; cfg->fps = 30;
     }
     else 
     {
@@ -621,6 +621,7 @@ int mpp_start(gsf_bsp_def_t *def)
     return 0;
 }
 
+#define AIO_TEST 0
 
 #define AU_PT(gsf) \
         (gsf == GSF_ENC_AAC)?PT_AAC:\
@@ -644,7 +645,12 @@ int vo_start()
         .cb = gsf_aenc_recv,
       };
       
+      //audio test
+      #if AIO_TEST
+      gsf_mpp_audio_start(NULL);
+      #else
       gsf_mpp_audio_start(&aenc);
+      #endif
     }
 
     if(codec_ipc.vo.intf < 0)
@@ -727,6 +733,17 @@ int vo_start()
 }
 
 
+
+
+// osd msg;
+static int voice_recv(char *msg, int size, int err)
+{
+  return gsf_mpp_ao_send_pcm(0, 0, 0, msg, size);
+}
+
+
+
+
 int main_start(gsf_bsp_def_t *bsp_def)
 {
     mpp_start(bsp_def);
@@ -735,14 +752,20 @@ int main_start(gsf_bsp_def_t *bsp_def)
 
     vo_start();
     
+    #if !AIO_TEST // audio test;
     extern int vdec_start();
     if(vdec_start() < 0)
     {
-      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
       #ifndef GSF_CPU_3519d
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
       gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+      #else
+	  //gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
+      void* voice_pull = nm_pull_listen(GSF_IPC_VOICE, voice_recv);
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, -1, 0);
       #endif
     }
+    #endif
     
     //flip&mirror;
     gsf_mpp_img_flip_t flip;

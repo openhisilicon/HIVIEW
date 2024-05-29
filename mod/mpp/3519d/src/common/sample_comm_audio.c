@@ -646,6 +646,27 @@ static hi_s32 inner_codec_get_i2s_fs(hi_audio_sample_rate sample_rate, hi_acodec
     return HI_SUCCESS;
 }
 
+
+hi_s32 sample_inner_codec_cfg_dac(hi_s32 vol)
+{
+  hi_s32 fd_acodec = open(ACODEC_FILE, O_RDWR);
+  ot_acodec_volume_ctrl acodec_volume;
+  acodec_volume.volume_ctrl = vol; //[0, 127] ?3?μ?a0ê±ò?á?×?′ó
+  acodec_volume.volume_ctrl_mute = 0;
+  hi_s32 ret = ioctl(fd_acodec, HI_ACODEC_SET_DACL_VOLUME, &acodec_volume);
+  if (ret != HI_SUCCESS) {
+      printf("%s: set acodec dacl vol failed\n", __FUNCTION__);
+  }
+  ret = ioctl(fd_acodec, HI_ACODEC_SET_DACR_VOLUME, &acodec_volume);
+  if (ret != HI_SUCCESS) {
+      printf("%s: set acodec dacr vol failed\n", __FUNCTION__);
+  }
+  printf("%s: set acodec adc vol:%d\n", __FUNCTION__, acodec_volume.volume_ctrl);
+  return close(fd_acodec);
+}
+
+
+
 hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
 {
     hi_s32 ret;
@@ -696,13 +717,32 @@ hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
      * and the voice quality can be guaranteed.
      */
     int acodec_input_vol;
-
-    acodec_input_vol = 30; /* 30dB */
+    #ifdef HIVIEW_MINI_BOARD
+    acodec_input_vol = 40; /* 30dB */
     ret = ioctl(fd_acodec,  HI_ACODEC_SET_INPUT_VOLUME, &acodec_input_vol);
     if (ret != HI_SUCCESS) {
         printf("%s: set acodec micin volume failed\n", __FUNCTION__);
         goto cfg_fail;
     }
+    printf("%s: set acodec micin volume:%d\n", __FUNCTION__, acodec_input_vol);
+    #endif
+    
+    #ifdef HIVIEW_MINI_BOARD
+    ot_acodec_volume_ctrl acodec_volume;
+    acodec_volume.volume_ctrl = 30;  //[0, 127]，赋值越大，音量越小。赋值为0时，音量最大
+    acodec_volume.volume_ctrl_mute = 0;
+    ret = ioctl(fd_acodec, HI_ACODEC_SET_ADCL_VOLUME, &acodec_volume);
+    if (ret != HI_SUCCESS) {
+        printf("%s: set acodec adcl vol failed\n", __FUNCTION__);
+        goto cfg_fail;
+    }
+    ret = ioctl(fd_acodec, HI_ACODEC_SET_ADCR_VOLUME, &acodec_volume);
+    if (ret != HI_SUCCESS) {
+        printf("%s: set acodec adcr vol failed\n", __FUNCTION__);
+        goto cfg_fail;
+    }
+    printf("%s: set acodec adc vol:%d\n", __FUNCTION__, acodec_volume.volume_ctrl);
+    #endif
 #endif
 
     printf("set inner audio codec ok: sample_rate = %d.\n", sample_rate);
@@ -735,6 +775,10 @@ hi_s32 sample_comm_audio_cfg_acodec(const hi_aio_attr *aio_attr)
         printf("%s:sample_inner_codec_cfg_audio failed\n", __FUNCTION__);
         return ret;
     }
+    codec_cfg = HI_TRUE;
+#endif
+
+#ifdef OT_ACODEC_TYPE_NVP6188
     codec_cfg = HI_TRUE;
 #endif
 

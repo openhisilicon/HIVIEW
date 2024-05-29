@@ -485,7 +485,11 @@ int webrtc_proc(struct mg_connection *nc, rtc_sess_t **rtc_sess, struct websocke
   return ret;
 }
 
-
+int voice_send(unsigned char *buf,  int size)
+{
+  extern void* voice_push;
+  return nm_push_send_wait(voice_push, buf, size);
+}
 
 static void ev_handler(struct mg_connection *nc, int ev, void *p) {
   switch (ev) {
@@ -596,7 +600,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
       {
         webrtc_proc(nc, (rtc_sess_t**)&nc->user_data, wm);
       }
-      
+      else 
+      {
+        //printf("voice_send wm->size:%d\n", wm->size);
+        voice_send(wm->data,  wm->size);
+      }
       break;
     }
     

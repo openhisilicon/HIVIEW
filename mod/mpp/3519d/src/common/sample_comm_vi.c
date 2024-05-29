@@ -791,8 +791,8 @@ hi_void sample_comm_vi_get_default_pipe_info(sample_sns_type sns_type, hi_vi_bin
 
         /* pub attr */
         sample_comm_isp_get_pub_attr_by_sns(sns_type, &pipe_info[i].isp_info.isp_pub_attr);
-
-        pipe_info[i].nr_attr.enable = HI_TRUE;
+        
+        pipe_info[i].nr_attr.enable = (sns_type == MIPI_YUV422_2M_30FPS_8BIT_4CH)?HI_FALSE:HI_TRUE; //maohw HI_TRUE
         pipe_info[i].nr_attr.compress_mode = HI_COMPRESS_MODE_FRAME;
         pipe_info[i].nr_attr.nr_type = HI_NR_TYPE_VIDEO_NORM;
         pipe_info[i].nr_attr.nr_motion_mode = HI_NR_MOTION_MODE_NORM;
@@ -1049,6 +1049,8 @@ static hi_s32 sample_comm_vi_start_mipi_rx(const sample_sns_info *sns_info, cons
     }
 
     if (sns_info->sns_clk_rst_en) {
+      printf("@@@@@@ %s => sns_clk_rst_en:%d, sns_rst_src:%d, sns_clk_src:%d bus_id:%d @@@@@@\n"
+            , __func__, sns_info->sns_clk_rst_en, sns_info->sns_rst_src, sns_info->sns_clk_src, sns_info->bus_id);
         sample_comm_vi_start_sensor(sns_info);
     }
 
@@ -1078,6 +1080,8 @@ static hi_void sample_comm_vi_stop_mipi_rx(const sample_sns_info *sns_info, cons
     
     if(sns_info->sns_clk_rst_en)
     {
+      printf("@@@@@@ %s => sns_clk_rst_en:%d, sns_rst_src:%d, sns_clk_src:%d bus_id:%d @@@@@@\n"
+            , __func__, sns_info->sns_clk_rst_en, sns_info->sns_rst_src, sns_info->sns_clk_src, sns_info->bus_id);
       ret = sample_comm_vi_mipi_ctrl_cmd(sns_info->sns_rst_src, HI_MIPI_RESET_SENSOR);
       if (ret != HI_SUCCESS) {
           sample_print("devno %u reset sensor failed!\n", sns_info->sns_rst_src);

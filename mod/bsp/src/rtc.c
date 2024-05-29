@@ -134,7 +134,6 @@ int rtc_init(void)
   if (hirtc_fd < 0 && rtc_fd < 0) 
   {
     printf("open [%s && %s] failed\n", HI_DEV_NAME, DEV_NAME);
-    return -1;
   }
   
   if(hirtc_fd > 0)

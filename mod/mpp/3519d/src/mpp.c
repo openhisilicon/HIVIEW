@@ -39,7 +39,16 @@
 int CHIP_3519D  = 0;
 static hi_s32 aiisp = 0;
 static int _audio_init = 0;
-static gsf_mpp_aenc_t _aenc;
+static gsf_mpp_aenc_t _adec, _aenc = {
+  .AeChn = 0,
+  .enPayLoad = PT_AAC,
+  .adtype = 0, // 0:INNER, 1:I2S, 2:PCM;
+  .stereo = 1, 
+  .sp = 48000, //sampleRate
+  .br = 0,    //bitRate;
+  .uargs = NULL,
+  .cb = NULL,
+};
 
 typedef struct {
   int   type;
@@ -70,6 +79,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SONY_IMX664_MIPI_4M_30FPS_12BIT,        "imx664-0-0-4-30",  "libsns_imx664.so",      "g_sns_imx664_obj"},
     {SONY_IMX335_MIPI_5M_30FPS_12BIT,        "imx335-0-0-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
     {SONY_IMX335_2L_MIPI_5M_30FPS_10BIT,     "imx335-2-0-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
+    {SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1,"imx335-0-1-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
     {SONY_IMX327_MIPI_2M_30FPS_12BIT,        "imx327-0-0-2-30",  "libsns_imx327.so",      "g_sns_imx327_obj"},
     {SONY_IMX327_2L_MIPI_2M_30FPS_12BIT,     "imx327-2-0-2-30",  "libsns_imx327.so",      "g_sns_imx327_obj"},
     {MIPI_YUV422_2M_30FPS_8BIT_4CH,           "yuv422-0-0-2-30",  NULL,  NULL}, //mipi_ad_4ch
@@ -130,8 +140,11 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
       sample_comm_all_isp_stop();
       printf("sample_comm_all_isp_stop\n");
       
-      //ret = sample_comm_vo_hdmi_stop();
-      //printf("sample_comm_vo_hdmi_stop ret = %x\n", ret);
+      gsf_mpp_vi_stop();
+      printf("gsf_mpp_vi_stop\n");
+      
+      sample_comm_audio_stop_ao(0, 2, 0);
+      printf("sample_comm_audio_stop_ao\n");
       
       sample_comm_sys_exit();
       printf("sample_comm_sys_exit\n");
@@ -1063,6 +1076,7 @@ int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
   if(aenc == NULL)
   {
     printf("sample_audio_ai_ao start \n");
+    _adec = _aenc;
     static pthread_t aio_pid;
     extern hi_s32 sample_audio_ai_ao(hi_void);
     return pthread_create(&aio_pid, 0, (void*(*)(void*))sample_audio_ai_ao, NULL);
@@ -1070,7 +1084,7 @@ int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
   else
   {
     printf("sample_audio_ai_aenc start \n");
-    _aenc = *aenc;
+    _adec = _aenc = *aenc;
     extern hi_s32 sample_audio_ai_aenc(gsf_mpp_aenc_t *aenc);
     return sample_audio_ai_aenc(aenc);
   }
@@ -1514,6 +1528,29 @@ int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr
 }
 
 
+int gsf_mpp_ao_send_pcm(int aodev, int ch, int flag, unsigned char *data, int size)
+{
+  int ret = 0;
+  static hi_s16 g_ao_data[2][HI_MAX_AO_POINT_NUM] = {0}; /* 2: stereo */
+  static hi_audio_frame ao_frame = {0};
+
+  ao_frame.bit_width = HI_AUDIO_BIT_WIDTH_16;
+  ao_frame.snd_mode = HI_AUDIO_SOUND_MODE_STEREO;
+  ao_frame.virt_addr[0] = (hi_u8 *)&(g_ao_data[0][0]);
+  ao_frame.virt_addr[1] = (hi_u8 *)&(g_ao_data[1][0]);
+  ao_frame.len = size;
+
+  memcpy(ao_frame.virt_addr[0], data, size); 
+  memcpy(ao_frame.virt_addr[1], data, size);
+
+  if(size > 0)
+  {
+    ret = hi_mpi_ao_send_frame(aodev, ch, &ao_frame, 1000); /* 1000:1000ms */
+  }
+  return ret;
+}
+
+
 int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
   if(!_audio_init)
@@ -1640,6 +1677,10 @@ int gsf_mpp_vo_bind(int volayer, int ch, gsf_mpp_vo_src_t *src)
   return 0;
 }
 
+
+
+
+
 //audio ao_bind_ai;
 int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
 {
@@ -1654,22 +1695,27 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   hi_audio_dev   AiDev = aidev;//SAMPLE_AUDIO_INNER_AI_DEV;
   hi_audio_dev   AoDev = aodev;//SAMPLE_AUDIO_INNER_AO_DEV; SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
 
+  if(aidev < 0)
+  {
+    printf("AoDev:%d, AoChn:%d, reset sp:%d & stereo:%d\n", AoDev, AoChn, _adec.sp, _adec.stereo);
+  }
+
   hi_bool bAioReSample = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?0:
-                         (_aenc.sp != HI_AUDIO_SAMPLE_RATE_48000)?1:0;
-  hi_audio_sample_rate enInSampleRate = _aenc.sp;
+                         (_adec.sp != HI_AUDIO_SAMPLE_RATE_48000)?1:0;
+  hi_audio_sample_rate enInSampleRate = _adec.sp;
   
   if(bAioReSample && AoDev != SAMPLE_AUDIO_INNER_AO_DEV)
     return 0;
 
-  stAioAttr.sample_rate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_aenc.sp:HI_AUDIO_SAMPLE_RATE_48000;
+  stAioAttr.sample_rate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_adec.sp:HI_AUDIO_SAMPLE_RATE_48000;
   stAioAttr.bit_width     = HI_AUDIO_BIT_WIDTH_16;
   stAioAttr.work_mode     = HI_AIO_MODE_I2S_MASTER;
-  stAioAttr.snd_mode      = _aenc.stereo;//HI_AUDIO_SOUND_MODE_STEREO;
+  stAioAttr.snd_mode      = _adec.stereo;//HI_AUDIO_SOUND_MODE_STEREO;
   stAioAttr.expand_flag   = 0;
   stAioAttr.frame_num     = 5;
-  stAioAttr.point_num_per_frame = (_aenc.enPayLoad==PT_AAC)?HI_AACLC_SAMPLES_PER_FRAME:80*6;//HI_AACLC_SAMPLES_PER_FRAME;
-  stAioAttr.chn_cnt       = 1<<_aenc.stereo;
-  stAioAttr.clk_share     = 1;
+  stAioAttr.point_num_per_frame = (_adec.enPayLoad==PT_AAC)?HI_AACLC_SAMPLES_PER_FRAME:80*6;//HI_AACLC_SAMPLES_PER_FRAME;
+  stAioAttr.chn_cnt       = 1<<_adec.stereo;
+  stAioAttr.clk_share     = 1;//(aidev<0)?0:1;
   stAioAttr.i2s_type      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?HI_AIO_I2STYPE_INNERCODEC:HI_AIO_I2STYPE_INNERHDMI;
 
   s32AoChnCnt = stAioAttr.chn_cnt;
@@ -1680,11 +1726,18 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
     return s32Ret;
   }
   
-  int aoVol = 6;
+  #ifdef HIVIEW_MINI_BOARD
+  int aoVol = -5;
   s32Ret = hi_mpi_ao_set_volume(AoDev, aoVol); //[-121, 6]
   if (s32Ret != HI_SUCCESS)
   {
     printf("hi_mpi_ao_set_volume err:%d, AoDev:%d, aoVol:%d\n", s32Ret, AoDev, aoVol);
+  }
+  #endif
+  if(AiDev < 0)
+  {
+    printf("AoDev:%d, AoChn:%d, ao not bind ai\n", AoDev, AoChn);
+    return 0;
   }
   
   s32Ret = sample_comm_audio_ao_bind_ai(AiDev, AiChn, AoDev, AoChn);

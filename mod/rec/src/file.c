@@ -4,6 +4,7 @@
 
 #include "inc/frm.h"
 
+#define PATH_MAX 256
 extern const struct mov_buffer_t* mov_file_buffer(void);
 
 fd_av_t*
@@ -150,7 +151,9 @@ int fd_av_write(fd_av_t *fd, char *buf, int size, rec_rw_info_t *info)   /* ะดสำ
         		}
             if(-1 != _hdl->atrack)
             {
-          		int framelen = ((buf[3] & 0x03) << 11) | (buf[4] << 3) | (buf[5] >> 5);
+              unsigned char *_buf = buf;
+          		int framelen = ((_buf[3] & 0x03) << 11) | (_buf[4] << 3) | (_buf[5] >> 5);
+          		//printf("AAC framelen:%d\n", framelen);
           		ret = fmp4_writer_write(_hdl->w, _hdl->atrack, buf + 7, framelen - 7, info->ms, info->ms, 0);
 	          }
           }

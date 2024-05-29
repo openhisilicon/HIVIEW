@@ -36,7 +36,7 @@
 #include "scan_block_device.h"
 #include "scandisk.h"
 
-
+#define PATH_MAX 256
 #define MAX_DIR_NAME_LEN 256
 
 #ifndef MKDEV

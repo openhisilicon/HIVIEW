@@ -75,7 +75,7 @@ static sample_vo_sync_info g_vo_sample_sync_info[HI_VO_OUT_BUTT] = {
 
     { HI_VO_OUT_720x1280_60, 720, 1280, 60 },
     { HI_VO_OUT_1080x1920_60, 1080, 1920, 60 },
-    { HI_VO_OUT_USER,  0,    0,    0 }
+    { HI_VO_OUT_USER,  1280,    720,    30 } //maohw
 };
 
 hi_s32 sample_comm_vo_get_width_height(hi_vo_intf_sync intf_sync, hi_u32 *width, hi_u32 *height, hi_u32 *frame_rate)
@@ -458,8 +458,14 @@ const hi_vo_sync_info *vo_get_dev_timing(hi_vo_dev dev)
 static const hi_vo_user_sync_info g_sample_comm_vo_sync_info[HI_VO_MAX_PHYS_DEV_NUM] = {
     {
         .manual_user_sync_info.user_sync_attr = {
-            .clk_src = HI_VO_CLK_SRC_FIXED,
-            .fixed_clk = OT_VO_FIXED_CLK_74_25M
+            .clk_src = HI_VO_CLK_SRC_PLL,
+            .vo_pll = { /* if bt1120, set it by pixel clk and div mode */
+                .fb_div = 49, /* 99 fb div */
+                .frac = 8388608,
+                .ref_div = 1, /* 2 ref div */
+                .post_div1 = 4, /* 4 post div1 */
+                .post_div2 = 4, /* 2 post div2 */
+            },
         },
         .manual_user_sync_info.pre_div = 1, /* if bt1120, set it by pixel clk */
         .manual_user_sync_info.dev_div = 2, /* if rgb, set it by serial mode */

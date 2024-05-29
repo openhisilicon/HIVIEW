@@ -68,7 +68,7 @@ int ws_recv(char *in, int isize, char *out, int *osize, int err)
   return 0;
 }
 
-void *web_pub, *web_rep, *web_sub, *_rep;
+void *web_pub, *web_rep, *web_sub, *_rep, *voice_push;
 int upg_stat = 0;
 int upg_progress = 0;
 int sub_recv(char *msg, int size, int err)
@@ -148,11 +148,14 @@ int main(int argc, char *argv[])
   web_rep  = nm_rep_listen("ws://*:7790"
                   , NM_REP_MAX_WORKERS
                   , NM_REP_OSIZE_MAX
-                  , ws_recv); 
+                  , ws_recv);
   #endif
                   
   web_sub = nm_sub_conn("ipc:///tmp/bsp_pub"
                   , sub_recv);
+
+  voice_push = nm_push_conn(GSF_IPC_VOICE);
+
 
   //local listen;
   GSF_LOG_CONN(1, 100);

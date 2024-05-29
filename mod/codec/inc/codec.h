@@ -12,6 +12,7 @@ extern "C" {
 
 #define GSF_IPC_OSD        "ipc:///tmp/codec_osd"
 #define GSF_IPC_CODEC      "ipc:///tmp/codec_rep"
+#define GSF_IPC_VOICE        "ipc:///tmp/codec_voice"
 
 enum {
     GSF_ID_CODEC_VENC     = 1,  // ch, sid, gsf_venc_t
