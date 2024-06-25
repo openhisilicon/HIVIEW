@@ -19,7 +19,7 @@ SUBDIRS=$(shell find ./src/ -maxdepth 7 -type d)
 SRCS:=$(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 
 OBJS := $(patsubst %.c, %.o, $(SRCS))
-LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lssl -lcrypto -lrtp -lmpeg -lcfifo -lnm -lcjson -lm -lpthread -lrt
+LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) -lssl -lcrypto -lh26xbits -lrtp -lmpeg -lcfifo -lnm -lcjson -lm -lpthread -lrt
 
 #SRTP
 #LIBS += -DSRTP_ENABLE -lsrtp2 
