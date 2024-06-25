@@ -2,6 +2,7 @@
 
 #include "fw/comm/inc/proc.h"
 #include "mod/rtsps/inc/rtsps.h"
+#include "mod/srts/inc/srts.h"
 #include "codec.h"
 #include "cfg.h"
 #include "msg_func.h"
@@ -26,38 +27,58 @@ int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
   gsf_shmid_t shmid = {-1, -1};
   
-  GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024); 
-  rtsp_url->transp = 0;
-  
-  strcpy(rtsp_url->url, codec_ipc.vdec.rtsp);
-  int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
-                        , sizeof(gsf_rtsp_url_t)
-                        , GSF_IPC_RTSPS, 3000);
-  if(ret == 0 && __pmsg->err == 0)
+  if(strstr(codec_ipc.vdec.rtsp, "rtsp://"))
   {
-    shmid = *((gsf_shmid_t*)__pmsg->data);
-    printf("video_shmid:%d\n", shmid.video_shmid);
+    GSF_MSG_DEF(gsf_rtsp_url_t, rtsp_url, 8*1024); 
+    rtsp_url->transp = 0;
+    strcpy(rtsp_url->url, codec_ipc.vdec.rtsp);
+    int ret = GSF_MSG_SENDTO(GSF_ID_RTSPS_C_OPEN, 0, SET, 0
+                          , sizeof(gsf_rtsp_url_t)
+                          , GSF_IPC_RTSPS, 3000);
+    if(ret == 0 && __pmsg->err == 0)
+    {
+      shmid = *((gsf_shmid_t*)__pmsg->data);
+      printf("%s video_shmid:%d\n", codec_ipc.vdec.rtsp, shmid.video_shmid);
+    }
+  }
+  else 
+  {
+    GSF_MSG_DEF(gsf_srts_ctl_t, ctl, 8*1024);
+    strcpy(ctl->dst, codec_ipc.vdec.rtsp);
+    int ret = GSF_MSG_SENDTO(GSF_ID_SRTS_RECV, 0, SET, 0
+                          , sizeof(gsf_srts_ctl_t)
+                          , GSF_IPC_SRTS, 3000);
+    if(ret == 0 && __pmsg->err == 0)
+    {
+      shmid = *((gsf_shmid_t*)__pmsg->data);
+      printf("%s video_shmid:%d\n", codec_ipc.vdec.rtsp, shmid.video_shmid);
+    }
   }
 
   if(shmid.video_shmid >= 0)
   {
     fifo[0] = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
-    frm[0] = (gsf_frm_t*)malloc(GSF_FRM_MAX_SIZE);
+    if(!frm[0])
+      frm[0] = (gsf_frm_t*)malloc(GSF_FRM_MAX_SIZE);
     cfifo_newest(fifo[0], 1);
     cfifo_set_u(fifo[0], (void*)1);
-    printf("video fifo:%p, frm:%p\n", fifo[0], frm[0]);
+    printf("video fifo[0]:%p, frm:%p\n", fifo[0], frm[0]);
   }
   if(shmid.audio_shmid >= 0)
   {
     fifo[1] = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.audio_shmid);
-    frm[1] = (gsf_frm_t*)malloc(4*1024);
+    if(!frm[1])
+      frm[1] = (gsf_frm_t*)malloc(4*1024);
     cfifo_newest(fifo[1], 1);
     cfifo_set_u(fifo[1], (void*)1);
-    printf("audio fifo:%p, frm:%p\n", fifo[1], frm[1]);
+    printf("audio fifo[1]:%p, frm:%p\n", fifo[1], frm[1]);
   }
   
   return 0;
 }
+
+
+static int recv_curr_time, recv_last_time;
 
 int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
@@ -89,6 +110,10 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
       attr.height = frm[i]->video.height;  // height;
       ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, 0, data, &attr);
       //printf("video size:%d, pts:%llu\n", attr.size, attr.pts);
+      
+    	struct timespec _ts;  
+      clock_gettime(CLOCK_MONOTONIC, &_ts);
+      recv_last_time = _ts.tv_sec;
     }
     else if(frm[i]->type == GSF_FRM_AUDIO)
     {
@@ -107,16 +132,40 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
 }
 
 static int _task_runing = 1;
-
 void* vdec_task(void *param)
 {
+  //fifo[0]: video, fifo[1]: audio;
   struct cfifo_ex* fifo[2] = {NULL,};
   gsf_frm_t *frm[2] = {NULL,};
   
-  vdec_connect(fifo, frm);
-  
   while(_task_runing)
   {
+    struct timespec _ts;
+    clock_gettime(CLOCK_MONOTONIC, &_ts);
+    recv_curr_time = _ts.tv_sec;
+    
+    if(recv_curr_time - recv_last_time > 5)
+    {
+      recv_last_time = recv_curr_time;
+      if(fifo[0])
+      {  
+        cfifo_free(fifo[0]);
+        fifo[0] = NULL;
+      }
+      if(fifo[1])
+      {  
+        cfifo_free(fifo[1]);
+        fifo[1] = NULL;
+      }
+      
+      vdec_connect(fifo, frm);
+      if(fifo[0] == NULL)
+      {
+        sleep(2);
+        continue;
+      }
+    }
+    
     if(vo_sendfrm(fifo, frm) < 0)
     {
       usleep(10*1000);
@@ -125,84 +174,37 @@ void* vdec_task(void *param)
   return NULL;
 }
 
-void* adec_task(void *param)
-{
-  char *filename = (char*)param;
-  FILE* pfd = fopen(filename, "rb");
-  if(!pfd)
-    return NULL;
-  
-  HI_U32 s32Ret = 0, ch = 0;
-  HI_U32 u32Len = 640;
-  HI_U8 u8Data[640];
-  
-  //wait hdmi-display screen;
-  sleep(5);
-
-  while(_task_runing)
-  {
-    gsf_mpp_frm_attr_t attr = {0};
-    attr.etype = PT_AAC;
-    
-    HI_U32 u32ReadLen = fread(u8Data, 1, u32Len, pfd);
-    if (u32ReadLen <= 0)
-    {
-      attr.size = 0;
-      s32Ret = gsf_mpp_ao_asend(aodev, ch, 1, u8Data, &attr);
-      printf("file EOF.\n");
-      break;
-    }
-    
-    attr.size = u32ReadLen;
-    s32Ret = gsf_mpp_ao_asend(aodev, ch, 1, u8Data, &attr);
-    if (HI_SUCCESS != s32Ret)
-    {
-      printf("asend err ret:%d\n", s32Ret);
-      break;
-    }
-  }
-  return NULL;
-}
-
-
-
-
 static pthread_t pid;
-
 int vdec_start()
-{
-  //////// test audio dec => ao //////// 
-  static char adec_filename[256] = {0};
-  proc_absolute_path(adec_filename);
-  sprintf(adec_filename, "%s/../cfg/audio2ch48k.mpa", adec_filename); //aac-lc;
-  if (access(adec_filename, 0) != -1)
-  {
-    printf("test audio dec => ao from adec_filename:[%s]\n", adec_filename);
-    return pthread_create(&pid, 0, adec_task, (void*)adec_filename);
-  }
-  //////////////////////////////// 
-  
+{  
   if(!codec_ipc.vdec.en)
     return -1;
  
   if(!strlen(codec_ipc.vdec.rtsp)) //"rtsp://admin:ydjs123456@192.168.1.25:554"
     return -1;   
-  
+
   int ly = VO_LAYOUT_2MUX;      
   gsf_mpp_vo_layout(VOLAYER_HD0, ly, NULL);
-  
   extern int vo_ly_set(int ly);
   vo_ly_set(ly);
-  
   gsf_mpp_vo_src_t src0 = {0, 0};
   gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+
+  //for vo_1 full screen;
+  gsf_resolu_t res;
+  vo_res_get(&res);  
+
+  #if 1 //show sensor 
+  RECT_S vo_0 = {res.w/2, res.h/2, res.w/2, res.h/2};
+  gsf_mpp_vo_rect(VOLAYER_HD0, 0, &vo_0, 1); // vo_0 for sensor;
+  #endif
+  
+  RECT_S vo_1 = {0, 0, res.w, res.h};
+  gsf_mpp_vo_rect(VOLAYER_HD0, 1, &vo_1, 0); // vo_1 for vdec;
 
   return pthread_create(&pid, 0, vdec_task, NULL);
 }
 
 #else
-int vdec_start()
-{
-  return -1;
-}
+int vdec_start() {return -1;}
 #endif // defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
