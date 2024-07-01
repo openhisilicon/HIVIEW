@@ -330,7 +330,13 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     extern int SENSOR0_TYPE;
     extern int SENSOR1_TYPE;
     extern int CHIP_3519D;
-    int vi_vb_cnt = (SENSOR0_TYPE == MIPI_YUV422_2M_30FPS_8BIT_4CH)?(VI_VB_YUV_CNT*2):VI_VB_YUV_CNT;
+    
+    int vi_vb_cnt = (SENSOR0_TYPE == SONY_IMX586_MIPI_48M_5FPS_12BIT)?6:
+                    (SENSOR0_TYPE == MIPI_YUV422_2M_30FPS_8BIT_6CH)?(VI_VB_YUV_CNT*2):
+                    VI_VB_YUV_CNT;
+    int vpss_vb_cnt = (SENSOR0_TYPE == SONY_IMX586_MIPI_48M_5FPS_12BIT)?6:
+                    VPSS_VB_YUV_CNT;
+                    
     update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_422, HI_COMPRESS_MODE_NONE, vi_vb_cnt);
 
     // vb for vpss-venc(big stream)
@@ -341,7 +347,7 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     for (i = 0; i < HI_VPSS_MAX_PHYS_CHN_NUM && vb_attr->valid_num < HI_VB_MAX_COMMON_POOLS; i++) {
         if (vpss_chn_attr->enable[i] == HI_TRUE && vpss_chn_attr->fmu_mode[i] == HI_FMU_MODE_OFF) {
             update_vb_attr(vb_attr, &vpss_chn_attr->output_size[i], vpss_chn_attr->pixel_format,
-                vpss_chn_attr->compress_mode[i], VPSS_VB_YUV_CNT);
+                vpss_chn_attr->compress_mode[i], vpss_vb_cnt);
         }
     }
 
@@ -361,7 +367,7 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     }
 
     max_width = vi_size->width;
-    max_height = vi_size->height;
+    max_height = vi_size->height;// 1944; //maohw vpss_online: vi_pipe == vpss_grp
 
     for (i = 0; (i < len) && (i < HI_VPSS_MAX_PHYS_CHN_NUM); i++) {
         vpss_chan_attr->output_size[i].width = enc_size[i].width;
@@ -408,6 +414,9 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         ret = sample_comm_sys_init_with_vb_supplement(&vb_cfg, vb_attr->supplement_config);
     }
     sample_print("%s => vb_init ret:%d, max_pool_cnt:%d, supplement_config:0x%x\n", __func__, ret, vb_cfg.max_pool_cnt, vb_attr->supplement_config);
+
+    //vpss_online 
+    //ret = sample_comm_vi_set_vi_vpss_mode(HI_VI_ONLINE_VPSS_OFFLINE, HI_VI_AIISP_MODE_DEFAULT);
     
     if (ret != HI_SUCCESS) {
         sample_print("sample_venc_sys_init failed!\n");
@@ -457,12 +466,12 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
             vpss_chn_attr.chn_attr[vpss_chn].pixel_format = HI_PIXEL_FORMAT_YVU_SEMIPLANAR_420;//maohw vpss_chan_cfg->pixel_format;
             vpss_chn_attr.chn_attr[vpss_chn].frame_rate.src_frame_rate = -1;
             vpss_chn_attr.chn_attr[vpss_chn].frame_rate.dst_frame_rate = -1;
-            vpss_chn_attr.chn_attr[vpss_chn].depth = 0;
+            vpss_chn_attr.chn_attr[vpss_chn].depth = 0+1; //maohw
             vpss_chn_attr.chn_attr[vpss_chn].mirror_en = 0;
             vpss_chn_attr.chn_attr[vpss_chn].flip_en = 0;
             vpss_chn_attr.chn_attr[vpss_chn].aspect_ratio.mode = HI_ASPECT_RATIO_NONE;
-            printf("@@@@@@@@@@ vpss_grp:%d, vpss_chn:%d, width:%d, height:%d\n"
-              , vpss_grp, vpss_chn, vpss_chn_attr.chn_attr[vpss_chn].width, vpss_chn_attr.chn_attr[vpss_chn].height);
+            printf("@@@@@@@@@@ vpss_grp:%d, vpss_chn:%d, width:%d, height:%d, depth:%d\n"
+              , vpss_grp, vpss_chn, vpss_chn_attr.chn_attr[vpss_chn].width, vpss_chn_attr.chn_attr[vpss_chn].height, vpss_chn_attr.chn_attr[vpss_chn].depth);
         }
     }
 
@@ -474,7 +483,16 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     if (ret != HI_SUCCESS) {
         sample_print("failed with %#x!\n", ret);
     }
-
+#if 0
+    hi_gdc_param gdc_param = {0};
+    gdc_param.in_size.width  = 0;
+    gdc_param.in_size.height = 0;
+    gdc_param.cell_size = HI_LUT_CELL_SIZE_16;
+    if (hi_mpi_vpss_set_grp_gdc_param(vpss_grp, &gdc_param) != HI_SUCCESS) 
+    {
+      printf("@@@@@@@@@@ hi_mpi_vpss_set_grp_gdc_param err, vpss_grp:%d\n", vpss_grp);
+    }
+#endif
     return ret;
 }
 

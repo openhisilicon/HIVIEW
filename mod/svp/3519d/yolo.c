@@ -35,9 +35,14 @@ int yolo_load(char *home_path)
   if(svp_parm.svp.yolo_alg == 2)
   {
     //for second channel;
-    VpssGrp[1] = 1;
-    VpssChn[1] = 0;
-  }
+    VpssGrp[1] = 1; VpssChn[1] = 0;
+  }else if(svp_parm.svp.yolo_alg == 4)
+  {
+    //for ahd dvr;
+    VpssGrp[1] = 1; VpssChn[1] = 1;
+    VpssGrp[2] = 2; VpssChn[2] = 1;
+    VpssGrp[3] = 3; VpssChn[3] = 1;
+  } 
   
   char ModelPath[256];
   if(_v8)

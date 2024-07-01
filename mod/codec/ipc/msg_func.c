@@ -50,7 +50,7 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   gsf_sdp_t *sdp = (gsf_sdp_t*)rsp->data;
   
-  sdp->video_shmid = venc_mgr[req->ch*3 + req->sid].video_shmid;
+  sdp->video_shmid = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].video_shmid;
   sdp->audio_shmid = audio_shmid;
   sdp->venc = codec_ipc.venc[req->sid];
   sdp->aenc = codec_ipc.aenc;
@@ -171,8 +171,12 @@ static void msg_func_snap(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   rsp->size = 0;
   rsp->ch = req->ch;
   rsp->sid = req->sid;
+  printf("ch:%d, sid:%d\n", req->ch, req->sid);
+  #if defined(GSF_CPU_3519d)
+  gsf_mpp_venc_snap(rsp->ch, 1, snap_cb, rsp);
+  #else
   gsf_mpp_venc_snap(rsp->ch*GSF_CODEC_VENC_NUM+GSF_CODEC_SNAP_IDX, 1, snap_cb, rsp);
-  
+  #endif
   return;
 }
 

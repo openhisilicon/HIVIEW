@@ -8,6 +8,8 @@
  *  Support yuv input:
  *  v SONY_IMX378_MIPI_8M_30FPS_10BIT
  *  v SONY_IMX585_MIPI_8M_30FPS_12BIT
+ *  v SONY_IMX586_MIPI_48M_5FPS_12BIT
+ *  v SONY_IMX586_MIPI_8M_30FPS_12BIT
  *  v SONY_IMX482_MIPI_2M_30FPS_12BIT
  *  v OV_OS04A10_2L_MIPI_4M_30FPS_10BIT
  *  v OV_OS08A20_2L_MIPI_2M_30FPS_10BIT
@@ -18,7 +20,8 @@
  *  v SONY_IMX664_MIPI_4M_30FPS_12BIT
  *  v SONY_IMX335_MIPI_5M_30FPS_12BIT
  *  v SONY_IMX335_2L_MIPI_5M_30FPS_10BIT
- *  v MIPI_YUV422_2M_30FPS_8BIT_4CH
+ *  v SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1
+ *  v MIPI_YUV422_2M_30FPS_8BIT_6CH
  *  v SONY_IMX327_MIPI_2M_30FPS_12BIT
  *  v SONY_IMX327_2L_MIPI_2M_30FPS_12BIT
  */
@@ -57,5 +60,7 @@ int mppex_comm_vi_tt(int snscnt, sample_vi_cfg vi_cfg[HI_VI_MAX_DEV_NUM]);
 
 int mppex_comm_vpss_bb(gsf_mpp_vpss_t *vpss, sample_venc_vpss_chn_attr *vpss_param);
 int mppex_comm_vpss_ee(gsf_mpp_vpss_t *vpss, sample_venc_vpss_chn_attr *vpss_param);
+
+hi_video_frame_info* mppex_comm_vpss_send_bb(int VpssGrp, int VpssGrpPipe, hi_video_frame_info *pstVideoFrame);
 
 #endif //__mppex_h__

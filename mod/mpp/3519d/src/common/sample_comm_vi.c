@@ -792,7 +792,7 @@ hi_void sample_comm_vi_get_default_pipe_info(sample_sns_type sns_type, hi_vi_bin
         /* pub attr */
         sample_comm_isp_get_pub_attr_by_sns(sns_type, &pipe_info[i].isp_info.isp_pub_attr);
         
-        pipe_info[i].nr_attr.enable = (sns_type == MIPI_YUV422_2M_30FPS_8BIT_4CH)?HI_FALSE:HI_TRUE; //maohw HI_TRUE
+        pipe_info[i].nr_attr.enable = (sns_type == MIPI_YUV422_2M_30FPS_8BIT_6CH)?HI_FALSE:HI_TRUE; //maohw HI_TRUE
         pipe_info[i].nr_attr.compress_mode = HI_COMPRESS_MODE_FRAME;
         pipe_info[i].nr_attr.nr_type = HI_NR_TYPE_VIDEO_NORM;
         pipe_info[i].nr_attr.nr_motion_mode = HI_NR_MOTION_MODE_NORM;

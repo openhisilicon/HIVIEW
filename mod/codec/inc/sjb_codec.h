@@ -2,12 +2,21 @@
 #define __sjb_codec_h__
 
 #define GSF_CODEC_NVR_CHN   16    // nvr channel num;
-#define GSF_CODEC_IPC_CHN   4     // ipc channel num;
-#define GSF_CODEC_ST_NUM    2     // stream num;
 #define GSF_CODEC_OSD_NUM   8     // osd num;
 #define GSF_CODEC_VMASK_NUM 8     // vmask num;
+
+#if defined(GSF_CPU_3519d)
+#define GSF_CODEC_IPC_CHN   (6) // ipc channel num;
+#define GSF_CODEC_ST_NUM    (2) // stream num;
+#define GSF_CODEC_SNAP_IDX  (GSF_CODEC_ST_NUM)
+#define GSF_CODEC_VENC_NUM  (GSF_CODEC_ST_NUM)
+#else
+#define GSF_CODEC_IPC_CHN   (4)   // ipc channel num;
+#define GSF_CODEC_ST_NUM    (2)   // stream num;
 #define GSF_CODEC_SNAP_IDX  (GSF_CODEC_ST_NUM)
 #define GSF_CODEC_VENC_NUM  (GSF_CODEC_ST_NUM+1)
+#endif
+
 
 typedef enum {
   GSF_LENS_IRC   = 1, // arg1: 0-day, 1-night

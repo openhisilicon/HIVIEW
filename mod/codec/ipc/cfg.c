@@ -44,6 +44,7 @@ gsf_codec_ipc_t codec_ipc = {
         .profile= 0,
         .qp     = 0,
     },
+    #if GSF_CODEC_VENC_NUM > 2
     [2] = {
         .en     = 1,
         .type   = 3,
@@ -64,6 +65,7 @@ gsf_codec_ipc_t codec_ipc = {
         .profile= 0,
         .qp     = 0,
     }
+    #endif
   },
   .aenc = {
     .en = 0, .type = GSF_ENC_AAC, .sprate = 48, .vol = 50,

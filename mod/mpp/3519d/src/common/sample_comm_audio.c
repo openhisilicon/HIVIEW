@@ -651,7 +651,7 @@ hi_s32 sample_inner_codec_cfg_dac(hi_s32 vol)
 {
   hi_s32 fd_acodec = open(ACODEC_FILE, O_RDWR);
   ot_acodec_volume_ctrl acodec_volume;
-  acodec_volume.volume_ctrl = vol; //[0, 127] ?3?μ?a0ê±ò?á?×?′ó
+  acodec_volume.volume_ctrl = vol; //[0, 127] 赋值为0时音量最大
   acodec_volume.volume_ctrl_mute = 0;
   hi_s32 ret = ioctl(fd_acodec, HI_ACODEC_SET_DACL_VOLUME, &acodec_volume);
   if (ret != HI_SUCCESS) {
@@ -699,6 +699,7 @@ hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
 
     /* refer to hardware, demo board is pseudo-differential (IN_D), socket board is single-ended (IN1) */
     input_mode = HI_ACODEC_MIXER_IN_D;
+    printf("@@@@@@@@ select acodec input_mode %d\n", input_mode);
     ret = ioctl(fd_acodec, HI_ACODEC_SET_MIXER_MIC, &input_mode);
     if (ret != HI_SUCCESS) {
         printf("%s: select acodec input_mode failed\n", __FUNCTION__);
@@ -717,7 +718,7 @@ hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
      * and the voice quality can be guaranteed.
      */
     int acodec_input_vol;
-    #ifdef HIVIEW_MINI_BOARD
+    #ifdef HIVIEW_SINGLE_BOARD
     acodec_input_vol = 40; /* 30dB */
     ret = ioctl(fd_acodec,  HI_ACODEC_SET_INPUT_VOLUME, &acodec_input_vol);
     if (ret != HI_SUCCESS) {
@@ -727,7 +728,7 @@ hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
     printf("%s: set acodec micin volume:%d\n", __FUNCTION__, acodec_input_vol);
     #endif
     
-    #ifdef HIVIEW_MINI_BOARD
+    #ifdef HIVIEW_SINGLE_BOARD
     ot_acodec_volume_ctrl acodec_volume;
     acodec_volume.volume_ctrl = 30;  //[0, 127]，赋值越大，音量越小。赋值为0时，音量最大
     acodec_volume.volume_ctrl_mute = 0;
@@ -960,7 +961,7 @@ void *sample_comm_audio_aenc_proc(void *parg)
 
         FD_ZERO(&read_fds);
         FD_SET(aenc_fd, &read_fds);
-
+        
         ret = select(aenc_fd + 1, &read_fds, NULL, NULL, &timeout_val);
         if (ret < 0) {
             break;
@@ -968,7 +969,7 @@ void *sample_comm_audio_aenc_proc(void *parg)
             printf("%s: get aenc stream select time out\n", __FUNCTION__);
             break;
         }
-
+         
         if (FD_ISSET(aenc_fd, &read_fds)) {
             /* get stream from aenc chn, send and release */
             ret = audio_aenc_get_stream_and_send(aenc_ctl);
@@ -1574,13 +1575,13 @@ hi_s32 sample_comm_audio_start_ao(hi_audio_dev ao_dev_id, hi_u32 ao_chn_cnt, hi_
             }
         }
     }
-
+#if 0 //maohw
     ret = hi_mpi_ao_enable_chn(ao_dev_id, HI_AO_SYS_CHN_ID);
     if (ret != HI_SUCCESS) {
         printf("%s: hi_mpi_ao_enable_chn(%d) failed with %#x!\n", __FUNCTION__, i, ret);
         return HI_FAILURE;
     }
-
+#endif
     return HI_SUCCESS;
 }
 
@@ -1605,13 +1606,13 @@ hi_s32 sample_comm_audio_stop_ao(hi_audio_dev ao_dev_id, hi_u32 ao_chn_cnt, hi_b
             return ret;
         }
     }
-
+#if 0 //maohw
     ret = hi_mpi_ao_disable_chn(ao_dev_id, HI_AO_SYS_CHN_ID);
     if (ret != HI_SUCCESS) {
         printf("%s: hi_mpi_ao_disable_chn(%d) failed with %#x!\n", __FUNCTION__, i, ret);
         return HI_FAILURE;
     }
-
+#endif
     ret = hi_mpi_ao_disable(ao_dev_id);
     if (ret != HI_SUCCESS) {
         printf("%s: hi_mpi_ao_disable failed with %#x!\n", __FUNCTION__, ret);

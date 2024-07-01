@@ -112,7 +112,7 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
-
+int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 typedef struct {
   int  ViPipe;
@@ -121,7 +121,6 @@ typedef struct {
 }gsf_mpp_af_t;
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af);
-
 
 //vpss;
 typedef struct {
@@ -145,6 +144,9 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 //HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 int gsf_mpp_vpss_sendgd(int VpssGrp, int VpssGrpPipe, /*guide_usb_frame_data_t*/void *pstVideoFrame, int s32MilliSec);
+int gsf_mpp_vpss_get(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_vpss_release(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo);
+
 
 enum {
   GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
@@ -223,7 +225,7 @@ typedef struct {
 //SAMPLE_COMM_VENC_StartGetStreamCb
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv);
 int gsf_mpp_venc_dest();
-int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
+int gsf_mpp_venc_snap(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
 
 
 //isp;
@@ -534,11 +536,23 @@ int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority);
 extern int SENSOR_TYPE;
 extern int SENSOR0_TYPE;
 extern int SENSOR1_TYPE;
-extern hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type);
+extern hi_isp_sns_obj* sample_comm_isp_get_sns_obj(sample_sns_type sns_type);
 
-#define OT_ACODEC_TYPE_INNER //for inner audio;
-#define HIVIEW_MINI_BOARD //for hiview mini board;
+
 //#define OT_ACODEC_TYPE_NVP6188 //for extern nvp6188 audio;
+
+#ifdef OT_ACODEC_TYPE_NVP6188
+  #undef SAMPLE_AUDIO_POINT_NUM_PER_FRAME
+  #undef SAMPLE_AUDIO_AI_USER_FRAME_DEPTH
+  #define SAMPLE_AUDIO_POINT_NUM_PER_FRAME 480
+  #define SAMPLE_AUDIO_AI_USER_FRAME_DEPTH 15 
+#else
+  #define OT_ACODEC_TYPE_INNER //for inner audio;
+  #define HIVIEW_SINGLE_BOARD //for hiview 3516dv500 single board;
+#endif
+
+
+
 
 ///////////////////
 

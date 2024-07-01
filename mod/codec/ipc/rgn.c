@@ -48,8 +48,15 @@ enum {
   OBJ_VMASK = 1,
 };
 
-#define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*3+8*1) + (type)*(8*3) + (st)*(8) + idx)
-static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_IPC_CHN)*(8*3/*osd*/+8*1/*vmask*/)];
+/****** ch i *******
+* strame0 osd   8   on venc
+* stream1 osd   8   on venc
+* streamN osd   8   on venc
+* stremaAll vmask 8 on vpss
+********************/
+
+#define GSF_RGN_OBJ_HANDLE(ch, type, st, idx) ((ch)*(8*GSF_CODEC_VENC_NUM+8*1) + (type)*(8*GSF_CODEC_VENC_NUM) + (st)*(8) + idx)
+static gsf_rgn_obj_t rgn_obj[(GSF_CODEC_IPC_CHN)*(8*GSF_CODEC_VENC_NUM/*osd*/+8*1/*vmask*/)];
 
 int utf8_byte_num(unsigned char firstCh)
 {

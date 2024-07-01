@@ -44,13 +44,17 @@ static int avs = 0; // codec_ipc.vi.avs;
 #warning "PIC_640P => PIC_512P"
 #define PIC_640P PIC_512P
 #endif
-
 #ifndef HAVE_PIC_1536P
 #warning "PIC_2592x1536 => PIC_2592x1520"
 #define PIC_2592x1536 PIC_2592x1520
 #endif
+#ifndef HAVE_PIC_6000P
+#warning "PIC_2592x1536 => PIC_2592x1520"
+#define PIC_8000x6000 PIC_7680x4320
+#endif
 
 #define PIC_WIDTH(w, h) \
+          (w >= 8000)?PIC_8000x6000:\
           (w >= 7680)?PIC_7680x4320:\
           (w >= 3840)?PIC_3840x2160:\
           (w >= 2688 && h >= 1520)?PIC_2688x1520:\
@@ -70,6 +74,7 @@ static int avs = 0; // codec_ipc.vi.avs;
           PIC_CIF
 
 static gsf_resolu_t __pic_wh[PIC_BUTT] = {
+      [PIC_8000x6000] = {0, 8000, 6000},
       [PIC_7680x4320] = {0, 7680, 4320},
       [PIC_3840x2160] = {0, 3840, 2160},
       [PIC_2688x1520] = {0, 2688, 1520},
@@ -419,10 +424,45 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     rgn_ini->ch_num = 4; rgn_ini->st_num = 2;
     venc_ini->ch_num = 4; venc_ini->st_num = 2;
     
+    //4CH-AHD
     VPSS_BIND_VI(0, 3, 0, 0, 1, 1, PIC_1080P, PIC_640P);
     VPSS_BIND_VI(1, 4, 0, 1, 1, 1, PIC_1080P, PIC_640P);
     VPSS_BIND_VI(2, 5, 0, 2, 1, 1, PIC_1080P, PIC_640P);
     VPSS_BIND_VI(3, 6, 0, 3, 1, 1, PIC_1080P, PIC_640P);
+    
+    //6CH-AHD
+    if(cfg->snscnt > 1)
+    {
+      VPSS_BIND_VI(4, -1, 0, 4, 1, 1, PIC_1080P, PIC_640P);
+      VPSS_BIND_VI(5, -1, 0, 5, 1, 1, PIC_1080P, PIC_640P);
+      rgn_ini->ch_num = 6;
+      venc_ini->ch_num= 6;
+    }
+    return;
+  }
+  
+  
+  if(strstr(cfg->snsname, "imx586"))
+  {
+    // imx586-0-0-48-5
+    cfg->lane = 0; cfg->wdr = 0; cfg->fps =(codec_ipc.vi.fps>0)?codec_ipc.vi.fps:5;
+    cfg->res  = (cfg->fps == 5)?48:8;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, (cfg->res == 48)?PIC_8000x6000:PIC_3840x2160, PIC_640P);
+    if(cfg->snscnt > 1)
+    {
+        // os08a20-0-0-8-30
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, (cfg->res == 48)?PIC_8000x6000:PIC_3840x2160, PIC_640P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    }
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        rgn_ini->st_num = venc_ini->st_num = 2;
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
+    }
     return;
   }
   
@@ -760,9 +800,16 @@ int main_start(gsf_bsp_def_t *bsp_def)
       gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
       gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
       #else
-	  //gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_HDMI_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
-      void* voice_pull = nm_pull_listen(GSF_IPC_VOICE, voice_recv);
-      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, -1, 0);
+      if(p_venc_ini->ch_num >= 4)
+      {
+        //6CHN-AHD
+        gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, 0, 0);
+      }
+      else 
+      {
+        void* voice_pull = nm_pull_listen(GSF_IPC_VOICE, voice_recv);
+        gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, -1, 0);
+      }
       #endif
     }
     #endif
@@ -781,6 +828,20 @@ int dzoom_plus = 0;
 int main_loop(void)
 {
     usleep(10*1000);
+    
+    //6CHN-AHD
+    if(p_venc_ini->ch_num >= 6)
+    {
+      for(int i = 0; i < 2; i++)
+      {
+        VIDEO_FRAME_INFO_S stFrameInfo;
+        if(gsf_mpp_vi_get(i, 0, &stFrameInfo, -1) == 0)
+        {
+          gsf_mpp_vpss_send(4+i, 0, &stFrameInfo, -1);
+          gsf_mpp_vi_release(i, 0, &stFrameInfo);
+        }
+      }
+    }
     
     #if defined(__TEST_ASPECT__)
     hi_aspect_ratio aspect;
