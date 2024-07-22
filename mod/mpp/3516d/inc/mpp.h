@@ -11,7 +11,7 @@ typedef enum {
   SECOND_BT656_512P = 3,
   SECOND_BT656_288P = 4, 
   SECOND_BT656_600P = 5,
-  SECOND_USB_GD     = 6
+  SECOND_USB_GD     = 6,
 }SECOND_TYPE;
 
 //cfg;
@@ -42,6 +42,9 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 
 typedef struct {
@@ -448,7 +451,6 @@ extern int SENSOR1_TYPE;
 extern SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM];
 extern ISP_SNS_OBJ_S* g_pstSnsObj[MAX_SENSOR_NUM];
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
-
 
 #define HI_ACODEC_TYPE_INNER //for audio;
 

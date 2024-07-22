@@ -321,6 +321,21 @@ int gsf_mpp_vi_stop()
   return s32Ret;
 }
 
+int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec)
+{
+  return HI_MPI_VPSS_SendFrame(VpssGrp, VpssGrpPipe, pstVideoFrame, s32MilliSec);
+}
+
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return mppex_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return mppex_uvc_rel(ViPipe, pstFrameInfo);
+}
+
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af)
 {
