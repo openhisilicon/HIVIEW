@@ -114,7 +114,8 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
   signal(SIGTERM, SIG_IGN);
   if (signo == SIGINT || signo == SIGTERM) 
   {
-      //mppex_hook_destroy();
+      mppex_hook_destroy();
+      
       ret = gsf_mpp_scene_stop();
       printf("gsf_mpp_scene_stop ret = %x\n", ret);
       ret = gsf_mpp_venc_dest();
@@ -162,7 +163,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   sprintf(snsstr, "%s-%d-%d-%d-%d"
           , cfg->snsname, cfg->lane, cfg->wdr, cfg->res, cfg->fps);
 
-  //mppex_hook_sns(cfg);
+  mppex_hook_sns(cfg);
   
   SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(snsstr);
   if(!sns)
@@ -218,7 +219,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
     SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT:
                    (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT:
                    (cfg->second == 3)?BT601_YUV422_0M_60FPS_8BIT:
-                                      BT1120_YUV422_2M_60FPS_8BIT;
+                                      SENSOR1_TYPE;//sns0==sns1;
   }
   
   if(dl)
@@ -455,6 +456,18 @@ int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
   }
   return ret;
 }
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return mppex_comm_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return mppex_comm_uvc_rel(ViPipe, pstFrameInfo);
+}
+
+
+
 
 //from sample_af.c;
 extern int sample_af_main(gsf_mpp_af_t *af);

@@ -114,6 +114,10 @@ int gsf_mpp_vi_stop();
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
 int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
+
+
 typedef struct {
   int  ViPipe;
   void *uargs;

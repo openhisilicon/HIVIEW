@@ -551,6 +551,12 @@ int mpp_start(gsf_bsp_def_t *def)
         #error "error unknow gsf_mpp_cfg_t."
       }
       #endif
+      //SECOND-UVC
+      if(cfg.second == 4)
+      {
+        VPSS_BIND_VI(1, -1, 0, 1, 1, 0, SECOND_HIRES(cfg.second), SECOND_LORES(cfg.second));
+      }
+      
     }while(0);
     
     p_venc_ini = &venc_ini;
@@ -837,9 +843,69 @@ int main_loop(void)
         VIDEO_FRAME_INFO_S stFrameInfo;
         if(gsf_mpp_vi_get(i, 0, &stFrameInfo, -1) == 0)
         {
-          gsf_mpp_vpss_send(4+i, 0, &stFrameInfo, -1);
+          gsf_mpp_vpss_send(4+i, 0, &stFrameInfo, 100);
           gsf_mpp_vi_release(i, 0, &stFrameInfo);
         }
+      }
+    }
+    
+    //SECOND-UVC
+    if(p_cfg->second == 4)
+    {
+      static int find_uvc = 0;
+      if(!find_uvc)
+      {
+        for(int i = 0; i < 10; i++)
+        {
+          if(access("/dev/video0", 0) == 0)
+          {
+            find_uvc = 1;
+            printf("@@@ find_uvc ok @@@\n");
+            sleep(3);
+            break;
+          }
+          sleep(1);
+        }
+      }
+
+      if(find_uvc)
+      {
+        VIDEO_FRAME_INFO_S stFrameInfo;
+        
+        static float cnt = 0;
+        static struct timespec ts1, ts2;  
+        clock_gettime(CLOCK_MONOTONIC, &ts2);
+        
+        if(gsf_mpp_uvc_get(0, 0, &stFrameInfo, -1) == 0)
+        {
+          cnt++;
+          
+          if(1)
+          {
+            struct timespec ts1, ts2;  
+            clock_gettime(CLOCK_MONOTONIC, &ts1);
+
+            gsf_mpp_vpss_send(1, 0, &stFrameInfo, 0);
+            gsf_mpp_uvc_release(0, 0, &stFrameInfo);
+            
+            clock_gettime(CLOCK_MONOTONIC, &ts2);
+            int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+            if(cost > 20)
+            {
+              printf("gsf_mpp_vpss_send cost:%d ms\n", cost);
+            }
+          }  
+        }
+        
+        float cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+        if(cost >= 1000)
+        {
+          float fps = 1000.0/(cost/cnt);
+          printf("%s uvc_fps: %0.2f\n", (fps<20)?"@@@":"", fps);
+          ts1 = ts2;
+          cnt = 0;
+        }
+        
       }
     }
     
