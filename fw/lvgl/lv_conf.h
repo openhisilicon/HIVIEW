@@ -30,7 +30,7 @@
  * - 32: ARGB8888
  */
 
-#if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403) || defined(GSF_CPU_3519d)
+#if defined(GSF_CPU_3559a) || defined(GSF_CPU_3403)
 #warning "LV_COLOR_DEPTH == 32"
 #define LV_COLOR_DEPTH     32 //ARGB8888
 #define LV_COLOR_SCREEN_TRANSP    1
@@ -78,7 +78,8 @@ typedef int16_t lv_coord_t;
 #define LV_MEM_CUSTOM      0
 #if LV_MEM_CUSTOM == 0
 /* Size of the memory used by `lv_mem_alloc` in bytes (>= 2kB)*/
-#  define LV_MEM_SIZE    (32U * 1024U)
+//maohw #  define LV_MEM_SIZE    (32U * 1024U)
+#  define LV_MEM_SIZE    (32U * 1024U *2U)
 
 /* Complier prefix for a big array declaration */
 #  define LV_MEM_ATTR
@@ -488,7 +489,13 @@ typedef void * lv_obj_user_data_t;
  *==================*/
 
 /*FreeType library*/
+#ifdef EXTRA_FREETYPE
+#define LV_USE_FREETYPE 1
+#warning "LV_USE_FREETYPE 1"
+#else
 #define LV_USE_FREETYPE 0
+#warning "LV_USE_FREETYPE 0"
+#endif
 #if LV_USE_FREETYPE
     /*Memory used by FreeType to cache characters [bytes] (-1: no caching)*/
     #define LV_FREETYPE_CACHE_SIZE (16 * 1024)

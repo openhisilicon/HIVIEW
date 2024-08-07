@@ -1,0 +1,372 @@
+#!/bin/sh
+# Usage: ./load3519dv500 [ -r|-i|-a ] [ -sensor0~3 ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#         -a : rmmod all moules and then insmod them
+# -sensor0-3 : sensor0~sensor3 config, default: os04a10
+#     -board : board config, default: dmeb
+#   -vo_intf : vo intf of bt1120/mipitx/bt656/none, default: bt1120
+#    ir_auto : ir_auto 0 or 1, default:1
+# e.g: ./load3519dv500 -a -sensor0 os04a10 -vo_intf bt1120 -board dmeb
+
+####### select sensor type for your test ########################
+####      os04a10              ####
+####      os08a20              ####
+####      imx347_slave         ####
+####      imx515               ####
+####      sc450ai              ####
+####      sc850sl              ####
+####      bt1120/bt656/bt601   ####
+####      t0/t1/t2/t3          ####
+####      mipi_ad              ####
+####################Variables Definition##########################
+
+SNS_TYPE0=os04a10;               # sensor type
+SNS_TYPE1=os04a10;               # sensor type
+SNS_TYPE2=os04a10;               # sensor type
+SNS_TYPE3=os04a10;               # sensor type
+BOARD=dmeb;                      # sck dmeb dmebpro
+
+VO_INTF=bt1120
+IR_AUTO=1
+# DDR start:    0x40000000
+# 192K, FDT&ATF mem
+# OPTEE start:	0x40030000
+# 16384k, OPTEE OS mem
+# SMMZ2 start:	0x41030000
+# 8192k, SMMZ2 mem(only for optee)
+# SMMZ1 start:  0x410b0000
+# 57344k, SMMZ1 mem(for npu security)
+# kernel start: 0x45030000
+# 132928K(1856K+128M), os mem
+# MMZ start:    0x4d200000
+# 1918M, mmz mem
+
+mmz_start=0x4d200000;         # mmz start addr, default:0x4d200000 (0x40000000+0x30000(FDT&ATF)+0x1000000(OPTEE)+0x4000000(SMMZ)+0x81D0000(OS))
+mmz_size=1838M;               # mmz size, default:1838M (2048M-130M-80M)
+##################################################################
+
+function report_error()
+{
+    echo "******* Error: There's something wrong, please check! *****"
+    exit 1
+}
+
+function insert_audio()
+{
+    insmod ot_aio.ko
+    insmod ot_ai.ko
+    insmod ot_ao.ko
+    insmod ot_aenc.ko
+    insmod ot_adec.ko
+    insmod ot_acodec.ko
+}
+
+function remove_audio()
+{
+    rmmod ot_acodec
+    rmmod ot_adec
+    rmmod ot_aenc
+    rmmod ot_ao
+    rmmod ot_ai
+    rmmod ot_aio
+}
+
+function insert_gyro()
+{
+    insmod extdrv/ot_spi.ko spi=1
+    insmod ot_gyrodis.ko
+    insmod ot_motionfusion.ko
+    insmod extdrv/motionsensor_mng.ko
+    insmod extdrv/motionsensor_chip.ko
+}
+
+function remove_gyro()
+{
+    rmmod motionsensor_chip
+    rmmod motionsensor_mng
+    rmmod ot_motionfusion
+    rmmod ot_gyrodis
+    rmmod ot_spi
+}
+
+function insert_security_subsys()
+{
+    insmod ot_cipher.ko
+    insmod ot_km.ko
+}
+
+function remove_security_subsys()
+{
+    rmmod ot_km.ko
+    rmmod ot_cipher.ko
+}
+
+function insert_ko()
+{
+    # sys config
+    insmod sys_config.ko sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1,sns2=$SNS_TYPE2,sns3=$SNS_TYPE3 board=$BOARD vo_intf=$VO_INTF ir_auto=$IR_AUTO || exit 1
+
+    # driver load
+    insmod ot_osal.ko
+    insmod ot_mmz.ko anony=1 mmz_allocator=ot mmz=anonymous,0,$mmz_start,$mmz_size$1 mem_process_isolation=1 || report_error
+    insmod ot_base.ko
+    insmod ot_vb.ko
+    insmod ot_vca.ko
+    insmod ot_sys.ko
+    insert_audio
+    insmod ot_tde.ko
+    insmod ot_rgn.ko
+    insmod ot_gdc.ko
+    insmod ot_vpp.ko
+    insmod ot_vgs.ko
+    insmod ot_dis.ko
+    insmod ot_vi.ko
+    insmod ot_isp.ko
+    insmod ot_vpss.ko
+    insmod ot_mcf.ko
+    # gfbg: default fb0:argb1555,1920x1080,2buf;
+    insmod gfbg.ko video="gfbg:vram0_size:16200"
+    insmod ot_vo_dev.ko
+    insmod ot_vo.ko
+    insmod ot_chnl.ko
+    insmod ot_vfmw.ko
+    insmod ot_rc.ko
+    insmod ot_venc.ko
+    insmod ot_venc_svr.ko
+    insmod ot_h264e.ko
+    insmod ot_h265e.ko
+    insmod ot_jpege.ko
+    insmod ot_jpegd.ko
+    insmod ot_vdec.ko
+    # Usage: insmod extdrv/ot_lt8618sx.ko norm=23
+    # 720p60:norm=10 | 1080p30:norm=19 | 1080p60:norm=23 | default:norm=23
+    insmod extdrv/ot_lt8618sx.ko
+    insmod ot_ive.ko save_power=1
+    insmod ot_dpu_rect.ko
+    insmod ot_dpu_match.ko
+    insmod ot_svp_npu.ko
+    insmod extdrv/ot_pwm.ko
+    insmod extdrv/ot_piris.ko
+    insmod extdrv/ot_sensor_i2c.ko
+    # insmod extdrv/ot_sensor_spi.ko
+
+    insmod ot_mipi_tx.ko g_smooth=0
+    insmod ot_mipi_rx.ko
+    insmod ot_user.ko
+    insmod ot_aiisp.ko
+    insmod ot_uvc.ko
+    insmod ot_pm.ko
+    insert_security_subsys
+    insmod ot_smmz_agent.ko
+
+    #insert_gyro
+}
+
+function remove_ko()
+{
+    #remove_gyro
+
+    rmmod ot_smmz_agent
+    remove_security_subsys
+    rmmod ot_pm
+    rmmod ot_uvc
+    rmmod ot_aiisp
+    rmmod ot_user
+    rmmod ot_mipi_rx
+
+    rmmod ot_mipi_tx
+    #rmmod ot_sensor_spi &> /dev/null
+    rmmod ot_sensor_i2c &> /dev/null
+    rmmod ot_piris
+    rmmod ot_pwm
+    rmmod ot_svp_npu
+    rmmod ot_dpu_match
+    rmmod ot_dpu_rect
+    rmmod ot_ive
+    rmmod ot_lt8618sx
+    rmmod ot_vdec
+    rmmod ot_jpegd
+    rmmod ot_jpege
+    rmmod ot_h265e
+    rmmod ot_h264e
+    rmmod ot_venc_svr
+    rmmod ot_venc
+    rmmod ot_rc
+    rmmod ot_vfmw
+    rmmod ot_chnl
+    rmmod ot_vo
+    rmmod ot_vo_dev
+    rmmod gfbg
+    rmmod ot_mcf
+    rmmod ot_vpss
+    rmmod ot_isp
+    rmmod ot_vi
+    rmmod ot_dis
+    rmmod ot_vgs
+    rmmod ot_vpp
+    rmmod ot_gdc
+    rmmod ot_rgn
+    rmmod ot_tde
+    remove_audio
+    rmmod ot_sys
+    rmmod ot_vca
+    rmmod ot_vb
+    rmmod ot_base
+    rmmod ot_mmz
+    rmmod ot_osal
+
+    rmmod sys_config
+}
+
+load_usage()
+{
+    echo "Usage:  $0 [-option] [-sensor0~3] "
+    echo "options:"
+    echo "    -i                       insert modules"
+    echo "    -r                       remove modules"
+    echo "    -a                       remove modules first, then insert modules"
+    echo "    -vo_intf vo intf type    config vo intf        [default: bt1120]"
+    echo "    -sensor0~3 sensor_name   config sensor type    [default: os04a10]"
+    echo "    -board board_name        config board type     [default: dmeb]"
+    echo "    -mmz_start               config MMZ start addr [default: 0x4d200000]"
+    echo "    -mmz_size                config MMZ mem size [unit: M, default: 1838M]"
+    echo "    -ir_auto                 config ir_auto enable [default: 1]"
+    echo "    -h                       help information"
+    echo -e "Available sensors:os04a10 os08a20 imx347_slave imx515 sc450ai sc850sl bt1120/bt656/bt601 t0/t1/t2/t3"
+    echo -e "for example: $0 -i -vo_intf bt1120 -sensor0 os04a10 -sensor1 os04a10 -sensor2 os04a10 -sensor3 os04a10 -board dmeb -mmz_start 0x4d200000 -mmz_size 1838M -ir_auto 1\n"
+}
+
+b_arg_insmod=0
+b_arg_remove=0
+function parse_arg()
+{
+    ######################parse arg###################################
+    b_arg_sensor0=0
+    b_arg_sensor1=0
+    b_arg_sensor2=0
+    b_arg_sensor3=0
+    b_arg_mmz_start=0
+    b_arg_mmz_size=0
+    b_arg_vo_intf=0
+    b_arg_board=0
+    b_arg_ir_auto=0
+
+    for arg in $@
+    do
+        if [ $b_arg_sensor0 -eq 1 ] ; then
+            b_arg_sensor0=0;
+            SNS_TYPE0=$arg;
+        fi
+        if [ $b_arg_sensor1 -eq 1 ] ; then
+            b_arg_sensor1=0;
+            SNS_TYPE1=$arg;
+        fi
+        if [ $b_arg_sensor2 -eq 1 ] ; then
+            b_arg_sensor2=0;
+            SNS_TYPE2=$arg;
+        fi
+        if [ $b_arg_sensor3 -eq 1 ] ; then
+            b_arg_sensor3=0;
+            SNS_TYPE3=$arg;
+        fi
+
+        if [ $b_arg_board -eq 1 ] ; then
+            b_arg_board=0;
+            BOARD=$arg;
+        fi
+
+        if [ $b_arg_vo_intf -eq 1 ] ; then
+            b_arg_vo_intf=0;
+            VO_INTF=$arg;
+        fi
+
+        if [ $b_arg_ir_auto -eq 1 ] ; then
+            b_arg_ir_auto=0;
+            IR_AUTO=$arg;
+        fi
+
+        if [ $b_arg_mmz_start -eq 1 ] ; then
+            b_arg_mmz_start=0;
+            mmz_start=$arg;
+
+            if [ -z $mmz_start ]; then
+                echo "[error] mmz_start is null"
+                exit;
+            fi
+        fi
+
+        if [ $b_arg_mmz_size -eq 1 ] ; then
+            b_arg_mmz_size=0;
+            mmz_size=$arg;
+
+            if [ -z $mmz_size ]; then
+                echo "[error] mmz_size is null"
+                exit;
+            fi
+        fi
+
+        case $arg in
+            "-i")
+                b_arg_insmod=1;
+                ;;
+            "-r")
+                b_arg_remove=1;
+                ;;
+            "-a")
+                b_arg_insmod=1;
+                b_arg_remove=1;
+                ;;
+            "-h")
+                load_usage;
+                ;;
+            "-sensor0")
+                b_arg_sensor0=1;
+                ;;
+            "-sensor")
+                b_arg_sensor0=1;
+                ;;
+            "-sensor1")
+                b_arg_sensor1=1;
+                ;;
+            "-sensor2")
+                b_arg_sensor2=1;
+                ;;
+            "-sensor3")
+                b_arg_sensor3=1;
+                ;;
+            "-board")
+                b_arg_board=1;
+                ;;
+            "-vo_intf")
+                b_arg_vo_intf=1;
+                ;;
+            "-ir_auto")
+                b_arg_ir_auto=1;
+                ;;
+            "-mmz_size")
+                b_arg_mmz_size=1;
+                ;;
+            "-mmz_start")
+                b_arg_mmz_start=1;
+                ;;
+        esac
+    done
+    #######################parse arg end########################
+}
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+parse_arg $@
+
+#######################Action###############################
+if [ $b_arg_remove -eq 1 ]; then
+    remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+    insert_ko;
+fi

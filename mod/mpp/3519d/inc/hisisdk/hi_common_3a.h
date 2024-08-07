@@ -1,0 +1,134 @@
+/*
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
+ */
+
+#ifndef HI_COMMON_3A_H
+#define HI_COMMON_3A_H
+
+#include "hi_common.h"
+#include "hi_common_isp.h"
+#include "hi_common_sns.h"
+#include "ot_common_3a.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HI_ISP_MAX_REGISTER_ALG_LIB_NUM OT_ISP_MAX_REGISTER_ALG_LIB_NUM
+#define HI_ISP_ALG_AE OT_ISP_ALG_AE
+#define HI_ISP_ALG_AF OT_ISP_ALG_AF
+#define HI_ISP_ALG_AWB OT_ISP_ALG_AWB
+#define HI_ISP_ALG_BLC OT_ISP_ALG_BLC
+#define HI_ISP_ALG_DP OT_ISP_ALG_DP
+#define HI_ISP_ALG_PREGAMMA OT_ISP_ALG_PREGAMMA
+#define HI_ISP_ALG_DRC OT_ISP_ALG_DRC
+#define HI_ISP_ALG_DEMOSAIC OT_ISP_ALG_DEMOSAIC
+#define HI_ISP_ALG_ANTIFALSECOLOR OT_ISP_ALG_ANTIFALSECOLOR
+#define HI_ISP_ALG_GAMMA OT_ISP_ALG_GAMMA
+#define HI_ISP_ALG_GE OT_ISP_ALG_GE
+#define HI_ISP_ALG_SHARPEN OT_ISP_ALG_SHARPEN
+#define HI_ISP_ALG_FRAMEWDR OT_ISP_ALG_FRAMEWDR
+#define HI_ISP_ALG_FPN OT_ISP_ALG_FPN
+#define HI_ISP_ALG_DEHAZE OT_ISP_ALG_DEHAZE
+#define HI_ISP_ALG_LCAC OT_ISP_ALG_LCAC
+#define HI_ISP_ALG_CAC OT_ISP_ALG_CAC
+#define HI_ISP_ALG_BSHP OT_ISP_ALG_BSHP
+#define HI_ISP_ALG_CSC OT_ISP_ALG_CSC
+#define HI_ISP_ALG_EXPANDER OT_ISP_ALG_EXPANDER
+#define HI_ISP_ALG_MCDS OT_ISP_ALG_MCDS
+#define HI_ISP_ALG_ACS OT_ISP_ALG_ACS
+#define HI_ISP_ALG_LSC OT_ISP_ALG_LSC
+#define HI_ISP_ALG_RC OT_ISP_ALG_RC
+#define HI_ISP_ALG_RGBIR OT_ISP_ALG_RGBIR
+#define HI_ISP_ALG_HRS OT_ISP_ALG_HRS
+#define HI_ISP_ALG_DG OT_ISP_ALG_DG
+#define HI_ISP_ALG_BAYERNR OT_ISP_ALG_BAYERNR
+#define HI_ISP_ALG_FLICKER OT_ISP_ALG_FLICKER
+#define HI_ISP_ALG_LDCI OT_ISP_ALG_LDCI
+#define HI_ISP_ALG_CA OT_ISP_ALG_CA
+#define HI_ISP_ALG_CLUT OT_ISP_ALG_CLUT
+#define HI_ISP_ALG_CCM OT_ISP_ALG_CCM
+#define HI_ISP_ALG_AI OT_ISP_ALG_AI
+#define HI_ISP_ALG_CRB OT_ISP_ALG_CRB
+#define HI_ISP_ALG_HNR OT_ISP_ALG_HNR
+#define HI_ISP_ALG_LBLC OT_ISP_ALG_LBLC
+
+#define HI_ISP_ALG_MOD_BUTT OT_ISP_ALG_MOD_BUTT
+typedef ot_isp_alg_mod hi_isp_alg_mod;
+#define HI_ISP_WDR_MODE_SET OT_ISP_WDR_MODE_SET
+#define HI_ISP_PROC_WRITE OT_ISP_PROC_WRITE
+#define HI_ISP_DEHAZE_DEBUG_ATTR_SET OT_ISP_DEHAZE_DEBUG_ATTR_SET
+#define HI_ISP_AE_DEBUG_ATTR_SET OT_ISP_AE_DEBUG_ATTR_SET
+#define HI_ISP_AE_FPS_BASE_SET OT_ISP_AE_FPS_BASE_SET
+#define HI_ISP_AE_BLC_SET OT_ISP_AE_BLC_SET
+#define HI_ISP_AE_RC_SET OT_ISP_AE_RC_SET
+#define HI_ISP_AE_BAYER_FORMAT_SET OT_ISP_AE_BAYER_FORMAT_SET
+#define HI_ISP_AE_INIT_INFO_GET OT_ISP_AE_INIT_INFO_GET
+#define HI_ISP_AWB_ISO_SET OT_ISP_AWB_ISO_SET
+#define HI_ISP_CHANGE_IMAGE_MODE_SET OT_ISP_CHANGE_IMAGE_MODE_SET
+#define HI_ISP_UPDATE_INFO_GET OT_ISP_UPDATE_INFO_GET
+#define HI_ISP_FRAMEINFO_GET OT_ISP_FRAMEINFO_GET
+#define HI_ISP_ATTACHINFO_GET OT_ISP_ATTACHINFO_GET
+#define HI_ISP_COLORGAMUTINFO_GET OT_ISP_COLORGAMUTINFO_GET
+#define HI_ISP_AWB_INTTIME_SET OT_ISP_AWB_INTTIME_SET
+#define HI_ISP_BAS_MODE_SET OT_ISP_BAS_MODE_SET
+#define HI_ISP_PROTRIGGER_SET OT_ISP_PROTRIGGER_SET
+#define HI_ISP_AWB_PIRIS_SET OT_ISP_AWB_PIRIS_SET
+#define HI_ISP_AWB_SNAP_MODE_SET OT_ISP_AWB_SNAP_MODE_SET
+#define HI_ISP_AWB_ZONE_ROW_SET OT_ISP_AWB_ZONE_ROW_SET
+#define HI_ISP_AWB_ZONE_COL_SET OT_ISP_AWB_ZONE_COL_SET
+#define HI_ISP_AWB_ZONE_BIN_SET OT_ISP_AWB_ZONE_BIN_SET
+#define HI_ISP_AWB_ERR_GET OT_ISP_AWB_ERR_GET
+#define HI_ISP_CTRL_CMD_BUTT OT_ISP_CTRL_CMD_BUTT
+#define HI_ISP_THERMO_FUSION_CURVE_NUM OT_ISP_THERMO_FUSION_CURVE_NUM
+typedef ot_isp_ctrl_cmd hi_isp_ctrl_cmd;
+typedef ot_isp_ctrl_proc_write hi_isp_ctrl_proc_write;
+typedef ot_isp_stitch_attr hi_isp_stitch_attr;
+typedef ot_isp_ae_param hi_isp_ae_param;
+typedef ot_isp_fe_ae_stat_1 hi_isp_fe_ae_stat_1;
+typedef ot_isp_fe_ae_stat_2 hi_isp_fe_ae_stat_2;
+typedef ot_isp_fe_ae_stat_3 hi_isp_fe_ae_stat_3;
+typedef ot_isp_fe_ae_stitch_stat_3 hi_isp_fe_ae_stitch_stat_3;
+typedef ot_isp_be_ae_stat_1 hi_isp_be_ae_stat_1;
+typedef ot_isp_be_ae_stat_2 hi_isp_be_ae_stat_2;
+typedef ot_isp_be_ae_stat_3 hi_isp_be_ae_stat_3;
+typedef ot_isp_be_ae_stitch_stat_3 hi_isp_be_ae_stitch_stat_3;
+typedef ot_isp_ae_info hi_isp_ae_info;
+typedef ot_isp_ae_stat_attr hi_isp_ae_stat_attr;
+typedef ot_isp_ae_result hi_isp_ae_result;
+typedef ot_isp_ae_init_info hi_isp_ae_init_info;
+typedef ot_isp_ae_exp_func hi_isp_ae_exp_func;
+typedef ot_isp_ae_register hi_isp_ae_register;
+typedef ot_isp_thermo_info hi_isp_thermo_info;
+typedef ot_isp_thermo_curve_attr hi_isp_thermo_curve_attr;
+typedef ot_isp_thermo_result hi_isp_thermo_result;
+typedef ot_isp_thermo_manual_attr hi_isp_thermo_manual_attr;
+typedef ot_isp_thermo_attr hi_isp_thermo_attr;
+#define HI_ISP_AWB_CCM_CONFIG_SET OT_ISP_AWB_CCM_CONFIG_SET
+#define HI_ISP_AWB_CCM_CONFIG_GET OT_ISP_AWB_CCM_CONFIG_GET
+#define HI_ISP_AWB_DEBUG_ATTR_SET OT_ISP_AWB_DEBUG_ATTR_SET
+#define HI_ISP_AWB_CTRL_BUTT OT_ISP_AWB_CTRL_BUTT
+typedef ot_isp_awb_ctrl_cmd hi_isp_awb_ctrl_cmd;
+typedef ot_isp_awb_param hi_isp_awb_param;
+typedef ot_isp_awb_stat_1 hi_isp_awb_stat_1;
+typedef ot_isp_awb_stat_2 hi_isp_awb_stat_2;
+typedef ot_isp_awb_stat_stitch hi_isp_awb_stat_stitch;
+typedef ot_isp_awb_stat_result hi_isp_awb_stat_result;
+typedef ot_isp_awb_overlap_zone hi_isp_awb_overlap_zone;
+typedef ot_isp_awb_overlap_all_zone hi_isp_awb_overlap_all_zone;
+typedef ot_isp_awb_info hi_isp_awb_info;
+typedef ot_isp_awb_raw_stat_attr hi_isp_awb_raw_stat_attr;
+typedef ot_isp_awb_overlap_result hi_isp_awb_overlap_result;
+typedef ot_isp_awb_result hi_isp_awb_result;
+typedef ot_isp_awb_exp_func hi_isp_awb_exp_func;
+typedef ot_isp_awb_register hi_isp_awb_register;
+typedef ot_isp_af_zone hi_isp_af_zone;
+typedef ot_isp_fe_af_stat hi_isp_fe_af_stat;
+typedef ot_isp_be_af_stat hi_isp_be_af_stat;
+typedef ot_isp_3a_alg_lib hi_isp_3a_alg_lib;
+typedef ot_isp_bind_attr hi_isp_bind_attr;
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* HI_COMMON_3A_H */
