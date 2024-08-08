@@ -41,6 +41,8 @@ typedef hi_vdec_chn VDEC_CHN;
 #define PT_AAC HI_PT_AAC
 #define PT_G711A HI_PT_G711A
 #define PT_G711U HI_PT_G711U
+#define PT_BUTT  HI_PT_BUTT
+
 #define VO_INTF_MIPI HI_VO_INTF_MIPI
 #define VO_INTF_HDMI HI_VO_INTF_HDMI
 #define VO_OUTPUT_USER HI_VO_OUT_USER
@@ -110,15 +112,19 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 
 typedef struct {
+  int  ViPipe;
   void *uargs;
   int (*cb)(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs);
 }gsf_mpp_af_t;
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af);
-
 
 //vpss;
 typedef struct {
@@ -142,6 +148,9 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 //HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 int gsf_mpp_vpss_sendgd(int VpssGrp, int VpssGrpPipe, /*guide_usb_frame_data_t*/void *pstVideoFrame, int s32MilliSec);
+int gsf_mpp_vpss_get(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_vpss_release(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo);
+
 
 enum {
   GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
@@ -154,6 +163,17 @@ enum {
 };
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args);
+
+
+//mcf;
+typedef struct {
+  ;
+}gsf_mpp_mcf_t;
+
+int gsf_mpp_mcf_start(gsf_mpp_mcf_t *mcf);
+int gsf_mpp_mcf_stop(gsf_mpp_mcf_t *mcf);
+
+
 
 
 //venc;
@@ -216,6 +236,7 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
 
+
 typedef struct { // ==gsf_scene_ae_t
   float compensation_mul; // 0.5 - 1.5;
 }gsf_mpp_scene_ae_t;
@@ -226,7 +247,6 @@ typedef struct {
   gsf_mpp_scene_ae_t ae;
 }gsf_mpp_scene_all_t;
 
-
 enum {
   GSF_MPP_SCENE_CTL_ALL= 0, // gsf_mpp_scene_all_t
   GSF_MPP_SCENE_CTL_AE = 1, // gsf_mpp_scene_ae_t==HI_SCENE_CTL_AE_S
@@ -234,9 +254,15 @@ enum {
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args);
 
 
+typedef struct {
+  int fps;
+  int bitrate;
+}gsf_mpp_venc_rc_t;
+
 enum {
   GSF_MPP_VENC_CTL_IDR = 0,
   GSF_MPP_VENC_CTL_RST = 1,
+  GSF_MPP_VENC_CTL_RC  = 2, //gsf_mpp_venc_rc_t;
 };
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args);
 
@@ -358,7 +384,7 @@ enum {
   GSF_MPP_ISP_CTL_3DNR   = 11,// set gsf_mpp_img_3dnr_t;
   GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
   GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
-  GSF_MPP_ISP_CTL_LDC    = 14,// set gsf_mpp_img_ldc_t;
+  GSF_MPP_ISP_CTL_LDC    = 14,// set gsf_mpp_img_ldc_t;  
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
@@ -463,10 +489,13 @@ typedef struct {
 }gsf_mpp_frm_attr_t;
 
 //发送视频数据到显示通道(创建VDEC通道)
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //发送音频数据到 audio 解码输出;
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
+
+//send pcm to ao;
+int gsf_mpp_ao_send_pcm(int aodev, int ch, int flag, unsigned char *data, int size);
 
 //解码状态;
 typedef struct {

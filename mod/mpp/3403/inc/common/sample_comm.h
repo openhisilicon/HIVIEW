@@ -274,6 +274,7 @@ typedef enum {
     T2_RAW_0M_60FPS_8BIT,
     T3_RAW_0M_60FPS_8BIT,
     OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,
+    SONY_IMX585_MIPI_8M_60FPS_10BIT,
     SNS_TYPE_BUTT,
 } sample_sns_type;
 

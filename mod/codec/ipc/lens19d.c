@@ -33,6 +33,12 @@ enum {
 }; static int _ircut_ctl  = IRCUT_CTL_EDGE;
 
 enum {
+  LAMP_IR = 0,
+  LAMP_WHITE = 1,
+}; static int _lamp_type = LAMP_IR;
+
+
+enum {
   IRCUT_REV_0,
   IRCUT_REV_1,
 }; static int _ircut_rev = IRCUT_REV_0;
@@ -237,8 +243,10 @@ int lens19d_lens_ircut(int ch, int dayNight)
     return -1;
   }
   ir_cb(ch, dayNight, NULL);
-  gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IR, (void*)dayNight);
-  
+  if(_lamp_type == LAMP_IR)
+  {  
+    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IR, (void*)dayNight);
+  }
   return 0;
 }
 

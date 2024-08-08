@@ -63,6 +63,7 @@ static SAMPLE_MPP_SENSOR_T libsns_master[SNS_TYPE_BUTT] = {
     {SONY_IMX334_MIPI_8M_60FPS_12BIT,        "imx334-0-0-8-60",   "libsns_imx334.so",     "g_sns_imx334_obj"},
     {SONY_IMX378_MIPI_8M_30FPS_10BIT,        "imx378-0-0-8-30",   "libsns_imx378.so",     "g_sns_imx378_obj"},
     {SONY_IMX585_MIPI_8M_30FPS_12BIT,        "imx585-0-0-8-30",   "libsns_imx585.so",     "g_sns_imx585_obj"},
+    {SONY_IMX585_MIPI_8M_60FPS_10BIT,        "imx585-0-0-8-60",   "libsns_imx585.so",     "g_sns_imx585_obj"},
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,        "imx482-0-0-2-30",   "libsns_imx482.so",     "g_sns_imx482_obj"},
     {MIPI_YUV422_2M_60FPS_8BIT,              "yuv422-0-0-2-60",     NULL,                 NULL},
     {MIPI_YUV422_half8M_60FPS_8BIT,          "yuv422-1-0-8-60",     NULL,                 NULL},
@@ -505,8 +506,34 @@ int gsf_mpp_vi_stop()
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
 {
   int ret = 0;
+  ret = hi_mpi_vi_get_chn_frame(ViPipe, ViChn, pstFrameInfo, s32MilliSec);
+  if(ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vi_get_chn_frame ViPipe:%d, ViChn:%d, ret:0x%x\n", ViPipe, ViChn, ret);
+  }
   return ret;
 }
+int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  int ret = 0;
+  ret = hi_mpi_vi_release_chn_frame(ViPipe, ViChn, pstFrameInfo);
+  if(ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vi_release_chn_frame ViPipe:%d, ViChn:%d, ret:0x%x\n", ViPipe, ViChn, ret);
+  }
+  return ret;
+}
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return -1;//mppex_comm_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return -1;//mppex_comm_uvc_rel(ViPipe, pstFrameInfo);
+}
+
+
 
 //vpss;
 extern hi_void sample_venc_vpss_deinit(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vpss_chan_cfg);
@@ -581,6 +608,15 @@ int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideo
 {
   int ret = 0;
   return ret;
+}
+
+int gsf_mpp_vpss_get(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return hi_mpi_vpss_get_chn_frame(VpssGrp, VpssGrpPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_vpss_release(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return hi_mpi_vpss_release_chn_frame(VpssGrp, VpssGrpPipe, pstFrameInfo);
 }
 
 
@@ -1287,7 +1323,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 
 
 //发送视频数据到指定ch;
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
   int err = 0;
   HI_S32 s32Ret = HI_SUCCESS;
@@ -1451,11 +1487,17 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 }
 
 
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
   //audio dec bind vo;
   return 0;
 }
+
+int gsf_mpp_ao_send_pcm(int aodev, int ch, int flag, unsigned char *data, int size)
+{
+  return 0;
+}
+
 
 //设置当前音频数据通道号(!=ch的数据不送解码)
 int gsf_mpp_ao_filter(int vodev, int ch)

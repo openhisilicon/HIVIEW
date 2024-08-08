@@ -506,9 +506,11 @@ static hi_s32 sample_hnr_start_venc_and_vo(hi_vpss_grp vpss_grp[], hi_u32 grp_nu
     {
         g_venc_chn_param.size = PIC_2560X1440;
     }
-    else if ((SENSOR0_TYPE == OV_OS08A20_MIPI_8M_30FPS_12BIT) ||
-               (SENSOR0_TYPE == SONY_IMX485_MIPI_8M_30FPS_12BIT) || 
-               (SENSOR0_TYPE == SONY_IMX585_MIPI_8M_30FPS_12BIT))
+    else if ((SENSOR0_TYPE == OV_OS08A20_MIPI_8M_30FPS_12BIT)
+               || (SENSOR0_TYPE == SONY_IMX485_MIPI_8M_30FPS_12BIT)
+               || (SENSOR0_TYPE == SONY_IMX585_MIPI_8M_30FPS_12BIT)
+               || (SENSOR0_TYPE == SONY_IMX585_MIPI_8M_60FPS_10BIT)
+               )
     {
         g_venc_chn_param.size = PIC_3840X2160;
     }
@@ -586,6 +588,7 @@ hi_void sample_hnr_sensor_cfg(hi_vi_pipe vi_pipe, sample_sns_type sns_type)
         case SONY_IMX485_MIPI_8M_30FPS_12BIT:
         case SONY_IMX482_MIPI_2M_30FPS_12BIT:
         case SONY_IMX585_MIPI_8M_30FPS_12BIT:
+        case SONY_IMX585_MIPI_8M_60FPS_10BIT:  
             g_sns_imx485_obj.pfn_set_blc_clamp(vi_pipe, sns_blc_clamp);
             break;
 
@@ -766,6 +769,7 @@ hi_s32 sample_hnr_set_blc(hi_vi_pipe vi_pipe, sample_sns_type sns_type)
     if ((sns_type == SONY_IMX347_SLAVE_MIPI_4M_30FPS_12BIT)
       || (sns_type == SONY_IMX485_MIPI_8M_30FPS_12BIT) 
       || (sns_type == SONY_IMX585_MIPI_8M_30FPS_12BIT)
+      || (sns_type == SONY_IMX585_MIPI_8M_60FPS_10BIT)
       || (sns_type == SONY_IMX482_MIPI_2M_30FPS_12BIT)
       )
     {

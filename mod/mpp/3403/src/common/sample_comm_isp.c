@@ -288,6 +288,7 @@ hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
         case SONY_IMX485_MIPI_8M_30FPS_10BIT_WDR3TO1:
             return &g_sns_imx485_obj;
         case SONY_IMX585_MIPI_8M_30FPS_12BIT:
+        case SONY_IMX585_MIPI_8M_60FPS_10BIT:
             return &g_sns_imx585_obj;
         case SONY_IMX482_MIPI_2M_30FPS_12BIT:
             return &g_sns_imx482_obj;
@@ -512,9 +513,10 @@ hi_s32 sample_comm_isp_sensor_founction_cfg(hi_vi_pipe vi_pipe, sample_sns_type 
     sns_blc_clamp.blc_clamp_en = HI_FALSE;
 
     switch (sns_type) {
-        case SONY_IMX485_MIPI_8M_30FPS_12BIT:
-        case SONY_IMX482_MIPI_2M_30FPS_12BIT:  
-        case SONY_IMX585_MIPI_8M_30FPS_12BIT:  
+    case SONY_IMX485_MIPI_8M_30FPS_12BIT:
+    case SONY_IMX482_MIPI_2M_30FPS_12BIT:  
+    case SONY_IMX585_MIPI_8M_30FPS_12BIT:
+    case SONY_IMX585_MIPI_8M_60FPS_10BIT:
 		case SONY_IMX334_MIPI_8M_30FPS_12BIT:
 		case SONY_IMX334_MIPI_8M_60FPS_12BIT:
 		case SONY_IMX378_MIPI_8M_30FPS_10BIT:
