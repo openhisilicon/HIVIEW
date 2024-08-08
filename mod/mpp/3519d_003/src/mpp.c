@@ -2003,7 +2003,7 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
         default:
             break;
     }
-    #if 1
+    #if 0
     #warning "FB_COLOR_DEPTH == 32"
     var.transp= s_a32;
     var.red   = s_r32;
