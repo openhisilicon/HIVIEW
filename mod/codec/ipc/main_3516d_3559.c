@@ -141,8 +141,11 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
                               (second) == SECOND_BT656_600P?PIC_600P:\
                               PIC_512P)
 
-int second_sdp(int i, gsf_sdp_t *sdp)
+int venc_fixed_sdp(int ch, int i, gsf_sdp_t *sdp)
 {
+  if(ch != 1)
+    return -1;
+  
   if(p_cfg->second)
   {
     sdp->audio_shmid = -1;
@@ -223,7 +226,7 @@ int venc_start(int start)
     if(p_cfg->second && i == 1)
     {
       gsf_sdp_t sdp;
-      if(second_sdp(j, &sdp) == 0)
+      if(venc_fixed_sdp(i, j, &sdp) == 0)
       {
         venc.enSize = PIC_WIDTH(sdp.venc.width, sdp.venc.height);
         venc.u32BitRate = sdp.venc.bitrate;
@@ -820,7 +823,7 @@ int vo_start()
     	  {
     	    gsf_sdp_t sdp;
           RECT_S rect = {20, 0, 720, 576};
-          if(second_sdp(0, &sdp) == 0)
+          if(venc_fixed_sdp(1, 0, &sdp) == 0)
           {
             rect_w = sdp.venc.width;
             rect_h = sdp.venc.height;

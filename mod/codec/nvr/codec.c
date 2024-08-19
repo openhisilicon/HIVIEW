@@ -314,7 +314,6 @@ int main(int argc, char *argv[])
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
     
-    
     while(1)
     {
       sleep(1);

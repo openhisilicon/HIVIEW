@@ -55,12 +55,9 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   sdp->venc = codec_ipc.venc[req->sid];
   sdp->aenc = codec_ipc.aenc;
   
-  if(req->ch == 1)
-  {
-    extern int second_sdp(int i, gsf_sdp_t *sdp);
-    second_sdp(req->ch, sdp);
-  }
-  
+  extern int venc_fixed_sdp(int ch, int st, gsf_sdp_t *sdp);
+  venc_fixed_sdp(req->ch, req->sid, sdp);
+
   sdp->val[0]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[0];
   sdp->val[1]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[1];
   sdp->val[2]  = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].val[2];

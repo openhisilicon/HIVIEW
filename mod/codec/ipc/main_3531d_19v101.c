@@ -123,8 +123,11 @@ static gsf_venc_ini_t *p_venc_ini = NULL;
 static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 //second sdp hook, fixed venc cfg;
-int second_sdp(int i, gsf_sdp_t *sdp)
+int venc_fixed_sdp(int ch, int i, gsf_sdp_t *sdp)
 {
+  if(ch != 1)
+    return -1;
+  
   return -1;
 }
 

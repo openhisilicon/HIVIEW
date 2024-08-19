@@ -271,7 +271,7 @@ static unsigned short argb8888_1555(unsigned int color)
   return (unsigned short)(a << 15 | r<<(10) | g<<5 | b);
 }
 
-extern int second_sdp(int i, gsf_sdp_t *sdp);
+extern int venc_fixed_sdp(int ch, int i, gsf_sdp_t *sdp);
 static int codec_venc_width(int ch, int i)
 {
 

@@ -84,16 +84,11 @@ typedef hi_venc_stream_buf_info VENC_STREAM_BUF_INFO_S;
 
 //cfg;
 typedef struct {
-  char  snsname[32];  // sensor imx335
-  int   snscnt;       // sensor count
-  int   lane;         // lane mode
-  int   wdr;          // wdr mode
-  int   res;          // resolution
-  int   fps;          // frame rate
-  int   slave;        // slave mode
-  int   second;       // second channel;
-  char  type[32];     // cpu type;
-  int   hnr;          // hnr mode;
+  int   snscnt;         // sensor count
+  char  snsname[8][32]; // os08a20-0-0-8-30,uvc-0-0-0-60,[name-lane-wdr-res-fps]
+  int   slave;          // slave mode
+  char  type[32];       // cpu type;
+  int   hnr;            // hnr mode;
 }gsf_mpp_cfg_t;
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);

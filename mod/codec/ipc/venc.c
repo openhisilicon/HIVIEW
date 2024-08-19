@@ -82,15 +82,13 @@ unsigned int cfifo_recput_v(unsigned char *p1, unsigned int n1, unsigned char *p
   if(mgr->vst/GSF_CODEC_VENC_NUM == 0 && mgr->vst%GSF_CODEC_VENC_NUM == 0)
     printf("vst:%d, venc_pts: %llu, pts:%u\n", mgr->vst, venc_pts, rec.pts);
 #endif
-  if(mgr->vst/GSF_CODEC_VENC_NUM == 1)
-  {  
-    gsf_sdp_t sdp;
-    extern int second_sdp(int i, gsf_sdp_t *sdp);
-    if(second_sdp(mgr->vst%GSF_CODEC_VENC_NUM, &sdp) == 0)
-    {
-      rec.video.width = sdp.venc.width;
-      rec.video.height = sdp.venc.height;
-    }
+
+  gsf_sdp_t sdp;
+  extern int venc_fixed_sdp(int ch, int st, gsf_sdp_t *sdp);
+  if(venc_fixed_sdp(mgr->vst/GSF_CODEC_VENC_NUM, mgr->vst%GSF_CODEC_VENC_NUM, &sdp) == 0)
+  {
+    rec.video.width = sdp.venc.width;
+    rec.video.height = sdp.venc.height;
   }
 
 #ifdef __FRM_PHY__

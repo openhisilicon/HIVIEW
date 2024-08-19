@@ -278,35 +278,26 @@ static unsigned short argb8888_1555(unsigned int color)
   return (unsigned short)(a << 15 | r<<(10) | g<<5 | b);
 }
 
-extern int second_sdp(int i, gsf_sdp_t *sdp);
+extern int venc_fixed_sdp(int ch, int st, gsf_sdp_t *sdp);
 static int codec_venc_width(int ch, int i)
 {
-  if(ch != 1)
-  {
-    return codec_ipc.venc[i].width;
-  }
   gsf_sdp_t sdp;
-  if(second_sdp(i, &sdp) == 0)
+  if(venc_fixed_sdp(ch, i, &sdp) == 0)
   {
-    return sdp.venc.width;
+     return sdp.venc.width;
   }
   return codec_ipc.venc[i].width;
 }
 
 static int codec_venc_height(int ch, int i)
 {
-  if(ch != 1)
-  {
-    return codec_ipc.venc[i].height;
-  }
   gsf_sdp_t sdp;
-  if(second_sdp(i, &sdp) == 0)
+  if(venc_fixed_sdp(ch, i, &sdp) == 0)
   {
     return sdp.venc.height;
   }
   return codec_ipc.venc[i].height;
 }
-
 
 //#define __RGN_CANVAS // __RGN_CANVAS is bad
 

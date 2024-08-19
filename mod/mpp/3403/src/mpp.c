@@ -32,8 +32,7 @@
 //#include "sample_isp.h"
 #include "hifb.h"
 #include "mpp.h"
-
-//#include "mppex.h"
+#include "mppex.h"
 
 typedef struct {
   int   type;
@@ -45,10 +44,10 @@ typedef struct {
 int SENSOR_TYPE;
 int SENSOR0_TYPE;
 int SENSOR1_TYPE;
-hi_isp_sns_obj* SENSOR_OBJ = NULL;
+hi_isp_sns_obj* SENSOR_OBJ[SNS_TYPE_BUTT] = {NULL};
 hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
 {
-  return SENSOR_OBJ;
+  return SENSOR_OBJ[sns_type];
 }
 
 static SAMPLE_MPP_SENSOR_T libsns_master[SNS_TYPE_BUTT] = {
@@ -67,7 +66,13 @@ static SAMPLE_MPP_SENSOR_T libsns_master[SNS_TYPE_BUTT] = {
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,        "imx482-0-0-2-30",   "libsns_imx482.so",     "g_sns_imx482_obj"},
     {MIPI_YUV422_2M_60FPS_8BIT,              "yuv422-0-0-2-60",     NULL,                 NULL},
     {MIPI_YUV422_half8M_60FPS_8BIT,          "yuv422-1-0-8-60",     NULL,                 NULL},
-    {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30",  "libsns_os04a10_2l.so",    "g_sns_os04a10_2l_obj"}, 
+    {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30",  "libsns_os04a10_2l.so", "g_sns_os04a10_2l_obj"}, 
+    {SONY_IMX586_MIPI_48M_5FPS_12BIT,        "imx586-0-0-48-5",  "libsns_imx586.so",      "g_sns_imx586_obj"},
+    {SONY_IMX415_MIPI_8M_30FPS_12BIT,        "imx415-0-0-8-30",  "libsns_imx415.so",      "g_sns_imx415_obj"},
+    {BT1120_YUV422_2M_60FPS_8BIT,            "bt1120-0-0-2-60",    NULL,                 NULL},
+    {BT656_YUV422_0M_60FPS_8BIT,             "bt656-0-0-0-60",     NULL,                 NULL},
+    {BT601_YUV422_0M_60FPS_8BIT,             "bt601-0-0-0-60",     NULL,                 NULL},
+    {SNS_TYPE_BUTT,                          "uvc-0-0-0-60",       NULL,                 NULL},
   };
 
 static SAMPLE_MPP_SENSOR_T libsns_slave[SNS_TYPE_BUTT] = {
@@ -94,7 +99,7 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name, int slave)
 }
 
 
-static void * dl = NULL;
+static void* snsdl[8] = {NULL};
 static int snscnt = 0;
 
 hi_void sample_venc_handle_sig2(hi_s32 signo)
@@ -105,7 +110,7 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
   signal(SIGTERM, SIG_IGN);
   if (signo == SIGINT || signo == SIGTERM) 
   {
-      //mppex_hook_destroy();
+      mppex_hook_destroy();
       ret = gsf_mpp_scene_stop();
       printf("gsf_mpp_scene_stop ret = %x\n", ret);
       ret = gsf_mpp_venc_dest();
@@ -139,94 +144,82 @@ static sample_hnr_param hnr_param = {.is_wdr_mode = HI_FALSE, .ref_mode = HI_HNR
 int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
 {
   int i = 0;
-  char snsstr[64];
-  sprintf(snsstr, "%s-%d-%d-%d-%d"
-          , cfg->snsname, cfg->lane, cfg->wdr, cfg->res, cfg->fps);
+ 
+  mppex_hook_sns(cfg);
 
-  //mppex_hook_sns(cfg);
+  hnr_cnt = cfg->hnr;  
+  snscnt = strstr(cfg->snsname[cfg->snscnt-1], "uvc")?cfg->snscnt-1:cfg->snscnt;  
   
-  SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(snsstr, cfg->slave);
-  if(!sns)
-  {
-    printf("%s => snsstr:%s, unknow.\n", __func__, snsstr);
-    return -1;
-  } 
-  
-  snscnt = cfg->snscnt;
   char loadstr[256] = {0};
-  char snsname[64] = {0};
+  sprintf(loadstr, "%s/ko/load_3403v100 -i ", path);
   
-  if(strstr(cfg->snsname, "imx334") || strstr(cfg->snsname, "imx378"))
-    strncpy(snsname, "os08a20", sizeof(snsname)-1);
-  else if(strstr(cfg->snsname, "imx585") || strstr(cfg->snsname, "imx482"))
-    strncpy(snsname, "imx485", sizeof(snsname)-1);
-  else  
-    strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
-    
-  sprintf(loadstr, "%s/ko/load_3403v100 -i -sensor0 %s", path, snsname);
-
-  for(i = 1; i < snscnt; i++)
+  for(i = 0; i < snscnt; i++)
   {
-    sprintf(loadstr, "%s -sensor%d %s", loadstr, i, snsname);
+    char snsname[64] = {0};  
+    if(strstr(cfg->snsname[i], "imx334") || strstr(cfg->snsname[i], "imx378") 
+      || strstr(cfg->snsname[i], "imx586"))
+      strncpy(snsname, "os08a20", sizeof(snsname)-1);
+    else if(strstr(cfg->snsname[i], "imx585") || strstr(cfg->snsname[i], "imx482")
+      || strstr(cfg->snsname[i], "imx415"))
+      strncpy(snsname, "imx485", sizeof(snsname)-1);
+    else
+      strncpy(snsname, cfg->snsname[i], sizeof(snsname)-1);
+   
+    if(strstr(snsname, "bt1120"))
+      sprintf(loadstr, "%s -sensor3 bt1120", loadstr);
+    else  
+      sprintf(loadstr, "%s -sensor%d %s", loadstr, i, snsname);  
   }
   
-  if(cfg->second == 1 && cfg->snscnt == 1)
-  {
-    sprintf(loadstr, "%s -sensor3 bt1120", loadstr);
-  }
-  
-  printf("%s => loadstr: %s\n", __func__, loadstr);
+  printf("%s => snscnt:%d, loadstr: %s\n", __func__, snscnt, loadstr);
   system(loadstr);
   
-  SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = sns->type;
   
-  if(cfg->second && cfg->snscnt == 1)
+  for(i = 0; i < snscnt; i++)
   {
-    SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT:
-                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT:
-                   (cfg->second == 3)?BT601_YUV422_0M_60FPS_8BIT:
-                                      T0_RAW_0M_60FPS_16BIT;
-  }
-  
-  hnr_cnt = cfg->hnr;
-  
-
-  if(dl)
-  {
-    dlclose(dl);
-    dlerror();
-  }
-  
-  if(sns->lib)
-  {
-    dl = dlopen(sns->lib, RTLD_LAZY);
-    if(dl == NULL)
+    SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(cfg->snsname[i], cfg->slave);
+    if(!sns)
     {
-      printf("err dlopen %s\n", sns->lib);
-      goto __err;
+      printf("%s => snsname:%s, unknow.\n", __func__, cfg->snsname[i]);
+      return -1;
+    }
+    if(i == 0)
+      SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = sns->type;
+    else if(i == 1)
+      SENSOR1_TYPE = sns->type;
+
+    if(snsdl[i])
+    {
+      dlclose(snsdl[i]);
+      dlerror();
     }
     
-    SENSOR_OBJ = dlsym(dl, sns->obj);
-    if(NULL != dlerror())
+    if(sns->lib)
     {
-        printf("err dlsym %s\n", sns->obj);
-        goto __err;
+      snsdl[i] = dlopen(sns->lib, RTLD_LAZY);
+      if(snsdl[i] == NULL)
+      {
+        printf("err dlopen %s\n", sns->lib);
+        dlerror();
+        return -1;
+      }
+      
+      SENSOR_OBJ[sns->type] = dlsym(snsdl[i], sns->obj);
+      if(NULL != dlerror())
+      {
+          printf("err dlsym %s\n", sns->obj);
+          dlclose(snsdl[i]);
+          dlerror();
+          return -1;
+      }
     }
+    printf("%s => snsname:%s, sensor_type:%d, load:%s\n", __func__, cfg->snsname[i], sns->type, sns->lib?:"");
   }
-  printf("%s => snsstr:%s, sensor_type:%d, load:%s\n"
-        , __func__, snsstr, SENSOR_TYPE, sns->lib?:"");
-  
+    
   signal(SIGINT, sample_venc_handle_sig2);
   signal(SIGTERM, sample_venc_handle_sig2);
   
   return 0;
-__err:
-	if(dl)
-	{
-    dlclose(dl);
-  }
-  dlerror();
-  return -1;
 }
 
 
@@ -239,7 +232,8 @@ hi_void sample_vdec_handle_sig2(hi_s32 signo)
   signal(SIGTERM, SIG_IGN);
   if (signo == SIGINT || signo == SIGTERM) 
   {
-      //mppex_hook_destroy();
+      mppex_hook_destroy();
+      
       ret = sample_comm_vo_hdmi_stop();
       printf("sample_comm_vo_hdmi_stop ret = %x\n", ret);
       sample_comm_sys_exit();
@@ -305,20 +299,44 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     
     if(snscnt == 2 && i != 0)
     {
-      const hi_vi_dev vi_dev = 2; /* dev2 for sensor1 */
-      const hi_vi_pipe vi_pipe = 1; /* dev2 bind pipe1 */
-      
-      vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
-      vi_cfg[i].sns_info.sns_clk_src = 1;
-      vi_cfg[i].sns_info.sns_rst_src = 1;
+      if(SENSOR1_TYPE != BT1120_YUV422_2M_60FPS_8BIT)
+      {
+        sample_comm_vi_get_default_vi_cfg(SENSOR1_TYPE, &vi_cfg[i]);
+        
+        const hi_vi_dev vi_dev = 2; /* dev2 for sensor1 */
+        const hi_vi_pipe vi_pipe = 1; /* dev2 bind pipe1 */
+        
+        vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
+        vi_cfg[i].sns_info.sns_clk_src = 1;
+        vi_cfg[i].sns_info.sns_rst_src = 1;
+        
+        sample_comm_vi_get_mipi_info_by_dev_id(SENSOR1_TYPE, vi_dev, &vi_cfg[i].mipi_info);
+        vi_cfg[i].dev_info.vi_dev = vi_dev;
+        vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
+        vi_cfg[i].grp_info.grp_num = 1;
+        vi_cfg[i].grp_info.fusion_grp[0] = 1;
+        vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
+        printf("sample_vi_get_two_sensor_vi_cfg(%d) sns:%d\n", vi_dev, SENSOR1_TYPE);
+      }
+      else
+      {
+        sample_comm_vi_get_default_vi_cfg(SENSOR1_TYPE, &vi_cfg[i]);
 
-      sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, vi_dev, &vi_cfg[i].mipi_info);
-      vi_cfg[i].dev_info.vi_dev = vi_dev;
-      vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
-      vi_cfg[i].grp_info.grp_num = 1;
-      vi_cfg[i].grp_info.fusion_grp[0] = 1;
-      vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
-      printf("sample_vi_get_two_sensor_vi_cfg(%d) bus_id:%d\n", vi_dev, vi_cfg[i].sns_info.bus_id);
+        const hi_vi_dev vi_dev = 3; /* dev3 for bt1120 */
+        const hi_vi_pipe vi_pipe = 1; /* dev3 bind pipe1 */
+        
+        printf("sample_vi_get_bt1120_vi_cfg() beg.\n");
+        vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
+        vi_cfg[i].sns_info.sns_clk_src = 1;
+        vi_cfg[i].sns_info.sns_rst_src = 1;
+        vi_cfg[i].mipi_info.mipi_dev = -1;
+        vi_cfg[i].dev_info.vi_dev = vi_dev;
+        vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
+        vi_cfg[i].grp_info.grp_num = 1;
+        vi_cfg[i].grp_info.fusion_grp[0] = 1;
+        vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
+        printf("sample_vi_get_bt1120_vi_cfg() end.\n");
+      }
     }
     else if(snscnt > 2) 
     {
@@ -339,27 +357,6 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
       printf("sample_vi_get_four_sensor_vi_cfg(%d) divide_mode:%d, bus_id:%d\n", i, vi_cfg[i].mipi_info.divide_mode, vi_cfg[i].sns_info.bus_id);
     }
-  }
-  
-  if(SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    i = 1;
-    sample_comm_vi_get_default_vi_cfg(SENSOR1_TYPE, &vi_cfg[i]);
-
-    const hi_vi_dev vi_dev = 3; /* dev3 for bt1120 */
-    const hi_vi_pipe vi_pipe = 1; /* dev3 bind pipe1 */
-    
-    printf("sample_vi_get_bt1120_vi_cfg() beg.\n");
-    vi_cfg[i].sns_info.bus_id = 5; /* i2c5 */
-    vi_cfg[i].sns_info.sns_clk_src = 1;
-    vi_cfg[i].sns_info.sns_rst_src = 1;
-    vi_cfg[i].mipi_info.mipi_dev = -1;
-    vi_cfg[i].dev_info.vi_dev = vi_dev;
-    vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
-    vi_cfg[i].grp_info.grp_num = 1;
-    vi_cfg[i].grp_info.fusion_grp[0] = 1;
-    vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
-    printf("sample_vi_get_bt1120_vi_cfg() end.\n");
   }
   
   // get vpss param
@@ -404,19 +401,11 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       return ret;
     }
   }
- 
+  
+
+    
   for(i = 0; i < snscnt; i++)
   {
-    extern hi_s32 sample_venc_vi_init(sample_vi_cfg *vi_cfg);
-    if ((ret = sample_venc_vi_init(&vi_cfg[i])) != HI_SUCCESS) {
-        sample_print("Init VI i:%d ret:%#x!\n", i, ret);
-        goto EXIT_SYS_STOP;
-    }
-  }
-  
-  if(SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    i = 1;
     extern hi_s32 sample_venc_vi_init(sample_vi_cfg *vi_cfg);
     if ((ret = sample_venc_vi_init(&vi_cfg[i])) != HI_SUCCESS) {
         sample_print("Init VI i:%d ret:%#x!\n", i, ret);
@@ -487,16 +476,7 @@ int gsf_mpp_vi_stop()
     }
   }
   
-  if(SENSOR0_TYPE != SENSOR1_TYPE)
-  {
-    i = 1;
-    sample_venc_vi_deinit(&vi_cfg[i]);
-  
-    if (g_vb_pool[i] != HI_VB_INVALID_POOL_ID) {
-      hi_mpi_vb_destroy_pool(g_vb_pool[i]);
-      g_vb_pool[i] = HI_VB_INVALID_POOL_ID;
-    }
-  }
+
 
   sample_comm_sys_exit();
   return ret;
@@ -526,11 +506,11 @@ int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
 
 int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
 {
-  return -1;//mppex_comm_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
+  mppex_comm_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
 }
 int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
 {
-  return -1;//mppex_comm_uvc_rel(ViPipe, pstFrameInfo);
+  mppex_comm_uvc_rel(ViPipe, pstFrameInfo);
 }
 
 
@@ -546,17 +526,19 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   hi_vi_chn vi_chn    = vpss->ViChn;
   hi_vpss_grp vpss_grp= vpss->VpssGrp;
   
-  if(vi_pipe == 1 && SENSOR0_TYPE != SENSOR1_TYPE)
+  if((vi_pipe == 1 && SENSOR1_TYPE == BT1120_YUV422_2M_60FPS_8BIT) || (vi_pipe < 0))
   {
-    for(int i = 0; i < HI_VPSS_MAX_PHYS_CHN_NUM; i++)
-    {
-      hi_size enc_size = {0};
-      ret = sample_comm_sys_get_pic_size(vpss->enSize[i], &enc_size);
-      vpss_param.enable[i] = vpss->enable[i]; 
-      vpss_param.output_size[i].width = enc_size.width;
-      vpss_param.output_size[i].height = enc_size.height;
-    }
     vpss_param.pixel_format = HI_PIXEL_FORMAT_YVU_SEMIPLANAR_422;
+    printf("vpss grp format: HI_PIXEL_FORMAT_YVU_SEMIPLANAR_422\n");
+  }
+  
+  for(int i = 0; i < HI_VPSS_MAX_PHYS_CHN_NUM; i++)
+  {
+    hi_size enc_size = {0};
+    ret = sample_comm_sys_get_pic_size(vpss->enSize[i], &enc_size);
+    vpss_param.enable[i] = vpss->enable[i]; 
+    vpss_param.output_size[i].width = enc_size.width;
+    vpss_param.output_size[i].height = enc_size.height;
   }
   
   extern hi_s32 sample_venc_vpss_init(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vpss_chan_cfg);
@@ -565,10 +547,13 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
       goto EXIT;
   }
   
-  if ((ret = sample_comm_vi_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0)) != HI_SUCCESS) 
-  {
-      sample_print("VI Bind VPSS err for %#x!\n", ret);
-      goto EXIT_VPSS_STOP;
+  if(vi_pipe >= 0)
+  {  
+    if ((ret = sample_comm_vi_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0)) != HI_SUCCESS) 
+    {
+        sample_print("VI Bind VPSS err for %#x!\n", ret);
+        goto EXIT_VPSS_STOP;
+    }
   }
   
   if(hnr_cnt)
@@ -599,7 +584,10 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
   hi_vi_chn vi_chn    = vpss->ViChn;
   hi_vpss_grp vpss_grp= vpss->VpssGrp;
 
-  sample_comm_vi_un_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0);
+  if(vi_pipe >= 0)
+  {  
+    sample_comm_vi_un_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0);
+  }
   sample_venc_vpss_deinit(vpss_grp, &vpss_param);
   return ret;
 }
@@ -607,6 +595,12 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec)
 {
   int ret = 0;
+  VIDEO_FRAME_INFO_S *outVideoFrame = mppex_comm_vpss_send_bb(VpssGrp, VpssGrpPipe, pstVideoFrame);
+  ret = hi_mpi_vpss_send_frame(VpssGrp, outVideoFrame, s32MilliSec);
+  if (ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vpss_send_frame VpssGrp:%d, ret:0x%x\n", VpssGrp, ret);
+  }
   return ret;
 }
 

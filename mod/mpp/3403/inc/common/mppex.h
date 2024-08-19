@@ -8,12 +8,15 @@
  *  Support yuv input:
  *  v SONY_IMX378_MIPI_8M_30FPS_10BIT
  *  v SONY_IMX585_MIPI_8M_30FPS_12BIT
+ *  v SONY_IMX585_MIPI_8M_60FPS_10BIT
  *  v SONY_IMX482_MIPI_2M_30FPS_12BIT
  *  v MIPI_YUV422_2M_60FPS_8BIT
  *  v MIPI_YUV422_half8M_60FPS_8BIT
  *  v BT1120_YUV422_2M_60FPS_8BIT
  *  v BT656_YUV422_0M_60FPS_8BIT
  *  v BT601_YUV422_0M_60FPS_8BIT
+ *  v SONY_IMX586_MIPI_48M_5FPS_12BIT
+ *  v SONY_IMX415_MIPI_8M_30FPS_12BIT
  */
 
 #include "mpp.h"
@@ -41,5 +44,13 @@ int mppex_comm_vi_get_default_pipe_info(sample_sns_type sns_type, int i,
 int mppex_comm_vi_bypass_isp(const sample_vi_cfg *vi_cfg);
 
 int mppex_comm_isp_get_pub_attr_by_sns(sample_sns_type sns_type, hi_isp_pub_attr *pub_attr);
+
+hi_video_frame_info* mppex_comm_vpss_send_bb(int VpssGrp, int VpssGrpPipe, hi_video_frame_info *pstVideoFrame);
+
+int mppex_comm_uvc_get(int idx, ot_video_frame_info *pstFrameInfo, int s32MilliSec);
+int mppex_comm_uvc_rel(int idx, ot_video_frame_info *pstFrameInfo);
+
+int mppex_hook_sns(gsf_mpp_cfg_t *cfg);
+int mppex_hook_destroy(void);
 
 #endif //__mppex_h__
