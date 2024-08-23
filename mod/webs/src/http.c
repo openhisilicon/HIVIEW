@@ -964,26 +964,37 @@ void handle_snap(struct mg_connection *nc, int ev, void *pp)
                         , GSF_IPC_CODEC
                         , 3000);
                         
-  printf("send => To:%s, ret:%d, msg->size:%d\n", GSF_IPC_CODEC, ret, __pmsg->size);
-  
   char qs_buf[256] = {0};
   int qs_len = (hm->query_string.len < sizeof(qs_buf)-1)?hm->query_string.len:(sizeof(qs_buf)-1);
   sprintf(qs_buf, "%.*s", qs_len, hm->query_string.p);
   char *target = strstr(qs_buf, "target=");
+  char *save = strstr(qs_buf, "save=");
+
+  printf("send => To:%s, ret:%d, msg->size:%d, target:%s, save:%s\n", GSF_IPC_CODEC, ret, __pmsg->size, target, save);  
   
-  if(target) //GSF_ID_SVP_FEATURE  
+  if(target) //GSF_ID_SVP_FEATURE test SVP
   {
     GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t) + 256);
     target += strlen("target=");
     strcpy(msgdata, target);
-    
-    ret = GSF_MSG_SENDTO(GSF_ID_SVP_FEATURE, channel, 1, sid
-                          , strlen(target)+1
+    int ret = GSF_MSG_SENDTO(GSF_ID_SVP_FEATURE, channel, 1, sid
+                          , strlen(msgdata)+1
                           , GSF_IPC_SVP
                           , 1000);
     printf("GSF_ID_SVP_FEATURE target=%s, ret:%d\n", target, ret);
   }
   
+  if(save && __pmsg->size > 0) //GSF_ID_REC_IMAGE test REC
+  {
+    char* image = __pmsg->data;
+    GSF_MSG_DEF(char, msgdata, sizeof(gsf_msg_t) + 256);
+    strcpy(msgdata, image);
+    int ret = GSF_MSG_SENDTO(GSF_ID_REC_IMAGE, channel, 1, sid
+                          , strlen(msgdata)+1
+                          , GSF_IPC_REC
+                          , 1000);
+    printf("GSF_ID_REC_IMAGE msgdata=%s, ret:%d\n", msgdata, ret);
+  }
   
   if(ret == 0 && __pmsg->size > 0)
   {

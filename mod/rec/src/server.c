@@ -186,7 +186,7 @@ static int ser_disk_check()
   return 0;
 }
 
-#define IMAGE_CHN_BASE 8 //image channel base;
+#define IMAGE_CHN_BASE 9 //image channel base;
 
 int ser_image_writer(int ch, int tags, char *filename)
 {

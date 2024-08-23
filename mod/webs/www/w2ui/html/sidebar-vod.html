@@ -36,16 +36,42 @@ function formatNum(num, strlength) {
 //播放视频
 function playVideo(obj){ 
   var info =  w2ui['grid-video'].get($(obj).data('id')); 
-  vUrl = '/rec/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.channel,3)+'.mp4'; 
-  if (mpegts.isSupported()) { 
-  var videoElement = document.getElementById('videoElement');
-  var flvPlayer = mpegts.createPlayer({
-	  type: 'mp4',
-	  url: vUrl
-  });
-  flvPlayer.attachMediaElement(videoElement);
-  flvPlayer.load();
-  flvPlayer.play();  
+
+  if(info.channel >= 9) //pic
+  {
+    w2ui['main_layout'].content('main', '<div id="videoContainer" style="width: 100%; height: 100%;"></div>'); 
+    
+    vUrl = '/jpg/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.channel,3)+'.jpg';
+    
+    var div = document.getElementById('videoContainer');
+    
+    var img = new Image(); 
+    img.width =  div.clientWidth; // Optional: set the width of the image 
+    img.height = div.clientHeight; // Optional: set the height of the image 
+    img.onload = function() {
+      div.appendChild(img);
+    };
+    img.src = vUrl;
+    console.log("jpg channel:" + info.channel);
+        
+  }
+  else {
+    
+    w2ui['main_layout'].content('main', '<div style="padding: 12px 20px; font-size: 18px;"><video id="videoElement" class="showVideo"  width="100%" muted="muted" controls autoplay>  Your browser is too old which doesn\'t support TML5 video.</video></div>');
+    
+    vUrl = '/rec/'+formatNum(info.btime,8)+'_'+formatNum(info.btime_ms,3)+'_'+formatNum(info.channel,3)+'.mp4'; 
+    
+    if (mpegts.isSupported()) { 
+    var videoElement = document.getElementById('videoElement');
+    var flvPlayer = mpegts.createPlayer({
+  	  type: 'mp4',
+  	  url: vUrl
+    });
+    flvPlayer.attachMediaElement(videoElement);
+    flvPlayer.load();
+    flvPlayer.play();  
+    console.log("mp4 channel:" + info.channel);
+    }
   }
 }
 //下载视频
@@ -55,8 +81,17 @@ function downVideo(obj){
   var a = document.createElement("a"), 
         e = document.createEvent("MouseEvents");
     e.initEvent("click", false, false);
-    vUrl = '/rec/'+filename+'.mp4';
-    a.href = vUrl;
+    
+    if(info.channel >= 9) //pic
+    {
+      vUrl = '/jpg/'+filename+'.jpg';
+      a.href = vUrl;
+    }
+    else
+    {
+      vUrl = '/rec/'+filename+'.mp4';
+      a.href = vUrl;
+    }
     a.download =filename;
     a.dispatchEvent(e);
 }
@@ -169,6 +204,7 @@ $(function () {
 
     loadVideo();  
 });  
+
 w2ui['main_layout'].content('main', '<div style="padding: 12px 20px; font-size: 18px;"><video id="videoElement" class="showVideo"  width="100%" muted="muted" controls autoplay>  Your browser is too old which doesn\'t support TML5 video.</video></div>');
 
 
