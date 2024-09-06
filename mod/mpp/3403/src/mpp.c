@@ -155,15 +155,14 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   for(i = 0; i < snscnt; i++)
   {
-    char snsname[64] = {0};  
-    if(strstr(cfg->snsname[i], "imx334") || strstr(cfg->snsname[i], "imx378") 
-      || strstr(cfg->snsname[i], "imx586"))
+    char snsname[64] = {0};
+    
+    if(strstr(cfg->snsname[i], "imx334") || strstr(cfg->snsname[i], "imx378") || strstr(cfg->snsname[i], "imx586"))
       strncpy(snsname, "os08a20", sizeof(snsname)-1);
-    else if(strstr(cfg->snsname[i], "imx585") || strstr(cfg->snsname[i], "imx482")
-      || strstr(cfg->snsname[i], "imx415"))
+    else if(strstr(cfg->snsname[i], "imx585") || strstr(cfg->snsname[i], "imx482") || strstr(cfg->snsname[i], "imx415"))
       strncpy(snsname, "imx485", sizeof(snsname)-1);
     else
-      strncpy(snsname, cfg->snsname[i], sizeof(snsname)-1);
+      sscanf(cfg->snsname[i], "%[^-]", snsname);
    
     if(strstr(snsname, "bt1120"))
       sprintf(loadstr, "%s -sensor3 bt1120", loadstr);
