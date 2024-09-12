@@ -411,8 +411,15 @@ hi_s32 sample_venc_vpss_init(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vp
         if (vpss_chan_cfg->enable[vpss_chn] == 1) {
             chn_attr[vpss_chn].width = vpss_chan_cfg->output_size[vpss_chn].width;
             chn_attr[vpss_chn].height = vpss_chan_cfg->output_size[vpss_chn].height;
+            #if 0 //maohw
             chn_attr[vpss_chn].chn_mode = HI_VPSS_CHN_MODE_USER;
             chn_attr[vpss_chn].compress_mode = vpss_chan_cfg->compress_mode[vpss_chn];
+            #else
+            chn_attr[vpss_chn].chn_mode = (chn_attr[vpss_chn].width==8000)?HI_VPSS_CHN_MODE_AUTO:HI_VPSS_CHN_MODE_USER;
+            //chn_attr[vpss_chn].compress_mode = (vpss_chn==0)?HI_COMPRESS_MODE_SEG:vpss_chan_cfg->compress_mode[vpss_chn];
+			chn_attr[vpss_chn].compress_mode = vpss_chan_cfg->compress_mode[vpss_chn];
+            #endif
+            
             chn_attr[vpss_chn].pixel_format = HI_PIXEL_FORMAT_YVU_SEMIPLANAR_420;//vpss_chan_cfg->pixel_format;
             chn_attr[vpss_chn].frame_rate.src_frame_rate = -1;
             chn_attr[vpss_chn].frame_rate.dst_frame_rate = -1;

@@ -134,7 +134,7 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 #define VENC_FIXED_HIRES(sns, w, h, fps, r) ({\
   int __change = 1;\
-  if (strstr(sns, "imx586")) {w = 8000; h = 6000; fps = 1; r = 80000;}\
+  if (strstr(sns, "imx586-0-0-48")) {w = 8000; h = 6000; fps = 1; r = 80000;}\
   else if(strstr(sns, "bt1120")) {w = 1920; h = 1080; fps = 60; r = 8000;}\
   else if(strstr(sns, "bt656")){w = 640; h = 512; fps = 60; r = 2000;}\
   else if(strstr(sns, "uvc")){w = 640; h = 512; fps = 60; r = 2000;}\
@@ -143,7 +143,7 @@ static gsf_mpp_cfg_t  *p_cfg = NULL;
 
 #define VENC_FIXED_LORES(sns, w, h, fps, r) ({\
   int __change = 1;\
-  if (strstr(sns, "imx586")) {w = 640; h = 640; fps = 1; r = 800;}\
+  if (strstr(sns, "imx586-0-0-48")) {w = 640; h = 640; fps = 1; r = 1000;}\
   else if(strstr(sns, "bt1120")) {w = 640; h = 360; fps = 60; r = 1000;}\
   else if(strstr(sns, "bt656")){w = 640; h = 512; fps = 60; r = 1000;}\
   else if(strstr(sns, "uvc")){w = 640; h = 512; fps = 60; r = 1000;}\
@@ -222,6 +222,11 @@ int venc_start(int start)
         venc.enSize = PIC_WIDTH(sdp.venc.width, sdp.venc.height);
         venc.u32BitRate = sdp.venc.bitrate;
         venc.u32FrameRate = sdp.venc.fps;
+      }
+      
+      if(strstr(p_cfg->snsname[i], "imx586-0-0-48") && venc.enPayLoad != PT_JPEG)
+      {
+        venc.VpssGrp = -1;
       }
     }
     
@@ -309,8 +314,16 @@ void mpp_ini_3403(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *ve
     }
     else if(strstr(cfg->snsname[i], "imx586"))
     {
-      strcpy(cfg->snsname[i], "imx586-0-0-48-5");
-      VPSS_BIND_VI(i, i, 0, i, 1, 0, PIC_8000x6000, PIC_640P);
+      if(codec_ipc.vi.fps == 30)
+      {  
+        strcpy(cfg->snsname[i], "imx586-0-0-8-30");
+        VPSS_BIND_VI(i, i, 0, i, 1, 1, PIC_3840x2160, PIC_640P);
+      }
+      else
+      {    
+        strcpy(cfg->snsname[i], "imx586-0-0-48-5");
+        VPSS_BIND_VI(i, i, 0, i, 1, 0, PIC_8000x6000, PIC_640P);
+      }
     }
     else 
     {
@@ -403,14 +416,20 @@ int mpp_start(gsf_bsp_def_t *def)
       
     gsf_mpp_vi_start(&vi);
     
-    #if 1
     {
       //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
       char uart_name[32] = {0};
 	    sprintf(uart_name, "/dev/%s", codec_ipc.lenscfg.uart);
-	    gsf_lens_start(0, uart_name);
+	    
+	    if(strstr(def->board.sensor[0], "imx586") && strstr(def->board.sensor[1], "imx415"))
+	    {
+	      gsf_lens_start(1, uart_name);
+	    }  
+	    else
+	    {
+	      gsf_lens_start(0, uart_name);
+	    }
   	}
-  	#endif
     
     // vpss start;
     {

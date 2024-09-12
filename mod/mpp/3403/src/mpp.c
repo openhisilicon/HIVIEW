@@ -68,6 +68,7 @@ static SAMPLE_MPP_SENSOR_T libsns_master[SNS_TYPE_BUTT] = {
     {MIPI_YUV422_half8M_60FPS_8BIT,          "yuv422-1-0-8-60",     NULL,                 NULL},
     {OV_OS04A10_2L_MIPI_4M_30FPS_10BIT,      "os04a10-2-0-4-30",  "libsns_os04a10_2l.so", "g_sns_os04a10_2l_obj"}, 
     {SONY_IMX586_MIPI_48M_5FPS_12BIT,        "imx586-0-0-48-5",  "libsns_imx586.so",      "g_sns_imx586_obj"},
+    {SONY_IMX586_MIPI_8M_30FPS_12BIT,        "imx586-0-0-8-30",  "libsns_imx586.so",      "g_sns_imx586_obj"},
     {SONY_IMX415_MIPI_8M_30FPS_12BIT,        "imx415-0-0-8-30",  "libsns_imx415.so",      "g_sns_imx415_obj"},
     {BT1120_YUV422_2M_60FPS_8BIT,            "bt1120-0-0-2-60",    NULL,                 NULL},
     {BT656_YUV422_0M_60FPS_8BIT,             "bt656-0-0-0-60",     NULL,                 NULL},
@@ -513,6 +514,15 @@ int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
 }
 
 
+//from sample_af.c;
+extern int sample_af_main(gsf_mpp_af_t *af);
+
+
+int gsf_mpp_af_start(gsf_mpp_af_t *af)
+{
+  return sample_af_main(af);
+}
+
 
 //vpss;
 extern hi_void sample_venc_vpss_deinit(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vpss_chan_cfg);
@@ -705,10 +715,12 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
       sample_print("Venc Start failed for %#x!\n", ret);
       goto EXIT;
   }
-
-  if ((ret = sample_comm_vpss_bind_venc(vpss_grp, vpss_chn, venc_chn)) != HI_SUCCESS) {
-      sample_print("sample_comm_vpss_bind_venc failed for %#x!\n", ret);
-      goto EXIT_VENC_H264_STOP;
+  if(vpss_grp >= 0)
+  {  
+    if ((ret = sample_comm_vpss_bind_venc(vpss_grp, vpss_chn, venc_chn)) != HI_SUCCESS) {
+        sample_print("sample_comm_vpss_bind_venc failed for %#x!\n", ret);
+        goto EXIT_VENC_H264_STOP;
+    }
   }
   
   return ret;
@@ -728,8 +740,10 @@ int gsf_mpp_venc_stop(gsf_mpp_venc_t *venc)
   hi_vpss_grp vpss_grp = venc->VpssGrp;
   hi_vpss_chn vpss_chn = venc->VpssChn;
   hi_venc_chn venc_chn = venc->VencChn;
-
-  sample_comm_vpss_un_bind_venc(vpss_grp, vpss_chn, venc_chn);
+  if(vpss_grp >= 0)
+  {  
+    sample_comm_vpss_un_bind_venc(vpss_grp, vpss_chn, venc_chn);
+  }
   sample_comm_venc_stop(venc_chn);
   return ret;
 }

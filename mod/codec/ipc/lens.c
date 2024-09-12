@@ -9,7 +9,9 @@
 #if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559)
 //The 3516dv300 implement is lens16x.c
 #elif defined(GSF_CPU_3519d)
-//The 3516dv500 implement is lens19d.c
+//The 3519dv500 implement is lens19d.c
+#elif defined(GSF_CPU_3403)
+//The 3403 implement is lens3403.c
 #else
 //The xxx not implement lensxxx.c
 #warning "xxx lens not implement"
