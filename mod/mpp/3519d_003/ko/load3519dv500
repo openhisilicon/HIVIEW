@@ -102,7 +102,7 @@ function insert_ko()
 
     # driver load
     insmod ot_osal.ko
-    insmod ot_mmz.ko anony=1 mmz_allocator=ot mmz=anonymous,0,$mmz_start,$mmz_size$1 mem_process_isolation=1 || report_error
+    insmod ot_mmz.ko anony=1 mmz_allocator=ot mmz=anonymous,0,$mmz_start,$mmz_size$1 mem_process_isolation=0 || report_error
     insmod ot_base.ko
     insmod ot_vb.ko
     insmod ot_vca.ko

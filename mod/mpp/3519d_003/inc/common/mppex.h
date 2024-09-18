@@ -24,6 +24,7 @@
  *  v MIPI_YUV422_2M_30FPS_8BIT_6CH
  *  v SONY_IMX327_MIPI_2M_30FPS_12BIT
  *  v SONY_IMX327_2L_MIPI_2M_30FPS_12BIT
+ *  v SONY_IMX678_MIPI_8M_30FPS_12BIT
  */
 
 #include "mpp.h"
@@ -62,5 +63,20 @@ int mppex_comm_vpss_bb(gsf_mpp_vpss_t *vpss, sample_venc_vpss_chn_attr *vpss_par
 int mppex_comm_vpss_ee(gsf_mpp_vpss_t *vpss, sample_venc_vpss_chn_attr *vpss_param);
 
 hi_video_frame_info* mppex_comm_vpss_send_bb(int VpssGrp, int VpssGrpPipe, hi_video_frame_info *pstVideoFrame);
+
+int mppex_comm_uvc_get(int idx, ot_video_frame_info *pstFrameInfo, int s32MilliSec);
+int mppex_comm_uvc_rel(int idx, ot_video_frame_info *pstFrameInfo);
+
+
+int mppex_hook_sns(gsf_mpp_cfg_t *cfg);
+int mppex_hook_destroy(void);
+
+typedef struct
+{
+  int data_seq;     // hi_vi_data_seq;
+  int width, height;// sns_size;
+  hi_rect crop;     // {x, y, width, height};
+}mppex_bt656_cfg_t;
+int mppex_comm_bt656_cfg(mppex_bt656_cfg_t *bt656);
 
 #endif //__mppex_h__

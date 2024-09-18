@@ -85,6 +85,8 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {MIPI_YUV422_2M_30FPS_8BIT_6CH,          "yuv422-0-0-2-30",   NULL,                    NULL}, //mipi_ad_6ch
     {SONY_IMX586_MIPI_48M_5FPS_12BIT,        "imx586-0-0-48-5",  "libsns_imx586.so",      "g_sns_imx586_obj"},
     {SONY_IMX586_MIPI_8M_30FPS_12BIT,        "imx586-0-0-8-30",  "libsns_imx586.so",      "g_sns_imx586_obj"},
+    {SONY_IMX678_MIPI_8M_30FPS_12BIT,        "imx678-0-0-8-30",  "libsns_imx678.so",      "g_sns_imx678_obj"},
+    {SONY_IMX585_MIPI_8M_30FPS_12BIT,        "imx585-0-0-8-30",  "libsns_imx585.so",      "g_sns_imx585_obj"},
   };
 
 
@@ -182,7 +184,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   //hook sensor name;
   if(strstr(cfg->snsname, "imx664") || strstr(cfg->snsname, "imx482") 
-    || strstr(cfg->snsname, "imx335") || strstr(cfg->snsname, "imx327"))  //37.125MHz
+    || strstr(cfg->snsname, "imx335") || strstr(cfg->snsname, "imx327")
+    || strstr(cfg->snsname, "imx678") || strstr(cfg->snsname, "imx585"))  //37.125MHz
     strncpy(snsname, "imx515", sizeof(snsname)-1);
   else if(strstr(cfg->snsname, "imx586"))             //24MHz
     strncpy(snsname, "os08a20", sizeof(snsname)-1);
@@ -217,7 +220,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   if(cfg->second && cfg->snscnt == 1)
   {
     SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT:
-                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT:
+                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT: //GD
+                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //GZ
                    (cfg->second == 3)?BT601_YUV422_0M_60FPS_8BIT:
                                       SENSOR1_TYPE;//sns0==sns1;
   }
@@ -907,6 +911,12 @@ int gsf_mpp_scene_start(char *path, int scenemode)
         return HI_FAILURE;
     }
 
+    ret = ot_scene_pause(HI_FALSE);
+    if (ret != HI_SUCCESS) {
+        printf("HI_SCENE_Resume failed\n");
+        return HI_FAILURE;
+    }
+    
     printf("The sceneauto is started\n");
     g_scenebEnable = 1;
     return ret;
@@ -1900,8 +1910,35 @@ int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect)
 //设置VO通道显示区域(位置&大小);
 int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority)
 {
-  int ret = 0;
-  return ret;
+    HI_S32 s32Ret = HI_SUCCESS;
+    hi_vo_chn_attr stChnAttr;
+ 
+    if(rect->width == 0 || rect->height == 0)
+    {
+      s32Ret = hi_mpi_vo_hide_chn(volayer, ch);
+      return s32Ret;
+    }
+    else 
+    {
+      s32Ret = hi_mpi_vo_show_chn(volayer, ch);
+    }
+    
+    stChnAttr.rect.x       = rect->x;
+    stChnAttr.rect.y       = rect->y;
+    stChnAttr.rect.width   = rect->width;
+    stChnAttr.rect.height  = rect->height;
+    stChnAttr.priority        = priority;
+    stChnAttr.deflicker_en    = HI_FALSE;
+
+    s32Ret = hi_mpi_vo_set_chn_attr(volayer, ch, &stChnAttr);
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("%s(%d):failed with %#x!\n", \
+               __FUNCTION__, __LINE__,  s32Ret);
+        return HI_FAILURE;
+    }
+    
+    return s32Ret;
 }
 
 static struct fb_bitfield s_r16 = {10, 5, 0};
