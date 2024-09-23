@@ -3,6 +3,17 @@
 
 #include "sample_comm.h"
 
+//second channel;
+typedef enum {
+  SECOND_DISABLE    = 0,
+  SECOND_BT656_PAL  = 1,
+  SECOND_BT656_NTSC = 2,
+  SECOND_BT656_512P = 3,
+  SECOND_BT656_288P = 4, 
+  SECOND_BT656_600P = 5,
+  SECOND_USB_GD     = 6,
+}SECOND_TYPE;
+
 //cfg;
 typedef struct {
   char  snsname[32];  // sensor imx335
@@ -31,6 +42,9 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 
 typedef struct {
@@ -138,6 +152,7 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 int gsf_mpp_scene_start(char *path, int scenemode);
 int gsf_mpp_scene_stop();
 
+
 typedef struct { // ==gsf_scene_ae_t
   float compensation_mul; // 0.5 - 1.5;
 }gsf_mpp_scene_ae_t;
@@ -225,12 +240,19 @@ typedef struct {
 
 typedef struct {
   int bEnable;
+  int s32DistortionRatio;
+}gsf_mpp_img_ldc_t;
+
+
+typedef struct {
+  int bEnable;
   int u8strength;
 }gsf_mpp_img_3dnr_t;
 
 typedef struct {
   int bEnable;
 }gsf_mpp_img_scene_t;
+
 
 // gsf_mpp_img_all_t == gsf_img_all_t;
 typedef struct {
@@ -245,7 +267,20 @@ typedef struct {
   gsf_mpp_img_drc_t   drc;
   gsf_mpp_img_ldci_t  ldci;
   gsf_mpp_img_3dnr_t  _3dnr;
+  gsf_mpp_img_ldc_t   ldc;
 }gsf_mpp_img_all_t;
+
+typedef struct {
+  int bFlip;
+  int bMirror;
+}gsf_mpp_img_flip_t;
+    
+typedef struct {
+  int bEnable;
+  int enMode;    //DIS_MODE_4_DOF_GME = 0 ;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+  int enPdtType; //DIS_PDT_TYPE_IPC = 0; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+}gsf_mpp_img_dis_t;
+
 
 enum {
   GSF_MPP_ISP_CTL_IR  = 0,    // 0: Day, 1: Night, x: gsf_mpp_ir_t
@@ -366,11 +401,12 @@ typedef struct {
     unsigned long long pts; // timestamp;
 }gsf_mpp_frm_attr_t;
 
+
 //发送视频数据到显示通道(创建VDEC通道)
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //发送音频数据到 audio 解码输出;
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr);
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
 
 //解码状态;
 typedef struct {
@@ -415,7 +451,6 @@ extern int SENSOR1_TYPE;
 extern SAMPLE_SNS_TYPE_E g_enSnsType[MAX_SENSOR_NUM];
 extern ISP_SNS_OBJ_S* g_pstSnsObj[MAX_SENSOR_NUM];
 ISP_SNS_OBJ_S* SAMPLE_COMM_ISP_GetSnsObj(HI_U32 u32SnsId);
-
 
 #define HI_ACODEC_TYPE_INNER //for audio;
 

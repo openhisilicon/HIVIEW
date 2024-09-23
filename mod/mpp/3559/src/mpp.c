@@ -326,6 +326,18 @@ int gsf_mpp_vi_stop()
   return s32Ret;
 }
 
+int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec)
+{
+  return HI_MPI_VPSS_SendFrame(VpssGrp, VpssGrpPipe, pstVideoFrame, s32MilliSec);
+}
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return -1;
+}
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return -1;
+}
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af)
 {
@@ -1763,7 +1775,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 
 
 //发送视频数据到指定ch;
-int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
   int err = 0;
   HI_S32 s32Ret = HI_SUCCESS;
@@ -1991,7 +2003,7 @@ int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 }
 
 
-int gsf_mpp_ao_asend(int aodev, int ch, char *data, gsf_mpp_frm_attr_t *attr)
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
 
   HI_S32 s32Ret = 0;
