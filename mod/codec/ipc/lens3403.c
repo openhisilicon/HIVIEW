@@ -464,11 +464,16 @@ int lens3403_uart_open(char *ttyAMA, int baudrate)
 {
   if(strstr(ttyAMA, "ttyAMA4"))
     system("bspmm 0x0102F0134 0x01;bspmm 0x0102F0138 0x01;"); //UART4 MUX
-  else 
+  else if(strstr(ttyAMA, "ttyAMA2"))
+    system("bspmm 0x0102F0070 0x01;bspmm 0x0102F0074 0x01;"); //UART2 MUX
+  else if(strstr(ttyAMA, "ttyAMA1"))
+    system("bspmm 0x0102F0060 0x01;bspmm 0x0102F0064 0x01;"); //UART1 MUX
+  else
     return -1;
     
   if(!ttyAMA || strlen(ttyAMA) < 1)
     return -1;
+    
   //O_NDELAY blocking read;
   serial_fd = open(ttyAMA, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
   if (serial_fd < 0)
