@@ -205,7 +205,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   {
     if(cfg->second == 1)
       sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor1 %s -sensor3 bt1120", path, snsname);
-    else if(cfg->second == 2)
+    else if(cfg->second >= 2 && cfg->second <= 9) //bt656-board need open sensor1 clk;
       //sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 bt656", path, snsname);
       sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 %s", path, snsname, snsname);
   }
@@ -219,11 +219,27 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT:
-                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT: //GD
-                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //GZ
-                   (cfg->second == 3)?BT601_YUV422_0M_60FPS_8BIT:
+    SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT://bt1120
+                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT: //GD-656
+                   (cfg->second == 3)?BT656_YUV422_0M_60FPS_8BIT: //GZ-656
+                   (cfg->second == 4)?SENSOR1_TYPE://sns0==sns1;  //USB-UVC
+                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //CUSTOM
+                   (cfg->second == 9)?BT601_YUV422_0M_60FPS_8BIT:
                                       SENSOR1_TYPE;//sns0==sns1;
+    if(cfg->second == 5) //CUSTOM
+    {
+      //you can add CUSTOM cfg for bt656 input;
+      mppex_bt656_cfg_t bt656 = {
+        .data_seq = HI_VI_DATA_SEQ_UYVY, //HI_VI_DATA_SEQ_YUYV
+        .width = 720,       // sensor-w: 720
+        .height = 288,      // sensor-h: 576
+        .crop.x = 0,        // valid-x: (720-640)/2
+        .crop.y = 0,        // valid-y: (576-512)/2
+        .crop.width = 720,  // valid-w: 640
+        .crop.height = 288, // valid-h: 512
+      };
+      mppex_comm_bt656_cfg(&bt656);
+    }
   }
   
   if(dl)
