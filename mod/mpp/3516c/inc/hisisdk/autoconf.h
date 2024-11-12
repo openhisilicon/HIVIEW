@@ -1,0 +1,429 @@
+/*
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
+ */
+#ifndef __AUTOCONF_H__
+#define __AUTOCONF_H__
+
+#define AUTOCONF_TIMESTAMP "2024-09-07 17:51:12 CST"
+
+/*
+ * General Setup
+ */
+#define CONFIG_HI3516CV610 1
+#define CONFIG_OT_CHIP_TYPE 0x3516c610
+#define CONFIG_OT_ARCH "hi3516cv610"
+#define CONFIG_SUBCHIP_HI3516CV610 1
+#define CONFIG_OT_SUBARCH "hi3516cv610"
+#define CONFIG_OT_SUBCHIP_TYPE 0x3516c610
+#define CONFIG_SMP 1
+#define CONFIG_ARM_ARCH_TYPE "smp"
+#define CONFIG_A7 1
+#define CONFIG_CPU_TYPE "a7"
+#define CONFIG_VERSION_ASIC 1
+#define CONFIG_LINUX_OS 1
+#define CONFIG_OS_TYPE "linux"
+#define CONFIG_KERNEL_SPACE 1
+#define CONFIG_DRIVER_SPACE_TYPE "kernel_space"
+#define CONFIG_GCC 1
+#define CONFIG_LINUX_5_10_y 1
+#define CONFIG_KERNEL_VERSION "linux-5.10.y"
+#define CONFIG_KERNEL_ARM_V01C02_LINUX_MUSLEABI 1
+#define CONFIG_OT_CROSS "arm-v01c02-linux-musleabi-"
+#define CONFIG_LIBC_TYPE "musl"
+#define CONFIG_KERNEL_BIT "KERNEL_BIT_32"
+#define CONFIG_USER_ARM_V01C02_LINUX_MUSLEABI 1
+#define CONFIG_OT_CROSS_LIB "arm-v01c02-linux-musleabi-"
+#define CONFIG_USER_BIT "USER_BIT_32"
+#define CONFIG_RELEASE_TYPE_RELEASE 1
+#define CONFIG_OT_RLS_MODE "OT_RELEASE"
+
+/*
+ * Media Modules Setup
+ */
+
+/*
+ * media audio config
+ */
+#define CONFIG_OT_AUDIO_SUPPORT 1
+#define CONFIG_OT_ACODEC_SUPPORT 1
+#define CONFIG_OT_ACODEC_VERSION "V752"
+#define CONFIG_OT_ACODEC_MAX_GAIN 50
+#define CONFIG_OT_ACODEC_MIN_GAIN 0
+#define CONFIG_OT_ACODEC_GAIN_STEP 2
+#define CONFIG_OT_ACODEC_FAST_POWER_SUPPORT 1
+#define CONFIG_OT_DOWNVQE_SUPPORT 1
+#define CONFIG_OT_TALKVQE_SUPPORT 1
+#define CONFIG_OT_RECORDVQE_SUPPORT 1
+#define CONFIG_OT_TALKVQEV2_SUPPORT 1
+#define CONFIG_OT_TALKVQEV2_WNR_SUPPORT 1
+#define CONFIG_OT_AUDIO_STATIC_REGISTER_SUPPORT 1
+#define CONFIG_OT_AUDIO_BCD_SUPPORT 1
+#define CONFIG_OT_AUDIO_BCD_V2_SUPPORT 1
+#define CONFIG_OT_AENC_SUPPORT 1
+#define CONFIG_OT_AENC_AAC_SUPPORT 1
+#define CONFIG_OT_AENC_MP3_SUPPORT 1
+#define CONFIG_OT_AENC_OPUS_SUPPORT 1
+#define CONFIG_OT_ADEC_SUPPORT 1
+#define CONFIG_OT_ADEC_AAC_SUPPORT 1
+#define CONFIG_OT_ADEC_MP3_SUPPORT 1
+#define CONFIG_OT_ADEC_OPUS_SUPPORT 1
+
+/*
+ * media base config
+ */
+
+/*
+ * media vb config
+ */
+#define CONFIG_OT_VB_EXTPOOL_SUPPORT 1
+#define CONFIG_OT_VB_SUPPLEMENT_MASK_SUPPORT 1
+
+/*
+ * media vca config
+ */
+#define CONFIG_OT_VCA_SUPPORT 1
+
+/*
+ * media chnl config
+ */
+#define CONFIG_OT_CHNL_SUPPORT 1
+
+/*
+ * media dis config
+ */
+
+/*
+ * media gdc config
+ */
+
+/*
+ * media hdmi config
+ */
+
+/*
+ * media isp config
+ */
+#define CONFIG_OT_ISP_SUPPORT 1
+#define CONFIG_OT_ISP_AF_SUPPORT 1
+#define CONFIG_OT_ISP_CR_SUPPORT 1
+#define CONFIG_OT_ISP_GCAC_SUPPORT 1
+#define CONFIG_OT_ISP_CA_SUPPORT 1
+#define CONFIG_OT_ISP_SPECAWB_SUPPORT 1
+#define CONFIG_OT_ISP_COLOR_SECTOR_SUPPORT 1
+
+/*
+ * media region config
+ */
+#define CONFIG_OT_REGION_SUPPORT 1
+#define CONFIG_OT_RGN_VGS_QUICKCOPY_SUPPORT 1
+#define CONFIG_OT_RGN_CORNER_RECT_SUPPORT 1
+#define CONFIG_OT_RGN_CORNER_RECT_SUPPORT_ACT_COVER 1
+#define CONFIG_OT_RGN_PIXEL_CLUT_MULTI_MAPPING 1
+
+/*
+ * media sys config
+ */
+#define CONFIG_OT_SYS_SUPPORT 1
+#define CONFIG_OT_SYS_SCALE_COEF_SUPPORT 1
+#define CONFIG_OT_SYS_VPSS_VENC_WRAP_SUPPORT 1
+#define CONFIG_SYS_CLK_CTRL_SUPPORT 1
+#define CONFIG_OT_SYS_VI_WRAP_SUPPORT 1
+#define CONFIG_OT_SYS_MEM_SEL_SUPPORT 1
+
+/*
+ * media tde config
+ */
+
+/*
+ * media vda config
+ */
+
+/*
+ * media vdec config
+ */
+#define CONFIG_VDEC_IP ""
+
+/*
+ * media venc config
+ */
+#define CONFIG_OT_VENC_SUPPORT 1
+#define CONFIG_OT_VENC_KERNEL_VERSION 1
+#define CONFIG_OT_H265E_SUPPORT 1
+#define CONFIG_OT_H265E_USERDATA_SUPPORT 1
+#define CONFIG_OT_H265E_INTRA_REFRESH_SUPPORT 1
+#define CONFIG_OT_H264E_SUPPORT 1
+#define CONFIG_OT_H264E_USERDATA_SUPPORT 1
+#define CONFIG_OT_H264E_INTRA_REFRESH_SUPPORT 1
+#define CONFIG_OT_SVAC3E_SUPPORT 1
+#define CONFIG_OT_JPEGE_SUPPORT 1
+#define CONFIG_OT_JPEGE_ROI_SUPPORT 1
+#define CONFIG_OT_MJPEGE_SUPPORT 1
+#define CONFIG_OT_JPEGE_DCF_SUPPORT 1
+#define CONFIG_OT_JPEGE_USERDATA_SUPPORT 1
+#define CONFIG_OT_VENC_LOWDELAY_SUPPORT 1
+#define CONFIG_OT_VENC_FRAMEBUF_RECYCLE_SUPPORT 1
+#define CONFIG_OT_VENC_VGS_SUPPORT 1
+#define CONFIG_OT_VENC_SVC_SUPPORT 1
+#define CONFIG_OT_VENC_SVC_V2_SUPPORT 1
+#define CONFIG_OT_VENC_SMARTP_SUPPORT 1
+#define CONFIG_OT_VENC_DUALP_SUPPORT 1
+#define CONFIG_OT_VENC_RCNREF_SHARE_SUPPORT 1
+#define CONFIG_OT_VENC_DEBREATH_SUPPORT 1
+#define CONFIG_OT_VENC_SKIPREF_SUPPORT 1
+#define CONFIG_OT_VENC_SCENE0_SUPPORT 1
+#define CONFIG_OT_VENC_SCENE1_SUPPORT 1
+#define CONFIG_OT_VENC_SCENE2_SUPPORT 1
+#define CONFIG_OT_RC_AVBR_SUPPORT 1
+#define CONFIG_OT_RC_QPMAP_SUPPORT 1
+#define CONFIG_OT_RC_QVBR_SUPPORT 1
+#define CONFIG_OT_RC_CVBR_SUPPORT 1
+#define CONFIG_OT_VENC_COMPOSITE_SUPPORT 1
+#define CONFIG_OT_VENC_OUT_ZME_SUPPORT 1
+#define CONFIG_OT_VENC_OTP_PERF_SUPPORT 1
+
+/*
+ * media vgs config
+ */
+#define CONFIG_OT_VGS_SUPPORT 1
+#define CONFIG_OT_VGS_LUMA_STAT_SUPPORT 1
+#define CONFIG_OT_VGS_CORNER_RECT_SUPPORT 1
+#define CONFIG_OT_VGS_CONVERT_CORNER_RECT_TO_LINE_SUPPORT 1
+#define CONFIG_OT_VGS_LOW_DELAY_SUPPORT 1
+#define CONFIG_OT_VGS_INPUT_LOW_DELAY_SUPPORT 1
+#define CONFIG_OT_VGS_LDC_SUPPORT 1
+#define CONFIG_OT_VGS_DMA_SUPPORT 1
+
+/*
+ * media vi config
+ */
+#define CONFIG_OT_VI_SUPPORT 1
+#define CONFIG_OT_VI_ALL_SUPPORT 1
+#define CONFIG_OT_VI_DEV_GENERATE_TIMING 1
+#define CONFIG_OT_VI_DEV_GENERATE_DATA 1
+#define CONFIG_OT_VI_VIRT_PIPE 1
+#define CONFIG_OT_VI_PIPE_POST_CROP 1
+#define CONFIG_OT_VI_PIPE_DUMP_FRAME 1
+#define CONFIG_OT_VI_PIPE_SEND_FRAME 1
+#define CONFIG_OT_VI_PIPE_INTERRUPT_EN 1
+#define CONFIG_OT_VI_PIPE_LOW_DELAY 1
+#define CONFIG_OT_VI_PIPE_FRAME_INTERRUPT_TYPE 1
+#define CONFIG_OT_VI_PIPE_GET_COMPRESS_PARAM 1
+#define CONFIG_OT_VI_PIPE_USER_PIC 1
+#define CONFIG_OT_VI_PIPE_SPLIT_CMP 1
+#define CONFIG_OT_VI_PIPE_FPN 1
+#define CONFIG_OT_VI_PIPE_BNR 1
+#define CONFIG_OT_VI_PIPE_VNR 1
+#define CONFIG_OT_VI_PIPE_VNR_STT 1
+#define CONFIG_OT_VI_PIPE_ONLINE_CLK_SEL 1
+#define CONFIG_OT_VI_CHN_LOW_DELAY 1
+#define CONFIG_OT_VI_CHN_ROTATION 1
+#define CONFIG_OT_VI_CHN_LDC 1
+#define CONFIG_OT_VI_EXT_CHN 1
+#define CONFIG_OT_VI_DISTRIBUTE_GRP 1
+#define CONFIG_OT_VI_PTS 1
+
+/*
+ * media vo config
+ */
+
+/*
+ * media vpss config
+ */
+#define CONFIG_OT_VPSS_SUPPORT 1
+
+/*
+ * vpss online config
+ */
+#define CONFIG_OT_VPSS_VIPROC_VPSS_ONLINE_SUPPORT 1
+#define CONFIG_OT_VPSS_ONLINE_SUPPORT 1
+#define CONFIG_OT_VPSS_SLAVE_SUPPORT 1
+
+/*
+ * vpss 3dnr config
+ */
+
+/*
+ * vpss rgn config
+ */
+
+/*
+ * vpss grp rgn config
+ */
+#define CONFIG_OT_VPSS_CORNER_RECT_SUPPORT 1
+
+/*
+ * vpss chn rgn config
+ */
+#define CONFIG_OT_VPSS_RGN_ON_CHN_SUPPORT 1
+#define CONFIG_OT_VPSS_COVER_SUPPORT 1
+#define CONFIG_OT_VPSS_COVER_RECT_SUPPORT 1
+#define CONFIG_OT_VPSS_COVER_HOLLOW_SUPPORT 1
+#define CONFIG_OT_VPSS_BUFFER_REUSE_SUPPORT 1
+#define CONFIG_OT_VPSS_LOW_DELAY_SUPPORT 1
+#define CONFIG_OT_VPSS_EXT_CHN_SUPPORT 1
+#define CONFIG_OT_VPSS_CHN_CROP_SUPPORT 1
+#define CONFIG_OT_VPSS_CHN_STRIDE_ALIGN_SUPPORT 1
+
+/*
+ * vpss gdc config
+ */
+#define CONFIG_OT_VPSS_GDC_SUPPORT 1
+
+/*
+ * vpss grp gdc config
+ */
+
+/*
+ * vpss chn gdc config
+ */
+#define CONFIG_OT_VPSS_CHN_GDC_SUPPORT 1
+#define CONFIG_OT_VPSS_CHN_LDC_SUPPORT 1
+#define CONFIG_OT_VPSS_CHN_LDC_V3_SUPPORT 1
+#define CONFIG_OT_VPSS_GRP_SVC_SUPPORT 1
+
+/*
+ * media vpp config
+ */
+#define CONFIG_OT_VPP_SUPPORT 1
+#define CONFIG_OT_VPP_VI_SUPPORT 1
+#define CONFIG_OT_VPP_COVEREX_RATIO_SUPPORT 1
+#define CONFIG_OT_VPP_CHN_ROTATION_SUPPORT 1
+
+/*
+ * media dcc config
+ */
+
+/*
+ * media security_subsys Config
+ */
+#define CONFIG_OT_SECURITY_SUBSYS_SUPPORT 1
+#define CONFIG_OT_CIPHER_SUPPORT 1
+
+/*
+ * media gfbg Config
+ */
+
+/*
+ * media ot_syslink Config
+ */
+
+/*
+ * media pciv Config
+ */
+
+/*
+ * media avs lut Config
+ */
+
+/*
+ * media avs convert Config
+ */
+
+/*
+ * media pos_query Config
+ */
+
+/*
+ * media snap Config
+ */
+
+/*
+ * media photo Config
+ */
+
+/*
+ * media heif Config
+ */
+
+/*
+ * media svp Config
+ */
+#define CONFIG_OT_SVP_SUPPORT 1
+#define CONFIG_OT_SVP_IVE_NPU 1
+#define CONFIG_OT_SVP_IVE_CSC 1
+#define CONFIG_OT_SVP_IVE_NCC 1
+#define CONFIG_OT_SVP_IVE_LBP 1
+#define CONFIG_OT_SVP_IVE_NORM_GRAD 1
+#define CONFIG_OT_SVP_IVE_ST_CANDI_CORNER 1
+#define CONFIG_OT_SVP_IVE_RESIZE 1
+#define CONFIG_OT_SVP_IVE_PERSP_TRANS 1
+#define CONFIG_OT_SVP_MD 1
+#define CONFIG_OT_SVP_NPU_V2R2 1
+#define CONFIG_OT_SVP_NPU_V2R2_MAC_RATIO 1
+#define CONFIG_OT_SVP_NPU_V2R2_SRAM_REUSE 1
+#define CONFIG_OT_SVP_NPU_V2R2_STREAM_BIND_CONTEXT 1
+
+/*
+ * media motionfusion config
+ */
+
+/*
+ * media mcf Config
+ */
+
+/*
+ * media securec Config
+ */
+#define CONFIG_OT_SECUREC_SUPPORT 1
+
+/*
+ * media irq config
+ */
+
+/*
+ * media proc config
+ */
+
+/*
+ * media uvc config
+ */
+#define CONFIG_OT_UVC_SUPPORT 1
+
+/*
+ * media smmz agent config
+ */
+
+/*
+ * media pm Config
+ */
+#define CONFIG_OT_PM_SUPPORT 1
+#define CONFIG_OT_PM_TEMP_COMP_SUPPORT 1
+
+/*
+ * media devstat config
+ */
+#define CONFIG_OT_DEVSTAT_SUPPORT 1
+
+/*
+ * Device Driver Setup
+ */
+
+/*
+ * drv config
+ */
+#define CONFIG_DRV 1
+#define CONFIG_EXTDRV 1
+#define CONFIG_INTERDRV 1
+#define CONFIG_OT_USER 1
+#define CONFIG_MIPI_RX 1
+#define CONFIG_OT_ADC 1
+#define CONFIG_OT_LSADC 1
+#define CONFIG_OT_WDG 1
+#define CONFIG_OT_SYSCFG 1
+
+/*
+ * Debug Config
+ */
+
+/*
+ * GDB  config
+ */
+#define CONFIG_OT_GDB_NO 1
+#define CONFIG_OT_GDB "n"
+#define CONFIG_OT_PROC_SHOW_SUPPORT 1
+#define CONFIG_OT_LOG_TRACE_SUPPORT 1
+#define CONFIG_OT_LOG_TRACE_ALL 1
+#define CONFIG_OT_LOG_TRACE_LEVEL 7
+
+#endif /* __AUTOCONF_H__ */
+

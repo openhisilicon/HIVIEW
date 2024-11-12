@@ -1,0 +1,280 @@
+#!/bin/sh
+# Usage: ./load3516cv610_10b[ -r|-i|-a ] [ -sensor0~1 ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#         -a : rmmod all moules and then insmod them
+# -sensor0-1 : sensor0~sensor1 config, default: sc4336p
+#    ir_auto : ir_auto 0 or 1, default:0
+#    profile : sys module param, range[0 - 0]
+# e.g: ./load3516cv610_10b -a -sensor0 sc4336p
+
+####### select sensor type for your test ########################
+####      sc4336p              ####
+####      gc4023               ####
+####      sc450ai              ####
+####      sc500ai              ####
+####      os04d10              ####
+####      sc431hai             ####
+####      bt1120/bt656/bt601   ####
+####      mipi_ad              ####
+####################Variables Definition##########################
+
+SNS_TYPE0=sc4336p;               # sensor type
+SNS_TYPE1=sc4336p;               # sensor type
+SYS_PROFILE=0
+IR_AUTO=0
+BOARD=dmeb_qfn;                  # dmeb_qfn dmeb_bga
+# DDR start:    0x40000000
+# kernel start: 0x40000000
+# 32M, os mem
+# MMZ start:    0x42000000
+# 32M, mmz mem
+
+mmz_start=0x42000000;         # mmz start addr, default:0x42000000 (0x40000000+0x2000000(OS))
+mmz_size=32M;               # mmz size, default:32M (64M-32M)
+##################################################################
+
+function report_error()
+{
+    echo "******* Error: There's something wrong, please check! *****"
+    exit 1
+}
+
+function insert_audio()
+{
+    insmod ot_aio.ko
+    insmod ot_ai.ko
+    insmod ot_ao.ko
+    insmod ot_aenc.ko
+    insmod ot_adec.ko
+    insmod ot_acodec.ko
+}
+
+function remove_audio()
+{
+    rmmod ot_acodec
+    rmmod ot_adec
+    rmmod ot_aenc
+    rmmod ot_ao
+    rmmod ot_ai
+    rmmod ot_aio
+}
+
+function insert_security_subsys()
+{
+    insmod ot_cipher.ko
+    insmod ot_km.ko
+}
+
+function remove_security_subsys()
+{
+    rmmod ot_km.ko
+    rmmod ot_cipher.ko
+}
+
+function insert_ko()
+{
+    # sys config
+    insmod sys_config.ko sensors=sns0=$SNS_TYPE0,sns1=$SNS_TYPE1 board=$BOARD ir_auto=$IR_AUTO
+
+    # driver load
+    insmod ot_osal.ko proc_show=0
+    insmod ot_mmz.ko anony=1 mmz_allocator=ot mmz=anonymous,0,$mmz_start,$mmz_size mem_process_isolation=1 || report_error
+    insmod ot_base.ko logmpp_show=0
+    insmod ot_vb.ko
+    insmod ot_vca.ko
+    insmod ot_sys.ko profile=$SYS_PROFILE
+    insmod ot_rgn.ko
+    insmod ot_vpp.ko
+    insmod ot_vgs.ko
+    insmod ot_vpss.ko
+    insmod ot_vi.ko
+    insmod ot_isp.ko
+    insmod ot_chnl.ko
+    insmod ot_rc.ko
+    insmod ot_venc.ko g_venc_max_chn_num=8
+    insmod ot_h264e.ko
+    insmod ot_h265e.ko
+    insmod ot_svac3e.ko
+    insmod ot_jpege.ko
+    insmod ot_svp_npu.ko
+    insmod ot_ive.ko save_power=1
+    insmod extdrv/ot_pwm.ko
+    insmod extdrv/ot_piris.ko
+    insmod extdrv/ot_sensor_i2c.ko
+    # insmod extdrv/ot_sensor_spi.ko
+
+    insert_audio
+    insmod ot_mipi_rx.ko
+    # insmod ot_user.ko
+    # insmod ot_uvc.ko
+    insmod ot_pm.ko
+    insert_security_subsys
+
+}
+
+function remove_ko()
+{
+    remove_security_subsys
+    rmmod ot_pm
+    # rmmod ot_uvc
+    # rmmod ot_user
+    rmmod ot_mipi_rx
+
+    remove_audio
+    #rmmod ot_sensor_spi &> /dev/null
+    rmmod ot_sensor_i2c &> /dev/null
+    rmmod ot_piris
+    rmmod ot_pwm
+    rmmod ot_ive
+    rmmod ot_svp_npu
+    rmmod ot_jpege
+    rmmod ot_h265e
+    rmmod ot_svac3e
+    rmmod ot_h264e
+    rmmod ot_venc
+    rmmod ot_rc
+    rmmod ot_chnl
+    rmmod ot_vpss
+    rmmod ot_isp
+    rmmod ot_vi
+    rmmod ot_vgs
+    rmmod ot_vpp
+    rmmod ot_rgn
+    rmmod ot_sys
+    rmmod ot_vca
+    rmmod ot_vb
+    rmmod ot_base
+    rmmod ot_mmz
+    rmmod ot_osal
+
+    rmmod sys_config
+}
+
+load_usage()
+{
+    echo "Usage:  $0 [-option] [-sensor0~1] "
+    echo "options:"
+    echo "    -i                       insert modules"
+    echo "    -r                       remove modules"
+    echo "    -a                       remove modules first, then insert modules"
+    echo "    -sensor0~1 sensor_name   config sensor type    [default: sc4336p]"
+    echo "    -mmz_start               config MMZ start addr [default: 0x42000000]"
+    echo "    -mmz_size                config MMZ mem size [unit: M, default: 32M]"
+    echo "    -ir_auto                 config ir_auto enable [default: 0]"
+    echo "    -profile                 config sys_profile [default: 0]"
+    echo "    -h                       help information"
+    echo -e "Available sensors:sc4336p gc4023 sc450ai sc500ai bt1120/bt656/bt601"
+    echo -e "for example: $0 -i -sensor0 sc4336p -sensor1 sc4336p -mmz_start 0x42000000 -mmz_size 32M -ir_auto 1\n"
+}
+
+b_arg_insmod=0
+b_arg_remove=0
+function parse_arg()
+{
+    ######################parse arg###################################
+    b_arg_sensor0=0
+    b_arg_sensor1=0
+    b_arg_mmz_start=0
+    b_arg_mmz_size=0
+    b_arg_ir_auto=0
+    b_arg_profile=0
+
+    for arg in $@
+    do
+        if [ $b_arg_sensor0 -eq 1 ] ; then
+            b_arg_sensor0=0;
+            SNS_TYPE0=$arg;
+        fi
+        if [ $b_arg_sensor1 -eq 1 ] ; then
+            b_arg_sensor1=0;
+            SNS_TYPE1=$arg;
+        fi
+
+        if [ $b_arg_ir_auto -eq 1 ] ; then
+            b_arg_ir_auto=0;
+            IR_AUTO=$arg;
+        fi
+
+        if [ $b_arg_mmz_start -eq 1 ] ; then
+            b_arg_mmz_start=0;
+            mmz_start=$arg;
+
+            if [ -z $mmz_start ]; then
+                echo "[error] mmz_start is null"
+                exit;
+            fi
+        fi
+
+        if [ $b_arg_mmz_size -eq 1 ] ; then
+            b_arg_mmz_size=0;
+            mmz_size=$arg;
+
+            if [ -z $mmz_size ]; then
+                echo "[error] mmz_size is null"
+                exit;
+            fi
+        fi
+
+        if [ $b_arg_profile -eq 1 ] ; then
+            b_arg_profile=0;
+            SYS_PROFILE=$arg;
+        fi
+
+        case $arg in
+            "-i")
+                b_arg_insmod=1;
+                ;;
+            "-r")
+                b_arg_remove=1;
+                ;;
+            "-a")
+                b_arg_insmod=1;
+                b_arg_remove=1;
+                ;;
+            "-h")
+                load_usage;
+                ;;
+            "-sensor0")
+                b_arg_sensor0=1;
+                ;;
+            "-sensor")
+                b_arg_sensor0=1;
+                ;;
+            "-sensor1")
+                b_arg_sensor1=1;
+                ;;
+            "-ir_auto")
+                b_arg_ir_auto=1;
+                ;;
+            "-mmz_size")
+                b_arg_mmz_size=1;
+                ;;
+            "-mmz_start")
+                b_arg_mmz_start=1;
+                ;;
+            "-profile")
+                b_arg_profile=1;
+                ;;
+        esac
+    done
+    #######################parse arg end########################
+}
+
+if [ $# -lt 1 ]; then
+    load_usage;
+    exit 0;
+fi
+
+parse_arg $@
+
+#######################Action###############################
+if [ $b_arg_remove -eq 1 ]; then
+    remove_ko;
+fi
+
+if [ $b_arg_insmod -eq 1 ]; then
+    cd ../
+    insert_ko;
+    cd -
+fi

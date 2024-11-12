@@ -1,0 +1,20 @@
+export GSF_CPU_ARCH=3516c
+export GSF_DEV_TYPE=ipc
+export GSF_HOME=`pwd`
+export GSF_CC="arm-v01c02-linux-musleabi-gcc -fPIC"
+export GSF_AR=arm-v01c02-linux-musleabi-ar
+export GSF_CFLAGS="-fPIC -DGSF_CPU_3516c -fstack-protector-strong -ffunction-sections -fdata-sections -Os -mthumb -fno-aggressive-loop-optimizations -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4 -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fsigned-char -DUSER_BIT_32 -DKERNEL_BIT_32 -DOT_RELEASE -Wno-date-time -lstdc++ -lpthread -lm -ldl"
+
+export GSF_LDFLAGS="-fno-common -rdynamic -shared ${GSF_CFLAGS}"
+
+export GSF_EXECFLAGS="-fPIE -pie -s -Wall"
+
+if [ ! -d ${GSF_HOME}/lib/${GSF_CPU_ARCH} ]
+then
+	mkdir -p ${GSF_HOME}/lib/${GSF_CPU_ARCH}
+fi
+
+if [ ! -d ${GSF_HOME}/bin/${GSF_CPU_ARCH} ]
+then
+	mkdir -p ${GSF_HOME}/bin/${GSF_CPU_ARCH}
+fi

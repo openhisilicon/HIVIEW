@@ -82,6 +82,11 @@ LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lsecurec \
         -lhi_mpi_audio -lvoice_engine -lupvqe -ldnvqe -lhi_mpi_audio_adp -lopus -lvqe_res -lvqe_record -lvqe_hpf -lvqe_anr -lvqe_aec -lvqe_agc -lvqe_eq -lvqe_talkv2 \
         -laac_dec -laac_enc -laac_comm -laac_sbr_dec -laac_sbr_enc -lstdc++ -lhi_tde -lhi_mpi_ive -lmp3_dec -lmp3_enc -lmp3_lame \
         -lopencv_core -lopencv_imgcodecs -lopencv_imgproc
+else ifeq ($(GSF_CPU_ARCH), 3516c)
+LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lsecurec \
+        -lhi_mpi -lhi_mpi_sysbind -lhi_mpi_sysmem -lhi_mpi_ae -lhi_mpi_isp -lot_mpi_isp -lhi_mpi_awb -ldehaze -lextend_stats -ldrc -lldci -lbnr -lcalcflicker -lir_auto \
+        -lhi_mpi_ive -lacs -lsvp_acl -lhi_mpi_km -lprotobuf-c -lhi_mpi_audio -lvoice_engine -lupvqe -ldnvqe -lhi_mpi_audio_adp -lmp3_dec -lmp3_enc -lmp3_lame -lhi_ivs_md \
+        -lopus -lvqe_res -lvqe_record -lvqe_hpf -lvqe_anr -lvqe_aec -lvqe_agc -lvqe_eq -lvqe_talkv2 -laac_dec -laac_enc -laac_comm -laac_sbr_dec -laac_sbr_enc 
 endif
 
 
