@@ -689,7 +689,7 @@ adec_ao_err0:
 }
 
 /* function : file -> adec -> ao */
-hi_s32 sample_audio_adec_ao(hi_void)
+hi_s32 sample_audio_adec_ao(gsf_mpp_frm_attr_t *attr)
 {
     hi_s32 ret;
     hi_u32 ao_chn_cnt;
@@ -700,6 +700,23 @@ hi_s32 sample_audio_adec_ao(hi_void)
     const hi_adec_chn ad_chn = 0;
 
     sample_audio_adec_ao_init_param(&aio_attr, &ao_dev);
+
+    if(attr)
+    {
+      aio_attr.sample_rate  = HI_AUDIO_SAMPLE_RATE_48000;
+      aio_attr.bit_width    = HI_AUDIO_BIT_WIDTH_16;
+      aio_attr.work_mode    = HI_AIO_MODE_I2S_MASTER;
+      aio_attr.snd_mode     = HI_AUDIO_SOUND_MODE_STEREO;
+      aio_attr.expand_flag  = 0;
+      aio_attr.frame_num    = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
+      aio_attr.point_num_per_frame = HI_AACLC_SAMPLES_PER_FRAME;
+      aio_attr.chn_cnt      = 2; /* 2:chn num */
+      ao_dev = SAMPLE_AUDIO_INNER_AO_DEV;
+      aio_attr.clk_share  = 0;
+      aio_attr.i2s_type   = HI_AIO_I2STYPE_INNERCODEC;
+      
+      g_payload_type = attr->etype;
+    }
 
     adec_chn_cnt = aio_attr.chn_cnt >> ((hi_u32)aio_attr.snd_mode);
     ret = sample_comm_audio_start_adec(adec_chn_cnt, &aio_attr, g_payload_type);
@@ -721,7 +738,14 @@ hi_s32 sample_audio_adec_ao(hi_void)
         goto adec_ao_err1;
     }
 
-    sample_audio_adec_ao_inner(ao_dev, ao_chn, ad_chn);
+    if(attr == NULL)
+    {  
+      sample_audio_adec_ao_inner(ao_dev, ao_chn, ad_chn);
+    }
+    else 
+    {
+      return sample_comm_audio_ao_bind_adec(ao_dev, ao_chn, ad_chn);
+    }
 
 adec_ao_err1:
     ret = sample_comm_audio_stop_ao(ao_dev, ao_chn_cnt, g_aio_resample);
@@ -997,19 +1021,35 @@ ai_aenc_err2:
  * function : ai -> aenc -> file
  *                       -> adec -> ao
  */
-hi_s32 sample_audio_ai_aenc(hi_void)
+hi_s32 sample_audio_ai_aenc(gsf_mpp_aenc_t *aenc)
 {
     hi_s32 ret;
     hi_audio_dev ai_dev;
     hi_audio_dev ao_dev;
     hi_u32 ai_chn_cnt;
     hi_u32 aenc_chn_cnt;
-    hi_bool send_adec = HI_TRUE;
+    hi_bool send_adec = (aenc)?HI_FALSE:HI_TRUE;
     hi_aio_attr aio_attr = {0};
     sample_comm_ai_vqe_param ai_vqe_param = {0};
 
     sample_audio_ai_aenc_init_param(&aio_attr, &ai_dev, &ao_dev);
 
+    #if 1
+    aio_attr.sample_rate  = aenc->sp; //HI_AUDIO_SAMPLE_RATE_48000
+    aio_attr.bit_width    = HI_AUDIO_BIT_WIDTH_16;
+    aio_attr.work_mode    = HI_AIO_MODE_I2S_MASTER;
+    aio_attr.snd_mode     = aenc->stereo; //HI_AUDIO_SOUND_MODE_STEREO;
+    aio_attr.expand_flag  = 0;
+    aio_attr.frame_num    = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
+    aio_attr.point_num_per_frame = (aenc->enPayLoad==PT_AAC)?HI_AACLC_SAMPLES_PER_FRAME:SAMPLE_AUDIO_POINT_NUM_PER_FRAME;//HI_AACLC_SAMPLES_PER_FRAME;
+    aio_attr.chn_cnt      = 1<<aenc->stereo; /* 2:chn num */
+    //ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
+    //ao_dev = SAMPLE_AUDIO_INNER_AO_DEV;
+    //aio_attr.clk_share  = 1;
+    //aio_attr.i2s_type   = HI_AIO_I2STYPE_INNERCODEC; //HI_AIO_I2STYPE_EXTERN
+    g_payload_type = aenc->enPayLoad;
+    #endif
+    
     /* step 1: start ai */
     ai_chn_cnt = aio_attr.chn_cnt;
     sample_audio_set_ai_vqe_param(&ai_vqe_param, g_out_sample_rate, g_aio_resample, HI_NULL, 0);
@@ -1040,7 +1080,34 @@ hi_s32 sample_audio_ai_aenc(hi_void)
         goto ai_aenc_err4;
     }
 
+#if 0
     sample_audio_ai_aenc_inner(send_adec, &aio_attr, ao_dev);
+#else
+    hi_u32 i, j;
+    hi_aenc_chn ae_chn;
+    hi_adec_chn ad_chn;
+   
+    //IN1R => IN1L_R
+    hi_audio_track_mode track_mode = HI_AUDIO_TRACK_BOTH_LEFT; // maohw HI_AUDIO_TRACK_EXCHANGE;
+    ret = hi_mpi_ai_set_track_mode(ai_dev, track_mode);
+    
+    hi_s32 adec_chn_cnt = aio_attr.chn_cnt >> ((hi_u32)aio_attr.snd_mode);
+    for (i = 0; i < adec_chn_cnt; i++) {
+        ae_chn = i;
+        ad_chn = i;
+        extern hi_s32 sample_comm_audio_set_aenc_cb(hi_aenc_chn ae_chn, hi_payload_type pt, int (*cb)(hi_aenc_chn ae_chn, hi_payload_type pt, hi_audio_stream* stream, void* uargs), void *uargs);
+        sample_comm_audio_set_aenc_cb(ae_chn, g_payload_type, aenc->cb, aenc->uargs);
+        ret = sample_comm_audio_create_thread_aenc_adec(ae_chn, ad_chn, NULL);
+        if (ret != HI_SUCCESS) {
+            sample_dbg(ret);
+            for (j = 0; j < i; j++) {
+                sample_comm_audio_destroy_thread_aenc_adec(j);
+            }
+            return HI_FAILURE;
+        }
+    }
+    return ret;
+#endif
 
     sample_audio_aenc_unbind_ai(ai_dev, aenc_chn_cnt);
 
@@ -1059,6 +1126,35 @@ ai_aenc_err5:
 ai_aenc_err6:
     return ret;
 }
+
+
+hi_s32 sample_audio_ai_aenc_stop(gsf_mpp_aenc_t *aenc)
+{
+    hi_s32 ret;
+    hi_s32 ai_chn_cnt = 1<<aenc->stereo;
+    hi_s32 adec_chn_cnt = ai_chn_cnt>>aenc->stereo;
+    hi_s32 aenc_chn_cnt = ai_chn_cnt>>aenc->stereo;
+    hi_audio_dev ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
+    hi_audio_dev ao_dev = SAMPLE_AUDIO_INNER_AO_DEV;
+    
+    //sample_comm_audio_destroy_thread_aenc_adec
+    sample_audio_adec_unbind_aenc(adec_chn_cnt);
+    
+    sample_audio_aenc_unbind_ai(ai_dev, aenc_chn_cnt);
+
+    ret = sample_comm_audio_stop_aenc(aenc_chn_cnt);
+    if (ret != HI_SUCCESS) {
+        sample_dbg(ret);
+    }
+
+    ret = sample_comm_audio_stop_ai(ai_dev, ai_chn_cnt, g_aio_resample, HI_FALSE);
+    if (ret != HI_SUCCESS) {
+        sample_dbg(ret);
+    }
+    return ret;
+}
+
+
 
 static hi_void sample_audio_ai_to_ext_resample_init_param(hi_aio_attr *aio_attr, hi_audio_dev *ai_dev)
 {
@@ -1293,9 +1389,13 @@ static hi_void sample_audio_ai_ao_inner(hi_audio_dev ai_dev, hi_ai_chn ai_chn,
         }
     }
 
+#if 0
     printf("\nplease press twice ENTER to exit this sample\n");
     smaple_audio_getchar();
     smaple_audio_getchar();
+#else
+    while(1) sleep(1);
+#endif
 
     if (g_ao_volume_ctrl == HI_TRUE) {
         ret = sample_comm_audio_destroy_thread_ao_vol_ctrl(ao_dev);
@@ -1346,6 +1446,10 @@ hi_s32 sample_audio_ai_ao(hi_void)
         sample_dbg(ret);
         goto ai_ao_err1;
     }
+
+    //IN1R => IN1L_R
+    hi_audio_track_mode track_mode = HI_AUDIO_TRACK_BOTH_LEFT; // maohw HI_AUDIO_TRACK_EXCHANGE;
+    ret = hi_mpi_ai_set_track_mode(ai_dev, track_mode);
 
     sample_audio_ai_ao_inner(ai_dev, ai_chn, ao_dev, ao_chn);
 
@@ -1768,11 +1872,11 @@ static hi_void main_inner(hi_u32 index)
             break;
         }
         case SAMPLE_INDEX_1: {
-            sample_audio_ai_aenc();
+            sample_audio_ai_aenc(NULL);
             break;
         }
         case SAMPLE_INDEX_2: {
-            sample_audio_adec_ao();
+            sample_audio_adec_ao(NULL);
             break;
         }
         case SAMPLE_INDEX_3: {
@@ -1954,4 +2058,52 @@ hi_s32 sample_audio_main(int argc, char *argv[])
     sample_comm_audio_exit();
 
     return ret;
+}
+
+
+
+hi_s32 sample_audio_init()
+{
+    hi_s32 ret;
+    
+#if defined(OT_VQE_USE_STATIC_MODULE_REGISTER)
+    ret = sample_audio_register_vqe_module();
+    if (ret != HI_SUCCESS) {
+        return HI_FAILURE;
+    }
+#endif
+
+    ret = sample_comm_audio_init();
+    if (ret != HI_SUCCESS) {
+        printf("%s: audio init failed with %d!\n", __FUNCTION__, ret);
+        return HI_FAILURE;
+    }
+
+    hi_mpi_aenc_aac_init();
+    hi_mpi_adec_aac_init();
+
+    hi_mpi_aenc_mp3_init();
+    hi_mpi_adec_mp3_init();
+
+    hi_mpi_aenc_opus_init();
+    hi_mpi_adec_opus_init();
+    
+    return 0;
+}
+
+
+hi_s32 sample_audio_deinit()
+{
+    hi_mpi_aenc_aac_deinit();
+    hi_mpi_adec_aac_deinit();
+
+    hi_mpi_aenc_mp3_deinit();
+    hi_mpi_adec_mp3_deinit();
+
+    hi_mpi_aenc_opus_deinit();
+    hi_mpi_adec_opus_deinit();
+
+    sample_comm_audio_exit();
+
+    return 0;
 }

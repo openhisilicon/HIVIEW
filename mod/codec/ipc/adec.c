@@ -1,6 +1,6 @@
 //Test audio decoding and output
 
-#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3519d)
+#if defined(GSF_CPU_3516d) || defined(GSF_CPU_3559) || defined(GSF_CPU_3519d)  || defined(GSF_CPU_3516c)
 
 #include "fw/comm/inc/proc.h"
 #include "codec.h"
@@ -10,7 +10,7 @@
 
 #include "inc/frm.h"
 
-#if defined(GSF_CPU_3519d)
+#if defined(GSF_CPU_3519d) || defined(GSF_CPU_3516c)
 static int aodev = SAMPLE_AUDIO_INNER_AO_DEV;
 #else
 static int aodev = SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
@@ -62,7 +62,7 @@ int adec_start()
   //////// test audio dec => ao //////// 
   static char adec_filename[256] = {0};
   proc_absolute_path(adec_filename);
-  sprintf(adec_filename, "%s/../cfg/audio2ch48k.mpa", adec_filename); //aac-lc;
+  strcat(adec_filename, "/../cfg/audio2ch48k.mpa"); //aac-lc;
   if (access(adec_filename, 0) < 0)
   {
     return -1;

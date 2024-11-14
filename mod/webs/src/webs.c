@@ -129,11 +129,12 @@ int main(int argc, char *argv[])
   }
   info("cfg.port:%d, cfg.auth:%d\n", webs_cfg.port, webs_cfg.auth);
 
-  //add reclink to /mnt/rec00000001/data;
+  //symlink() reclink to /mnt/rec00000001/data;
   char reclink[128] = {0};
   char home_path[128] = {0};
   proc_absolute_path(home_path);
   sprintf(reclink, "%s/../www/rec", home_path);
+
   if(access(reclink, 0) == -1)
   {
     char cmdstr[256] = {0};

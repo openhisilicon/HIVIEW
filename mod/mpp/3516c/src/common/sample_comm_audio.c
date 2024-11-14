@@ -34,7 +34,7 @@
 #define AUDIO_ADPCM_TYPE HI_ADPCM_TYPE_DVI4 /* ADPCM_TYPE_IMA, ADPCM_TYPE_DVI4 */
 #define G726_BPS HI_MEDIA_G726_40K          /* MEDIA_G726_16K, MEDIA_G726_24K ... */
 
-#define AUDIO_MICIN_GAIN_OPEN 0             /* should be 1 when micin */
+#define AUDIO_MICIN_GAIN_OPEN 1             /* should be 1 when micin */
 
 static hi_aac_type g_aac_type = HI_AAC_TYPE_AACLC;
 static hi_aac_bps g_aac_bps = HI_AAC_BPS_96K;
@@ -50,6 +50,10 @@ typedef struct {
     hi_s32 ad_chn;
     FILE *fd;
     hi_bool send_ad_chn;
+    
+    hi_payload_type pt;
+    void *uargs;
+    int (*cb)(hi_aenc_chn ae_chn, hi_payload_type pt, hi_audio_stream* stream, void* uargs);
 } sample_aenc;
 
 typedef struct {
@@ -642,6 +646,7 @@ static hi_s32 inner_codec_get_i2s_fs(hi_audio_sample_rate sample_rate, hi_acodec
     return HI_SUCCESS;
 }
 
+
 hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
 {
     hi_s32 ret;
@@ -693,7 +698,7 @@ hi_s32 sample_inner_codec_cfg_audio(hi_audio_sample_rate sample_rate)
      */
     int acodec_input_vol;
 
-    acodec_input_vol = 30; /* 30dB */
+    acodec_input_vol = 40; /* 30dB */
     ret = ioctl(fd_acodec,  HI_ACODEC_SET_INPUT_VOLUME, &acodec_input_vol);
     if (ret != HI_SUCCESS) {
         printf("%s: set acodec micin volume failed\n", __FUNCTION__);
@@ -869,10 +874,17 @@ static hi_s32 audio_aenc_get_stream_and_send(sample_aenc *aenc_ctl)
         }
     }
 
-    /* save audio stream to file */
-    (hi_void)fwrite(stream.stream, 1, stream.len, aenc_ctl->fd);
-    (hi_void)fflush(aenc_ctl->fd);
-
+    if(aenc_ctl->fd)
+    {  
+      /* save audio stream to file */
+      (hi_void)fwrite(stream.stream, 1, stream.len, aenc_ctl->fd);
+      (hi_void)fflush(aenc_ctl->fd);
+    }
+    if(aenc_ctl->cb)
+    {
+      aenc_ctl->cb(aenc_ctl->ae_chn, aenc_ctl->pt, &stream, aenc_ctl->uargs);
+    }
+    
     /* finally you must release the stream */
     ret = hi_mpi_aenc_release_stream(aenc_ctl->ae_chn, &stream);
     if (ret != HI_SUCCESS) {
@@ -925,8 +937,11 @@ void *sample_comm_audio_aenc_proc(void *parg)
     }
 
 get_fd_fail:
-    (hi_void)fclose(aenc_ctl->fd);
-    aenc_ctl->fd = HI_NULL;
+    if(aenc_ctl->fd)
+    {  
+      (hi_void)fclose(aenc_ctl->fd);
+      aenc_ctl->fd = HI_NULL;
+    }
     aenc_ctl->start = HI_FALSE;
     return NULL;
 }
@@ -1090,14 +1105,27 @@ hi_s32 sample_comm_audio_create_thread_ai_aenc(hi_audio_dev ai_dev, hi_ai_chn ai
     return HI_SUCCESS;
 }
 
+
+hi_s32 sample_comm_audio_set_aenc_cb(hi_aenc_chn ae_chn, hi_payload_type pt, int (*cb)(hi_aenc_chn ae_chn, hi_payload_type pt, hi_audio_stream* stream, void* uargs), void *uargs)
+{
+  sample_aenc *aenc = &g_sample_aenc[ae_chn];
+  aenc->pt = pt;
+  aenc->cb = cb;
+  aenc->uargs = uargs;
+  return 0;
+}
+
+
 /* create the thread to get stream from aenc and send to adec */
 hi_s32 sample_comm_audio_create_thread_aenc_adec(hi_aenc_chn ae_chn, hi_adec_chn ad_chn, FILE *aenc_fd)
 {
     sample_aenc *aenc = NULL;
 
+#if 0
     if (aenc_fd == NULL) {
         return HI_FAILURE;
     }
+#endif
 
     if ((ae_chn >= HI_AENC_MAX_CHN_NUM) || (ae_chn < 0)) {
         printf("%s: ae_chn = %d error.\n", __FUNCTION__, ae_chn);
@@ -1107,7 +1135,7 @@ hi_s32 sample_comm_audio_create_thread_aenc_adec(hi_aenc_chn ae_chn, hi_adec_chn
     aenc = &g_sample_aenc[ae_chn];
     aenc->ae_chn = ae_chn;
     aenc->ad_chn = ad_chn;
-    aenc->send_ad_chn = HI_TRUE;
+    aenc->send_ad_chn = (aenc_fd == NULL)?HI_FALSE:HI_TRUE;
     aenc->fd = aenc_fd;
     aenc->start = HI_TRUE;
     pthread_create(&aenc->aenc_pid, 0, sample_comm_audio_aenc_proc, aenc);
@@ -1506,13 +1534,13 @@ hi_s32 sample_comm_audio_start_ao(hi_audio_dev ao_dev_id, hi_u32 ao_chn_cnt, hi_
             }
         }
     }
-
+#if 0
     ret = hi_mpi_ao_enable_chn(ao_dev_id, HI_AO_SYS_CHN_ID);
     if (ret != HI_SUCCESS) {
         printf("%s: hi_mpi_ao_enable_chn(%d) failed with %#x!\n", __FUNCTION__, i, ret);
         return HI_FAILURE;
     }
-
+#endif
     return HI_SUCCESS;
 }
 
@@ -1537,13 +1565,13 @@ hi_s32 sample_comm_audio_stop_ao(hi_audio_dev ao_dev_id, hi_u32 ao_chn_cnt, hi_b
             return ret;
         }
     }
-
+#if 0
     ret = hi_mpi_ao_disable_chn(ao_dev_id, HI_AO_SYS_CHN_ID);
     if (ret != HI_SUCCESS) {
         printf("%s: hi_mpi_ao_disable_chn(%d) failed with %#x!\n", __FUNCTION__, i, ret);
         return HI_FAILURE;
     }
-
+#endif
     ret = hi_mpi_ao_disable(ao_dev_id);
     if (ret != HI_SUCCESS) {
         printf("%s: hi_mpi_ao_disable failed with %#x!\n", __FUNCTION__, ret);

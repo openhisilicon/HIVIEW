@@ -740,7 +740,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
         boxW = (_boxW > boxW)?ALIGN_UP(_boxW, 2):boxW;
         boxH = (_boxH > boxH)?ALIGN_UP(_boxH, 2):boxH;
         #if 0  
-        printf("r:%d, rect[%d,%d,%d], box[%d,%d,%d,%d]\n"
+        printf("r:%d, rect[%d,%d,%d,%d], box[%d,%d,%d,%d]\n"
               , r
               , rects->box[r].rect[0], rects->box[r].rect[1], rects->box[r].rect[2], rects->box[r].rect[3]
               , boxX, boxY, boxW, boxH);
@@ -778,7 +778,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
                       info->fontS,
                       osd_bmp + l * bitmap_w * info->fontH*2,
               		    info->lines[l], "",
-              		    (boxW && boxW)?ARG1555_RED:0xffff, 0x0000, 0xffff, 0x0000);
+              		    (boxW && boxH)?ARG1555_RED:0xffff, 0x0000, 0xffff, 0x0000);
           	}
           	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].a = (int)((char*)osd_bmp - (char*)bitmap_data);
           	rgn_obj[handle].box_tmp.box[rgn_obj[handle].box_tmp.cnt].w = labelW;
@@ -787,7 +787,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
         	}
         	
         	// draw rect;
-        	if(boxW && boxW)
+        	if(boxW > 4 && boxH > 4)
         	{
             HI_U16 *p = (HI_U16*)osd_bmp;
             boxW = (boxX + boxW > info->osdW)?info->osdW-boxX:boxW;

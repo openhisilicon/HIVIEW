@@ -317,8 +317,12 @@ static void *send_thread_func(void *param) {
             
             //struct timespec ts1, ts2;  
             //clock_gettime(CLOCK_MONOTONIC, &ts1);
-            
-            
+            #if 0
+            printf("A rec->data:[%02x %02x %02x %02x %02x %02x %02x], size[%02x %02x]\n"
+                ,  rec->data[0], rec->data[1], rec->data[2], rec->data[3], rec->data[4]
+                , rec->data[5], rec->data[6], (rec->size>>8)&0xff, rec->size&0xff);
+            #endif
+                
             if(flv_muxer_aac(sess->flv // sps-pps-vcl
                     , rec->data
                     , rec->size
@@ -537,7 +541,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
                                 , 2000);
         }
 
-        if(ret != 0)
+        if(ret != 0 || sdp->video_shmid == -1)
         {
           printf("open err uri:%.*s, channel:%d\n",(int) hm->uri.len, hm->uri.p, channel);
           break;
@@ -1200,8 +1204,9 @@ static void* ws_task(void* parm)
   
   char www_path[128] = {0};
   proc_absolute_path(www_path);
+  //sprintf(www_path, "%s/../www", www_path);
+  strcat(www_path, "/../www");
   
-  sprintf(www_path, "%s/../www", www_path);
   printf("www_path:[%s]\n", www_path);
   s_http_server_opts.document_root = www_path;  // Serve current directory
   
@@ -1238,13 +1243,15 @@ static void* ws_task(void* parm)
   // Set up HTTP server parameters
   mg_set_protocol_http_websocket(c);
   MSG_HANDER_REG(c);
-  
+
+#if MG_ENABLE_SSL	
   char ssl_cert[128];
   char ssl_key[128];
   sprintf(ssl_cert, "%s/cert.pem", www_path);
   sprintf(ssl_key, "%s/key.pem", www_path);
   opts.ssl_cert = ssl_cert;
   opts.ssl_key  = ssl_key;
+  
   https = mg_bind_opt(&mgr, "443", ev_handler, opts);
   if(https == NULL)
   {
@@ -1254,6 +1261,7 @@ static void* ws_task(void* parm)
   
   mg_set_protocol_http_websocket(https);
   MSG_HANDER_REG(https);
+#endif
   
   while (s_received_signal == 0) {
     mg_mgr_poll(&mgr, 1000);

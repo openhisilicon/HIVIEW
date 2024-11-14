@@ -22,15 +22,14 @@ endif
 
 
 INCS := -I$(HOME) -Isrc -Iinc \
-        -I$(HOME)/fw/openssl/openssl-1.1.0l \
         -DMG_ENABLE_HTTP_STREAMING_MULTIPART \
+        -I$(HOME)/fw/openssl/openssl-1.1.0l  \
         -I$(HOME)/fw/kvs/inc $(RTC_INCS) \
         -I$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/inc/hisisdk
-        
+
 #SRCS := $(shell ls src/*.c)
 SRCS := $(shell find src -type f -name "*.c" -o -name "*.cpp")
 OBJS := $(patsubst %.c, %.o, $(SRCS))
-
 
 LIBS += -L$(HOME)/lib/$(GSF_CPU_ARCH) $(RTC_LIBS) \
         -lflv -lcfifo -lpthread -lrt -lnm -lcjson -lcomm -lssl -lcrypto -lm

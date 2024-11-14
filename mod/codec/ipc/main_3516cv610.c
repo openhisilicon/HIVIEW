@@ -416,11 +416,17 @@ int mpp_start(gsf_bsp_def_t *def)
     return 0;
 }
 
-
+#define ADEC_TEST 0
 #define AU_PT(gsf) \
         (gsf == GSF_ENC_AAC)?PT_AAC:\
         (gsf == GSF_ENC_G711A)?PT_G711A:\
         PT_G711U
+        
+// osd msg;
+static int voice_recv(char *msg, int size, int err)
+{
+  return gsf_mpp_ao_send_pcm(0, 0, 0, msg, size);
+}
 
 
 int main_start(gsf_bsp_def_t *bsp_def)
@@ -428,6 +434,30 @@ int main_start(gsf_bsp_def_t *bsp_def)
     mpp_start(bsp_def);
 
     venc_start(1);
+    
+    //aenc;
+    if( codec_ipc.aenc.en)
+    {
+      gsf_mpp_aenc_t aenc = {
+        .AeChn = 0,
+        .enPayLoad = AU_PT(codec_ipc.aenc.type),
+        .adtype = 0, // 0:INNER, 1:I2S, 2:PCM;
+        .stereo = (codec_ipc.aenc.type == GSF_ENC_AAC)?1:0, 
+        //.stereo = codec_ipc.aenc.stereo,
+        .sp = codec_ipc.aenc.sprate*1000, //sampleRate
+        .br = 0,    //bitRate;
+        .uargs = NULL,
+        .cb = gsf_aenc_recv,
+      };
+      gsf_mpp_audio_start(&aenc); //ai->aenc;
+      
+      #if ADEC_TEST
+      extern int adec_start(); adec_start();  //file->adec->ao;
+      #else
+      void* voice_pull = nm_pull_listen(GSF_IPC_VOICE, voice_recv);
+      gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, -1, 0);
+      #endif
+    }
 
     //flip&mirror;
     gsf_mpp_img_flip_t flip;

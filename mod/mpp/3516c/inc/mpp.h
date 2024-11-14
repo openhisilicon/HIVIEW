@@ -411,6 +411,27 @@ int gsf_mpp_rgn_canvas_get(RGN_HANDLE Handle, RGN_CANVAS_INFO_S *pstRgnCanvasInf
 int gsf_mpp_rgn_canvas_update(RGN_HANDLE Handle);
 
 
+//vdec;
+//解码数据帧属性
+typedef struct {
+    int size;     // data size;
+    int ftype;    // frame type;
+    int etype;    // PAYLOAD_TYPE_E;
+    int width;    // width;
+    int height;   // height;
+    int au_chs;   // audio channels;
+    unsigned long long pts; // timestamp;
+}gsf_mpp_frm_attr_t;
+
+//发送音频数据到 audio 解码输出;
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr);
+
+//send pcm to ao;
+int gsf_mpp_ao_send_pcm(int aodev, int ch, int flag, unsigned char *data, int size);
+
+//audio ao_bind_ai;
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich);
+
 //private for mpp;
 #include "hi_sns_ctrl.h"
 

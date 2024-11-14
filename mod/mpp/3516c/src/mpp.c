@@ -32,8 +32,19 @@
 //#include "mppex.h"
 
 static hi_s32 aiisp = 0;
+
 static int _audio_init = 0;
-static gsf_mpp_aenc_t _aenc;
+static gsf_mpp_aenc_t _adec, _aenc = {
+  .AeChn = 0,
+  .enPayLoad = PT_AAC,
+  .adtype = 0, // 0:INNER, 1:I2S, 2:PCM;
+  .stereo = 1, 
+  .sp = 48000, //sampleRate
+  .br = 0,    //bitRate;
+  .uargs = NULL,
+  .cb = NULL,
+};
+
 
 typedef struct {
   int   type;
@@ -908,13 +919,43 @@ int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
 
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
-  int ret = 0;
-  return ret;
+  if(!_audio_init)
+  {
+    _audio_init = 1;
+    extern hi_s32 sample_audio_init();
+    sample_audio_init();
+  }
+ 
+  if(aenc == NULL)
+  {
+    printf("sample_audio_ai_ao start \n");
+    _adec = _aenc;
+    static pthread_t aio_pid;
+    extern hi_s32 sample_audio_ai_ao(hi_void);
+    return pthread_create(&aio_pid, 0, (void*(*)(void*))sample_audio_ai_ao, NULL);
+  }
+  else
+  {
+    printf("sample_audio_ai_aenc start \n");
+    _adec = _aenc = *aenc;
+    extern hi_s32 sample_audio_ai_aenc(gsf_mpp_aenc_t *aenc);
+    return sample_audio_ai_aenc(aenc);
+  }
+  return 0;
 }
 
 int gsf_mpp_audio_stop(gsf_mpp_aenc_t  *aenc)
 {
   int ret = 0;
+  if(aenc == NULL)
+  {
+    ;  
+  }
+  else
+  {
+    extern hi_s32 sample_audio_ai_aenc_stop(gsf_mpp_aenc_t *aenc);
+    return sample_audio_ai_aenc_stop(aenc);
+  }
   return ret;
 }
 
@@ -970,3 +1011,156 @@ int gsf_mpp_rgn_canvas_update(RGN_HANDLE Handle)
   return ret;
 }
 
+
+int gsf_mpp_ao_send_pcm(int aodev, int ch, int flag, unsigned char *data, int size)
+{
+  int ret = 0;
+  static hi_s16 g_ao_data[2][HI_MAX_AO_POINT_NUM] = {0}; /* 2: stereo */
+  static hi_audio_frame ao_frame = {0};
+
+  printf("gsf_mpp_ao_send_pcm size:%d\n", size);
+
+  ao_frame.bit_width = HI_AUDIO_BIT_WIDTH_16;
+  ao_frame.snd_mode = HI_AUDIO_SOUND_MODE_STEREO;
+
+  ao_frame.virt_addr[0] = (hi_u8 *)&(g_ao_data[0][0]);
+  ao_frame.virt_addr[1] = (hi_u8 *)&(g_ao_data[1][0]);
+  ao_frame.len = size;
+
+  memcpy(ao_frame.virt_addr[0], data, size); 
+  memcpy(ao_frame.virt_addr[1], data, size);
+
+  if(size > 0)
+  {
+    ret = hi_mpi_ao_send_frame(aodev, ch, &ao_frame, 1000); /* 1000:1000ms */
+  }
+  return ret;
+}
+
+
+int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
+{
+  if(!_audio_init)
+  {
+    _audio_init = 1;
+    extern hi_s32 sample_audio_init();
+    sample_audio_init();
+  }
+  
+  HI_S32 s32Ret = 0;
+  HI_S32 adch = 0;
+    
+  static gsf_mpp_frm_attr_t _attr = {.etype = PT_BUTT, };
+  
+  if(_attr.etype != attr->etype)
+  {
+    //reset;
+    _attr = *attr;
+    extern hi_s32 sample_audio_adec_ao(gsf_mpp_frm_attr_t *attr);
+    sample_audio_adec_ao(attr);
+  }
+  
+  if(attr->size == 0)
+  {
+    return hi_mpi_adec_send_end_of_stream(adch, HI_FALSE);
+  }
+  
+  hi_audio_stream stAudioStream = {0};
+  stAudioStream.stream = data;
+  stAudioStream.len = attr->size;
+  stAudioStream.time_stamp = 0;
+  stAudioStream.seq = 0;
+  
+  /* here only demo adec streaming sending mode, but pack sending mode is commended */
+  s32Ret = hi_mpi_adec_send_stream(adch, &stAudioStream, flag);
+  if (HI_SUCCESS != s32Ret)
+  {
+    printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \
+           __FUNCTION__, adch, stAudioStream.len);
+  }
+  else
+  {
+    //printf("%s: HI_MPI_ADEC_SendStream(%d) OK len:%d, time_stamp:%llu\n", \
+    //       __FUNCTION__, adch, stAudioStream.len, stAudioStream.time_stamp);
+  }
+
+  return s32Ret;
+}
+
+//audio ao_bind_ai;
+int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
+{
+  //ao bind ai;
+  hi_s32    s32Ret;
+  hi_ai_chn AiChn = aich;
+  hi_ao_chn AoChn = ch;
+  hi_s32    s32AoChnCnt;
+
+  hi_aio_attr stAioAttr;
+  
+  hi_audio_dev   AiDev = aidev;//SAMPLE_AUDIO_INNER_AI_DEV;
+  hi_audio_dev   AoDev = aodev;//SAMPLE_AUDIO_INNER_AO_DEV; SAMPLE_AUDIO_EXTERN_AO_DEV;
+
+  if(aidev < 0)
+  {
+    printf("AoDev:%d, AoChn:%d, reset sp:%d & stereo:%d\n", AoDev, AoChn, _adec.sp, _adec.stereo);
+  }
+
+  hi_bool bAioReSample = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?0:
+                         (_adec.sp != HI_AUDIO_SAMPLE_RATE_48000)?1:0;
+  hi_audio_sample_rate enInSampleRate = _adec.sp;
+  
+  if(bAioReSample && AoDev != SAMPLE_AUDIO_INNER_AO_DEV)
+    return 0;
+
+  stAioAttr.sample_rate   = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?_adec.sp:HI_AUDIO_SAMPLE_RATE_48000;
+  stAioAttr.bit_width     = HI_AUDIO_BIT_WIDTH_16;
+  stAioAttr.work_mode     = HI_AIO_MODE_I2S_MASTER;
+  stAioAttr.snd_mode      = _adec.stereo;//HI_AUDIO_SOUND_MODE_STEREO;
+  stAioAttr.expand_flag   = 0;
+  stAioAttr.frame_num     = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
+  stAioAttr.point_num_per_frame = (_adec.enPayLoad==PT_AAC)?HI_AACLC_SAMPLES_PER_FRAME:SAMPLE_AUDIO_POINT_NUM_PER_FRAME;//HI_AACLC_SAMPLES_PER_FRAME;
+  stAioAttr.chn_cnt       = 1<<_adec.stereo;
+  stAioAttr.clk_share     = 1;//(aidev<0)?0:1;
+  stAioAttr.i2s_type      = (AoDev == SAMPLE_AUDIO_INNER_AO_DEV)?HI_AIO_I2STYPE_INNERCODEC:HI_AIO_I2STYPE_EXTERN;
+
+  s32AoChnCnt = stAioAttr.chn_cnt;
+  s32Ret = sample_comm_audio_start_ao(AoDev, s32AoChnCnt, &stAioAttr, enInSampleRate, bAioReSample);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("sample_comm_audio_start_ao err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
+    return s32Ret;
+  }
+  
+  #if 1
+  int aoVol = -5;
+  s32Ret = hi_mpi_ao_set_volume(AoDev, aoVol); //[-121, 6] 值越大音量越大
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("hi_mpi_ao_set_volume err:%d, AoDev:%d, aoVol:%d\n", s32Ret, AoDev, aoVol);
+  }
+  #endif
+  
+  if(AiDev < 0)
+  {
+    printf("AoDev:%d, AoChn:%d, ao not bind ai\n", AoDev, AoChn);
+    return 0;
+  }
+  
+  s32Ret = sample_comm_audio_ao_bind_ai(AiDev, AiChn, AoDev, AoChn);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("sample_comm_audio_ao_bind_ai err:%d, AoDev:%d, AiDev:%d\n", s32Ret, AoDev, AiDev);
+    goto __err;
+  }
+
+  return 0;
+  
+__err:
+  s32Ret = sample_comm_audio_stop_ao(AoDev, s32AoChnCnt, bAioReSample);
+  if (s32Ret != HI_SUCCESS)
+  {
+    printf("sample_comm_audio_stop_ao err:%d, AoDev:%d, s32AoChnCnt:%d\n", s32Ret, AoDev, s32AoChnCnt);
+  }
+  return -1;
+}
