@@ -45,6 +45,9 @@ static hi_ir_auto_thread g_ast_ir_thread[HI_ISP_MAX_PIPE_NUM] = {{0}};
 static hi_isp_ir_auto_attr g_ast_ir_attr[HI_ISP_MAX_PIPE_NUM] = {{0}};
 static hi_vi_pipe g_vi_pipe = 0;
 
+//maohw
+static pthread_mutex_t g_ir_mutex = PTHREAD_MUTEX_INITIALIZER;
+static gsf_mpp_ir_t g_ir_switch = {0,};
 #define SAMPLE_IR_CALIBRATION_MODE  (0)
 #define SAMPLE_IR_AUTO_MODE         (1)
 #define GAIN_MAX_COEF               (280)
@@ -566,8 +569,19 @@ hi_void sample_ir_cut_gpio_unexport(hi_u32 gpio_chip_num, hi_u32 gpio_offset)
 }
 
 // normal mode
-void sample_ir_cut_enable(void)
+void sample_ir_cut_enable(hi_vi_pipe vi_pipe)
 {
+    pthread_mutex_lock(&g_ir_mutex);
+    if(g_ir_switch.cb)
+    {
+      g_ir_switch.cb(vi_pipe, HI_ISP_IR_STATUS_NORMAL, g_ir_switch.uargs);
+    }
+    pthread_mutex_unlock(&g_ir_mutex);
+    
+    g_ast_ir_attr[vi_pipe].ir_status = HI_ISP_IR_STATUS_NORMAL;
+	return;
+	
+	
     hi_u32 gpio_chip_num7 = 7; // gpio7
     hi_u32 gpio_chip_num1 = 1; // gpio1
     hi_u32 gpio_offset6 = 6;  // gpio7_6
@@ -612,8 +626,17 @@ void sample_ir_cut_enable(void)
     return;
 }
 
-void sample_ir_cut_disable(void)
+void sample_ir_cut_disable(hi_vi_pipe vi_pipe)
 {
+    pthread_mutex_lock(&g_ir_mutex);
+    if(g_ir_switch.cb)
+    {
+      g_ir_switch.cb(vi_pipe, HI_ISP_IR_STATUS_IR, g_ir_switch.uargs);
+    }
+    pthread_mutex_unlock(&g_ir_mutex);
+    g_ast_ir_attr[vi_pipe].ir_status = HI_ISP_IR_STATUS_IR;
+	return;
+	
     hi_u32 gpio_chip_num7 = 7; // gpio7
     hi_u32 gpio_chip_num1 = 1; // gpio1
     hi_u32 gpio_offset7 = 7;  // gpio7_7
@@ -694,7 +717,7 @@ hi_s32 isp_ir_switch_to_normal(hi_vi_pipe vi_pipe)
     hi_isp_color_matrix_attr isp_ccm_attr;
 
     /* switch ir-cut to normal */
-    sample_ir_cut_enable();
+    sample_ir_cut_enable(vi_pipe);
     /* switch isp config to normal */
     ret = hi_mpi_isp_get_saturation_attr(vi_pipe, &isp_saturation_attr);
     if (HI_SUCCESS != ret) {
@@ -806,7 +829,7 @@ hi_s32 isp_ir_switch_to_ir(hi_vi_pipe vi_pipe)
     usleep(1000000); // sleep 1000000 us
 
     /* switch ir-cut to ir */
-    sample_ir_cut_disable();
+    sample_ir_cut_disable(vi_pipe);
 
     return HI_SUCCESS;
 }
@@ -826,14 +849,44 @@ hi_s32 sample_isp_ir_auto_run(hi_vi_pipe vi_pipe)
     ir_attr.ir_status         = g_ast_ir_attr[vi_pipe].ir_status;
     ir_attr.ir_switch         = g_ast_ir_attr[vi_pipe].ir_switch;
     while (HI_TRUE == g_ast_ir_thread[vi_pipe].thread_flag) {
+      
+        //printf("sample_isp_ir_auto_run g_ir_switch.cb:%p, g_ir_switch.cds:%p\n", g_ir_switch.cb, g_ir_switch.cds);
+        
         /* run_interval: 40 ms */
         usleep(40000 * 4); // sleep 40000 * 4 us
-        ret = hi_mpi_isp_ir_auto(vi_pipe, &ir_attr);
-        if (HI_SUCCESS != ret) {
-            printf("hi_mpi_isp_ir_auto_run_once failed\n");
-            return ret;
-        }
 
+        if(!g_ir_switch.cb)
+          continue;
+        else
+          ir_attr.ir_status = g_ast_ir_attr[vi_pipe].ir_status;
+        
+        if(g_ir_switch.cds)
+        {
+          int night = 0; 
+          pthread_mutex_lock(&g_ir_mutex);
+          if(g_ir_switch.cds)
+          {
+            night = g_ir_switch.cds(vi_pipe, g_ir_switch.uargs);
+          }
+          pthread_mutex_unlock(&g_ir_mutex);
+          if(ir_attr.ir_status != night)
+          {
+            ir_attr.ir_switch = (night)?HI_ISP_IR_SWITCH_TO_IR:HI_ISP_IR_SWITCH_TO_NORMAL;
+          }
+          else 
+          {
+            ir_attr.ir_switch = HI_ISP_IR_SWITCH_NONE;
+          }
+        }
+        else
+        {
+          ret = hi_mpi_isp_ir_auto(vi_pipe, &ir_attr);
+          if (HI_SUCCESS != ret) {
+              printf("hi_mpi_isp_ir_auto_run_once failed\n");
+              return ret;
+          }
+        }
+ 
         if (HI_ISP_IR_SWITCH_TO_IR == ir_attr.ir_switch) { /* normal to IR */
             printf("\n[normal -> IR]\n");
 
@@ -843,7 +896,7 @@ hi_s32 sample_isp_ir_auto_run(hi_vi_pipe vi_pipe)
                 return ret;
             }
 
-            ir_attr.ir_status = HI_ISP_IR_STATUS_IR;
+            g_ast_ir_attr[vi_pipe].ir_status = ir_attr.ir_status = HI_ISP_IR_STATUS_IR;
         } else if (HI_ISP_IR_SWITCH_TO_NORMAL == ir_attr.ir_switch) { /* IR to normal */
             printf("\n[IR -> normal]\n");
 
@@ -853,7 +906,7 @@ hi_s32 sample_isp_ir_auto_run(hi_vi_pipe vi_pipe)
                 return ret;
             }
 
-            ir_attr.ir_status = HI_ISP_IR_STATUS_NORMAL;
+            g_ast_ir_attr[vi_pipe].ir_status = ir_attr.ir_status = HI_ISP_IR_STATUS_NORMAL;
         }
     }
 
@@ -1083,6 +1136,51 @@ static hi_void ir_auto_getchar(hi_void)
     if (g_sig_flag == 1) {
         return;
     }
+}
+
+
+ 
+hi_s32 isp_ir_mode(gsf_mpp_ir_t *ir)
+{
+  pthread_mutex_lock(&g_ir_mutex);
+  if(ir)
+    g_ir_switch = *ir;
+  else
+    g_ir_switch.cb = NULL;
+  pthread_mutex_unlock(&g_ir_mutex);
+  
+  printf("isp_ir_mode switch.cb:%p, switch.cds:%p\n", g_ir_switch.cb, g_ir_switch.cds);
+  return 0;
+}
+
+
+hi_s32 isp_ir_switch_to_auto(hi_vi_pipe vi_pipe)
+{
+  if(g_ast_ir_thread[vi_pipe].thread)
+    return 0;
+    
+  g_vi_pipe = vi_pipe;
+  #define RATIO 1.5
+    
+  /* need to modified when sensor/lens/IR-cut/infrared light changed */
+  g_ast_ir_attr[g_vi_pipe].enable = HI_TRUE;
+  g_ast_ir_attr[g_vi_pipe].normal_to_ir_iso_threshold= 16000; // normal_to_ir_iso_threshold 16000
+  g_ast_ir_attr[g_vi_pipe].ir_to_normal_iso_threshold = 400; // ir_to_normal_iso_threshold 400
+  g_ast_ir_attr[g_vi_pipe].rg_max = 280 * RATIO; // max 280
+  g_ast_ir_attr[g_vi_pipe].rg_min = 190 / RATIO; // 190
+  g_ast_ir_attr[g_vi_pipe].bg_max = 280 * RATIO; // 280
+  g_ast_ir_attr[g_vi_pipe].bg_min = 190 / RATIO; // 190
+  g_ast_ir_attr[g_vi_pipe].ir_status = HI_ISP_IR_STATUS_NORMAL;
+  
+  g_ast_ir_thread[g_vi_pipe].thread_flag = HI_TRUE;
+
+  int ret = pthread_create(&g_ast_ir_thread[g_vi_pipe].thread, HI_NULL, sample_isp_ir_auto_thread, (hi_void *)&g_vi_pipe);
+  if (ret != 0) {
+      printf("%s: create isp ir_auto thread failed!, error: %d, %s\r\n", __FUNCTION__, ret, strerror(ret));
+      return HI_FAILURE;
+  }
+  
+  return HI_SUCCESS;
 }
 
 /******************************************************************************

@@ -12,6 +12,8 @@
 //The 3519dv500 implement is lens19d.c
 #elif defined(GSF_CPU_3403)
 //The 3403 implement is lens3403.c
+#elif defined(GSF_CPU_3516c)
+//The 3516cv610 implement is lens610.c
 #else
 //The xxx not implement lensxxx.c
 #warning "xxx lens not implement"

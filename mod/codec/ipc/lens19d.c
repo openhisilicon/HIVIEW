@@ -8,7 +8,7 @@
 #include "fw/libaf/inc/af_ptz.h"
 
 #define DEBUG 0
-
+#define SUM6(buf) do{buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;}while(0)
 extern int dzoom_plus;
 
 static int _sensor_flag = 0;
@@ -139,7 +139,7 @@ int flash_is_emmc()
   if (fd && fgets(str, sizeof(str), fd))
   {
     ret = strstr(str, "mmcblk")?1:0;
-    fclose(fd);
+    pclose(fd);
   }
   return ret;
 }
@@ -167,11 +167,6 @@ int lens19d_lens_init(gsf_lens_ini_t *ini)
     //IRCUT && DAY
   } 
     
-  if(_flash_emmc)
-  {
-    return 0;
-  }
-
   IRCUT0_INIT();
   IRCUT0_DAY(_ircut_ctl);
 
@@ -219,7 +214,7 @@ static int cds_cb(int ViPipe, void* uargs)
    
   int value = 0;
  
-  FILE* fp = fopen("/sys/class/gpio/gpio55/value", "rb+");
+  FILE* fp = fopen("/sys/class/gpio/gpio13/value", "rb+");
   if(fp)
   {
     unsigned char buf[10] = {0};
@@ -316,6 +311,7 @@ int lens19d_lens_start(int ch, char *ttyAMA)
     }
   }
   
+  printf("%s => _sensor_flag:%d\n", __func__, _sensor_flag);
   if(!_sensor_flag)
   {  
     return -1;
@@ -342,7 +338,7 @@ int lens19d_lens_start(int ch, char *ttyAMA)
   {
   	return 0;
   }
-  
+  printf("%s => gsf_mpp_af_start(%d)\n", __func__, ch);
   return gsf_mpp_af_start(&af);
 }
 
@@ -370,7 +366,7 @@ int lens19d_lens_stop(int ch)
   }
   else 
   {
-    unsigned char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c};
+    unsigned char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c}; SUM6(buf);
     ret = gsf_uart_write(buf, 8);
   }
   return 0;
@@ -406,8 +402,8 @@ int lens19d_lens_zoom(int ch,  int dir, int speed)
   else 
   {
   	// 派尔高D协议开始字节FF换成C5,最后补充一个字节5C组成8个字节
-    unsigned char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c};
-    unsigned char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c};
+    unsigned char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c}; SUM6(add);
+    unsigned char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c}; SUM6(sub);
     unsigned char *buf = (dir)?add:sub;
     ret = gsf_uart_write(buf, 8);
   }
@@ -437,8 +433,8 @@ int lens19d_lens_focus(int ch, int dir, int speed)
   else 
   {
   	// 派尔高D协议开始字节FF换成C5,最后补充一个字节5C组成8个字节
-    unsigned char add[8] = {0xc5,0x00,0x01,0x00,0x00,0x00,0x00,0x5c};
-    unsigned char sub[8] = {0xc5,0x00,0x00,0x80,0x00,0x00,0x00,0x5c};
+    unsigned char add[8] = {0xc5,0x00,0x01,0x00,0x00,0x00,0x00,0x5c}; SUM6(add);
+    unsigned char sub[8] = {0xc5,0x00,0x00,0x80,0x00,0x00,0x00,0x5c}; SUM6(sub);
     unsigned char *buf = (dir)?add:sub;
     ret = gsf_uart_write(buf, 8);
   }
@@ -454,7 +450,7 @@ int lens19d_lens_cal(int ch)
   }  
   else
   {
-    unsigned char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c};
+    unsigned char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c}; SUM6(buf);
     int ret = gsf_uart_write(buf, 8);
     usleep(100*1000);
     ret |= gsf_uart_write(buf, 8);
@@ -508,7 +504,7 @@ static void* serial_task_ldm(void *parm)
     ret += read(serial_fd, &buf[4], buf[3]);
     #if DEBUG
     int i = 0;
-    char bufstr[sizeof(buf)*3] = {0};
+    unsigned char bufstr[sizeof(buf)*3] = {0};
     for(i = 0; i < ret && i < sizeof(buf); i++)
     {
       char token[4];
@@ -564,7 +560,7 @@ HEAD:
     
     #if DEBUG
     int i = 0;
-    char bufstr[sizeof(buf)*3] = {0};
+    unsigned char bufstr[sizeof(buf)*3] = {0};
     for(i = 0; i < ret && i < sizeof(buf); i++)
     {
       char token[4];

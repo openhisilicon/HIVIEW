@@ -685,7 +685,7 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   switch(id)
   {
   case GSF_MPP_ISP_CTL_IR:
-    #if 0
+    #if 1
     switch((int)args)
     {
       case 0:

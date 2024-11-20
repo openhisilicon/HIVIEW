@@ -8,7 +8,7 @@
 #include "fw/libaf/inc/af_ptz.h"
 
 #define DEBUG 0
-
+#define SUM6(buf) do{buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;}while(0)
 extern int dzoom_plus;
 
 static int _sensor_flag = 0;
@@ -55,7 +55,7 @@ int flash_is_emmc()
   if (fd && fgets(str, sizeof(str), fd))
   {
     ret = strstr(str, "mmcblk")?1:0;
-    fclose(fd);
+    pclose(fd);
   }
   return ret;
 }
@@ -224,7 +224,7 @@ static int cds_cb(int ViPipe, void* uargs)
   FILE* fp = fopen("/sys/class/gpio/gpio55/value", "rb+");
   if(fp)
   {
-    char buf[10] = {0};
+    unsigned char buf[10] = {0};
     fread(buf, sizeof(char), sizeof(buf) - 1, fp);
     value = (buf[0] == '0')?1:0;
     fclose(fp);
@@ -271,7 +271,7 @@ int lens16x_uart_write(unsigned char *buf, int size)
 
 static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
 {
-  char buf[8];
+  unsigned char buf[8];
   HI_U32 Fv = Fv1 + Fv2;
 
 #if 0
@@ -315,10 +315,10 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
           {
             
             int ret = 0;
-            char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c};
-            char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c};
-            char stop[8]= {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c};
-            static char *buf = NULL;
+            unsigned char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c}; SUM6(add);
+            unsigned char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c}; SUM6(sub);
+            unsigned char stop[8]= {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c}; SUM6(stop);
+            static unsigned char *buf = NULL;
             
             buf = (buf==add)?sub:add;
             ret = gsf_uart_write(buf, 8);
@@ -429,7 +429,7 @@ int lens16x_lens_stop(int ch)
   
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    char buf[1] = {AF_PTZ_CMD_ZOOM_STOP};
+    unsigned char buf[1] = {AF_PTZ_CMD_ZOOM_STOP};
     af_ptz_ctl(buf, 1);
   }
   else if(_lens_type == LENS_TYPE_GPIO)
@@ -440,13 +440,13 @@ int lens16x_lens_stop(int ch)
   }
   else if(_lens_type == LENS_TYPE_SONY)
   {
-    char buf[6] = {0x81, 0x01, 0x04, 0x07, 0x00, 0xFF};
+    unsigned char buf[6] = {0x81, 0x01, 0x04, 0x07, 0x00, 0xFF};
     ret = gsf_uart_write(buf, 6);
     return 0;
   }
   else 
   {
-    char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c};
+    unsigned char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c}; SUM6(buf);
     ret = gsf_uart_write(buf, 8);
   }
   return 0;
@@ -464,7 +464,7 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
   
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    char buf[1];
+    unsigned char buf[1];
     buf[0] = (dir)?AF_PTZ_CMD_ZOOM_WIDE:AF_PTZ_CMD_ZOOM_TELE;
     af_ptz_ctl(buf, 1);
   }  
@@ -480,18 +480,18 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
   }
   else if(_lens_type == LENS_TYPE_SONY)
   {
-    char add[6] = {0x81, 0x01, 0x04, 0x07, 0x25, 0xFF}; //buf[4] = 0x20 | (speed&0x0F);
-    char sub[6] = {0x81, 0x01, 0x04, 0x07, 0x35, 0xFF}; //buf[4] = 0x30 | (speed&0x0F);
-    char *buf = (dir)?add:sub;
+    unsigned char add[6] = {0x81, 0x01, 0x04, 0x07, 0x25, 0xFF}; //buf[4] = 0x20 | (speed&0x0F);
+    unsigned char sub[6] = {0x81, 0x01, 0x04, 0x07, 0x35, 0xFF}; //buf[4] = 0x30 | (speed&0x0F);
+    unsigned char *buf = (dir)?add:sub;
     ret = gsf_uart_write(buf, 6);
     return 0;
   }
   else 
   {
   	// 派尔高D协议开始字节FF换成C5,最后补充一个字节5C组成8个字节
-    char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c};
-    char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c};
-    char *buf = (dir)?add:sub;
+    unsigned char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c}; SUM6(add);
+    unsigned char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c}; SUM6(sub);
+    unsigned char *buf = (dir)?add:sub;
     ret = gsf_uart_write(buf, 8);
   }
   return 0;
@@ -514,34 +514,36 @@ int lens16x_lens_focus(int ch, int dir, int speed)
   }
   else if(_lens_type == LENS_TYPE_SONY)
   {
-    char add[6] = {0x81, 0x01, 0x04, 0x08, 0x25, 0xFF};
-    char sub[6] = {0x81, 0x01, 0x04, 0x08, 0x35, 0xFF};
-    char *buf = (dir)?add:sub;
+    unsigned char add[6] = {0x81, 0x01, 0x04, 0x08, 0x25, 0xFF};
+    unsigned char sub[6] = {0x81, 0x01, 0x04, 0x08, 0x35, 0xFF};
+    unsigned char *buf = (dir)?add:sub;
     ret = gsf_uart_write(buf, 6);
     return 0;
   }
   else 
   {
   	// 派尔高D协议开始字节FF换成C5,最后补充一个字节5C组成8个字节
-    char add[8] = {0xc5,0x00,0x01,0x00,0x00,0x00,0x00,0x5c};
-    char sub[8] = {0xc5,0x00,0x00,0x80,0x00,0x00,0x00,0x5c};
-    char *buf = (dir)?add:sub;
+    unsigned char add[8] = {0xc5,0x00,0x01,0x00,0x00,0x00,0x00,0x5c}; SUM6(add);
+    unsigned char sub[8] = {0xc5,0x00,0x00,0x80,0x00,0x00,0x00,0x5c}; SUM6(sub);
+    unsigned char *buf = (dir)?add:sub;
     ret = gsf_uart_write(buf, 8);
   }
   return 0;
 }
+
+//#define SUM6(buf) do{buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;}while(0)
 
 int lens16x_lens_cal(int ch)
 {
 	// lens calibration
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    char buf[1] = {AF_PTZ_CMD_LENS_CORRECT};
+    unsigned char buf[1] = {AF_PTZ_CMD_LENS_CORRECT};
     af_ptz_ctl(buf, 1);
   }  
   else
   {
-    char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c};
+    unsigned char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c}; SUM6(buf);
     int ret = gsf_uart_write(buf, 8);
     usleep(100*1000);
     ret |= gsf_uart_write(buf, 8);
@@ -599,7 +601,7 @@ static void* serial_task_ldm(void *parm)
     ret += read(serial_fd, &buf[4], buf[3]);
     #if DEBUG
     int i = 0;
-    char bufstr[sizeof(buf)*3] = {0};
+    unsigned char bufstr[sizeof(buf)*3] = {0};
     for(i = 0; i < ret && i < sizeof(buf); i++)
     {
       char token[4];
@@ -872,7 +874,7 @@ HEAD:
     
     #if DEBUG
     int i = 0;
-    char bufstr[sizeof(buf)*3] = {0};
+    unsigned char bufstr[sizeof(buf)*3] = {0};
     for(i = 0; i < ret && i < sizeof(buf); i++)
     {
       char token[4];
@@ -923,7 +925,7 @@ int lens16x_lens_ptz(int ch, gsf_lens_t *lens)
   if(_lens_type != 3)
     return 0;
     
-  char buf[4] = {0};
+  unsigned char buf[4] = {0};
   printf("cmd:%d\n", lens->cmd);
   switch(lens->cmd)
   { 
@@ -984,35 +986,35 @@ static int pelco_d_write(char *cmd, int size)
   {
     case GSF_PTZ_STOP:
     {
-      char buf[7] = {0xff,0xff,0x00,0x00,0x00,0x00,0x00};
+      unsigned char buf[7] = {0xff,0xff,0x00,0x00,0x00,0x00,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
       gsf_uart_write(buf, sizeof(buf));
     }  
     break;
     case GSF_PTZ_UP:
     {
-      char buf[7] = {0xff,0xff,0x00,0x08,0x00,0x31,0x00};
+      unsigned char buf[7] = {0xff,0xff,0x00,0x08,0x00,0x31,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
       gsf_uart_write(buf, sizeof(buf));
     }
     break;    
     case GSF_PTZ_DOWN:
     {
-      char buf[7] = {0xff,0xff,0x00,0x10,0x00,0x31,0x00};
+      unsigned char buf[7] = {0xff,0xff,0x00,0x10,0x00,0x31,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
       gsf_uart_write(buf, sizeof(buf));
     }
     break;  
     case GSF_PTZ_LEFT:
     {
-      char buf[7] = {0xff,0xff,0x00,0x04,0x31,0x00,0x00};
+      unsigned char buf[7] = {0xff,0xff,0x00,0x04,0x31,0x00,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
       gsf_uart_write(buf, sizeof(buf));
     }
     break;    
     case GSF_PTZ_RIGHT:
     {
-      char buf[7] = {0xff,0xff,0x00,0x02,0x31,0x00,0x00};
+      unsigned char buf[7] = {0xff,0xff,0x00,0x02,0x31,0x00,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
       gsf_uart_write(buf, sizeof(buf));
     }

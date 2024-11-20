@@ -54,50 +54,40 @@ static int pelco_d_write(char *cmd, int size);
 static int ptz_led_set(int stat);
 
 
-#if defined(GSF_CPU_3403)
+#if defined(GSF_CPU_3516c)
 
-#warning "3403 lens is implemented"
+#warning "3516cv610 lens is implemented"
 
-//#5-1, 2-0; IRCUT1
+//#9-2, 9-3; IRCUT1
 #define IRCUT0_INIT() do {\
-    system("bspmm 0x0102F00F0 0x1201;bspmm 0x0102F00F4 0x1201;echo 77 > /sys/class/gpio/export;echo 78 > /sys/class/gpio/export;");\
-    system("echo low > /sys/class/gpio/gpio77/direction;echo low > /sys/class/gpio/gpio78/direction");\
+    system("bspmm 0x17940058 0x0;bspmm 0x1794005C 0x0;echo 74 > /sys/class/gpio/export;echo 75 > /sys/class/gpio/export;");\
+    system("echo low > /sys/class/gpio/gpio74/direction;echo low > /sys/class/gpio/gpio75/direction");\
   }while(0)
 
 #define __IRCUT0_DAY(ctl) do {\
     if(ctl == IRCUT_CTL_LEVEL)\
-      system("echo 0 > /sys/class/gpio/gpio77/value;echo 0 > /sys/class/gpio/gpio78/value;");\
+      system("echo 0 > /sys/class/gpio/gpio74/value;echo 0 > /sys/class/gpio/gpio75/value;");\
     else \
-      system("echo 0 > /sys/class/gpio/gpio77/value;echo 1 > /sys/class/gpio/gpio78/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio78/value");\
+      system("echo 0 > /sys/class/gpio/gpio74/value;echo 1 > /sys/class/gpio/gpio75/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio75/value");\
   }while(0)
 
 #define __IRCUT0_NIGHT(ctl) do {\
     if(ctl == IRCUT_CTL_LEVEL)\
-      system("echo 1 > /sys/class/gpio/gpio77/value;echo 1 > /sys/class/gpio/gpio78/value;");\
+      system("echo 1 > /sys/class/gpio/gpio74/value;echo 1 > /sys/class/gpio/gpio75/value;");\
     else \
-      system("echo 1 > /sys/class/gpio/gpio77/value;echo 0 > /sys/class/gpio/gpio78/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio77/value");\
+      system("echo 1 > /sys/class/gpio/gpio74/value;echo 0 > /sys/class/gpio/gpio75/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio74/value");\
   }while(0)
 
-//#10-2 4-4; IRCUT2
+//#; IRCUT2
 #define IRCUT1_INIT() do {\
-    system("bspmm 0x0102F012C 0x1200;bspmm 0x0102F0110 0x1201;echo 88 > /sys/class/gpio/export;echo 85 > /sys/class/gpio/export;");\
-    system("echo low > /sys/class/gpio/gpio88/direction;echo low > /sys/class/gpio/gpio85/direction");\
   }while(0)
 
 #define __IRCUT1_DAY(ctl) do {\
-    if(ctl == IRCUT_CTL_LEVEL)\
-      system("echo 0 > /sys/class/gpio/gpio88/value;echo 0 > /sys/class/gpio/gpio85/value;");\
-    else \
-      system("echo 0 > /sys/class/gpio/gpio88/value;echo 1 > /sys/class/gpio/gpio85/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio85/value");\
   }while(0)
 
 #define __IRCUT1_NIGHT(ctl) do {\
-    if(ctl == IRCUT_CTL_LEVEL)\
-      system("echo 1 > /sys/class/gpio/gpio88/value;echo 1 > /sys/class/gpio/gpio85/value;");\
-    else \
-      system("echo 1 > /sys/class/gpio/gpio88/value;echo 0 > /sys/class/gpio/gpio85/value;sleep 0.1;echo 0 > /sys/class/gpio/gpio88/value");\
   }while(0)
-
+  
 //ircut reversed
 #define IRCUT0_DAY(ctl) do{ \
     if(_ircut_rev) __IRCUT0_NIGHT(ctl); else __IRCUT0_DAY(ctl);\
@@ -115,14 +105,28 @@ static int ptz_led_set(int stat);
     if(_ircut_rev) __IRCUT1_DAY(ctl); else __IRCUT1_NIGHT(ctl);\
   }while(0)
 
-//#1-4  Lamp0
+/*
+  bspmm 0x17940090 0x0; #0x0: GPIO7_0 0x3: SPI0_CSN0 0x5: I2C1_SDA 0x7: SENSOR0_HS                 
+  bspmm 0x17940094 0x0; #0x0: GPIO7_1 0x3: SPI0_SDI 0x4: SENSOR0_RSTN 0x5: I2C1_SCL 0x7: SENSOR0_VS 
+  echo 56 > /sys/class/gpio/export;
+  echo 57 > /sys/class/gpio/export;
+  echo high > /sys/class/gpio/gpio56/direction;
+  echo high > /sys/class/gpio/gpio57/direction;
+*/
+
+//#7-0  white-lamp
+//#7-1-ir-lamp
 #define LAMP0_INIT() do {\
+    system("bspmm 0x17940094 0x0;echo 57 > /sys/class/gpio/export");\
+    system("echo high > /sys/class/gpio/gpio57/direction");\
   }while(0)
 
 #define LAMP0_DAY() do {\
+      system("echo 1 > /sys/class/gpio/gpio57/value");\
   }while(0)
 
 #define LAMP0_NIGHT() do {\
+      system("echo 0 > /sys/class/gpio/gpio57/value");\
   }while(0)
 
 
@@ -140,7 +144,7 @@ int flash_is_emmc()
   return ret;
 }
 
-int lens3403_lens_init(gsf_lens_ini_t *ini)
+int lens610_lens_init(gsf_lens_ini_t *ini)
 {
   _ini = *ini;
   _sensor_flag = (strstr(_ini.sns, "imx") ||strstr(_ini.sns, "os"))?1:0;
@@ -163,11 +167,6 @@ int lens3403_lens_init(gsf_lens_ini_t *ini)
     //IRCUT && DAY
   } 
     
-  if(_flash_emmc)
-  {
-    return 0;
-  }
-
   IRCUT0_INIT();
   IRCUT0_DAY(_ircut_ctl);
 
@@ -215,7 +214,7 @@ static int cds_cb(int ViPipe, void* uargs)
    
   int value = 0;
  
-  FILE* fp = fopen("/sys/class/gpio/gpio13/value", "rb+");
+  FILE* fp = fopen("/sys/class/gpio/gpioXX/value", "rb+");
   if(fp)
   {
     unsigned char buf[10] = {0};
@@ -232,7 +231,7 @@ static int cds_cb(int ViPipe, void* uargs)
   return value;
 }
 
-int lens3403_lens_ircut(int ch, int dayNight)
+int lens610_lens_ircut(int ch, int dayNight)
 {
   if(!_sensor_flag)
   {  
@@ -246,7 +245,7 @@ int lens3403_lens_ircut(int ch, int dayNight)
   return 0;
 }
 
-int lens3403_uart_write(unsigned char *buf, int size)
+int lens610_uart_write(unsigned char *buf, int size)
 {
   int ret = 0;
 
@@ -281,14 +280,12 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
   buf[6] = Gain & 0xFF;
 
   buf[7] = _dayNight; //彩色是0 黑白是1
-  //maohw;
-  //printf("ViPipe:%d, Fv1:%u, Fv2:%u, Gain:%u\n", (int)uargs, Fv1, Fv2, Gain);
 
-  int ret = gsf_uart_write(buf, 8);
+  int ret = lens610_uart_write(buf, 8);
   return 0;
 }
 
-int lens3403_lens_start(int ch, char *ttyAMA)
+int lens610_lens_start(int ch, char *ttyAMA)
 {
   int ret = 0;
   
@@ -303,16 +300,17 @@ int lens3403_lens_start(int ch, char *ttyAMA)
   }  
   else if(_lens_type == LENS_TYPE_SONY)
   {
-    gsf_uart_open(ttyAMA, 9600);
+    lens610_uart_open(ttyAMA, 9600);
     return -1;
   }
   else
   {
-    if(gsf_uart_open(ttyAMA, 115200) < 0)
+    if(lens610_uart_open(ttyAMA, 115200) < 0)
     {  
       printf("open error ttyAMA:[%s]\n", ttyAMA);
     }
   }
+  
   printf("%s => _sensor_flag:%d\n", __func__, _sensor_flag);
   if(!_sensor_flag)
   {  
@@ -345,7 +343,7 @@ int lens3403_lens_start(int ch, char *ttyAMA)
 }
 
 
-int lens3403_lens_stop(int ch)
+int lens610_lens_stop(int ch)
 {
   int ret = 0;
   
@@ -363,18 +361,18 @@ int lens3403_lens_stop(int ch)
   else if(_lens_type == LENS_TYPE_SONY)
   {
     unsigned char buf[6] = {0x81, 0x01, 0x04, 0x07, 0x00, 0xFF};
-    ret = gsf_uart_write(buf, 6);
+    ret = lens610_uart_write(buf, 6);
     return 0;
   }
   else 
   {
-    unsigned char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c};SUM6(buf);
-    ret = gsf_uart_write(buf, 8);
+    unsigned char buf[8] = {0xc5,0x00,0x00,0x00,0x00,0x00,0x00,0x5c}; SUM6(buf);
+    ret = lens610_uart_write(buf, 8);
   }
   return 0;
 }
 
-int lens3403_lens_zoom(int ch,  int dir, int speed)
+int lens610_lens_zoom(int ch,  int dir, int speed)
 {
   int ret = 0;
   
@@ -398,7 +396,7 @@ int lens3403_lens_zoom(int ch,  int dir, int speed)
     unsigned char add[6] = {0x81, 0x01, 0x04, 0x07, 0x25, 0xFF}; //buf[4] = 0x20 | (speed&0x0F);
     unsigned char sub[6] = {0x81, 0x01, 0x04, 0x07, 0x35, 0xFF}; //buf[4] = 0x30 | (speed&0x0F);
     unsigned char *buf = (dir)?add:sub;
-    ret = gsf_uart_write(buf, 6);
+    ret = lens610_uart_write(buf, 6);
     return 0;
   }
   else 
@@ -407,12 +405,12 @@ int lens3403_lens_zoom(int ch,  int dir, int speed)
     unsigned char add[8] = {0xc5,0x00,0x00,0x20,0x00,0x00,0x00,0x5c}; SUM6(add);
     unsigned char sub[8] = {0xc5,0x00,0x00,0x40,0x00,0x00,0x00,0x5c}; SUM6(sub);
     unsigned char *buf = (dir)?add:sub;
-    ret = gsf_uart_write(buf, 8);
+    ret = lens610_uart_write(buf, 8);
   }
   return 0;
 }
 
-int lens3403_lens_focus(int ch, int dir, int speed)
+int lens610_lens_focus(int ch, int dir, int speed)
 {
   int ret = 0;
   if(_lens_type == LENS_TYPE_HIVIEW)
@@ -429,7 +427,7 @@ int lens3403_lens_focus(int ch, int dir, int speed)
     unsigned char add[6] = {0x81, 0x01, 0x04, 0x08, 0x25, 0xFF};
     unsigned char sub[6] = {0x81, 0x01, 0x04, 0x08, 0x35, 0xFF};
     unsigned char *buf = (dir)?add:sub;
-    ret = gsf_uart_write(buf, 6);
+    ret = lens610_uart_write(buf, 6);
     return 0;
   }
   else 
@@ -438,12 +436,12 @@ int lens3403_lens_focus(int ch, int dir, int speed)
     unsigned char add[8] = {0xc5,0x00,0x01,0x00,0x00,0x00,0x00,0x5c}; SUM6(add);
     unsigned char sub[8] = {0xc5,0x00,0x00,0x80,0x00,0x00,0x00,0x5c}; SUM6(sub);
     unsigned char *buf = (dir)?add:sub;
-    ret = gsf_uart_write(buf, 8);
+    ret = lens610_uart_write(buf, 8);
   }
   return 0;
 }
 
-int lens3403_lens_cal(int ch)
+int lens610_lens_cal(int ch)
 {
 	// lens calibration
   if(_lens_type == LENS_TYPE_HIVIEW)
@@ -453,27 +451,22 @@ int lens3403_lens_cal(int ch)
   else
   {
     unsigned char buf[8] = {0xc5,0x00,0x00,0x07,0x00,250,0x00,0x5c}; SUM6(buf);
-    int ret = gsf_uart_write(buf, 8);
+    int ret = lens610_uart_write(buf, 8);
     usleep(100*1000);
-    ret |= gsf_uart_write(buf, 8);
+    ret |= lens610_uart_write(buf, 8);
   }
   return 0;
 }
 
-int lens3403_uart_open(char *ttyAMA, int baudrate)
+int lens610_uart_open(char *ttyAMA, int baudrate)
 {
-  if(strstr(ttyAMA, "ttyAMA4"))
-    system("bspmm 0x0102F0134 0x01;bspmm 0x0102F0138 0x01;"); //UART4 MUX
-  else if(strstr(ttyAMA, "ttyAMA2"))
-    system("bspmm 0x0102F0070 0x01;bspmm 0x0102F0074 0x01;"); //UART2 MUX
-  else if(strstr(ttyAMA, "ttyAMA1"))
-    system("bspmm 0x0102F0060 0x01;bspmm 0x0102F0064 0x01;"); //UART1 MUX
-  else
+  if(strstr(ttyAMA, "ttyAMAxx"))
+    ;//system("bspmm 0x0102600E0 2; bspmm 0x0102600E4 2;"); //UART3 MUX
+  else 
     return -1;
     
   if(!ttyAMA || strlen(ttyAMA) < 1)
     return -1;
-    
   //O_NDELAY blocking read;
   serial_fd = open(ttyAMA, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
   if (serial_fd < 0)
@@ -494,10 +487,8 @@ static void* serial_task_ldm(void *parm)
   unsigned short cmd = 0;
   unsigned char buf[4+256] = {0};
   while(serial_fd > 0)
-  { 
-    //OSD:|0   |1   |2   |3  |4         |5          |6   |7  |  8 -- 11  |12 |
-    //FMT:|0xEF|0x01|0x00|len|0x00(前景)|0x02(index)|line|col|char0~charN|sum|
-    
+  {
+    //OSD: 0xEF，0x01, 0x00，len，0x00(前景),0x02(index),line，col，char0~charN
     buf[0] = buf[1] = buf[2] = buf[3] = 0;
     ret = read(serial_fd, buf, 4);
     if(buf[0] != 0xef || buf[1] != 0x01 || buf[2] != 0x00)
@@ -614,7 +605,7 @@ static void* serial_task(void *parm)
 }
 
 
-int lens3403_lens_ptz(int ch, gsf_lens_t *lens)
+int lens610_lens_ptz(int ch, gsf_lens_t *lens)
 {
   if(_lens_type != LENS_TYPE_HIVIEW)
     return 0;
@@ -644,50 +635,50 @@ static int pelco_d_write(char *cmd, int size)
     {
       unsigned char buf[7] = {0xff,0xff,0x00,0x00,0x00,0x00,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
-      gsf_uart_write(buf, sizeof(buf));
+      lens610_uart_write(buf, sizeof(buf));
     }  
     break;
     case GSF_PTZ_UP:
     {
       unsigned char buf[7] = {0xff,0xff,0x00,0x08,0x00,0x31,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
-      gsf_uart_write(buf, sizeof(buf));
+      lens610_uart_write(buf, sizeof(buf));
     }
     break;    
     case GSF_PTZ_DOWN:
     {
       unsigned char buf[7] = {0xff,0xff,0x00,0x10,0x00,0x31,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
-      gsf_uart_write(buf, sizeof(buf));
+      lens610_uart_write(buf, sizeof(buf));
     }
     break;  
     case GSF_PTZ_LEFT:
     {
       unsigned char buf[7] = {0xff,0xff,0x00,0x04,0x31,0x00,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
-      gsf_uart_write(buf, sizeof(buf));
+      lens610_uart_write(buf, sizeof(buf));
     }
     break;    
     case GSF_PTZ_RIGHT:
     {
       unsigned char buf[7] = {0xff,0xff,0x00,0x02,0x31,0x00,0x00};
       buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;
-      gsf_uart_write(buf, sizeof(buf));
+      lens610_uart_write(buf, sizeof(buf));
     }
     break;
   }
   return 0;
 }
 
-int (*gsf_lens_start)(int ch, char *ttyAMA) = lens3403_lens_start;
-int (*gsf_lens_ircut)(int ch, int dayNight) = lens3403_lens_ircut;
-int (*gsf_lens_zoom)(int ch,  int dir, int speed) = lens3403_lens_zoom;
-int (*gsf_lens_focus)(int ch, int dir, int speed) = lens3403_lens_focus;
-int (*gsf_lens_stop)(int ch) = lens3403_lens_stop;
-int (*gsf_lens_cal)(int ch) = lens3403_lens_cal;
-int (*gsf_uart_open)(char *ttyAMA, int baudrate) = lens3403_uart_open;
-int (*gsf_uart_write)(unsigned char *buf, int size) = lens3403_uart_write;
-int (*gsf_lens_init)(gsf_lens_ini_t *ini) = lens3403_lens_init;
-int (*gsf_lens_ptz)(int ch, gsf_lens_t *lens) = lens3403_lens_ptz;
+int (*gsf_lens_start)(int ch, char *ttyAMA) = lens610_lens_start;
+int (*gsf_lens_ircut)(int ch, int dayNight) = lens610_lens_ircut;
+int (*gsf_lens_zoom)(int ch,  int dir, int speed) = lens610_lens_zoom;
+int (*gsf_lens_focus)(int ch, int dir, int speed) = lens610_lens_focus;
+int (*gsf_lens_stop)(int ch) = lens610_lens_stop;
+int (*gsf_lens_cal)(int ch) = lens610_lens_cal;
+int (*gsf_uart_open)(char *ttyAMA, int baudrate) = lens610_uart_open;
+int (*gsf_uart_write)(unsigned char *buf, int size) = lens610_uart_write;
+int (*gsf_lens_init)(gsf_lens_ini_t *ini) = lens610_lens_init;
+int (*gsf_lens_ptz)(int ch, gsf_lens_t *lens) = lens610_lens_ptz;
 
 #endif
