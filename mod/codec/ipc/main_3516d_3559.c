@@ -848,11 +848,26 @@ int vo_start()
     }
     return 0;
 }
+//test bt1120 user_pic;
+//#define __USER_PIC__ 
 
 int main_start(gsf_bsp_def_t *bsp_def)
 {
     mpp_start(bsp_def);
 
+    #ifdef __USER_PIC__
+    if(strstr(p_cfg->snsname, "bt1120"))
+    {
+      VI_PIPE ViPipe = 2;
+      VI_PIPE_ATTR_S stPipeAttr;
+      if(HI_MPI_VI_GetPipeAttr(ViPipe, &stPipeAttr) == 0)
+      {
+        stPipeAttr.enPixFmt = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+        HI_MPI_VI_SetPipeAttr(ViPipe, &stPipeAttr);
+      }  
+    }
+    #endif
+    
     venc_start(1);
 
     vo_start();
@@ -888,7 +903,6 @@ int main_start(gsf_bsp_def_t *bsp_def)
 
 
 int dzoom_plus = 0;
-
 int main_loop(void)
 {
     usleep(10*1000);
@@ -953,6 +967,46 @@ int main_loop(void)
       }
     }
     
+
+    #ifdef __USER_PIC__
+    {
+    static VI_PIPE ViPipe = -1;
+    static HI_S32 s32Ret = 0;
+    static SAMPLE_VI_FRAME_INFO_S stViFrameInfo;
+    static VI_USERPIC_ATTR_S stUsrPic;
+    
+    if(ViPipe == -1)
+    {
+      ViPipe = 2;
+      stUsrPic.enUsrPicMode = VI_USERPIC_MODE_PIC;
+      stUsrPic.unUsrPic.stUsrPicFrm.stVFrame.u32Width = 1920;
+      stUsrPic.unUsrPic.stUsrPicFrm.stVFrame.u32Height = 1080;
+      stUsrPic.unUsrPic.stUsrPicFrm.stVFrame.enPixelFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+
+      s32Ret = SAMPLE_COMM_VI_Load_UserPic("/app/cfg/UsePic_1920_1080_420.yuv", &stUsrPic, &stViFrameInfo);
+      printf("SAMPLE_COMM_VI_Load_UserPic with %#x!\n", s32Ret);
+
+      //stUsrPic.enUsrPicMode = VI_USERPIC_MODE_BGC;
+      //stUsrPic.unUsrPic.stUsrPicBg.u32BgColor = 0xff22cc;
+      assert(stUsrPic.unUsrPic.stUsrPicFrm.stVFrame.enPixelFormat == PIXEL_FORMAT_YVU_SEMIPLANAR_420);
+      assert(stViFrameInfo.stVideoFrameInfo.stVFrame.enPixelFormat == PIXEL_FORMAT_YVU_SEMIPLANAR_420);
+      assert(stViFrameInfo.stVideoFrameInfo.stVFrame.enCompressMode == COMPRESS_MODE_NONE);
+      s32Ret = HI_MPI_VI_SetUserPic(ViPipe, &stUsrPic);
+      printf("HI_MPI_VI_SetUserPic with %#x!\n", s32Ret);
+
+    }
+
+    s32Ret = HI_MPI_VI_EnableUserPic(ViPipe);
+    printf("HI_MPI_VI_EnableUserPic with %#x!\n", s32Ret);
+    sleep(10);
+    
+    s32Ret = HI_MPI_VI_DisableUserPic(ViPipe);
+    printf("HI_MPI_VI_DisableUserPic with %#x!\n", s32Ret);
+    sleep(10);
+    
+    //SAMPLE_COMM_VI_Release_UserPic(&stViFrameInfo);
+    }
+    #endif
     
     #if defined(__TEST_ASPECT__)
     ASPECT_RATIO_S aspect;
