@@ -11,7 +11,7 @@ gsf_rec_parm_t rec_parm = {
   .pattern = "", // allowed disk;
   #endif
   .cfg = {
-    [0] = {1, 180},   // enable channel;
+    [0] = {1, 0, 180},   // enable channel;
   },
 };
 

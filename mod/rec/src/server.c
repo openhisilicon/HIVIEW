@@ -400,18 +400,19 @@ static void* ser_thread(void *param)
         if(!cfifo[i])
         {
           // start rec;
+          int st = rec_parm.cfg[i].st; //stream type;
           GSF_MSG_DEF(gsf_sdp_t, gsf_sdp, sizeof(gsf_msg_t)+sizeof(gsf_sdp_t));
           gsf_sdp->video_shmid = -1;
           gsf_sdp->audio_shmid = -1;
-          if(GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, i, GET, 0
+          if(GSF_MSG_SENDTO(GSF_ID_CODEC_SDP, i, GET, st
                                 , 0
                                 , GSF_IPC_CODEC
                                 , 2000) < 0)
           {
-            printf(" get GSF_ID_CODEC_SDP(%d) err.\n" , i);
+            printf(" get GSF_ID_CODEC_SDP(chn:%d,st:%d) err.\n" , i, st);
             continue;
           }
-          printf(" get GSF_ID_CODEC_SDP(%d) ok.\n" , i);
+          printf(" get GSF_ID_CODEC_SDP(chn:%d,st:%d) ok.\n" , i, st);
       
           cfifo[i] = cfifo_shmat(cfifo_recsize, cfifo_rectag, gsf_sdp->video_shmid);
           if(cfifo[i] == NULL)
@@ -429,6 +430,12 @@ static void* ser_thread(void *param)
             unsigned int audio_utc = cfifo_oldest(cfifo_au[i], video_utc);
             printf("ch:%d, sync video_utc:%u, audio_utc:%u\n", i, video_utc, audio_utc);
             cfifo_ep_ctl(ep, CFIFO_EP_ADD, cfifo_au[i]);
+            if(cfifo_get(cfifo_au[i], cfifo_recgut, (void*)frm) > 0)
+            {
+              void* ch = cfifo_get_u(cfifo_au[i]);
+              int ret = ser_file_writer((int)ch&0xff, frm);
+              printf("ch:%d try write an audio frame first ret:%d\n", (int)ch&0xff, ret);
+            }
           }
         }
       }

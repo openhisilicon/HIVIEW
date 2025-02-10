@@ -4,14 +4,15 @@
 
 STRUCT(gsf_rec_cfg_t)
 {
-  FIELD(int, en);
+  FIELD(int, en);      //enable
+  FIELD(int, st);      //stream 0:main, 1:sub
   FIELD(int, segtime); //SEC
 };
 
 
 STRUCT(gsf_rec_parm_t)
 {
-  STRING(pattern, 128);
+  STRING(pattern, 128); //disk filter
   ARRAY(gsf_rec_cfg_t,  cfg,  GSF_REC_CH_NUM);
 };
 
