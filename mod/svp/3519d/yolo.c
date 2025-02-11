@@ -44,6 +44,14 @@ int yolo_load(char *home_path)
     VpssGrp[3] = 3; VpssChn[3] = 1;
   } 
   
+  for(int i = 0; i < YOLO_CHN_MAX && i < GSF_SVP_CHN; i++)
+  {
+    if(svp_parm.svp.vpssGrp[i] != -1 && svp_parm.svp.vpssChn[i] != -1)
+    {
+      VpssGrp[i] = svp_parm.svp.vpssGrp[i];
+      VpssChn[i] = svp_parm.svp.vpssChn[i];
+    }
+  }
   char ModelPath[256];
   if(_v8)
   {

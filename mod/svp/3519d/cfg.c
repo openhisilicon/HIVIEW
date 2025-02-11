@@ -3,7 +3,13 @@
 char svp_parm_path[128] = {0};
 
 gsf_svp_parm_t svp_parm = {
-  .svp = {0,}
+  .svp = {
+    .md_alg = 0,
+    .lpr_alg = 0,
+    .yolo_alg = 0,
+    .vpssGrp = { -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    .vpssChn = { -1, -1, -1, -1, -1, -1, -1, -1, -1},
+   }
 };
 
 int json_parm_load(char *filename, gsf_svp_parm_t *cfg)

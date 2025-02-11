@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
                     , NM_REP_OSIZE_MAX
                     , req_recv);
     //reg2bsp();
-    
+    printf("init ok.\n");
     int yolo_alg = 0;
     while(1)
     {                        

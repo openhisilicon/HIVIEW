@@ -20,6 +20,7 @@ static vcap_t vcap[YOLO_CHN_MAX];
 static int vcap_save_yuv   = 0;
 static int vcap_save_image = 0;
 static int vcap_cnt = 0;
+static gsf_mpp_venc_t* __venc_yuv2jpeg = NULL;
 
 extern "C" hi_s32 sample_comm_venc_save_stream(FILE *fd, hi_venc_stream *stream);
 static int venc_cb(VENC_STREAM_S* pstStream, void* u)
@@ -74,7 +75,6 @@ int yolov5_init(int vpss_grp[YOLO_CHN_MAX], int vpss_chn[YOLO_CHN_MAX], char *Mo
 }
 
 
-gsf_mpp_venc_t* __venc_yuv2jpeg = NULL;
 
 int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
 {
@@ -155,9 +155,9 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
           if(!vcap[i].image.empty())
             sprintf(info, "%s cv_mat[%dx%d]", info, vcap[i].image.cols, vcap[i].image.rows);
           if(hi_frame)
-            sprintf(info, "%s hi_frame[%dx%d:%llu ms]", info, hi_frame->video_frame.width, hi_frame->video_frame.height, hi_frame->video_frame.pts/1000);
+            sprintf(info, "%s hi_frame[%dx%d,%llu ms]", info, hi_frame->video_frame.width, hi_frame->video_frame.height,hi_frame->video_frame.pts/1000);
           if(other_frame)
-            sprintf(info, "%s other_frame[%dx%d:%llu ms]", info, other_frame->video_frame.width, other_frame->video_frame.height, other_frame->video_frame.pts/1000);    
+            sprintf(info, "%s other_frame[%dx%d,%llu ms]", info, other_frame->video_frame.width, other_frame->video_frame.height,other_frame->video_frame.pts/1000);    
           
           printf("%s\n\n", info);
           
@@ -205,7 +205,7 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
               
               gsf_mpp_venc_get_t vget;
               vget.cb = venc_cb;
-              vget.u = (void*)filename;
+              vget.u = NULL;//(void*)filename;
      
      
               static td_u64 __pts = 0;
@@ -221,7 +221,7 @@ int yolov5_detect(yolo_boxs_t _boxs[YOLO_CHN_MAX])
             #endif
 
             clock_gettime(CLOCK_MONOTONIC, &ts2);
-            printf("save cost:%d ms\n", (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000));
+            printf("save cost:%d ms, pts:%llu, time_ref:%u\n", (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000), hi_frame->video_frame.pts, hi_frame->video_frame.time_ref);
           }
         }
         

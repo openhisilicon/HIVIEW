@@ -55,6 +55,7 @@ private:
 	hi_u32 g_blk_size = 0;
 	hi_vb_calc_cfg vb_calc_cfg = {0};
 	hi_video_frame_info vgs_frame = {0};
+	int send_to_vgs = 0;
 	
   //memcpy;
   hi_u32 g_size = 0;

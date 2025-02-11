@@ -5,6 +5,11 @@ STRUCT(gsf_svp_t)
   FIELD(int, md_alg);
   FIELD(int, lpr_alg);
   FIELD(int, yolo_alg);
+#if defined(GSF_CPU_3519d)
+#warning "GSF_CPU_3519d add vpssGrp,vpssChn"
+  ARRAY(int, vpssGrp, GSF_SVP_CHN);
+  ARRAY(int, vpssChn, GSF_SVP_CHN);
+#endif  
 };
 
 STRUCT(gsf_point_t)

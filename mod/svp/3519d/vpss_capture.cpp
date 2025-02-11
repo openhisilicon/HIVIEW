@@ -140,7 +140,7 @@ int VpssCapture::yuv2mat(hi_video_frame *frame, cv::Mat *cv_mat)
 		}
 		dst_mat = cv::Mat(frame->height, frame->width, CV_8UC3, (void*)dst_img.virt_addr[0]);
 		*cv_mat = cv::Mat(dst_mat);
-		printf("MmzAlloc_Cached OK! dst_mat:%p, => cv_mat:%p\n", &dst_mat, cv_mat);
+		printf("MmzAlloc_Cached OK! w:%d, h:%d, dst_mat:%p, => cv_mat:%p\n", frame->width, frame->height, &dst_mat, cv_mat);
 	}
 
 	dst_img.phys_addr[1] = dst_img.phys_addr[0] + dst_img.stride[0];
@@ -288,8 +288,8 @@ hi_void VpssCapture::vpss_chn_dump_set_vgs_frame_info(hi_video_frame_info *vgs_f
     vgs_frame_info->video_frame.pixel_format = vpss_frame_info->video_frame.pixel_format;
     vgs_frame_info->video_frame.video_format = HI_VIDEO_FORMAT_LINEAR;
     vgs_frame_info->video_frame.dynamic_range = vpss_frame_info->video_frame.dynamic_range;
-    vgs_frame_info->video_frame.pts = 0;
-    vgs_frame_info->video_frame.time_ref = 0;
+    vgs_frame_info->video_frame.pts = vpss_frame_info->video_frame.pts;
+    vgs_frame_info->video_frame.time_ref = vpss_frame_info->video_frame.time_ref;
     vgs_frame_info->pool_id = dump_mem->vb_pool;
     vgs_frame_info->mod_id = HI_ID_VGS;
 }
@@ -302,7 +302,7 @@ int VpssCapture::get_frame(cv::Mat *cv_mat)
       return -1;
   }
   
-	bool send_to_vgs = ((HI_COMPRESS_MODE_NONE != g_frame[0].video_frame.compress_mode) 
+	send_to_vgs = ((HI_COMPRESS_MODE_NONE != g_frame[0].video_frame.compress_mode) 
 	                  || (HI_VIDEO_FORMAT_LINEAR != g_frame[0].video_frame.video_format)
 	                  || (this->vgsW != 0 && this->vgsH != 0));
   
@@ -317,6 +317,7 @@ int VpssCapture::get_frame(cv::Mat *cv_mat)
       }
       vpss_chn_dump_set_vgs_frame_info(&vgs_frame, &g_dump_mem, &vb_calc_cfg, &g_frame[0]);
     }
+    vgs_frame.video_frame.pts = g_frame[0].video_frame.pts;
     
     hi_vgs_task_attr vgs_task_attr;
        
@@ -392,7 +393,16 @@ int VpssCapture::get_frame_lock(cv::Mat *cv_mat, hi_video_frame_info **hi_frame,
   int ret = get_frame(cv_mat);
   if(hi_frame)
   {  
+    if(send_to_vgs)
+    {
+      *hi_frame = &vgs_frame;
+      hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, &g_frame[0]);
+  	  g_frame[0].pool_id = HI_VB_INVALID_POOL_ID;
+    }
+    else
+    {  
     *hi_frame = &g_frame[0];
+    }
   }
   return ret;
 }
@@ -403,7 +413,7 @@ int VpssCapture::get_frame_unlock(hi_video_frame_info *hi_frame, hi_video_frame_
   {
     frame_lock = 0;
     
-    if(hi_frame)
+    if(hi_frame == &g_frame[0])
     {  
       //printf("hi_mpi_vpss_release_chn_frame hi_frame:%p\n", hi_frame);
       hi_mpi_vpss_release_chn_frame(g_vpss_grp, g_vpss_chn, hi_frame);
