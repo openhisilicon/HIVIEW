@@ -281,9 +281,9 @@ int gsf_venc_recv(VENC_CHN VeChn, PAYLOAD_TYPE_E PT, VENC_STREAM_S* pstStream, v
     }
   }
   
-  if(len+sizeof(gsf_frm_t) > GSF_FRM_MAX_SIZE)
+  if(venc_mgr[VeChn].video_fifo == NULL || len+sizeof(gsf_frm_t) > GSF_FRM_MAX_SIZE)
   {
-    printf("drop VeChn:%d, bigframe size:%d \n", VeChn, len+sizeof(gsf_frm_t));
+    printf("drop VeChn:%d, frame size:%d \n", VeChn, len+sizeof(gsf_frm_t));
     goto __err;
   }
   

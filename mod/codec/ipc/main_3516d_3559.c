@@ -188,14 +188,14 @@ int venc_start(int start)
   for(i = 0; i < p_venc_ini->ch_num; i++)
   for(j = 0; j < GSF_CODEC_VENC_NUM; j++)
   {
-    if((!codec_ipc.venc[j].en) || (j >= p_venc_ini->st_num && j != GSF_CODEC_SNAP_IDX))
+    if(!codec_ipc.venc[j].en)
       continue;
 
     gsf_mpp_venc_t venc = {
       .VencChn    = i*GSF_CODEC_VENC_NUM+j,
       .srcModId   = HI_ID_VPSS,
       .VpssGrp    = i,
-      .VpssChn    = (j<p_venc_ini->st_num)?j:0,
+      .VpssChn    = (p_vpss[i].enable[j])?j:0,
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
       .enSize     = PIC_WIDTH(codec_ipc.venc[j].width, codec_ipc.venc[j].height),
       .enRcMode   = codec_ipc.venc[j].rcmode,
@@ -264,7 +264,7 @@ int venc_start(int start)
     if(!start)
       continue;
     
-    if(j < p_venc_ini->st_num) // st_num+1(JPEG);
+    if(codec_ipc.venc[j].type != GSF_ENC_JPEG)
     {
       st.VeChn[st.s32Cnt] = venc.VencChn;
       st.s32Cnt++;

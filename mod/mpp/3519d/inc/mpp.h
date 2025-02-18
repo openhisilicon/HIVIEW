@@ -229,7 +229,8 @@ typedef struct {
 //SAMPLE_COMM_VENC_StartGetStreamCb
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv);
 int gsf_mpp_venc_dest();
-int gsf_mpp_venc_snap(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
+int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
+int gsf_mpp_venc_snap4vpss(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
 
 
 //isp;

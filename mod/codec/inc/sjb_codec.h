@@ -5,11 +5,14 @@
 #define GSF_CODEC_OSD_NUM   8     // osd num;
 #define GSF_CODEC_VMASK_NUM 8     // vmask num;
 
-#if defined(GSF_CPU_3519d)
+//#define GSF_CPU_3519d_6CHN      //6CHN-AHD
+
+#if defined(GSF_CPU_3519d_6CHN)
 #define GSF_CODEC_IPC_CHN   (6) // ipc channel num;
 #define GSF_CODEC_ST_NUM    (2) // stream num;
 #define GSF_CODEC_SNAP_IDX  (GSF_CODEC_ST_NUM)
 #define GSF_CODEC_VENC_NUM  (GSF_CODEC_ST_NUM)
+#warning "GSF_CPU_3519d_6CHN"
 #else
 #define GSF_CODEC_IPC_CHN   (4)   // ipc channel num;
 #define GSF_CODEC_ST_NUM    (2)   // stream num;

@@ -311,7 +311,8 @@ int gsf_rgn_osd_set(int ch, int idx, gsf_osd_t *_osd)
   
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
-    if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+    
+    if(!codec_ipc.venc[i].en)
       continue;
     
     int handle = GSF_RGN_OBJ_HANDLE(ch, OBJ_OSD, i, idx);
@@ -576,7 +577,7 @@ int gsf_rgn_rect_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
    
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
-    if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+    if(!codec_ipc.venc[i].en)
       continue;
     if(!((1<<i) & mask))
       continue;
@@ -965,7 +966,7 @@ int gsf_rgn_nk_set(int ch, int idx, gsf_rgn_rects_t *rects, int mask)
   
   for(i = 0; i < GSF_CODEC_VENC_NUM; i++)
   {
-    if(i >= rgn_ini.st_num && i != GSF_CODEC_SNAP_IDX)
+    if(!codec_ipc.venc[i].en)
       continue;
     if(!((1<<i) & mask))
       continue;

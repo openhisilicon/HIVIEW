@@ -173,14 +173,14 @@ int venc_start(int start)
   for(i = 0; i < p_venc_ini->ch_num; i++)
   for(j = 0; j < GSF_CODEC_VENC_NUM; j++)
   {
-    if((!codec_ipc.venc[j].en) || (j >= p_venc_ini->st_num && j != GSF_CODEC_SNAP_IDX))
+    if(!codec_ipc.venc[j].en)
       continue;
 
     gsf_mpp_venc_t venc = {
       .VencChn    = i*GSF_CODEC_VENC_NUM+j,
       .srcModId   = HI_ID_VPSS,
       .VpssGrp    = i,
-      .VpssChn    = (j<p_venc_ini->st_num)?j:0,
+      .VpssChn    = (p_vpss[i].enable[j])?j:0,
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
       .enSize     = PIC_WIDTH(codec_ipc.venc[j].width, codec_ipc.venc[j].height),
       .enRcMode   = codec_ipc.venc[j].rcmode,
@@ -224,7 +224,7 @@ int venc_start(int start)
     if(!start)
       continue;
     
-    if(j < p_venc_ini->st_num) // st_num+1(JPEG);
+    if(codec_ipc.venc[j].type != GSF_ENC_JPEG)
     {
       st.VeChn[st.s32Cnt] = venc.VencChn;
       st.s32Cnt++;
@@ -328,7 +328,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     }
     else 
     {
-      cfg->lane = 0; cfg->wdr = 0; cfg->res = strstr(cfg->snsname, "imx335")?5:2; cfg->fps = 30;
+      cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = strstr(cfg->snsname, "imx335")?5:2; cfg->fps = 30;
     }
     
     rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
@@ -422,7 +422,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   }
   
   // os08a20-0-0-8-30
-  cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
+  cfg->lane = 0; cfg->wdr = codec_ipc.vi.wdr; cfg->res = 8; cfg->fps = (codec_ipc.vi.fps>0)?codec_ipc.vi.fps:30;
   rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
   venc_ini->ch_num = 1; venc_ini->st_num = 2;
   VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_640P);

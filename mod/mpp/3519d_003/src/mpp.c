@@ -137,6 +137,7 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
           sample_comm_venc_stop(dst_chn.chn_id);
         }  
       }  
+      sample_comm_venc_stop(HI_VENC_MAX_CHN_NUM-2);
       
       extern hi_s32 sample_audio_ai_aenc_stop(gsf_mpp_aenc_t *aenc);
       ret = sample_audio_ai_aenc_stop(&_aenc);
@@ -809,10 +810,12 @@ static int snap_venc_cb(VENC_STREAM_S* pstStream, void* u)
   return 0;
 }
 
-int gsf_mpp_venc_snap(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
 {
-  //return sample_comm_venc_snap_processCB(VencChn, SnapCnt, cb, u);
- 
+  return sample_comm_venc_snap_processCB(VencChn, SnapCnt, cb, u);
+}
+int gsf_mpp_venc_snap4vpss(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+{
   printf("gsf_mpp_vpss_get VpssGrp:%d, SnapCnt:%d\n", VpssGrp, SnapCnt);
  
   hi_video_frame_info stFrameInfo;

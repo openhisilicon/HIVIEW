@@ -129,7 +129,7 @@ int venc_start(int start)
   for(i = 0; i < p_venc_ini->ch_num; i++)
   for(j = 0; j < GSF_CODEC_VENC_NUM; j++)
   {
-    if((!codec_nvr.venc[j].en) || (j >= p_venc_ini->st_num && j != GSF_CODEC_SNAP_IDX))
+    if(!codec_nvr.venc[j].en)
       continue;
     
     gsf_mpp_venc_t venc = {
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
     
     char home_path[256] = {0};
     proc_absolute_path(home_path);
-    sprintf(home_path, "%s/../", home_path);
+    strcat(home_path, "/../");
     printf("home_path:[%s]\n", home_path);
     
     int mipi_800x1280 = codec_nvr.vo.intf;
