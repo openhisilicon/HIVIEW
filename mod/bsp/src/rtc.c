@@ -153,7 +153,7 @@ int rtc_init(void)
     gsf2tm(&gsf, &tm);
 		tv.tv_sec  = mktime(&tm);
 		tv.tv_usec = 0;
-		settimeofday(&tv, &tz);
+		settimeofday(&tv, NULL/*&tz*/);
   }
   else if(rtc_fd > 0)
   {
@@ -172,7 +172,7 @@ int rtc_init(void)
     gsf2tm(&gsf, &tm);
 		tv.tv_sec  = mktime(&tm);
 		tv.tv_usec = 0;
-		settimeofday(&tv, &tz);
+		settimeofday(&tv, NULL/*&tz*/);
   }
   else
   {
@@ -219,7 +219,7 @@ int rtc_set(gsf_time_t *gsf)
     gsf2tm(gsf, &tm);
 		tv.tv_sec  = mktime(&tm);
 		tv.tv_usec = 0;
-		settimeofday(&tv, &tz);
+		settimeofday(&tv, NULL/*&tz*/);
     
     int ret = ioctl(hirtc_fd, HI_RTC_SET_TIME, &rtc);
     return ret;
@@ -237,7 +237,7 @@ int rtc_set(gsf_time_t *gsf)
     gsf2tm(gsf, &tm);
 		tv.tv_sec  = mktime(&tm);
 		tv.tv_usec = 0;
-		settimeofday(&tv, &tz);
+		settimeofday(&tv, NULL/*&tz*/);
     
     int ret = ioctl(rtc_fd, RTC_SET_TIME, &rtc);
     return ret;
@@ -252,7 +252,7 @@ int rtc_set(gsf_time_t *gsf)
     gsf2tm(gsf, &tm);
 		tv.tv_sec  = mktime(&tm);
 		tv.tv_usec = 0;
-		settimeofday(&tv, &tz);
+		settimeofday(&tv, NULL/*&tz*/);
 		
 		return system("hwclock -w");
   }
