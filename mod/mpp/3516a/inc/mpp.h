@@ -3,6 +3,15 @@
 
 #include "sample_comm.h"
 
+typedef enum {
+  SECOND_DISABLE    = 0,
+  SECOND_BT656_PAL  = 1,
+  SECOND_BT656_NTSC = 2,
+  SECOND_BT656_512P = 3,
+  SECOND_BT656_288P = 4, 
+  SECOND_BT656_600P = 5,
+  SECOND_USB_GD     = 6,
+}SECOND_TYPE;
 //cfg;
 typedef struct {
   char  snsname[32];  // sensor imx335
@@ -31,6 +40,8 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 
 typedef struct {
@@ -225,6 +236,10 @@ typedef struct {
 
 typedef struct {
   int bEnable;
+  int s32DistortionRatio;
+}gsf_mpp_img_ldc_t;
+typedef struct {
+  int bEnable;
   int u8strength;
 }gsf_mpp_img_3dnr_t;
 
@@ -245,6 +260,7 @@ typedef struct {
   gsf_mpp_img_drc_t   drc;
   gsf_mpp_img_ldci_t  ldci;
   gsf_mpp_img_3dnr_t  _3dnr;
+  gsf_mpp_img_ldc_t   ldc;
 }gsf_mpp_img_all_t;
 
 typedef struct {

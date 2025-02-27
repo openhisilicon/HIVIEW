@@ -144,13 +144,18 @@ typedef enum hiPIC_SIZE_E
 {
     PIC_CIF,
     PIC_360P,      /* 640 * 360 */
-    
+    #define HAVE_PIC_288P
+    PIC_288P,      /* 384 * 288 */ 
     #define HAVE_PIC_400P 
     PIC_400P,      /* 400 * 400 */ 
     #define HAVE_PIC_512P
     PIC_512P,      /* 640 * 512 */    
+    #define HAVE_PIC_640P
+    PIC_640P,      /* 640 * 640 */  
     PIC_D1_PAL,    /* 720 * 576 */
     PIC_D1_NTSC,   /* 720 * 480 */
+    #define HAVE_PIC_600P
+    PIC_600P,      /* 800 * 600   */
     PIC_720P,      /* 1280 * 720  */
     PIC_1080P,     /* 1920 * 1080 */
     PIC_1280x800,
@@ -233,10 +238,12 @@ typedef enum hiSAMPLE_SNS_TYPE_E
     MIPI_YUV_8M_30FPS_8BIT,
     MIPI_YUVPKG_2M_60FPS_8BIT,
     BT1120_YUV_2M_60FPS_8BIT,
+    BT1120_YUV_1M_60FPS_8BIT,  // 720P
     BT656_YUV_0M_60FPS_8BIT,   // BT656 PAL;
-    BT601_YUV_0M_60FPS_8BIT,   // BT601 PAL;
+    BT656_YUV_512P_60FPS_8BIT, // BT656 640?ив512;
     BT656N_YUV_0M_60FPS_8BIT,  // BT656 NTSC;
-    BT601GD_YUV_0M_60FPS_8BIT, // BT601 GD;
+    BT656_YUV_288P_60FPS_8BIT, // BT656 384?ив288;
+    BT656_YUV_600P_60FPS_8BIT, // BT656 800б┴600;
     SONY_IMX385_MIPI_2M_30FPS_12BIT,
     SONY_IMX482_MIPI_2M_30FPS_12BIT,
     OV426_OV6946_DC_0M_30FPS_12BIT,

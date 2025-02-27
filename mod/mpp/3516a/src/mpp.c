@@ -133,6 +133,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
+    {BT1120_YUV_1M_60FPS_8BIT,                    "bt1120-0-0-1-60", NULL,                NULL},
     {SONY_IMX385_MIPI_2M_30FPS_12BIT,           "imx385-0-0-2-30", "libsns_imx385.so", "stSnsImx385Obj"},
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,           "imx482-0-0-2-30", "libsns_imx482.so", "stSnsImx482Obj"},
     {OV426_OV6946_DC_0M_30FPS_12BIT,            "ov426-0-0-0-30", "libsns_ov426.so", "stSnsOv426Obj"},
@@ -231,10 +232,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT: //PAL
-                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT://NTSC
-                   (cfg->second == 3)?BT601GD_YUV_0M_60FPS_8BIT://GD
-                                      BT601_YUV_0M_60FPS_8BIT;//PAL
+    SENSOR1_TYPE = (cfg->second == SECOND_BT656_PAL)?BT656_YUV_0M_60FPS_8BIT: //PAL
+                   (cfg->second == SECOND_BT656_NTSC)?BT656N_YUV_0M_60FPS_8BIT://NTSC
+                   (cfg->second == SECOND_BT656_512P)?BT656_YUV_512P_60FPS_8BIT://640x512
+                   (cfg->second == SECOND_BT656_288P)?BT656_YUV_288P_60FPS_8BIT://384x288
+                                                      BT656_YUV_600P_60FPS_8BIT;//800x600
   }
   
   if(dl)
@@ -341,6 +343,21 @@ int gsf_mpp_vi_stop()
   
   SAMPLE_COMM_SYS_Exit();
   return s32Ret;
+}
+
+int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec)
+{
+  return HI_MPI_VPSS_SendFrame(VpssGrp, VpssGrpPipe, pstVideoFrame, s32MilliSec);
+}
+
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return mppex_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return mppex_uvc_rel(ViPipe, pstFrameInfo);
 }
 
 
@@ -594,10 +611,14 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
     ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
  
     VENC_STREAM_S stStream;
+    VENC_PACK_S stPack[4];
+    stStream.u32PackCount = 4;
+    stStream.pstPack = &stPack;
     ret = HI_MPI_VENC_GetStream(VeChn, &stStream, s32MilliSec);
     if(ret == 0)
     {
       get->cb(&stStream, get->u);
+      ret = HI_MPI_VENC_ReleaseStream(VeChn, &stStream);
     }
     ret = HI_MPI_VENC_StopRecvFrame(VeChn);
     return ret;
@@ -749,7 +770,7 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
     default:
       break;
   }
-  printf("VencChn:%d, id:%d, ret:%d\n", VencChn, id, ret);
+  printf("%s => VencChn:%d, id:%d, ret:%d\n", __func__, VencChn, id, ret);
   return ret;
 }
 
@@ -841,6 +862,10 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         VPSS_GRP_ATTR_S stGrpAttr = {0};
         ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
 
+        VI_LDC_ATTR_S stLDCAttr = {0};
+        ret = HI_MPI_VI_GetChnLDCAttr(ViPipe, 0, &stLDCAttr);
+        all->ldc.bEnable = stLDCAttr.bEnable;
+        all->ldc.s32DistortionRatio = stLDCAttr.stAttr.s32DistortionRatio;
       }
       break;
     case GSF_MPP_ISP_CTL_CSC:
@@ -1402,7 +1427,23 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       
      }
      break;
-     
+     case GSF_MPP_ISP_CTL_LDC:
+     {
+      gsf_mpp_img_ldc_t *ldc = (gsf_mpp_img_ldc_t*)args;
+      VI_LDC_ATTR_S stLDCAttr = {0};
+      stLDCAttr.bEnable = ldc->bEnable;
+      stLDCAttr.stAttr.bAspect = 1;              /* RW;Range: [0, 1];Whether aspect ration  is keep */
+      stLDCAttr.stAttr.s32XRatio = 100;          /* RW; Range: [0, 100]; field angle ration of  horizontal,valid when bAspect=0.*/
+      stLDCAttr.stAttr.s32YRatio = 100;          /* RW; Range: [0, 100]; field angle ration of  vertical,valid when bAspect=0.*/
+      stLDCAttr.stAttr.s32XYRatio = 100;         /* RW; Range: [0, 100]; field angle ration of  all,valid when bAspect=1.*/
+      stLDCAttr.stAttr.s32CenterXOffset = 0;     /* RW; Range: [-511, 511]; horizontal offset of the image distortion center relative to image center.*/
+      stLDCAttr.stAttr.s32CenterYOffset = 0;     /* RW; Range: [-511, 511]; vertical offset of the image distortion center relative to image center.*/
+      stLDCAttr.stAttr.s32DistortionRatio = ldc->s32DistortionRatio;  /* RW; Range: [-300, 500]; LDC Distortion ratio.When spread on,s32DistortionRatio range should be [0, 500]*/
+      ret = HI_MPI_VI_SetChnLDCAttr(ViPipe, 0, &stLDCAttr);
+      printf("SetChnLDCAttr ret:0x%x, ViPipe:%d, bEnable:%d, s32DistortionRatio:%d\n"
+            , ret, ViPipe, stLDCAttr.bEnable, stLDCAttr.stAttr.s32DistortionRatio);
+     }
+     break;
      default:
       break;
   }

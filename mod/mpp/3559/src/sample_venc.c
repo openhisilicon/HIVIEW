@@ -215,7 +215,8 @@ HI_S32 SAMPLE_VENC_SYS_Init(HI_U32 u32SupplementConfig,SAMPLE_SNS_TYPE_E  enSnsT
 
     u64BlkSize = COMMON_GetPicBufferSize(stSnsSize.u32Width, stSnsSize.u32Height, PIXEL_FORMAT_YVU_SEMIPLANAR_422, DATA_BITWIDTH_8, COMPRESS_MODE_SEG,DEFAULT_ALIGN);
     stVbConf.astCommPool[0].u64BlkSize   = u64BlkSize;
-    stVbConf.astCommPool[0].u32BlkCnt    = (stSnsSize.u32Width>=3840)?20/2:20*1.5;
+    stVbConf.astCommPool[0].u32BlkCnt    = (stSnsSize.u32Width>=3840)?20*0.5:
+                                           (stSnsSize.u32Width>=2048)?20*1.0:20*1.5;
 
     stVbConf.u32MaxPoolCnt = 1;
     

@@ -124,7 +124,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {MIPI_YUV_8M_30FPS_8BIT,                      "yuv422-0-0-8-30", NULL,                NULL},
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
-
+    {BT1120_YUV_1M_60FPS_8BIT,                    "bt1120-0-0-1-60", NULL,                NULL},
   };
 
 
@@ -215,10 +215,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = (cfg->second == 1)?BT656_YUV_0M_60FPS_8BIT: //PAL
-                   (cfg->second == 2)?BT656N_YUV_0M_60FPS_8BIT://NTSC
-                   (cfg->second == 3)?BT601GD_YUV_0M_60FPS_8BIT://GD
-                                      BT601_YUV_0M_60FPS_8BIT;//PAL
+    SENSOR1_TYPE = (cfg->second == SECOND_BT656_PAL)?BT656_YUV_0M_60FPS_8BIT: //PAL
+                   (cfg->second == SECOND_BT656_NTSC)?BT656N_YUV_0M_60FPS_8BIT://NTSC
+                   (cfg->second == SECOND_BT656_512P)?BT656_YUV_512P_60FPS_8BIT://640x512
+                   (cfg->second == SECOND_BT656_288P)?BT656_YUV_288P_60FPS_8BIT://384x288
+                                                      BT656_YUV_600P_60FPS_8BIT;//800x600
   }
   
   if(dl)
@@ -332,11 +333,11 @@ int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideo
 }
 int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
 {
-  return -1;
+  return mppex_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
 }
 int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
 {
-  return -1;
+  return mppex_uvc_rel(ViPipe, pstFrameInfo);
 }
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af)
@@ -483,6 +484,11 @@ int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
       if(ret)
         printf("GSF_MPP_VPCH_CTL_DISABLE VpssGrp:%d,VpssChn:%d err 0x%x\n", VpssGrp, (int)args, ret); 
       break;
+    case GSF_MPP_VPSS_CTL_ATTR:
+      ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, (VPSS_GRP_ATTR_S*)args);
+      if(ret)
+        printf("GSF_MPP_VPSS_CTL_ATTR VpssGrp:%d, err 0x%x\n", VpssGrp, ret); 
+      break;
   }
   return ret;
 }
@@ -584,10 +590,14 @@ int gsf_mpp_venc_send(int VeChn, VIDEO_FRAME_INFO_S *pstFrame, int s32MilliSec, 
     ret = HI_MPI_VENC_SendFrame(VeChn, pstFrame, s32MilliSec);
  
     VENC_STREAM_S stStream;
+    VENC_PACK_S stPack[4];
+    stStream.u32PackCount = 4;
+    stStream.pstPack = &stPack;
     ret = HI_MPI_VENC_GetStream(VeChn, &stStream, s32MilliSec);
     if(ret == 0)
     {
       get->cb(&stStream, get->u);
+      ret = HI_MPI_VENC_ReleaseStream(VeChn, &stStream);
     }
     ret = HI_MPI_VENC_StopRecvFrame(VeChn);
     return ret;
@@ -674,9 +684,34 @@ int gsf_mpp_scene_stop()
   return s32ret;
 }
 
+extern HI_SCENE_CTL_AE_S g_scene_ctl_ae[4];
 int gsf_mpp_scene_ctl(int ViPipe, int id, void *args)
 {
-  return -1;
+  int ret = -1;
+  
+  if(ViPipe < 0 || ViPipe >= 4)
+    return ret;  
+
+  switch(id)
+  {
+    case GSF_MPP_SCENE_CTL_ALL:
+      {
+        ret = 0;
+        gsf_mpp_scene_all_t *all = (gsf_mpp_scene_all_t*)args;
+        all->ae.compensation_mul = g_scene_ctl_ae[ViPipe].compensation_mul;
+      }
+      break;
+    case GSF_MPP_SCENE_CTL_AE:
+      {
+        ret = 0;
+        HI_SCENE_CTL_AE_S *ae = (HI_SCENE_CTL_AE_S*)args;
+        
+        g_scene_ctl_ae[ViPipe].compensation_mul = ae->compensation_mul;
+        printf("g_scene_ctl_ae[%d]: %0.2f\n", ViPipe, g_scene_ctl_ae[ViPipe].compensation_mul);
+      }
+      break;
+  }
+  return ret;
 }
 
 int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
@@ -712,7 +747,7 @@ int gsf_mpp_venc_ctl(int VencChn, int id, void *args)
     default:
       break;
   }
-  printf("VencChn:%d, id:%d, ret:%d\n", VencChn, id, ret);
+  printf("%s => VencChn:%d, id:%d, ret:%d\n", __func__, VencChn, id, ret);
   return ret;
 }
 
@@ -804,6 +839,10 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         VPSS_GRP_ATTR_S stGrpAttr = {0};
         ret = HI_MPI_VPSS_GetGrpAttr(VpssGrp, &stGrpAttr);
 
+        VI_LDC_ATTR_S stLDCAttr = {0};
+        ret = HI_MPI_VI_GetChnLDCAttr(ViPipe, 0, &stLDCAttr);
+        all->ldc.bEnable = stLDCAttr.bEnable;
+        all->ldc.s32DistortionRatio = stLDCAttr.stAttr.s32DistortionRatio;
       }
       break;
     case GSF_MPP_ISP_CTL_CSC:
@@ -881,18 +920,14 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
      case GSF_MPP_ISP_CTL_SHARPEN:
      {   
         gsf_mpp_img_sharpen_t *sharpen = (gsf_mpp_img_sharpen_t*)args;
-        if(!sharpen->bEnable)
-        {
-          ret = 0;  
-          break;
-        }
+
           
         printf("sharpen->bEnable:%d,u16TextureFreq:%d\n", sharpen->bEnable, sharpen->u16TextureFreq);  
         ISP_SHARPEN_ATTR_S stIspShpAttr;
         ret = HI_MPI_ISP_GetIspSharpenAttr(ViPipe, &stIspShpAttr);
         
-        stIspShpAttr.bEnable = 1;
-        stIspShpAttr.enOpType= OP_TYPE_MANUAL;
+        //stIspShpAttr.bEnable = 1;
+        stIspShpAttr.enOpType= (sharpen->bEnable)?OP_TYPE_MANUAL:OP_TYPE_AUTO;
         stIspShpAttr.stManual.u16TextureFreq = sharpen->u16TextureFreq;
         stIspShpAttr.stManual.u16EdgeFreq = sharpen->u16EdgeFreq;
         stIspShpAttr.stManual.u8DetailCtrl = sharpen->u8DetailCtrl;
@@ -1308,7 +1343,86 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
         ret = HI_MPI_VPSS_SetGrpAttr(VpssGrp, &stGrpAttr);
      }
      break; 
+     case GSF_MPP_ISP_CTL_FLIP:
+     {
+      gsf_mpp_img_flip_t *flip = (gsf_mpp_img_flip_t*)args;
+      
+      VI_CHN_ATTR_S stChnAttr;
+      ret = HI_MPI_VI_GetChnAttr(ViPipe, 0, &stChnAttr);
+      printf("GET ret:0x%x, bFlip:%d, bMirror:%d\n", ret, stChnAttr.bFlip, stChnAttr.bMirror);
+      
+      stChnAttr.bFlip = flip->bFlip;
+      stChnAttr.bMirror = flip->bMirror;
+      
+      ret = HI_MPI_VI_SetChnAttr(ViPipe, 0, &stChnAttr);
+      printf("SET ret:0x%x, bFlip:%d, bMirror:%d\n", ret, stChnAttr.bFlip, stChnAttr.bMirror);  
+      
+     }
+     break;
+     case GSF_MPP_ISP_CTL_DIS:
+     {
+      gsf_mpp_img_dis_t *dis = (gsf_mpp_img_dis_t*)args;
 
+      DIS_CONFIG_S stDISConfig     = {0};
+      DIS_ATTR_S stDISAttr         = {0};
+      
+      HI_MPI_VI_GetChnDISAttr(ViPipe, 0, &stDISAttr);
+      if(stDISAttr.bEnable)
+      {
+        stDISAttr.bEnable = HI_FALSE;
+        HI_MPI_VI_SetChnDISAttr(ViPipe, 0, &stDISAttr);
+      }      
+
+      stDISConfig.enMode              = dis->enMode;//DIS_MODE_4_DOF_GME;//DIS_MODE_6_DOF_GME; //DIS_MODE_4_DOF_GME;
+      stDISConfig.enMotionLevel       = DIS_MOTION_LEVEL_NORMAL;
+      stDISConfig.u32CropRatio        = 80;
+      stDISConfig.u32BufNum           = 5;
+      stDISConfig.u32FrameRate        = 30;
+      stDISConfig.enPdtType           = dis->enPdtType;//DIS_PDT_TYPE_DV;//DIS_PDT_TYPE_IPC; //DIS_PDT_TYPE_DV; DIS_PDT_TYPE_DRONE;
+      stDISConfig.u32GyroOutputRange  = 0;
+      stDISConfig.bScale              = HI_TRUE; //HI_FALSE;
+      stDISConfig.bCameraSteady       = HI_FALSE;
+      stDISConfig.u32GyroDataBitWidth = 0;
+
+      stDISAttr.bEnable               = dis->bEnable; //HI_TRUE;
+      stDISAttr.u32MovingSubjectLevel = 0;
+      stDISAttr.s32RollingShutterCoef = 0;
+      stDISAttr.s32Timelag            = 0;
+      stDISAttr.u32ViewAngle          = 1000;
+      stDISAttr.bStillCrop            = HI_FALSE;
+      stDISAttr.u32HorizontalLimit    = 512;
+      stDISAttr.u32VerticalLimit      = 512;
+      stDISAttr.bGdcBypass            = HI_FALSE;
+      stDISAttr.u32Strength           = 1024;
+          
+      stDISConfig.u32FrameRate        = 30;
+      stDISAttr.s32Timelag            = 33333;
+
+      ret = HI_MPI_VI_SetChnDISConfig(ViPipe, 0, &stDISConfig);
+      printf("SET dis config ret:0x%x, enMode:%d, enPdtType:%d\n", ret, stDISConfig.enMode, stDISConfig.enPdtType);
+
+      ret = HI_MPI_VI_SetChnDISAttr(ViPipe, 0, &stDISAttr);
+      printf("SET dis attr ret:0x%x, bEnable:%d\n", ret, stDISAttr.bEnable);
+      
+     }
+     break;
+     case GSF_MPP_ISP_CTL_LDC:
+     {
+      gsf_mpp_img_ldc_t *ldc = (gsf_mpp_img_ldc_t*)args;
+      VI_LDC_ATTR_S stLDCAttr = {0};
+      stLDCAttr.bEnable = ldc->bEnable;
+      stLDCAttr.stAttr.bAspect = 1;              /* RW;Range: [0, 1];Whether aspect ration  is keep */
+      stLDCAttr.stAttr.s32XRatio = 100;          /* RW; Range: [0, 100]; field angle ration of  horizontal,valid when bAspect=0.*/
+      stLDCAttr.stAttr.s32YRatio = 100;          /* RW; Range: [0, 100]; field angle ration of  vertical,valid when bAspect=0.*/
+      stLDCAttr.stAttr.s32XYRatio = 100;         /* RW; Range: [0, 100]; field angle ration of  all,valid when bAspect=1.*/
+      stLDCAttr.stAttr.s32CenterXOffset = 0;     /* RW; Range: [-511, 511]; horizontal offset of the image distortion center relative to image center.*/
+      stLDCAttr.stAttr.s32CenterYOffset = 0;     /* RW; Range: [-511, 511]; vertical offset of the image distortion center relative to image center.*/
+      stLDCAttr.stAttr.s32DistortionRatio = ldc->s32DistortionRatio;  /* RW; Range: [-300, 500]; LDC Distortion ratio.When spread on,s32DistortionRatio range should be [0, 500]*/
+      ret = HI_MPI_VI_SetChnLDCAttr(ViPipe, 0, &stLDCAttr);
+      printf("SetChnLDCAttr ret:0x%x, ViPipe:%d, bEnable:%d, s32DistortionRatio:%d\n"
+            , ret, ViPipe, stLDCAttr.bEnable, stLDCAttr.stAttr.s32DistortionRatio);
+     }
+     break;
     default:
       break;
   }
@@ -1316,14 +1430,14 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
   return ret;
 }
 
+static int _audio_init = 0;
 static gsf_mpp_aenc_t _aenc;
 int gsf_mpp_audio_start(gsf_mpp_aenc_t *aenc)
 {
-  static int init = 0;
   
-  if(!init)
+  if(!_audio_init)
   {
-    init = 1;
+    _audio_init = 1;
     extern HI_S32 sample_audio_init();
     sample_audio_init();
   }
@@ -1614,7 +1728,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.enIntfSync            = sync;
     stVoConfig.enPicSize             = enDispPicSize; // unused;
     stVoConfig.u32BgColor            = COLOR_RGB_BLACK;//COLOR_RGB_BLUE;
-    stVoConfig.u32DisBufLen          = 3;
+    stVoConfig.u32DisBufLen          = 3*3; //maohw
     stVoConfig.enDstDynamicRange     = DYNAMIC_RANGE_SDR8;
     stVoConfig.enVoMode              = VO_MODE_1MUX;
     stVoConfig.enPixFormat           = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
@@ -2005,8 +2119,14 @@ int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr
 
 int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t *attr)
 {
-
+  if(!_audio_init)
+  {
+    _audio_init = 1;
+    extern HI_S32 sample_audio_init();
+    sample_audio_init();
+  }
   HI_S32 s32Ret = 0;
+  HI_S32 adch = 0;
   static gsf_mpp_frm_attr_t _attr = {.etype = PT_BUTT, };
   
   if(_attr.etype != attr->etype)
@@ -2016,7 +2136,10 @@ int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t
     SAMPLE_AUDIO_AdecAo(attr);
   }
   
-  HI_S32 adch = 0;
+  if(attr->size == 0)
+  {
+    return HI_MPI_ADEC_SendEndOfStream(adch, HI_FALSE);
+  }
   AUDIO_STREAM_S stAudioStream;
   stAudioStream.pStream = data;
   stAudioStream.u32Len = attr->size;
@@ -2024,7 +2147,7 @@ int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t
   stAudioStream.u32Seq = 0;
   
   /* here only demo adec streaming sending mode, but pack sending mode is commended */
-  s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, 0);
+  s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, flag);
   if (HI_SUCCESS != s32Ret)
   {
     printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \
@@ -2246,6 +2369,15 @@ int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority)
     HI_S32 s32Ret = HI_SUCCESS;
     VO_CHN_ATTR_S stChnAttr;
  
+    if(rect->u32Width == 0 || rect->u32Height == 0)
+    {
+      s32Ret = HI_MPI_VO_HideChn(volayer, ch);
+      return s32Ret;
+    }
+    else 
+    {
+      s32Ret = HI_MPI_VO_ShowChn(volayer, ch);
+    }
     vo_mng_t *vdev = &vo_mng[layer2vdev[volayer]];
     
     int l = vdev->layer[volayer].rect.s32X;
