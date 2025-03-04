@@ -62,6 +62,10 @@ int SENSOR1_TYPE;
 hi_isp_sns_obj* SENSOR_OBJ = NULL;
 hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
 {
+ #if 0 //maohw
+  if(sns_type == BT656_YUV422_0M_60FPS_8BIT)
+    return NULL;
+ #endif 
   return SENSOR_OBJ;
 }
 
@@ -85,6 +89,8 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SONY_IMX586_MIPI_48M_5FPS_12BIT,        "imx586-0-0-48-5",  "libsns_imx586.so",      "g_sns_imx586_obj"},
     {SONY_IMX586_MIPI_8M_30FPS_12BIT,        "imx586-0-0-8-30",  "libsns_imx586.so",      "g_sns_imx586_obj"},
     {SONY_IMX678_MIPI_8M_30FPS_12BIT,        "imx678-0-0-8-30",  "libsns_imx678.so",      "g_sns_imx678_obj"},
+    {SONY_IMX678_MIPI_8M_30FPS_10BIT_WDR2TO1,"imx678-0-1-8-30",  "libsns_imx678.so",      "g_sns_imx678_obj"},
+    {SONY_IMX678_MIPI_8M_60FPS_10BIT,        "imx678-0-0-8-60",  "libsns_imx678.so",      "g_sns_imx678_obj"},
     {SONY_IMX585_MIPI_8M_30FPS_12BIT,        "imx585-0-0-8-30",  "libsns_imx585.so",      "g_sns_imx585_obj"},
   };
 
@@ -95,11 +101,11 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
   {
     if(libsns[i].name && strstr(libsns[i].name, name))
     {
-      printf("got name:%s\n", name);
+      printf("got name:[%s]\n", name);
       return &libsns[i];
     }
   }
-  printf("unknow name:%s\n", name);
+  printf("unknow name:[%s]\n", name);
   return NULL;
 }
 
@@ -205,7 +211,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   {
     if(cfg->second == 1)
       sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor1 %s -sensor3 bt1120", path, snsname);
-    else if(cfg->second == 2)
+    else if(cfg->second >= 2 && cfg->second <= 9) //bt656-board need open sensor1 clk;
       //sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 bt656", path, snsname);
       sprintf(loadstr, "%s/ko/load3519dv500 -i -sensor0 %s -sensor1 %s", path, snsname, snsname);
   }
@@ -221,8 +227,24 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   {
     SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT:
                    (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT:
-                   (cfg->second == 3)?BT601_YUV422_0M_60FPS_8BIT:
+                   (cfg->second == 3)?BT656_YUV422_0M_60FPS_8BIT: //GZ-656
+                   (cfg->second == 4)?SENSOR1_TYPE://sns0==sns1;  //USB-UVC
+                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //GZ
+                   (cfg->second == 9)?BT601_YUV422_0M_60FPS_8BIT:
                                       SENSOR1_TYPE;//sns0==sns1;
+    if(cfg->second == 5) //CUSTOM
+    {
+      mppex_bt656_cfg_t bt656 = {
+        .data_seq = HI_VI_DATA_SEQ_UYVY, //HI_VI_DATA_SEQ_YUYV
+        .width = 640,       // sensor-w: 720
+        .height = 512,      // sensor-h: 576
+        .crop.x = 0,        // valid-x: (720-640)/2
+        .crop.y = 0,        // valid-y: (576-512)/2
+        .crop.width = 640,  // valid-w: 640
+        .crop.height = 512, // valid-h: 512
+      };
+      mppex_comm_bt656_cfg(&bt656);
+    }
   }
   
   if(dl)
@@ -1911,8 +1933,32 @@ int gsf_mpp_vo_aspect(int volayer, int ch, RECT_S *rect)
 //设置VO通道显示区域(位置&大小);
 int gsf_mpp_vo_rect(int volayer, int ch, RECT_S *rect, int priority)
 {
-  int ret = 0;
-  return ret;
+    HI_S32 s32Ret = HI_SUCCESS;
+    hi_vo_chn_attr stChnAttr;
+    if(rect->width == 0 || rect->height == 0)
+    {
+      s32Ret = hi_mpi_vo_hide_chn(volayer, ch);
+      return s32Ret;
+    }
+    else 
+    {
+      s32Ret = hi_mpi_vo_show_chn(volayer, ch);
+    }
+    stChnAttr.rect.x       = rect->x;
+    stChnAttr.rect.y       = rect->y;
+    stChnAttr.rect.width   = rect->width;
+    stChnAttr.rect.height  = rect->height;
+    stChnAttr.priority        = priority;
+    stChnAttr.deflicker_en    = HI_FALSE;
+
+    s32Ret = hi_mpi_vo_set_chn_attr(volayer, ch, &stChnAttr);
+    if (s32Ret != HI_SUCCESS)
+    {
+        printf("%s(%d):failed with %#x!\n", \
+               __FUNCTION__, __LINE__,  s32Ret);
+        return HI_FAILURE;
+    }
+    return s32Ret;
 }
 
 static struct fb_bitfield s_r16 = {10, 5, 0};

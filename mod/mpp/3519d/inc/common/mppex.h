@@ -71,4 +71,11 @@ int mppex_comm_uvc_rel(int idx, ot_video_frame_info *pstFrameInfo);
 int mppex_hook_sns(gsf_mpp_cfg_t *cfg);
 int mppex_hook_destroy(void);
 
+typedef struct
+{
+  int data_seq;     // hi_vi_data_seq;
+  int width, height;// sns_size;
+  hi_rect crop;     // {x, y, width, height};
+}mppex_bt656_cfg_t;
+int mppex_comm_bt656_cfg(mppex_bt656_cfg_t *bt656);
 #endif //__mppex_h__

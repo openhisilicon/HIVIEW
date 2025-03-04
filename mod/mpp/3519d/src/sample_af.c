@@ -19,7 +19,7 @@ extern "C" {
 #define BLEND_SHIFT 6
 #define ALPHA 64 // 1
 #define BELTA 54 // 0.85
-#define FEINFO
+#define FEINFO 1
  
 static int af_runing = 0;
 static pthread_t af_tid;
@@ -69,8 +69,10 @@ int af_set_statistic(ot_vi_pipe vi_pipe)
 	td_s32 ret = TD_SUCCESS;
   ot_isp_stats_cfg stats_cfg;
   
+  #define SNS_WIDTH 1920
+  #define SNS_HEIGHT 1080
   ot_isp_focus_stats_cfg focus_cfg = {
-    {1, 17, 15, 1, 0, {0, 0, 0, 1920, 1080}, {0, 0, 0, 1920, 1080}, 0/*OT_ISP_AF_STATS_AFTER_DGAIN*/, {0x0, 0x1, 0}, {1, 0x9bff}, 0xf0},
+    {1, 17, 15, 1, 0, {0, 0, 0, SNS_WIDTH, SNS_HEIGHT}, {0, 0, 0, SNS_WIDTH, SNS_HEIGHT}, 0/*OT_ISP_AF_STATS_AFTER_DGAIN*/, {0x0, 0x1, 0}, {1, 0x9bff}, 0xf0},
     {1, {1, 1, 1}, 15, {188, 414, -330, 486, -461, 400, -328}, {7, 0, 3, 1}, {1, 0, 255, 0, 240, 8, 14}, {127, 12, 2047}},
     {0, {1, 1, 0}, 2, {200, 200, -110, 461, -415, 0, 0}, {6, 0, 1, 0}, {0, 0, 0, 0, 0, 0, 0},{ 15, 12, 2047}},
     {{ 20, 16, 0, -16, -20}, {1, 0, 255, 0, 220, 8, 14}, {38, 12, 1800}},
@@ -82,6 +84,15 @@ int af_set_statistic(ot_vi_pipe vi_pipe)
   if (TD_SUCCESS != ret) {
     printf("get_stats_cfg error!(ret = 0x%x)\n", ret);
     return TD_FAILURE;
+  }
+  {
+    hi_isp_pub_attr pub_attr;
+   	ret |= hi_mpi_isp_get_pub_attr(vi_pipe, &pub_attr);
+  	focus_cfg.config.crop.height = focus_cfg.config.fe_crop.height = pub_attr.wnd_rect.height;
+  	focus_cfg.config.crop.width = focus_cfg.config.fe_crop.width = pub_attr.wnd_rect.width;
+    printf("width: %d, height: %d, stats_cfg.ctrl:[bit1_fe:%d, bit1_be:%d]\n"
+          , focus_cfg.config.crop.width, focus_cfg.config.crop.height
+          , stats_cfg.ctrl.bit1_fe_af_stat, stats_cfg.ctrl.bit1_be_af_stat);
   }
   memcpy(&stats_cfg.focus_cfg, &focus_cfg, sizeof(ot_isp_focus_stats_cfg));
   ret = hi_mpi_isp_set_stats_cfg(vi_pipe, &stats_cfg);
@@ -108,7 +119,7 @@ int af_get_value(HI_U32 FV[2])
   
   ret = hi_mpi_isp_get_focus_stats(vi_pipe, &af_stats);
   
-  #ifdef FEINFO
+  #if FEINFO
   memcpy(zone_metrics, &af_stats.fe_af_stat, sizeof(ot_isp_focus_zone) * OT_ISP_WDR_MAX_FRAME_NUM * OT_ISP_AF_ZONE_ROW * OT_ISP_AF_ZONE_COLUMN);
   #else
   memcpy(zone_metrics[0], &af_stats.be_af_stat, sizeof(ot_isp_focus_zone) * OT_ISP_AF_ZONE_ROW * OT_ISP_AF_ZONE_COLUMN);
@@ -190,8 +201,10 @@ void* af_task(void * argv)
 int sample_af_main(gsf_mpp_af_t *af)
 {
   if(af)
+  {  
     af_ini = *af;
-  
+    //af_ini.ViPipe = 3; //maohw
+  } 
   if(af_set_statistic(af_ini.ViPipe) < 0)
   {
     printf("af_set_statistic err.\n");
