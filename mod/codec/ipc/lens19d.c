@@ -46,7 +46,7 @@ enum {
 
 static gsf_lens_ini_t _ini;
 static pthread_t serial_tid;
-static int serial_fd = -1;
+static int serial_fd = -1, last_cmd = GSF_LENS_STOP;
 static int _zoomValue = 0, _cdsValue = 0, _dayNight = 0; // 0: day,  1: night;
 static void* serial_task(void *parm);
 static int pelco_d_write(char *cmd, int size);
@@ -144,6 +144,30 @@ int flash_is_emmc()
   return ret;
 }
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+static int af_ctl(char *buf, int size)
+{
+  int ret = 0;
+  struct sockaddr_in to_addr;
+  memset(&to_addr, 0, sizeof(struct sockaddr_in));
+  to_addr.sin_family = AF_INET;
+  to_addr.sin_port = htons(3000);
+  to_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  static int sock = -1;
+  if(sock < 0)
+  {
+    sock = socket(PF_INET, SOCK_DGRAM, 0);
+    struct timeval tv;
+  	tv.tv_sec  = 3;
+  	tv.tv_usec = 0;
+  	setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  }
+  ret = sendto(sock, buf, size, 0, (struct sockaddr*)&to_addr, sizeof(to_addr));
+  printf("sendto ret:%d\n", ret);
+  return ret;
+}
 int lens19d_lens_init(gsf_lens_ini_t *ini)
 {
   _ini = *ini;
@@ -164,7 +188,8 @@ int lens19d_lens_init(gsf_lens_ini_t *ini)
    
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    //IRCUT && DAY
+    printf("LENS_TYPE_HIVIEW init IRCUT\n");
+    return 0;
   } 
     
   IRCUT0_INIT();
@@ -184,18 +209,19 @@ static int ir_cb(int ViPipe, int dayNight, void* uargs)
   
   if(_lens_type == LENS_TYPE_HIVIEW)
   { 
+    printf("LENS_TYPE_HIVIEW set IRCUT\n");
     return 0;
   }
   else
   {
     if(dayNight)
     {   
-      IRCUT0_NIGHT(_ircut_ctl);
+      if(_lamp_type == LAMP_IR) IRCUT0_NIGHT(_ircut_ctl);
       LAMP0_NIGHT();
     }
     else
     {  
-      IRCUT0_DAY(_ircut_ctl);
+      if(_lamp_type == LAMP_IR) IRCUT0_DAY(_ircut_ctl);
       LAMP0_DAY();
     } 
   }
@@ -327,17 +353,18 @@ int lens19d_lens_start(int ch, char *ttyAMA)
     gsf_mpp_ir_t ir = {.cds = cds_cb, .cb = ir_cb};
     ret = gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IR, &ir);
   }
+  if(ch < 0 || _lens_type == LENS_TYPE_HIVIEW)
+  {
+    printf("LENS_TYPE_HIVIEW DISABLE gsf_mpp_af_start()\n");
+  	return 0;
+  }
   
   gsf_mpp_af_t af = {
       .ViPipe = ch,
       .uargs = (void*)ch,
-      .cb = (_lens_type == LENS_TYPE_HIVIEW)?NULL:af_cb,
+      .cb = af_cb,
   };
   
-  if(ch < 0)
-  {
-  	return 0;
-  }
   printf("%s => gsf_mpp_af_start(%d)\n", __func__, ch);
   return gsf_mpp_af_start(&af);
 }
@@ -351,7 +378,12 @@ int lens19d_lens_stop(int ch)
   
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    ;
+    unsigned char zm_stop[]  = {0xAF, 0x01, 0x04, 0x00};
+    unsigned char foc_stop[] = {0xAF, 0x10, 0x05, 0x00, 0x00};
+    unsigned char *buf = (last_cmd == GSF_LENS_FOCUS)?foc_stop:zm_stop;
+    af_ctl(buf, (last_cmd == GSF_LENS_FOCUS)?sizeof(foc_stop):sizeof(zm_stop));
+    printf("LENS_TYPE_HIVIEW  stop %s\n", (buf==foc_stop)?"FOCUS":"ZOOM");
+    last_cmd = GSF_LENS_STOP;
   }
   else if(_lens_type == LENS_TYPE_GPIO)
   {
@@ -384,7 +416,12 @@ int lens19d_lens_zoom(int ch,  int dir, int speed)
   
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    ;
+    unsigned char add[] = {0xAF, 0x01, 0x04, 0x01};
+    unsigned char sub[] = {0xAF, 0x01, 0x04, 0x02};
+    unsigned char *buf = (dir)?add:sub;
+    af_ctl(buf, sizeof(add));
+    last_cmd = GSF_LENS_ZOOM;
+    printf("LENS_TYPE_HIVIEW  start %s\n","ZOOM");
   }  
   else if(_lens_type == LENS_TYPE_GPIO)
   {
@@ -415,7 +452,12 @@ int lens19d_lens_focus(int ch, int dir, int speed)
   int ret = 0;
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    ;
+    unsigned char add[] = {0xAF, 0x10, 0x05, 0x00, 0x04};
+    unsigned char sub[] = {0xAF, 0x10, 0x05, 0x01, 0x04};
+    unsigned char *buf = (dir)?add:sub;
+    af_ctl(buf, sizeof(add));
+    last_cmd = GSF_LENS_FOCUS;
+    printf("LENS_TYPE_HIVIEW  start %s\n","FOCUS");
   }  
   else if(_lens_type == LENS_TYPE_GPIO)
   {
@@ -446,7 +488,8 @@ int lens19d_lens_cal(int ch)
 	// lens calibration
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    ;
+    unsigned char buf[] = {0xAF, 0x10, 0x04};
+    af_ctl(buf, sizeof(buf));
   }  
   else
   {

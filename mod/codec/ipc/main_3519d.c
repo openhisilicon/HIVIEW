@@ -224,6 +224,8 @@ int venc_start(int start)
     if(!start)
       continue;
     
+    if(ret!=0)
+      continue;  
     if(codec_ipc.venc[j].type != GSF_ENC_JPEG)
     {
       st.VeChn[st.s32Cnt] = venc.VencChn;
