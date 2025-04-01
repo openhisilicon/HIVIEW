@@ -246,7 +246,34 @@ int venc_start(int start)
 
 void mpp_ini_3516c(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *venc_ini, gsf_mpp_vpss_t *vpss)
 {
+  //HI3516CV610_20S, HI3516CV610_00S; bspmd.l 0x11020ee0
   printf("@@@@@@ %s @@@@@@\n", cfg->type);
+  
+  
+  if(strstr(cfg->type, "HI3516CV610_20S"))
+  {
+    // sc4336p-0-0-4-30
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2560X1440, PIC_640P);
+    if(cfg->snscnt > 1)
+    {
+        // os08a20-0-0-8-30
+        //VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_2688X1520, PIC_640P);
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    }
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        rgn_ini->st_num = venc_ini->st_num = 2;
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
+    }
+      
+    return;
+  }
   
   // gc4023-0-0-4-30
   cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
@@ -290,7 +317,7 @@ int mpp_start(gsf_bsp_def_t *def)
     //only used sensor[0];
     strcpy(cfg.snsname, def->board.sensor[0]);
     cfg.snscnt = def->board.snscnt;
-    
+    strcpy(cfg.type, def->board.type);
     avs = codec_ipc.vi.avs;
 
     do{
@@ -315,18 +342,25 @@ int mpp_start(gsf_bsp_def_t *def)
     
     char home_path[256] = {0};
     proc_absolute_path(home_path);
-    //sprintf(home_path, "%s/../", home_path);
     strcat(home_path, "/../");
     
     printf("home_path:[%s]\n", home_path);
 
     gsf_mpp_cfg(home_path, &cfg);
-
-    lens_ini.ch_num = 1;  // lens number;
-    strncpy(lens_ini.sns, cfg.snsname, sizeof(lens_ini.sns)-1);
-    strncpy(lens_ini.lens, "LENS-NAME", sizeof(lens_ini.lens)-1);
-    gsf_lens_init(&lens_ini);
-
+    
+    if(strstr(cfg.type, "HI3516CV610_20S"))
+    {
+      printf("disable gsf_lens_init.\n");
+    }
+    else 
+    {
+      lens_ini.ch_num = 1;  // lens number;
+      strncpy(lens_ini.sns, cfg.snsname, sizeof(lens_ini.sns)-1);
+      strncpy(lens_ini.lens, "LENS-NAME", sizeof(lens_ini.lens)-1);
+      gsf_lens_init(&lens_ini);
+    }
+    
+    
     // vi start;
     printf("vi.lowdelay:%d\n", codec_ipc.vi.lowdelay);
     gsf_mpp_vi_t vi = {
@@ -341,14 +375,17 @@ int mpp_start(gsf_bsp_def_t *def)
       
     gsf_mpp_vi_start(&vi);
     
-    #if 1
+    if(strstr(cfg.type, "HI3516CV610_20S"))
+    {
+      printf("disable gsf_lens_start.\n");
+    }
+    else
     {
       //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
       char uart_name[32] = {0};
 	    sprintf(uart_name, "/dev/%s", codec_ipc.lenscfg.uart);
 	    gsf_lens_start(0, uart_name);
   	}
-  	#endif
     
     // vpss start;
     {

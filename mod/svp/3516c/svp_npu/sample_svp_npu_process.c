@@ -330,7 +330,7 @@ static hi_s32 sample_svp_npu_acl_init_task(hi_u32 task_num, hi_bool is_share_wor
         }
         ret = sample_common_svp_npu_create_task_buf(&g_svp_npu_task[task_idx]);
         if (ret != HI_SUCCESS) {
-            sample_svp_trace_err("create task buf failed.\n");
+            sample_svp_trace_err("create task buf failed, task_idx:%d\n", task_idx);
             goto task_init_end_0;
         }
         if (is_share_work_buf == HI_FALSE) {
@@ -341,7 +341,7 @@ static hi_s32 sample_svp_npu_acl_init_task(hi_u32 task_num, hi_bool is_share_wor
                 &g_svp_npu_task[task_idx]);
         }
         if (ret != HI_SUCCESS) {
-            sample_svp_trace_err("create work buf failed.\n");
+            sample_svp_trace_err("create work buf failed, task_idx:%d\n", task_idx);
             goto task_init_end_0;
         }
     }

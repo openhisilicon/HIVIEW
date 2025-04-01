@@ -200,12 +200,12 @@ int main(int argc, char *argv[])
       const hi_s32 vpss_grp = 0;
       hi_s32 vpss_chn[] = { HI_VPSS_CHN0, HI_VPSS_CHN1 };
       ret = hi_mpi_vpss_get_chn_attr(vpss_grp, vpss_chn[0], &chn_attr);
-      chn_attr.depth = 2;
+      chn_attr.depth = 1;
       chn_attr.chn_mode = HI_VPSS_CHN_MODE_USER;
       ret = hi_mpi_vpss_set_chn_attr(vpss_grp, vpss_chn[0], &chn_attr);
 
       ret = hi_mpi_vpss_get_chn_attr(vpss_grp, vpss_chn[1], &chn_attr);
-      chn_attr.depth = 2;
+      chn_attr.depth = 1;
       chn_attr.chn_mode = HI_VPSS_CHN_MODE_USER;
       ret = hi_mpi_vpss_set_chn_attr(vpss_grp, vpss_chn[1], &chn_attr);
     }

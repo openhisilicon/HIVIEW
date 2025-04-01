@@ -481,8 +481,11 @@ int gsf_venc_init(gsf_venc_ini_t *ini)
 
     #else
     // The Video frame data is in CIFO
-    
+    #if defined(GSF_CPU_3516c)
+    #define _MUL_ 3 //
+    #else
     #define _MUL_ 1 //
+    #endif
     
     int size = (j == 0)? 6*GSF_FRM_MAX_SIZE/_MUL_:
                (j == 1)? 3*GSF_FRM_MAX_SIZE/_MUL_:

@@ -16,8 +16,8 @@
 #define BIG_STREAM_SIZE PIC_2688X1520//PIC_2560X1440
 #define SMALL_STREAM_SIZE PIC_D1_NTSC
 
-#define VI_VB_YUV_CNT 4
-#define VPSS_VB_YUV_CNT 6
+static int VI_VB_YUV_CNT = 4;
+static int VPSS_VB_YUV_CNT = 6;
 
 #define ENTER_ASCII 10
 
@@ -503,9 +503,11 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     sample_venc_vb_attr *vb_attr)
 {
     hi_s32 i;
+	VI_VB_YUV_CNT = (SENSOR0_TYPE == SC4336P_MIPI_4M_30FPS_10BIT)?1:VI_VB_YUV_CNT;
+	VPSS_VB_YUV_CNT = (SENSOR0_TYPE == SC4336P_MIPI_4M_30FPS_10BIT)?4:VPSS_VB_YUV_CNT;
 
     /* vb for vi-vpss */
-    update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_422, HI_COMPRESS_MODE_NONE, VI_VB_YUV_CNT);
+    update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_420, HI_COMPRESS_MODE_NONE, VI_VB_YUV_CNT);
 
     // vb for vpss-venc(big stream)
     if (vb_attr->valid_num >= HI_VB_MAX_COMMON_POOLS) {

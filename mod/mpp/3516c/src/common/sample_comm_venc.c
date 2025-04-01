@@ -1492,7 +1492,7 @@ static hi_s32 sample_comm_venc_channel_param_init(sample_comm_venc_chn_param *ch
 
     if (type == HI_PT_MJPEG || type == HI_PT_JPEG) {
         chn_attr->venc_attr.buf_size =
-            HI_ALIGN_UP(venc_size.width, 16) * HI_ALIGN_UP(venc_size.height, 16) * 4; /* 16 4 is a number */
+            HI_ALIGN_UP(venc_size.width, 16) * HI_ALIGN_UP(venc_size.height, 16) * 4 /4; /* 16 4 is a number */
     } else {
         chn_attr->venc_attr.buf_size =
             HI_ALIGN_UP(venc_size.width * venc_size.height * 3 / 4, 64); /*  3  4 64 is a number */

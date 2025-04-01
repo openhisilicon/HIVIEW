@@ -156,13 +156,16 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
     
   char loadstr[256] = {0};
   char snsname[64] = {0};
- 
+  char script[64] = {0};
+  
+  sprintf(script, "%s", strstr(cfg->type, "HI3516CV610_20S")?"load3516cv610_20s_debug":"load3516cv610_00s_debug");
+  
   if(strstr(cfg->snsname, "os04a10"))
     strncpy(snsname, "os04d10", sizeof(snsname)-1);
   else 
     strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
   
-  sprintf(loadstr, "%s/ko/load3516cv610/load3516cv610_00s_debug -i -sensor0 %s", path, snsname);
+  sprintf(loadstr, "%s/ko/load3516cv610/%s -i -sensor0 %s", path, script, snsname);
   for(i = 1; i < snscnt; i++)
   {
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, snsname);
@@ -248,8 +251,24 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   // get vi param
   for(i = 0; i < snscnt; i++)
   {
+    
     sample_comm_vi_get_default_vi_cfg(SENSOR0_TYPE, &vi_cfg[i]);
-    //sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, i, &vi_cfg[i].mipi_info);
+    if(SENSOR0_TYPE == SC4336P_MIPI_4M_30FPS_10BIT) 
+    {
+      const hi_vi_dev vi_dev = 1;
+      const hi_vi_pipe vi_pipe = 0;
+      
+      printf("SC4336P_MIPI_4M_30FPS_10BIT\n");
+      sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, vi_dev, &vi_cfg[i].mipi_info);
+      vi_cfg[i].sns_info.bus_id = 0;
+      vi_cfg[i].sns_info.sns_clk_src = 0;
+      vi_cfg[i].sns_info.sns_rst_src = 0;
+      vi_cfg[i].dev_info.vi_dev = vi_dev;
+      vi_cfg[i].bind_pipe.pipe_id[0] = vi_pipe;
+      vi_cfg[i].grp_info.grp_num = 1;
+      vi_cfg[i].grp_info.fusion_grp[0] = 0;
+      vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
+    }
   }
   
   //mppex_comm_vi_bb(snscnt, vi_cfg);
