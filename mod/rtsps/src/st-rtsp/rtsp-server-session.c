@@ -17,6 +17,7 @@ void rtsp_session_ondestroy(struct rtsp_session_t* sess)
 	
   if (session->media)
 	{
+	  printf("%s => rtp_media_live_free media:%p\n", __func__, session->media);
 	  rtp_media_live_free(session->media);
 	  session->media = NULL;
 	}

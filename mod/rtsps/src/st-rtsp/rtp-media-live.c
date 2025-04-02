@@ -221,25 +221,33 @@ static void *live_send_task(void *arg)
                     , 2000);
                     
     fds[j].fd = m->track[MEDIA_TRACK_VIDEO].m_evfd;
-	#if defined(GSF_CPU_3519d) 
+    
+	  #if defined(GSF_CPU_3519d) || defined(GSF_CPU_3516c) 
     fds[j].events = POLLIN|(cfifo_fd_et(fds[j].fd)?POLLET:0);
-	#else
-	fds[j].events = POLLIN|POLLET;
-	#endif
-    m_evfd[MEDIA_TRACK_VIDEO] = st_netfd_open(fds[j].fd);
-    j++;
+	  #else
+	  fds[j].events = POLLIN|POLLET;
+	  #endif
+	
+	  if(fds[j].fd > 0)
+	  {  
+      m_evfd[MEDIA_TRACK_VIDEO] = st_netfd_open(fds[j].fd);
+      j++;
+    }
   }
   if(m->track[MEDIA_TRACK_AUDIO].m_reader)
   {
     cfifo_newest(m->track[MEDIA_TRACK_AUDIO].m_reader, 0);
     fds[j].fd = m->track[MEDIA_TRACK_AUDIO].m_evfd;
-	#if defined(GSF_CPU_3519d) 
+	  #if defined(GSF_CPU_3519d) || defined(GSF_CPU_3516c) 
     fds[j].events = POLLIN|(cfifo_fd_et(fds[j].fd)?POLLET:0);
-	#else
-	fds[j].events = POLLIN|POLLET;
-	#endif
-    m_evfd[MEDIA_TRACK_AUDIO] = st_netfd_open(fds[j].fd);
-    j++;
+	  #else
+	  fds[j].events = POLLIN|POLLET;
+	  #endif
+    if(fds[j].fd > 0)
+    {  
+      m_evfd[MEDIA_TRACK_AUDIO] = st_netfd_open(fds[j].fd);
+      j++;
+    }
   }
   
   int fdcnt = j;
@@ -247,24 +255,46 @@ static void *live_send_task(void *arg)
   while(m->loop)
   {
     //get stream;
-    
-    fds[MEDIA_TRACK_VIDEO].revents = 0;
-    fds[MEDIA_TRACK_AUDIO].revents = 0;
-    fds[MEDIA_TRACK_META].revents  = 0;
+    if(fdcnt > 0)
+    {  
+      fds[MEDIA_TRACK_VIDEO].revents = 0;
+      fds[MEDIA_TRACK_AUDIO].revents = 0;
+      fds[MEDIA_TRACK_META].revents  = 0;
 
-    if (st_poll(fds, fdcnt, 1000*1000) <= 0)
-    {
-      printf("%s => st_poll err.\n", __func__);
-      continue;
+      if (st_poll(fds, fdcnt, 1000*1000) <= 0)
+      {
+        printf("%s => st_poll err.\n", __func__);
+        continue;
+      }
     }
+    else 
+    {
+      st_usleep(1000);  
+    }
+
     //printf("%s => st_poll ts:%llu ms\n", __func__, time64_now());
 
     for(j = 0; j < MEDIA_TRACK_BUTT; j++)
     {
-      if ((fds[j].revents & POLLIN)
-          && m->track[j].m_transport)
+      int getflag = 0;
+
+      if (fdcnt > 0)
       {
-        #if defined(GSF_CPU_3519d)
+        if((fds[j].revents & POLLIN) && m->track[j].m_transport)
+        {
+          getflag = 1;
+          //printf("EVENT GET\n");
+        }
+      }
+      else if (m->track[j].m_reader && m->track[j].m_transport)
+      {
+        getflag = 1;
+        //printf("WHILE GET\n");
+      }
+        
+      if(getflag)
+      {        
+        #if defined(GSF_CPU_3519d) || defined(GSF_CPU_3516c) 
         cfifo_fd_resume(fds[j].fd);
         #endif
 
@@ -421,7 +451,7 @@ static int rtp_live_get_sdp(struct rtp_media_t* _m, char *sdp)
         , m->track[MEDIA_TRACK_VIDEO].m_evfd);
         
   if(m->track[MEDIA_TRACK_VIDEO].m_reader == NULL 
-    || m->track[MEDIA_TRACK_VIDEO].m_evfd < 0)
+    /*maohw || m->track[MEDIA_TRACK_VIDEO].m_evfd < 0*/)
   {
     return 0;
   }

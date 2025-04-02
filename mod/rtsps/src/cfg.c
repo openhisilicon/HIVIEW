@@ -7,6 +7,7 @@ char rtsps_parm_path[128] = {0};
 gsf_rtsps_t rtsps_parm = {
   .port = 554,
   .auth = 0,
+  .chname = {"0","1","2","3","4","5","6","7"}
 };
 
 int json_parm_load(char *filename, gsf_rtsps_t *cfg)

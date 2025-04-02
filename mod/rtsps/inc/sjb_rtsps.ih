@@ -5,6 +5,7 @@ STRUCT(gsf_rtsps_t)
 {
   FIELD(int, port);
   FIELD(int, auth);
+  ARRAY2(string, chname, 8, 64);
 };
 
 

@@ -51,8 +51,8 @@ static void *handle_request(void *arg)
   printf("st_netfd_close sess:%p, cli_nfd:%d, timeout:%d\n", s, s->socket, s->timeout);
   st_netfd_close(s->socket);
   st_mutex_destroy(s->lock);
-  free(s);
   s->exited = 1;
+  free(s);
   st_thread_exit(NULL);
   return NULL;
 }

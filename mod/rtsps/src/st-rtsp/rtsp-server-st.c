@@ -114,10 +114,25 @@ static int rtsp_ondescribe(void* ptr, rtsp_server_t* rtsp, const char* uri)
   int ch = 0, sid = 0;
   char filename[256] = {0};
 	rtsp_uri_parse(uri, filename);
-	printf("%s => ptr:%p, uri:[%s], filename[%s]\n", __func__, ptr, uri, filename);
-  sscanf(filename, "/%d/%d", &ch, &sid);
-  ch  = (ch < 0 || ch > 255)?0:ch;
-  sid = (sid < 0 || sid > 255)?0:sid; 
+	
+  char *_sid = &filename[1]; // "/chname/sid"
+  char *_ch = strsep(&_sid, "/");
+  if(_ch && _ch[0])
+  {
+    for(int i = 0; i < sizeof(rtsps_parm.chname)/sizeof(rtsps_parm.chname[0]); i++)
+    {
+      if(strstr(_ch, rtsps_parm.chname[i]))
+      {
+        ch = i;
+        break;
+      }
+    }
+  }
+  if(_sid && _sid[0])
+  {
+    sid = atoi(_sid);
+  }
+  printf("%s => ptr:%p, uri:[%s] => ch:%d, sid:%d\n", __func__, ptr, uri, ch, sid);
   
   if(!sess->media)
     sess->media = rtp_media_live_new(ch, sid);
@@ -276,6 +291,7 @@ static int rtsp_onteardown(void* ptr, rtsp_server_t* rtsp, const char* uri, cons
 	
 	if(sess->media)
 	{
+	  printf("%s => rtp_media_live_free media:%p\n", __func__, sess->media);
 	  rtp_media_live_free(sess->media);
 	  sess->media = NULL;
 	}
