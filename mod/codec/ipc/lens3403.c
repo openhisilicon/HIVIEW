@@ -1,12 +1,18 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <termios.h>
+
 #include "fw/comm/inc/serial.h"
 #include "cfg.h"
 #include "lens.h"
 #include "mpp.h"
 #include "fw/libaf/inc/af_ptz.h"
 
+
+#define LENS_TEST 0 
 #define DEBUG 0
 #define SUM6(buf) do{buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;}while(0)
 extern int dzoom_plus;
@@ -47,6 +53,7 @@ enum {
 static gsf_lens_ini_t _ini;
 static pthread_t serial_tid;
 static int serial_fd = -1;
+static pthread_mutex_t serial_lock = PTHREAD_MUTEX_INITIALIZER;
 static int _zoomValue = 0, _cdsValue = 0, _dayNight = 0; // 0: day,  1: night;
 static void* serial_task(void *parm);
 static int pelco_d_write(char *cmd, int size);
@@ -246,16 +253,22 @@ int lens3403_lens_ircut(int ch, int dayNight)
   return 0;
 }
 
+
 int lens3403_uart_write(unsigned char *buf, int size)
 {
   int ret = 0;
 
   if(serial_fd > 0)
   {
-    struct timespec ts1;  
-    clock_gettime(CLOCK_MONOTONIC, &ts1);
     
+    pthread_mutex_lock(&serial_lock);
+    
+    struct timespec ts1;
+    clock_gettime(CLOCK_MONOTONIC, &ts1);
     ret = write(serial_fd, buf, size);
+    
+    pthread_mutex_unlock(&serial_lock);
+    
     #if DEBUG
     printf("ret:%d, ms:%u, buf[%02X %02X %02X %02X %02X %02X %02X %02X]\n"
         , ret, (ts1.tv_sec*1000 + ts1.tv_nsec/1000000)
@@ -265,8 +278,73 @@ int lens3403_uart_write(unsigned char *buf, int size)
 	return ret;
 }
 
+#if LENS_TEST
+static int udp2serial(void)
+{
+
+  struct sockaddr_in baddr;
+  struct sockaddr_in peeraddr;
+  int peerlen = sizeof(peeraddr);
+  int flag = 1, len = sizeof(int); 
+  static int udp_fd = -1;
+
+  char buf[16] = {0};
+  int size = sizeof(buf);
+  
+  if(udp_fd < 0)
+  {
+    if ((udp_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) 
+  	{
+  		printf("udp_fd err socket.\n");
+  		return -1;
+  	}
+  	
+  	baddr.sin_family      = AF_INET;
+  	baddr.sin_addr.s_addr = htonl(INADDR_ANY); 
+  	baddr.sin_port        = htons(6666);
+  	
+  	if(setsockopt(udp_fd, SOL_SOCKET, SO_REUSEADDR, &flag, len) == -1) 
+  	{
+  		printf("udp_fd err SO_REUSEADDR.\n");
+  		return -1;
+  	}
+  	
+  	if (bind(udp_fd, (struct sockaddr *) &baddr, sizeof(baddr)) < 0) 
+  	{
+  		printf("udp_fd err bind.\n");
+  		return -1;
+  	}
+  }
+  
+  len = recvfrom(udp_fd, buf, size, MSG_DONTWAIT, (struct sockaddr*)&peeraddr, &peerlen);
+  if(len > 0)
+  {
+      char ip[32];
+      unsigned short port = ntohs(peeraddr.sin_port);
+      inet_ntop(AF_INET, &peeraddr.sin_addr, ip, 32);
+      printf("recvfrom [ip:%s,port:%d] len:%d\n", ip, port, len);
+      
+      tcflush(serial_fd, TCIFLUSH);//clear response buffer;
+      gsf_uart_write(buf, len);
+      usleep(10*1000); //wait response;
+      len = read(serial_fd, buf, size);
+      if(len > 0)
+      {
+        printf("sendto [ip:%s,port:%d] len:%d\n", ip, port, len);
+        sendto(udp_fd, buf, len, MSG_DONTWAIT, (struct sockaddr*)&peeraddr, peerlen);
+      }
+  }
+
+  return len;
+}
+#endif
+
 static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
 {
+  #if LENS_TEST
+  udp2serial();
+  #endif
+  
   unsigned char buf[8];
   HI_U32 Fv = Fv1 + Fv2;
 
@@ -287,6 +365,7 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
   int ret = gsf_uart_write(buf, 8);
   return 0;
 }
+
 
 int lens3403_lens_start(int ch, char *ttyAMA)
 {
@@ -340,6 +419,7 @@ int lens3403_lens_start(int ch, char *ttyAMA)
   {
   	return 0;
   }
+  
   printf("%s => gsf_mpp_af_start(%d)\n", __func__, ch);
   return gsf_mpp_af_start(&af);
 }
@@ -473,9 +553,14 @@ int lens3403_uart_open(char *ttyAMA, int baudrate)
     
   if(!ttyAMA || strlen(ttyAMA) < 1)
     return -1;
-    
-  //O_NDELAY blocking read;
-  serial_fd = open(ttyAMA, O_RDWR | O_NOCTTY /*| O_NDELAY*/);
+  
+  #if LENS_TEST  
+  int non_blocking = O_NDELAY; //maohw
+  #else
+  int non_blocking = 0;
+  #endif
+  
+  serial_fd = open(ttyAMA, O_RDWR | O_NOCTTY | non_blocking);
   if (serial_fd < 0)
   {
       return -2;
@@ -485,6 +570,12 @@ int lens3403_uart_open(char *ttyAMA, int baudrate)
   {
     return -3;
   }
+  
+  if(non_blocking)
+  {
+    return 0;
+  }
+  
   return pthread_create(&serial_tid, NULL, serial_task, (void*)NULL);
 }
 
