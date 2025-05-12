@@ -35,6 +35,9 @@ else ifeq ($(GSF_CPU_ARCH), 3516d)
 #        -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -ltde
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -laf -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -l_hicalcflicker -l_hiir_auto -ltde
+#test file=>vdec=>vo
+INCS += -I$(HOME)/fw/libmov/inc -I$(HOME)/mod/rec/inc 
+LIBS += -lmov
 else ifeq ($(GSF_CPU_ARCH), 3519a)
 LIBS += -L$(HOME)/mod/mpp/$(GSF_CPU_ARCH)/lib/hisisdk -lisp -l_hiae -l_hiawb -lhdmi -l_hidrc -l_hildci -l_hidehaze -lsecurec \
         -live -lmpi -lVoiceEngine -ldnvqe -lupvqe -lhive_RES -laacenc -laacdec -ltde

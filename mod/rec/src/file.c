@@ -349,8 +349,10 @@ int fd_av_rread(fd_av_t *fd, char *buf, int *size, rec_rw_info_t *info)    /* ¶Á
                   (_hdl->aobject == MOV_OBJECT_AAC)?GSF_ENC_AAC:    GSF_ENC_BUTT:
                   GSF_ENC_BUTT;
   info->ms = _hdl->pts;
-  info->v  = _hdl->v;
-  info->a  = _hdl->a;
+  if(info->type < GSF_FRM_AUDIO_1)
+    info->v  = _hdl->v;
+  else
+    info->a  = _hdl->a;
   
   return ret;
 }

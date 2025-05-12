@@ -444,7 +444,7 @@ int disk_percent(char *mnt)
   double percent = (stat_buf.f_blocks - stat_buf.f_bavail);
   percent /= stat_buf.f_blocks;
   percent *= 100;
-  printf("disk_percent statvfs mnt:%s, percent:%d%\n", mnt, (int)percent);
+  printf("disk_percent statvfs mnt:%s, percent:%d\n", mnt, (int)percent);
 	return percent;
 }
 

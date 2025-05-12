@@ -885,6 +885,12 @@ int main_start(gsf_bsp_def_t *bsp_def)
     }
     #endif
     
+    if(1) //test file=>vdec=>vo;
+    {
+      extern int file_vdec(void);
+      file_vdec();
+    }
+    
     extern int vdec_start();
     if(vdec_start() < 0)
     {
