@@ -82,19 +82,24 @@ static int recv_curr_time, recv_last_time;
 
 int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
-  int ret = 0, i = 0;
+  int ret = 0, i = 0, got = 0;
   if(!fifo[0] || !frm[0])
+  {
+    usleep(10*1000);  
     return -1;
+  }
   
   for(i = 0; i < 2; i++)
   while(fifo[i] && frm[i])
-  {
+  {  
     int ret = cfifo_get(fifo[i], cfifo_recgut, (void*)frm[i]);
     if(ret <= 0)
     {
       //printf("err: cfifo_get i:%d, ret:%d\n", i, ret);
       break;
     }
+    got = 1;
+    
     int ch = (int)(cfifo_get_u(fifo[i]));
     char *data = frm[i]->data;
     
@@ -111,6 +116,12 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
       ret = gsf_mpp_vo_vsend(VOLAYER_HD0, ch, 0, data, &attr);
       //printf("video size:%d, pts:%llu\n", attr.size, attr.pts);
       
+      if(0)
+      {
+        static unsigned long long _pts = 0;
+        printf("video size:%d, pts diff:%llu ms\n", attr.size, (attr.pts - _pts)/1000);
+        _pts = attr.pts;
+      }
     	struct timespec _ts;  
       clock_gettime(CLOCK_MONOTONIC, &_ts);
       recv_last_time = _ts.tv_sec;
@@ -125,8 +136,9 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
       }
     }
   };
-  usleep(10*1000);
   
+  if(got == 0)
+    usleep(10*1000);  
   
   return 0;
 }
@@ -137,7 +149,7 @@ void* vdec_task(void *param)
   //fifo[0]: video, fifo[1]: audio;
   struct cfifo_ex* fifo[2] = {NULL,};
   gsf_frm_t *frm[2] = {NULL,};
-  
+   
   while(_task_runing)
   {
     struct timespec _ts;
@@ -166,10 +178,7 @@ void* vdec_task(void *param)
       }
     }
     
-    if(vo_sendfrm(fifo, frm) < 0)
-    {
-      usleep(10*1000);
-    }
+    vo_sendfrm(fifo, frm);
   }
   return NULL;
 }
