@@ -23,6 +23,10 @@ static int aodev = SAMPLE_AUDIO_INNER_AO_DEV;
 static int aodev = SAMPLE_AUDIO_INNER_HDMI_AO_DEV;
 #endif
 
+//slow_send = 1 indicates that vo_sendfrm() sends only one frame to vdec at a time
+//The hi3516dv300 does not support frame rate control with vdec=>vpss=>vo.
+static int slow_send = 1;
+
 int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
 {
   gsf_shmid_t shmid = {-1, -1};
@@ -54,12 +58,13 @@ int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
       printf("%s video_shmid:%d\n", codec_ipc.vdec.rtsp, shmid.video_shmid);
     }
   }
-
+  
   if(shmid.video_shmid >= 0)
   {
     fifo[0] = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.video_shmid);
     if(!frm[0])
       frm[0] = (gsf_frm_t*)malloc(GSF_FRM_MAX_SIZE);
+    
     cfifo_newest(fifo[0], 1);
     cfifo_set_u(fifo[0], (void*)1);
     printf("video fifo[0]:%p, frm:%p\n", fifo[0], frm[0]);
@@ -69,10 +74,13 @@ int vdec_connect(struct cfifo_ex** fifo, gsf_frm_t** frm)
     fifo[1] = cfifo_shmat(cfifo_recsize, cfifo_rectag, shmid.audio_shmid);
     if(!frm[1])
       frm[1] = (gsf_frm_t*)malloc(4*1024);
+    
     cfifo_newest(fifo[1], 1);
     cfifo_set_u(fifo[1], (void*)1);
     printf("audio fifo[1]:%p, frm:%p\n", fifo[1], frm[1]);
   }
+  
+  warn("slow_send: %d\n", slow_send);
   
   return 0;
 }
@@ -106,7 +114,7 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
     gsf_mpp_frm_attr_t attr;
     attr.size   = frm[i]->size;     // data size;
     attr.ftype  = frm[i]->flag;     // frame type;
-    attr.pts    = frm[i]->pts*1000; // pts ms*1000;
+    attr.pts    = (frm[i]->pts*1000); // pts ms*1000;
     
     if(frm[i]->type == GSF_FRM_VIDEO)
     {  
@@ -135,10 +143,16 @@ int vo_sendfrm(struct cfifo_ex** fifo, gsf_frm_t** frm)
         ret = gsf_mpp_ao_asend(aodev, ch, 0, data, &attr);
       }
     }
+    
+    if(slow_send)
+      break;
   };
-  
-  if(got == 0)
-    usleep(10*1000);  
+    
+  if(got == 0)  
+    usleep(10*1000);
+    
+  if(slow_send)
+    usleep(15*1000);
   
   return 0;
 }
@@ -175,7 +189,7 @@ void* vdec_task(void *param)
       {
         sleep(2);
         continue;
-      }
+      } 
     }
     
     vo_sendfrm(fifo, frm);
