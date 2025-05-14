@@ -129,7 +129,7 @@ static void rtp_packet(void* param, const void *packet, int bytes, uint32_t time
       ctx->video_frm->flag = (type == 5)?GSF_FRM_FLAG_IDR:0;
       ctx->video_frm->seq  = ctx->video_frm->seq + 1;
       ctx->video_frm->utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
-      ctx->video_frm->pts  = ctx->video_frm->utc;
+      ctx->video_frm->pts  = time/90;//ctx->video_frm->utc;
       ctx->video_frm->video.encode = GSF_ENC_H264;
 
       int ret = cfifo_put(ctx->video_fifo,  
@@ -229,7 +229,7 @@ static void rtp_packet(void* param, const void *packet, int bytes, uint32_t time
       ctx->video_frm->flag = (type >= 16)?GSF_FRM_FLAG_IDR:0;
       ctx->video_frm->seq  = ctx->video_frm->seq + 1;
       ctx->video_frm->utc  = _ts.tv_sec*1000 + _ts.tv_nsec/1000000;
-      ctx->video_frm->pts  = ctx->video_frm->utc;
+      ctx->video_frm->pts  = time/90;//ctx->video_frm->utc;
       ctx->video_frm->video.encode = GSF_ENC_H265;
 
       int ret = cfifo_put(ctx->video_fifo,  
