@@ -4,7 +4,7 @@
 ### Business cooperation, contact Email: thomas@hiview-tech.cn  
 ## RoadMap:
 ### 1. Design products in the form of core board + base board (customizable);
-<img src=/res/16dv300-c.jpg width=200 height=200 /><img src=/res/59v200-c.jpg width=200 height=200 /><img src=/res/16av300-c.jpg width=200 height=200 />
+<img src=/res/16av300-c.jpg width=200 height=200 /><img src=/res/59v200-c.jpg width=200 height=200 /><img src=/res/cv610-c.jpg width=200 height=200 />
 
 <img src=/res/19dv500-c.jpg width=200 height=200 /><img src=/res/16dv500-c.jpg width=200 height=200 /><img src=/res/hv3403-c.jpg width=200 height=200 />
 
