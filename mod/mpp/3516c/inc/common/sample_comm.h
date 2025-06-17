@@ -271,9 +271,15 @@ typedef enum {
     SC500AI_MIPI_5M_30FPS_10BIT,
     SC500AI_MIPI_5M_30FPS_10BIT_WDR2TO1,
     SC4336P_MIPI_3M_30FPS_10BIT,
-    OV_OS04A10_MIPI_4M_30FPS_12BIT,
+    OV_OS04A10_MIPI_4M_30FPS_12BIT = 10,
 	  OV_OS04A10_MIPI_4M_30FPS_12BIT_WDR2TO1,
     OV_OS04A10_SLAVE_MIPI_4M_30FPS_12BIT,
+    SONY_IMX415_MIPI_8M_30FPS_12BIT,
+    
+    MIPI_YUV422_2M_60FPS_8BIT = 30,
+    BT1120_YUV422_2M_60FPS_8BIT,
+    BT656_YUV422_0M_60FPS_8BIT,
+    BT601_YUV422_0M_60FPS_8BIT,
     SNS_TYPE_BUTT,
 } sample_sns_type;
 
@@ -790,6 +796,10 @@ typedef struct {
     hi_compress_mode compress_mode[HI_VPSS_MAX_PHYS_CHN_NUM];
     hi_bool enable[HI_VPSS_MAX_PHYS_CHN_NUM];
     hi_fmu_mode fmu_mode[HI_VPSS_MAX_PHYS_CHN_NUM];
+    hi_vpss_chn_buf_wrap_attr wrap_attr[HI_VPSS_MAX_PHYS_CHN_NUM];
+    hi_u32 vb_yuv_cnt[HI_VPSS_MAX_PHYS_CHN_NUM];
+    hi_u32 vpss_chn_depth;
+    hi_s32 vi_vpss_mode;
 } sample_venc_vpss_chn_attr;
 
 typedef struct {

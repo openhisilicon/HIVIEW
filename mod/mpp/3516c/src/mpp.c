@@ -29,10 +29,11 @@
 #include "hi_audio_aac_adp.h"
 
 #include "mpp.h"
-//#include "mppex.h"
+#include "mppex.h"
 
 static hi_s32 aiisp = 0;
-
+int board_type = DMEB_BGA;
+int board_type_20s = 0;
 static int _audio_init = 0;
 static gsf_mpp_aenc_t _adec, _aenc = {
   .AeChn = 0,
@@ -73,6 +74,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SC500AI_MIPI_5M_30FPS_10BIT,             "sc500ai-0-0-5-30", "libsns_sc500ai.so",    "g_sns_sc500ai_obj"},
     {SC500AI_MIPI_5M_30FPS_10BIT_WDR2TO1,     "sc500ai-0-1-5-30", "libsns_sc500ai.so",    "g_sns_sc500ai_obj"},
     {OV_OS04A10_MIPI_4M_30FPS_12BIT,          "os04a10-0-0-4-30", "libsns_os04a10.so",    "g_sns_os04a10_obj"},
+    {SONY_IMX415_MIPI_8M_30FPS_12BIT,         "imx415-0-0-8-30",  "libsns_imx415.so",     "g_sns_imx415_obj"},
   };
 
 
@@ -93,6 +95,7 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
 
 static void * dl = NULL;
 static int snscnt = 0;
+static sample_vi_user_frame_info user_frame_info = {0};
 
 hi_void sample_venc_handle_sig2(hi_s32 signo)
 {
@@ -102,7 +105,7 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
   signal(SIGTERM, SIG_IGN);
   if (signo == SIGINT || signo == SIGTERM) 
   {
-      //mppex_hook_destroy();
+      mppex_hook_destroy();
       ret = gsf_mpp_scene_stop();
       printf("gsf_mpp_scene_stop ret = %x\n", ret);
       ret = gsf_mpp_venc_dest();
@@ -130,6 +133,11 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
       sample_comm_all_isp_stop();
       printf("sample_comm_all_isp_stop\n");
       
+      if(user_frame_info.vb_blk)
+      {
+        sample_comm_vi_release_frame_blk(&user_frame_info, 1);
+      }
+      
       sample_comm_sys_exit();
       printf("sample_comm_sys_exit\n");
   }
@@ -143,6 +151,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char snsstr[64];
   sprintf(snsstr, "%s-%d-%d-%d-%d"
           , cfg->snsname, cfg->lane, cfg->wdr, cfg->res, cfg->fps);
+  
+  mppex_hook_sns(cfg);
   
   SAMPLE_MPP_SENSOR_T* sns = SAMPLE_MPP_SERSOR_GET(snsstr);
   if(!sns)
@@ -158,14 +168,25 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char snsname[64] = {0};
   char script[64] = {0};
   
-  sprintf(script, "%s", strstr(cfg->type, "HI3516CV610_20S")?"load3516cv610_20s_debug":"load3516cv610_00s_debug");
+  board_type = strstr(cfg->type, "HI3516CV610_20S")?DMEB_QFN:DMEB_BGA;
+  if(board_type == DMEB_QFN)
+  {
+    sscanf(cfg->type, "HI3516CV610_20S%d", &board_type_20s);
+    sprintf(script, "%s", "load3516cv610_20s_debug");
+  }
+  else 
+  {
+    sprintf(script, "%s", "load3516cv610_00s_debug");
+  }
   
   if(strstr(cfg->snsname, "os04a10"))
     strncpy(snsname, "os04d10", sizeof(snsname)-1);
+  else if(strstr(cfg->snsname, "imx415")) //37M clk
+    strncpy(snsname, "mipi_ad", sizeof(snsname)-1);
   else 
     strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
   
-  sprintf(loadstr, "%s/ko/load3516cv610/%s -i -sensor0 %s", path, script, snsname);
+  sprintf(loadstr, "%s/ko/load3516cv610/%s -i -sensor0 %s -board %d", path, script, snsname, board_type_20s);
   for(i = 1; i < snscnt; i++)
   {
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, snsname);
@@ -175,10 +196,27 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   system(loadstr);
   
   SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = sns->type;
-  
+
   if(cfg->second && cfg->snscnt == 1)
   {
-    SENSOR1_TYPE = SNS_TYPE_BUTT;
+    SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT://BT1120
+                   (cfg->second == 4)?SENSOR1_TYPE://sns0==sns1;  //USB-UVC
+                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //BT656-CUSTOM
+                                      SENSOR1_TYPE;//sns0==sns1;
+  
+    if(cfg->second == 5) //CUSTOM
+    {
+      mppex_bt656_cfg_t bt656 = {
+        .data_seq = HI_VI_DATA_SEQ_UYVY, //HI_VI_DATA_SEQ_YUYV
+        .width = 720,       // sensor-w: 720
+        .height = 576,      // sensor-h: 576
+        .crop.x = 0,        // valid-x: (720-640)/2
+        .crop.y = 0,        // valid-y: (576-512)/2
+        .crop.width = 720,  // valid-w: 640
+        .crop.height = 576, // valid-h: 512
+      };
+      mppex_comm_bt656_cfg(&bt656);
+    }
   }
   
   if(dl)
@@ -253,12 +291,12 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   {
     
     sample_comm_vi_get_default_vi_cfg(SENSOR0_TYPE, &vi_cfg[i]);
-    if(SENSOR0_TYPE == SC4336P_MIPI_4M_30FPS_10BIT) 
+    if(board_type_20s > 0 && SENSOR0_TYPE < 10) 
     {
-      const hi_vi_dev vi_dev = 1;
+      const hi_vi_dev vi_dev = (board_type_20s == 38)?1:0;
       const hi_vi_pipe vi_pipe = 0;
       
-      printf("SC4336P_MIPI_4M_30FPS_10BIT\n");
+      printf("board_type_20s = %d\n", board_type_20s);
       sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, vi_dev, &vi_cfg[i].mipi_info);
       vi_cfg[i].sns_info.bus_id = 0;
       vi_cfg[i].sns_info.sns_clk_src = 0;
@@ -271,14 +309,25 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     }
   }
   
-  //mppex_comm_vi_bb(snscnt, vi_cfg);
-  
   // get vpss param
   vi_size = vi_cfg[0].dev_info.dev_attr.in_size;
   extern hi_void get_default_vpss_chn_attr(hi_size *vi_size, hi_size enc_size[], hi_s32 len,
             sample_venc_vpss_chn_attr *vpss_chan_attr);
   get_default_vpss_chn_attr(&vi_size, enc_size, CHN_NUM_MAX, &vpss_param);
 
+  #if 0 //vi_vpss_mode;
+  vpss_param.vi_vpss_mode = HI_VI_ONLINE_VPSS_ONLINE;
+  vpss_param.vb_yuv_cnt[0] = 0;
+  vpss_param.vb_yuv_cnt[1] = 4;
+  vpss_param.vb_yuv_cnt[2] = 4;  
+  vpss_param.vpss_chn_depth = 1; 
+  #endif
+  
+  //vpss_param.vpss_chn_depth = 1; //depth会占用VB内存
+  
+  mppex_comm_vi_bb(snscnt, vi_cfg, &vpss_param);
+  
+  
   /******************************************
     step 1: init sys alloc common vb
   ******************************************/
@@ -295,10 +344,9 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   }
   
   //vi_vpss_mode;
-  sample_comm_vi_set_vi_vpss_mode(HI_VI_ONLINE_VPSS_ONLINE, HI_VI_AIISP_MODE_DEFAULT);
+  sample_comm_vi_set_vi_vpss_mode(vpss_param.vi_vpss_mode, HI_VI_AIISP_MODE_DEFAULT);
   
   sample_sns_type sns_type = SENSOR0_TYPE;
- 
   for(i = 0; i < snscnt; i++)
   {
     extern hi_s32 sample_venc_vi_init(sample_vi_cfg *vi_cfg); //sample_comm_vi_start_vi(vi_cfg);
@@ -312,7 +360,7 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
     }
   }
   
-  //ret = mppex_comm_vi_ee(snscnt, vi_cfg);
+  ret = mppex_comm_vi_ee(snscnt, vi_cfg);
   
   return ret;
 
@@ -334,7 +382,7 @@ int gsf_mpp_vi_stop()
     }  
   }
 
-  //mppex_comm_vi_tt(snscnt, vi_cfg);
+  mppex_comm_vi_tt(snscnt, vi_cfg);
 
   sample_comm_sys_exit();
   return ret;
@@ -344,8 +392,46 @@ int gsf_mpp_vi_stop()
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
 {
   int ret = 0;
+#if 1
+  ret = hi_mpi_vi_get_chn_frame(ViPipe, ViChn, pstFrameInfo, s32MilliSec);
+  if(ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vi_get_chn_frame ViPipe:%d, ViChn:%d, ret:0x%x\n", ViPipe, ViChn, ret);
+  }
+#else
+  ret = hi_mpi_vi_get_pipe_frame(ViPipe, pstFrameInfo, s32MilliSec);
+  if(ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vi_get_pipe_frame ViPipe:%d, ret:0x%x\n", ViPipe, ret);
+  }
+#endif  
   return ret;
 }
+
+
+int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  int ret = 0;
+
+  ret = hi_mpi_vi_release_chn_frame(ViPipe, ViChn, pstFrameInfo);
+  if(ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vi_release_chn_frame ViPipe:%d, ViChn:%d, ret:0x%x\n", ViPipe, ViChn, ret);
+  }
+  return ret;
+}
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return mppex_comm_uvc_get(ViPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return mppex_comm_uvc_rel(ViPipe, pstFrameInfo);
+}
+
+
+
 
 //from sample_af.c;
 extern int sample_af_main(gsf_mpp_af_t *af);
@@ -368,7 +454,7 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
   hi_vi_chn vi_chn    = vpss->ViChn;
   hi_vpss_grp vpss_grp= vpss->VpssGrp;
     
-  //vi_pipe = mppex_comm_vpss_bb(vpss, &vpss_param);
+  vi_pipe = mppex_comm_vpss_bb(vpss, &vpss_param);
   
   extern hi_s32 sample_venc_vpss_init(hi_vpss_grp vpss_grp, sample_venc_vpss_chn_attr *vpss_chan_cfg);
   if ((ret = sample_venc_vpss_init(vpss_grp, &vpss_param)) != HI_SUCCESS) {
@@ -376,13 +462,16 @@ int gsf_mpp_vpss_start(gsf_mpp_vpss_t *vpss)
       goto EXIT;
   }
   
-  if ((ret = sample_comm_vi_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0)) != HI_SUCCESS) 
+  if(vi_pipe >= 0)
   {
-      sample_print("VI Bind VPSS err for %#x!\n", ret);
-      goto EXIT_VPSS_STOP;
+    if ((ret = sample_comm_vi_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0)) != HI_SUCCESS) 
+    {
+        sample_print("VI Bind VPSS err for %#x!\n", ret);
+        goto EXIT_VPSS_STOP;
+    }
+    printf("@@@ bind vi_pipe:%d,vi_chn:%d => vpss_grp:%d\n\n",vi_pipe, vi_chn ,vpss_grp);
   }
-  
-  //mppex_comm_vpss_ee(vpss, &vpss_param);
+  mppex_comm_vpss_ee(vpss, &vpss_param);
 EXIT:
   return ret;
   
@@ -397,8 +486,10 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
   hi_vi_pipe vi_pipe  = vpss->ViPipe;
   hi_vi_chn vi_chn    = vpss->ViChn;
   hi_vpss_grp vpss_grp= vpss->VpssGrp;
-
-  sample_comm_vi_un_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0);
+  if(vi_pipe >= 0)
+  {
+    sample_comm_vi_un_bind_vpss(vi_pipe, vi_chn, vpss_grp, 0);
+  }
   sample_venc_vpss_deinit(vpss_grp, &vpss_param);
   return ret;
 }
@@ -406,8 +497,25 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss)
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec)
 {
   int ret = 0;
+  
+  VIDEO_FRAME_INFO_S *outVideoFrame = mppex_comm_vpss_send_bb(VpssGrp, VpssGrpPipe, pstVideoFrame);
+  ret = hi_mpi_vpss_send_frame(VpssGrp, outVideoFrame, s32MilliSec);
+  if (ret != HI_SUCCESS) 
+  {
+    printf("hi_mpi_vpss_send_frame VpssGrp:%d, ret:0x%x\n", VpssGrp, ret);
+  }
   return ret;
 }
+
+int gsf_mpp_vpss_get(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec)
+{
+  return hi_mpi_vpss_get_chn_frame(VpssGrp, VpssGrpPipe, pstFrameInfo, s32MilliSec);
+}
+int gsf_mpp_vpss_release(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo)
+{
+  return hi_mpi_vpss_release_chn_frame(VpssGrp, VpssGrpPipe, pstFrameInfo);
+}
+
 
 int gsf_mpp_vpss_ctl(int VpssGrp, int id, void *args)
 {
@@ -635,6 +743,116 @@ int gsf_mpp_venc_dest()
 int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
 {
   return sample_comm_venc_snap_processCB(VencChn, SnapCnt, cb, u);
+}
+
+
+typedef struct {
+  int(*cb)(int i, VENC_STREAM_S* pstStream, void* u);
+  void *u;
+}snap_user_cb_t;
+
+static int snap_venc_cb(VENC_STREAM_S* pstStream, void* u)
+{
+  snap_user_cb_t *user = (snap_user_cb_t*)u;
+  if(user->cb)
+  {
+    user->cb(0, pstStream, user->u);
+  }
+  return 0;
+}
+
+int gsf_mpp_venc_snap4vpss(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
+{ 
+  int ret = 0;
+  printf("gsf_mpp_vpss_get VpssGrp:%d, SnapCnt:%d\n", VpssGrp, SnapCnt);
+ 
+  hi_video_frame_info srcFrameInfo;
+  if(gsf_mpp_vpss_get(VpssGrp, 0, &srcFrameInfo, 100) < 0)
+  {
+    return -1;
+  }
+  printf("gsf_mpp_vpss_get ok VpssGrp:%d\n", VpssGrp);
+  
+  if(!user_frame_info.vb_blk)
+  {
+    extern hi_s32 sample_comm_vi_get_frame_blk(sample_vi_get_frame_vb_cfg *get_frame_vb_cfg, sample_vi_user_frame_info user_frame_info[], hi_s32 frame_cnt);
+    extern hi_s32 sample_comm_vi_add_scale_task(hi_video_frame_info *src_frame, hi_video_frame_info *dst_frame);
+    
+    hi_vpss_chn_attr vpss_chn_attr;
+    hi_mpi_vpss_get_chn_attr(VpssGrp, 0, &vpss_chn_attr);
+
+    sample_vi_get_frame_vb_cfg vb_cfg;
+    vb_cfg.size.width    = (vpss_chn_attr.width < 3840)?vpss_chn_attr.width*1.3:vpss_chn_attr.width;
+    vb_cfg.size.height   = (vpss_chn_attr.height < 2160)?vpss_chn_attr.height*1.3:vpss_chn_attr.height;
+    vb_cfg.pixel_format  = HI_PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+    vb_cfg.video_format  = HI_VIDEO_FORMAT_LINEAR;
+    vb_cfg.compress_mode = HI_COMPRESS_MODE_NONE;
+    vb_cfg.dynamic_range = HI_DYNAMIC_RANGE_SDR8;
+
+    ret = sample_comm_vi_get_frame_blk(&vb_cfg, &user_frame_info, 1);
+    if (ret != HI_SUCCESS) {
+        sample_print("get frame vb failed!\n");
+        goto EXIT;
+    }
+  }
+  if(user_frame_info.vb_blk)
+    sample_comm_vi_add_scale_task(&srcFrameInfo, &user_frame_info.frame_info);
+  
+  static int VeChn = 0;
+  if(!VeChn)
+  {
+    VeChn = 7;//(HI_VENC_MAX_CHN_NUM-2);
+    static gsf_mpp_venc_t venc;
+    venc.VencChn    = VeChn;
+    venc.srcModId   = HI_ID_VPSS;
+    venc.VpssGrp    = -1;
+    venc.VpssChn    = -1;
+    venc.enPayLoad  = PT_JPEG;
+    venc.enSize     = PIC_3840X2160;
+    venc.enRcMode   = 0;
+    venc.u32Profile = 0;
+    venc.bRcnRefShareBuf = HI_TRUE;
+    venc.enGopMode  = VENC_GOPMODE_NORMALP;
+    venc.u32FrameRate = 30;
+    venc.u32Gop       = 30;
+    venc.u32BitRate   = 2000;
+    venc.u32LowDelay  = 0;
+    if(gsf_mpp_venc_start(&venc) < 0)
+    {
+      printf("gsf_mpp_venc_start error VeChn:%d\n", VeChn);
+    }
+  }
+  printf("gsf_mpp_venc_start ok VeChn:%d\n", VeChn);
+  
+  static td_u64 __pts = 0;
+  static td_u32 __time_ref = 0; 
+  hi_video_frame_info *dstFrameInfo = &srcFrameInfo;
+  
+  if(user_frame_info.vb_blk)
+  {
+    dstFrameInfo = &user_frame_info.frame_info;
+    gsf_mpp_vpss_release(VpssGrp, 0, &srcFrameInfo);
+  }
+  
+  
+  dstFrameInfo->video_frame.pts = __pts+= 33000;
+  dstFrameInfo->video_frame.time_ref = __time_ref+=2;
+  dstFrameInfo->video_frame.frame_flag = 0;
+  
+  snap_user_cb_t user = {cb, u};
+  gsf_mpp_venc_get_t vget;
+  vget.cb = snap_venc_cb;
+  vget.u = &user;
+  if(gsf_mpp_venc_send(VeChn, dstFrameInfo, 100, &vget) < 0)
+  {
+    printf("gsf_mpp_venc_send error VeChn:%d\n", VeChn);
+  }
+  
+EXIT:
+  if(!user_frame_info.vb_blk)
+    gsf_mpp_vpss_release(VpssGrp, 0, &srcFrameInfo);
+
+  return ret;
 }
 
 static int g_scenebEnable = 0;

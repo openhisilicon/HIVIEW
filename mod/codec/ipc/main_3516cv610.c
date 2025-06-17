@@ -252,11 +252,24 @@ void mpp_ini_3516c(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   
   if(strstr(cfg->type, "HI3516CV610_20S"))
   {
-    // sc4336p-0-0-4-30
-    cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
-    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
-    venc_ini->ch_num = 1; venc_ini->st_num = 2;
-    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2560X1440, PIC_640P);
+    
+    if(strstr(cfg->snsname, "imx415"))
+    {  
+      // imx415-0-0-8-30
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840X2160, PIC_360P);
+    }
+    else 
+    {  
+      // sc4336p-0-0-4-30
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 4; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2560X1440, PIC_640P);
+    }
+    
     if(cfg->snscnt > 1)
     {
         // os08a20-0-0-8-30
@@ -333,7 +346,11 @@ int mpp_start(gsf_bsp_def_t *def)
         #error "error unknow gsf_mpp_cfg_t."
       }
       #endif
-      
+      //SECOND-UVC
+      if(cfg.second == 4)
+      {
+        VPSS_BIND_VI(1, -1, 0, (1+0), 1, 0, SECOND_HIRES(cfg.second), SECOND_LORES(cfg.second));
+      }
     }while(0);
     
     p_venc_ini = &venc_ini;
@@ -348,18 +365,13 @@ int mpp_start(gsf_bsp_def_t *def)
 
     gsf_mpp_cfg(home_path, &cfg);
     
-    if(strstr(cfg.type, "HI3516CV610_20S"))
-    {
-      printf("disable gsf_lens_init.\n");
-    }
-    else 
+    if(1)
     {
       lens_ini.ch_num = 1;  // lens number;
       strncpy(lens_ini.sns, cfg.snsname, sizeof(lens_ini.sns)-1);
       strncpy(lens_ini.lens, "LENS-NAME", sizeof(lens_ini.lens)-1);
       gsf_lens_init(&lens_ini);
     }
-    
     
     // vi start;
     printf("vi.lowdelay:%d\n", codec_ipc.vi.lowdelay);
@@ -375,17 +387,15 @@ int mpp_start(gsf_bsp_def_t *def)
       
     gsf_mpp_vi_start(&vi);
     
-    if(strstr(cfg.type, "HI3516CV610_20S"))
-    {
-      printf("disable gsf_lens_start.\n");
-    }
-    else
+    if(1)
     {
       //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
       char uart_name[32] = {0};
 	    sprintf(uart_name, "/dev/%s", codec_ipc.lenscfg.uart);
 	    gsf_lens_start(0, uart_name);
   	}
+    
+    
     
     // vpss start;
     {
@@ -511,6 +521,78 @@ int main_loop(void)
 {
     usleep(10*1000);
     
+    //#define __TEST_CROP__
+    #if defined(__TEST_CROP__)
+    static int crop_cnt = 0;
+    static int dz[3] = {0, -1, 1};
+    if(crop_cnt % 200 == 0)
+    {
+      dzoom_plus = dz[(crop_cnt/200)%3];
+      printf("dzoom_plus :%d\n", dzoom_plus);
+    }crop_cnt++;
+    #endif
+    
+    #if !defined(__TEST_CROP__)
+    //SECOND-UVC
+    if(p_cfg->second == 4)
+    {
+      static int find_uvc = 0;
+      if(!find_uvc)
+      {
+        for(int i = 0; i < 10; i++)
+        {
+          if(access("/dev/video0", 0) == 0)
+          {
+            find_uvc = 1;
+            printf("@@@ find_uvc ok @@@\n");
+            sleep(3);
+            break;
+          }
+          sleep(1);
+        }
+      }
+
+      if(find_uvc)
+      {
+        VIDEO_FRAME_INFO_S stFrameInfo;
+        
+        static float cnt = 0;
+        static struct timespec ts1, ts2;  
+        clock_gettime(CLOCK_MONOTONIC, &ts2);
+        
+        if(gsf_mpp_uvc_get(0, 0, &stFrameInfo, -1) == 0)
+        {
+          cnt++;
+          
+          if(1)
+          {
+            struct timespec ts1, ts2;  
+            clock_gettime(CLOCK_MONOTONIC, &ts1);
+            #if 1
+            gsf_mpp_vpss_send(1+0, 0, &stFrameInfo, 0);
+            gsf_mpp_uvc_release(0, 0, &stFrameInfo);
+            #endif       
+            clock_gettime(CLOCK_MONOTONIC, &ts2);
+            int cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+            if(cost > 10)
+            {
+              printf("gsf_mpp_vpss_send cost:%d ms\n", cost);
+            }
+          }  
+        }
+        
+        float cost = (ts2.tv_sec*1000 + ts2.tv_nsec/1000000) - (ts1.tv_sec*1000 + ts1.tv_nsec/1000000);
+        if(cost >= 1000)
+        {
+          float fps = 1000.0/(cost/cnt);
+          printf("%s uvc_fps: %0.2f\n", (fps<20)?"@@@":"", fps);
+          ts1 = ts2;
+          cnt = 0;
+        }
+      }
+    }
+    #endif
+    
     #if defined(__TEST_ASPECT__)
     hi_aspect_ratio aspect;
     aspect.mode = OT_ASPECT_RATIO_AUTO;
@@ -543,7 +625,8 @@ int main_loop(void)
     sleep(6);
     #endif
     
-    {
+    
+    do{
       #define ZOOM_STEPS 100
       #define STEP_X  (MAX_W-MIN_W)/ZOOM_STEPS/2
       #define STEP_Y  (MAX_H-MIN_H)/ZOOM_STEPS/2
@@ -559,8 +642,8 @@ int main_loop(void)
         gsf_mpp_vpss_ctl(vpssGrp, GSF_MPP_VPSS_CTL_ATTR, &grp_attr);
         MAX_W = grp_attr.max_width;
         MAX_H = grp_attr.max_height;
-        MIN_W = MAX_W/3.0;
-        MIN_H = MAX_H/3.0;
+        MIN_W = MAX_W/2.0;
+        MIN_H = MAX_H/2.0;
       }
       
       if(dzoom_plus > 0)
@@ -585,7 +668,7 @@ int main_loop(void)
         stcrop.crop_rect.height = HI_ALIGN_UP((int)(MAX_H/2 - stcrop.crop_rect.y)*2, 2);
         gsf_mpp_vpss_ctl(vpssGrp, GSF_MPP_VPSS_CTL_CROP, &stcrop);
       }
-    }
+    }while(0);
 }
 
 #endif //#if defined(GSF_CPU_3516c)

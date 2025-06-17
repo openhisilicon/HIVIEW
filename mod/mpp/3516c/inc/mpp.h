@@ -104,6 +104,10 @@ int gsf_mpp_vi_stop();
 //HI_S32 HI_MPI_VI_GetPipeFrame(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S *pstVideoFrame, HI_S32 s32MilliSec);
 //HI_S32 HI_MPI_VI_GetChnFrame(VI_PIPE ViPipe, VI_CHN ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, HI_S32 s32MilliSec);
 int gsf_mpp_vi_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_vi_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
+
+int gsf_mpp_uvc_get(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_uvc_release(int ViPipe, int ViChn, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 
 typedef struct {
@@ -137,6 +141,8 @@ int gsf_mpp_vpss_stop(gsf_mpp_vpss_t *vpss);
 //HI_S32 HI_MPI_VPSS_SendFrame VPSS_GRP VpssGrp, VPSS_GRP_PIPE VpssGrpPipe, const VIDEO_FRAME_INFO_S *pstVideoFrame , HI_S32 s32MilliSec);
 int gsf_mpp_vpss_send(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstVideoFrame , int s32MilliSec);
 int gsf_mpp_vpss_sendgd(int VpssGrp, int VpssGrpPipe, /*guide_usb_frame_data_t*/void *pstVideoFrame, int s32MilliSec);
+int gsf_mpp_vpss_get(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);
+int gsf_mpp_vpss_release(int VpssGrp, int VpssGrpPipe, VIDEO_FRAME_INFO_S *pstFrameInfo);
 
 enum {
   GSF_MPP_VPSS_CTL_PAUSE = 0, //HI_MPI_VPSS_StartGrp(VpssGrp);
@@ -214,7 +220,7 @@ typedef struct {
 int gsf_mpp_venc_recv(gsf_mpp_recv_t *recv);
 int gsf_mpp_venc_dest();
 int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
-
+int gsf_mpp_venc_snap4vpss(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u);
 
 //isp;
 int gsf_mpp_scene_start(char *path, int scenemode);
@@ -441,8 +447,8 @@ extern int SENSOR1_TYPE;
 extern hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type);
 
 #define OT_ACODEC_TYPE_INNER //for audio;
-#define BOARD_TYPE DMEB_BGA //for BOARD;
-
+extern int board_type;       //DMEB_BGA/DMEB_QFN;
+extern int board_type_20s;   //20S38/20S32;
 //-DSENSOR0_TYPE=SC4336P_MIPI_4M_30FPS_10BIT -DSENSOR1_TYPE=SC4336P_MIPI_4M_30FPS_10BIT -DOT_ACODEC_TYPE_INNER -DOT_VQE_USE_STATIC_MODULE_REGISTER 
 
 

@@ -169,11 +169,11 @@ static void msg_func_snap(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
   rsp->ch = req->ch;
   rsp->sid = req->sid;
   printf("ch:%d, sid:%d\n", req->ch, req->sid);
-  #if defined(GSF_CPU_3519d_6CHN)
+  #if defined(GSF_CPU_3519d_6CHN) || defined(GSF_SNAP4VPSS)
   gsf_mpp_venc_snap4vpss(rsp->ch, 1, snap_cb, rsp);
   #else
   if(codec_ipc.venc[GSF_CODEC_SNAP_IDX].type == GSF_ENC_JPEG)
-  gsf_mpp_venc_snap(rsp->ch*GSF_CODEC_VENC_NUM+GSF_CODEC_SNAP_IDX, 1, snap_cb, rsp);
+    gsf_mpp_venc_snap(rsp->ch*GSF_CODEC_VENC_NUM+GSF_CODEC_SNAP_IDX, 1, snap_cb, rsp);
   #endif
   return;
 }

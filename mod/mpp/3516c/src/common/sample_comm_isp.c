@@ -34,6 +34,8 @@
 #include "hi_common_video.h"
 #include "sample_comm.h"
 
+#include "mppex.h"
+
 static sample_sns_type g_sns_type[HI_VI_MAX_PIPE_NUM] = {SNS_TYPE_BUTT};
 static pthread_t g_isp_pid[HI_VI_MAX_PIPE_NUM] = {0};
 
@@ -83,6 +85,23 @@ static hi_isp_pub_attr g_isp_pub_attr_os04d10_mipi_4m_30fps = {
         { 0, 0, 2560, 1440 },
     },
 };
+
+static hi_isp_pub_attr g_isp_pub_attr_imx415_mipi_8m_30fps = {
+    {0, 0, 3840, 2160},
+    {3840, 2160},
+    25,
+    HI_ISP_BAYER_GBRG,
+    HI_WDR_MODE_NONE,
+    0,
+    0,
+    0,
+    {
+        0,
+        {0, 0, 3840, 2160},
+    },
+};
+
+
 
 static hi_isp_pub_attr g_isp_pub_attr_os04a10_mipi_4m_30fps = {
     {0, 0, 2688, 1520},
@@ -244,6 +263,10 @@ hi_void sample_comm_isp_get_pub_attr_by_sns_part1(sample_sns_type sns_type, hi_i
             (hi_void)memcpy_s(pub_attr, sizeof(hi_isp_pub_attr),
                 &g_isp_pub_attr_os04a10_mipi_4m_30fps_wdr2to1, sizeof(hi_isp_pub_attr));
             break;
+        case SONY_IMX415_MIPI_8M_30FPS_12BIT:
+            (hi_void)memcpy_s(pub_attr, sizeof(hi_isp_pub_attr),
+                &g_isp_pub_attr_imx415_mipi_8m_30fps, sizeof(hi_isp_pub_attr));
+            break;
         default:
             break;
     }
@@ -288,9 +311,10 @@ hi_s32 sample_comm_isp_get_pub_attr_by_sns(sample_sns_type sns_type, hi_isp_pub_
             break;
     }
     sample_comm_isp_get_pub_attr_by_sns_part1(sns_type, pub_attr);
+    mppex_comm_isp_get_pub_attr_by_sns(sns_type, pub_attr);
     return HI_SUCCESS;
 }
-#if 0 //maohw
+#if 0 //maohw mvto mpp.c;
 hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
 {
     switch (sns_type) {
@@ -331,6 +355,11 @@ hi_isp_sns_obj *sample_comm_isp_get_sns_obj(sample_sns_type sns_type)
           return &g_sns_os04a10_obj;
       //case OV_OS04A10_SLAVE_MIPI_4M_30FPS_12BIT:
       //    return &g_sns_os04a10_slave_obj;
+#endif
+
+#ifdef SONY_IMX415_MIPI_8M_30FPS_12BIT_SELECT
+      case SONY_IMX415_MIPI_8M_30FPS_12BIT:
+          return &g_sns_imx415_obj;
 #endif
         default:
             return HI_NULL;
@@ -582,7 +611,7 @@ hi_s32 sample_comm_isp_run(hi_isp_dev isp_dev)
 {
     hi_s32 ret;
     pthread_attr_t *thread_attr = NULL;
-
+    printf("%s => isp_dev:%d", __func__, isp_dev);
     ret = pthread_create(&g_isp_pid[isp_dev], thread_attr, sample_comm_isp_thread, (hi_void*)(hi_uintptr_t)isp_dev);
     if (ret != 0) {
         printf("create isp running thread failed!, error: %d\r\n", ret);

@@ -16,8 +16,9 @@
 #define BIG_STREAM_SIZE PIC_2688X1520//PIC_2560X1440
 #define SMALL_STREAM_SIZE PIC_D1_NTSC
 
-static int VI_VB_YUV_CNT = 4;
-static int VPSS_VB_YUV_CNT = 6;
+static int VI_VB_YUV_CNT = 1;
+static int VPSS_VB_YUV_CNT = 4;
+static int VPSS2_VB_YUV_CNT = 4;
 
 #define ENTER_ASCII 10
 
@@ -44,6 +45,7 @@ typedef struct {
     hi_compress_mode compress_mode[HI_VPSS_MAX_PHYS_CHN_NUM];
     hi_bool enable[HI_VPSS_MAX_PHYS_CHN_NUM];
     hi_fmu_mode fmu_mode[HI_VPSS_MAX_PHYS_CHN_NUM];
+    hi_vpss_chn_buf_wrap_attr wrap_attr[HI_VPSS_MAX_PHYS_CHN_NUM];
 } sample_venc_vpss_chn_attr;
 
 typedef struct {
@@ -503,10 +505,13 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     sample_venc_vb_attr *vb_attr)
 {
     hi_s32 i;
-	VI_VB_YUV_CNT = (SENSOR0_TYPE == SC4336P_MIPI_4M_30FPS_10BIT)?1:VI_VB_YUV_CNT;
-	VPSS_VB_YUV_CNT = (SENSOR0_TYPE == SC4336P_MIPI_4M_30FPS_10BIT)?4:VPSS_VB_YUV_CNT;
-
+    
+    VI_VB_YUV_CNT    = vpss_chn_attr->vb_yuv_cnt[0];
+    VPSS_VB_YUV_CNT  = vpss_chn_attr->vb_yuv_cnt[1];
+    VPSS2_VB_YUV_CNT = vpss_chn_attr->vb_yuv_cnt[2];
+  	
     /* vb for vi-vpss */
+    //update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_422, HI_COMPRESS_MODE_NONE, VI_VB_YUV_CNT);
     update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_420, HI_COMPRESS_MODE_NONE, VI_VB_YUV_CNT);
 
     // vb for vpss-venc(big stream)
@@ -516,8 +521,17 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
 
     for (i = 0; i < HI_VPSS_MAX_PHYS_CHN_NUM && vb_attr->valid_num < HI_VB_MAX_COMMON_POOLS; i++) {
         if (vpss_chn_attr->enable[i] == HI_TRUE && vpss_chn_attr->fmu_mode[i] == HI_FMU_MODE_OFF) {
-            update_vb_attr(vb_attr, &vpss_chn_attr->output_size[i], vpss_chn_attr->pixel_format,
-                vpss_chn_attr->compress_mode[i], VPSS_VB_YUV_CNT);
+          
+            hi_size size = vpss_chn_attr->output_size[i];
+            printf("width*height: %d, buf_size:%d\n", size.width*size.height, vpss_chn_attr->wrap_attr[0].buf_size);
+            if(size.width*size.height < vpss_chn_attr->wrap_attr[0].buf_size)
+            {
+              int buf_size = vpss_chn_attr->wrap_attr[0].buf_size /1.5; //yuv420;
+              size.width  = 1000;
+              size.height = HI_ALIGN_UP(buf_size/size.width, 2);
+            }
+            update_vb_attr(vb_attr, &size, vpss_chn_attr->pixel_format,
+                vpss_chn_attr->compress_mode[i], (i==0)?VPSS_VB_YUV_CNT:VPSS2_VB_YUV_CNT);     
         }
     }
 
@@ -535,7 +549,8 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         printf("vpss chn attr call memset_s error\n");
         return;
     }
-
+    vpss_chan_attr->vi_vpss_mode = -1;
+    
     max_width = vi_size->width;
     max_height = vi_size->height;
 
@@ -543,6 +558,7 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         vpss_chan_attr->output_size[i].width = enc_size[i].width;
         vpss_chan_attr->output_size[i].height = enc_size[i].height;
         vpss_chan_attr->compress_mode[i] = (i == 0) ? HI_COMPRESS_MODE_SEG_COMPACT : HI_COMPRESS_MODE_NONE;
+        //vpss_chan_attr->compress_mode[i] = HI_COMPRESS_MODE_NONE;
         vpss_chan_attr->enable[i] = HI_TRUE;
         vpss_chan_attr->fmu_mode[i] = HI_FMU_MODE_OFF;
 
@@ -630,22 +646,24 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
             vpss_chn_attr.chn_attr[vpss_chn].pixel_format = vpss_chan_cfg->pixel_format;
             vpss_chn_attr.chn_attr[vpss_chn].frame_rate.src_frame_rate = -1;
             vpss_chn_attr.chn_attr[vpss_chn].frame_rate.dst_frame_rate = -1;
-            vpss_chn_attr.chn_attr[vpss_chn].depth = 0;
+            vpss_chn_attr.chn_attr[vpss_chn].depth = vpss_chan_cfg->vpss_chn_depth; //maohw
             vpss_chn_attr.chn_attr[vpss_chn].mirror_en = 0;
             vpss_chn_attr.chn_attr[vpss_chn].flip_en = 0;
             vpss_chn_attr.chn_attr[vpss_chn].aspect_ratio.mode = HI_ASPECT_RATIO_NONE;
         }
     }
-
+    
     memcpy_s(vpss_chn_attr.chn_enable, sizeof(vpss_chn_attr.chn_enable),
             vpss_chan_cfg->enable, sizeof(vpss_chn_attr.chn_enable));
     vpss_chn_attr.chn_array_size = HI_VPSS_MAX_PHYS_CHN_NUM;
-
+    memcpy_s(vpss_chn_attr.wrap_attr, sizeof(vpss_chn_attr.wrap_attr),
+            vpss_chan_cfg->wrap_attr, sizeof(vpss_chn_attr.wrap_attr));
+            
     ret = sample_common_vpss_start(vpss_grp, &grp_attr, &vpss_chn_attr);
     if (ret != HI_SUCCESS) {
         sample_print("failed with %#x!\n", ret);
     }
-
+    
     return ret;
 }
 

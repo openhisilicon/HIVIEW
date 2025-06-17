@@ -588,7 +588,7 @@ void sample_ir_cut_enable(hi_vi_pipe vi_pipe)
     hi_u32 gpio_offset1 = 1;  // gpio1_1
     hi_u32 gpio_offset7 = 7;  // gpio7_7
     hi_u32 gpio_offset0 = 0;  // gpio1_0
-    if (BOARD_TYPE == DMEB_QFN) {
+    if (board_type == DMEB_QFN) {
         // export
         sample_ir_cut_gpio_export(gpio_chip_num7, gpio_offset7);
         sample_ir_cut_gpio_export(gpio_chip_num1, gpio_offset0);
@@ -643,7 +643,7 @@ void sample_ir_cut_disable(hi_vi_pipe vi_pipe)
     hi_u32 gpio_offset0 = 0;  // gpio1_0
     hi_u32 gpio_offset6 = 6;  // gpio7_6
     hi_u32 gpio_offset1 = 1;  // gpio1_1
-    if (BOARD_TYPE == DMEB_QFN) {
+    if (board_type == DMEB_QFN) {
         // export
         sample_ir_cut_gpio_export(gpio_chip_num7, gpio_offset7);
         sample_ir_cut_gpio_export(gpio_chip_num1, gpio_offset0);
