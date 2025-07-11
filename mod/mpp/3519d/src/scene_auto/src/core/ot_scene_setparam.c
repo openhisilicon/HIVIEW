@@ -60,13 +60,71 @@ hi_s32 ot_scene_set_ae_weight_table(hi_vi_pipe vi_pipe, hi_u8 index)
     return HI_SUCCESS;
 }
 
+
+
+static int ae_iris_set(hi_vi_pipe vi_pipe, int enable)
+{
+  int ret = -1;
+  ot_isp_piris_attr piris_attr;
+    
+  td_u16 total_step_def = 62;         //最大值
+  td_u16 step_count_def = 62;         //从最大值递减,有效值个数;
+  td_u16 step_fno_table_def[1024] =   //P-Iris步进电机位置与F值映射表 取值范围：[1, 1024]
+  { 30, 35, 40,  45, 50, 56, 61, 67, 73, 79,
+    85, 92, 98, 105,112,120,127,135,143,150,
+    158,166,174,183,191,200,208,217,225,234,
+    243,252,261,270,279,289,298,307,316,325,
+    335,344,353,362,372,381,390,399,408,417,
+    426,435,444,453,462,470,478,486,493,500,
+    506,512};
+    
+  for(int i = step_count_def; i < 1024; i++)
+  {
+    step_fno_table_def[i] = 1024;
+  }
+  piris_attr.step_fno_table_change= TD_TRUE;
+  piris_attr.zero_is_max= TD_TRUE;//TD_FALSE;
+  piris_attr.total_step= total_step_def;
+  piris_attr.step_count= step_count_def;
+  piris_attr.max_iris_fno_target = OT_ISP_IRIS_F_NO_1_4; //9
+  piris_attr.min_iris_fno_target = OT_ISP_IRIS_F_NO_5_6; //5
+  memcpy(piris_attr.step_fno_table, step_fno_table_def, sizeof(piris_attr.step_fno_table));
+  piris_attr.fno_ex_valid = TD_FALSE;
+  piris_attr.max_iris_fno_target_linear = 1;
+  piris_attr.min_iris_fno_target_linear = 1;
+  
+  ret = hi_mpi_isp_set_piris_attr(vi_pipe, &piris_attr);
+  printf("hi_mpi_isp_set_piris_attr ret:%d\n", ret);
+  
+  ot_isp_iris_attr iris_attr;
+  ret = hi_mpi_isp_get_iris_attr(vi_pipe, &iris_attr);
+  iris_attr.enable = enable;
+  iris_attr.op_type = OT_OP_MODE_AUTO;
+  iris_attr.iris_type = OT_ISP_IRIS_TYPE_P;
+  ret = hi_mpi_isp_set_iris_attr(vi_pipe, &iris_attr);
+  printf("hi_mpi_isp_set_iris_attr ret:%d\n", ret);
+  return ret;
+}
+
+
 hi_s32 ot_scene_set_static_ae(hi_vi_pipe vi_pipe, hi_u8 index)
 {
+    hi_s32 ret;
+    
     ot_scenecomm_expr_true_return(index >= HI_SCENE_PIPETYPE_NUM, HI_FAILURE);
     if (get_pipe_params()[index].module_state.static_ae != HI_TRUE) {
         return HI_SUCCESS;
     }
-    hi_s32 ret;
+    
+    td_bool ae_auto_iris = get_pipe_params()[index].static_ae.ae_auto_iris;
+    printf("\n @@@ vi_pipe:%d, ae_auto_iris: %d @@@ \n", vi_pipe, ae_auto_iris);
+    if(ae_auto_iris)
+    {
+      //hi_mpi_isp_set_iris_attr()
+      ret = ae_iris_set(vi_pipe, ae_auto_iris);
+      sleep(1);
+    }
+    
     hi_isp_exposure_attr exposure_attr;
     hi_isp_ae_route_ex ae_route_ex;
 
@@ -78,13 +136,15 @@ hi_s32 ot_scene_set_static_ae(hi_vi_pipe vi_pipe, hi_u8 index)
         ae_route_ex.route_ex_node[i].a_gain = get_pipe_params()[index].static_ae_route_ex.again[i];
         ae_route_ex.route_ex_node[i].d_gain = get_pipe_params()[index].static_ae_route_ex.dgain[i];
         ae_route_ex.route_ex_node[i].isp_d_gain = get_pipe_params()[index].static_ae_route_ex.isp_dgain[i];
+        ae_route_ex.route_ex_node[i].iris_fno = get_pipe_params()[index].static_ae_route_ex.iris_fno[i];
+        
     }
     ret = hi_mpi_isp_set_ae_route_attr_ex(vi_pipe, &ae_route_ex);
     check_scene_ret(ret);
 
     ret = hi_mpi_isp_get_exposure_attr(vi_pipe, &exposure_attr);
     check_scene_ret(ret);
-
+    
     exposure_attr.ae_route_ex_valid = get_pipe_params()[index].static_ae.ae_route_ex_valid;
     exposure_attr.ae_run_interval = get_pipe_params()[index].static_ae.ae_run_interval;
     exposure_attr.auto_attr.sys_gain_range.max = get_pipe_params()[index].static_ae.auto_sys_gain_max;
@@ -93,7 +153,8 @@ hi_s32 ot_scene_set_static_ae(hi_vi_pipe vi_pipe, hi_u8 index)
     exposure_attr.auto_attr.tolerance = get_pipe_params()[index].static_ae.auto_tolerance;
     exposure_attr.auto_attr.ae_delay_attr.black_delay_frame = get_pipe_params()[index].static_ae.auto_black_delay_frame;
     exposure_attr.auto_attr.ae_delay_attr.white_delay_frame = get_pipe_params()[index].static_ae.auto_white_delay_frame;
-
+    
+    printf("ae_route_ex_valid:%d\n", exposure_attr.ae_route_ex_valid);
     ret = hi_mpi_isp_set_exposure_attr(vi_pipe, &exposure_attr);
     check_scene_ret(ret);
 

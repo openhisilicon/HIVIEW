@@ -218,6 +218,7 @@ static hi_s32 scene_load_static_ae(const hi_char *module, ot_scene_static_ae *st
     scene_load_int(module, "static_ae:auto_tolerance", static_ae->auto_tolerance, hi_u8);
     scene_load_int(module, "static_ae:auto_black_delay_frame", static_ae->auto_black_delay_frame, hi_u16);
     scene_load_int(module, "static_ae:auto_white_delay_frame", static_ae->auto_white_delay_frame, hi_u16);
+    scene_load_int(module, "static_ae:ae_auto_iris", static_ae->ae_auto_iris, hi_bool);
 
     return HI_SUCCESS;
 }
@@ -240,6 +241,9 @@ static hi_s32 scene_load_static_ae_route_ex(const hi_char *module, ot_scene_stat
         hi_u32);
 
     scene_load_array(module, "static_aerouteex:isp_dgain", static_ae_route_ex->isp_dgain, static_ae_route_ex->total_num,
+        hi_u32);
+        
+    scene_load_array(module, "static_aerouteex:iris_fno", static_ae_route_ex->iris_fno, static_ae_route_ex->total_num,
         hi_u32);
 
     return HI_SUCCESS;

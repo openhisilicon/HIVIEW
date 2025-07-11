@@ -94,6 +94,7 @@ typedef struct {
   int   second;       // second channel;
   char  type[32];     // cpu type;
   int   aiisp;        // aiisp mode;
+  int   dis;          // dis enable;
 }gsf_mpp_cfg_t;
 
 int gsf_mpp_cfg(char *path, gsf_mpp_cfg_t *cfg);
@@ -386,6 +387,7 @@ enum {
   GSF_MPP_ISP_CTL_FLIP   = 12,// set gsf_mpp_img_flip_t;
   GSF_MPP_ISP_CTL_DIS    = 13,// set gsf_mpp_img_dis_t;
   GSF_MPP_ISP_CTL_LDC    = 14,// set gsf_mpp_img_ldc_t;  
+  GSF_MPP_ISP_CTL_IRIS   = 15,
 };
 int gsf_mpp_isp_ctl(int ViPipe, int id, void *args);
 
@@ -556,7 +558,7 @@ extern hi_isp_sns_obj* sample_comm_isp_get_sns_obj(sample_sns_type sns_type);
   #define HIVIEW_SINGLE_BOARD //for hiview 3516dv500 single board;
 #endif
 
-
+extern int g_dis_enable; 
 
 
 ///////////////////

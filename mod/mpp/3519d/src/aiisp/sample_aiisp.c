@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
  */
 #include <signal.h>
 #include "sample_comm.h"
@@ -249,7 +249,7 @@ hi_s32 sample_aiisp_main(hi_s32 argc, hi_char *argv[])
     }
 
     ret = sample_aiisp_execute_case(index);
-    if (ret == HI_SUCCESS) {
+    if ((ret == HI_SUCCESS) && (sample_aiisp_get_sig() == 0)) {
         sample_print("\033[0;32mprogram exit normally!\033[0;39m\n");
     } else {
         sample_print("\033[0;31mprogram exit abnormally!\033[0;39m\n");

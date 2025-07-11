@@ -179,7 +179,7 @@ int venc_start(int start)
     gsf_mpp_venc_t venc = {
       .VencChn    = i*GSF_CODEC_VENC_NUM+j,
       .srcModId   = HI_ID_VPSS,
-      .VpssGrp    = i,
+      .VpssGrp    = i,      
       .VpssChn    = (p_vpss[i].enable[j])?j:0,
       .enPayLoad  = PT_VENC(codec_ipc.venc[j].type),
       .enSize     = PIC_WIDTH(codec_ipc.venc[j].width, codec_ipc.venc[j].height),
@@ -223,9 +223,10 @@ int venc_start(int start)
     
     if(!start)
       continue;
-    
+      
     if(ret!=0)
       continue;  
+      
     if(codec_ipc.venc[j].type != GSF_ENC_JPEG)
     {
       st.VeChn[st.s32Cnt] = venc.VencChn;
@@ -445,6 +446,61 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
 #endif
 
 
+int scene_start(void)
+{
+  int i = 0;
+  char scene_ini[128] = {0};
+  proc_absolute_path(scene_ini);
+
+  #if defined(GSF_CPU_3519d)
+    sprintf(scene_ini, "%s/../cfg/%s%s.ini", scene_ini, p_cfg->snsname, (p_cfg->aiisp)?"_hnr":"");
+  #endif
+ 
+  if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) <= 0)  //enable img;
+  {
+    #define GET_IMG(ch) \
+      gsf_img_all_t *_img = (ch == 0)?&codec_ipc.img:\
+      (ch == 1)?&codec_ipc.img1:\
+      (ch == 2)?&codec_ipc.img2:&codec_ipc.img3;
+    
+    for(i = 0; i < p_cfg->snscnt; i++)
+    {
+      GET_IMG(i);
+      printf("setimg i:%d, magic:0x%x to isp.\n", i, _img->magic);
+      
+      if(_img->magic == 0x55aa)
+      {
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_CSC, &_img->csc);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_AE, &_img->ae);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_DEHAZE, &_img->dehaze);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_SHARPEN, &_img->sharpen);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_HLC, &_img->hlc);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_GAMMA, &_img->gamma);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_DRC, &_img->drc);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_LDCI, &_img->ldci);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_3DNR, &_img->_3dnr);
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_LDC, &_img->ldc);
+      }
+      else 
+      {
+        _img->magic = 0x55aa;
+        gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_IMG, _img);
+      }
+      
+      printf("setscene i:%d, magic:0x%x to isp.\n", i, codec_ipc.scene[i].magic);
+      if(codec_ipc.scene[i].magic == 0x55aa)
+      {
+        gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_AE, &codec_ipc.scene[i].ae);
+      }
+      else 
+      {
+        codec_ipc.scene[i].magic = 0x55aa;
+        gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
+      }
+    }
+  }
+}
+
 
 int mpp_start(gsf_bsp_def_t *def)
 {
@@ -465,7 +521,7 @@ int mpp_start(gsf_bsp_def_t *def)
     //only used sensor[0];
     strcpy(cfg.snsname, def->board.sensor[0]);
     cfg.snscnt = def->board.snscnt;
-    
+    cfg.dis = codec_ipc.vi.dis;
     avs = codec_ipc.vi.avs;
 
     do{
@@ -473,6 +529,7 @@ int mpp_start(gsf_bsp_def_t *def)
       {
         cfg.second = def->board.second;
         cfg.aiisp = codec_ipc.vi.hnr;
+        warn("codec_ipc.vi.hnr:%d\n", codec_ipc.vi.hnr);
         mpp_ini_3519d(&cfg, &rgn_ini, &venc_ini, vpss);
       }
       #else
@@ -483,7 +540,7 @@ int mpp_start(gsf_bsp_def_t *def)
       //SECOND-UVC
       if(cfg.second == 4)
       {
-        VPSS_BIND_VI(1, -1, 0, 1, 1, 0, SECOND_HIRES(cfg.second), SECOND_LORES(cfg.second));
+        VPSS_BIND_VI(1, -1, 0, (1+0), 1, 0, SECOND_HIRES(cfg.second), SECOND_LORES(cfg.second));
       }
       
     }while(0);
@@ -505,7 +562,7 @@ int mpp_start(gsf_bsp_def_t *def)
     gsf_lens_init(&lens_ini);
 
     // vi start;
-    printf("vi.lowdelay:%d\n", codec_ipc.vi.lowdelay);
+    printf("vi.lowdelay:%d, aiisp:%d\n", codec_ipc.vi.lowdelay, cfg.aiisp);
     gsf_mpp_vi_t vi = {
         .bLowDelay = codec_ipc.vi.lowdelay,//HI_TRUE,//HI_FALSE,
         .u32SupplementConfig = 0,
@@ -518,13 +575,16 @@ int mpp_start(gsf_bsp_def_t *def)
       
     gsf_mpp_vi_start(&vi);
     
-    #if 1
+    #if 1 //maohw
+    #warning "=== Enable lens start() === "
     {
       //ttyAMA2: Single channel baseboard, ttyAMA4: double channel baseboard;
       char uart_name[32] = {0};
 	    sprintf(uart_name, "/dev/%s", codec_ipc.lenscfg.uart);
 	    gsf_lens_start(0, uart_name);
   	}
+  	#else
+    #warning "=== Disable lens start() === "
   	#endif
     
     // vpss start;
@@ -535,57 +595,7 @@ int mpp_start(gsf_bsp_def_t *def)
       }
     }
     
-    // scene start;
-    char scene_ini[128] = {0};
-    proc_absolute_path(scene_ini);
-
-    #if defined(GSF_CPU_3519d)
-      sprintf(scene_ini, "%s/../cfg/%s%s.ini", scene_ini, cfg.snsname, (cfg.aiisp)?"_hnr":"");
-    #endif
-   
-    if(gsf_mpp_scene_start(scene_ini, codec_ipc.vi.wdr) <= 0)  //enable img;
-    {
-      #define GET_IMG(ch) \
-        gsf_img_all_t *_img = (ch == 0)?&codec_ipc.img:\
-        (ch == 1)?&codec_ipc.img1:\
-        (ch == 2)?&codec_ipc.img2:&codec_ipc.img3;
-      
-      for(i = 0; i < p_cfg->snscnt; i++)
-      {
-        GET_IMG(i);
-        printf("setimg i:%d, magic:0x%x to isp.\n", i, _img->magic);
-        
-        if(_img->magic == 0x55aa)
-        {
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_CSC, &_img->csc);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_AE, &_img->ae);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_DEHAZE, &_img->dehaze);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_SHARPEN, &_img->sharpen);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_HLC, &_img->hlc);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_GAMMA, &_img->gamma);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_DRC, &_img->drc);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_LDCI, &_img->ldci);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_3DNR, &_img->_3dnr);
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_LDC, &_img->ldc);
-        }
-        else 
-        {
-          _img->magic = 0x55aa;
-          gsf_mpp_isp_ctl(i, GSF_MPP_ISP_CTL_IMG, _img);
-        }
-        
-        printf("setscene i:%d, magic:0x%x to isp.\n", i, codec_ipc.scene[i].magic);
-        if(codec_ipc.scene[i].magic == 0x55aa)
-        {
-          gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_AE, &codec_ipc.scene[i].ae);
-        }
-        else 
-        {
-          codec_ipc.scene[i].magic = 0x55aa;
-          gsf_mpp_scene_ctl(i, GSF_MPP_SCENE_CTL_ALL, &codec_ipc.scene[i]);
-        }
-      }
-    }
+    scene_start();
     
     //internal-init rgn, venc;
     gsf_rgn_init(&rgn_ini);
@@ -722,7 +732,7 @@ int main_start(gsf_bsp_def_t *bsp_def)
     mpp_start(bsp_def);
 
     venc_start(1);
-
+    
     vo_start();
     
     #if !AIO_TEST // audio test;
@@ -743,10 +753,33 @@ int main_start(gsf_bsp_def_t *bsp_def)
     #endif
     
     //flip&mirror;
-    gsf_mpp_img_flip_t flip;
-    flip.bFlip = codec_ipc.vi.flip;
-    flip.bMirror = codec_ipc.vi.flip;
-    gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
+    if(codec_ipc.vi.flip)
+    {  
+      gsf_mpp_img_flip_t flip;
+      flip.bFlip = codec_ipc.vi.flip;
+      flip.bMirror = codec_ipc.vi.flip;
+      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
+    }
+    //dis;
+    if(codec_ipc.vi.dis)
+    {
+      gsf_mpp_img_dis_t dis;
+      
+      if(codec_ipc.vi.dis == 1)
+      {
+        dis.bEnable = 1;
+        dis.enMode = HI_DIS_MODE_6_DOF_GME;
+        dis.enPdtType = HI_DIS_PDT_TYPE_RECORDER;
+      }
+      else 
+      {
+        dis.bEnable = 1;
+        dis.enMode = HI_DIS_MODE_GYRO;
+        dis.enPdtType = HI_DIS_PDT_TYPE_DV;
+      }
+      printf("GSF_MPP_ISP_CTL_DIS bEnable: %d, enMode: %d, enPdtType: %d\n", dis.bEnable, dis.enMode, dis.enPdtType);
+      gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
+    }
     
     return 0;
 }
@@ -755,7 +788,7 @@ int dzoom_plus = 0;
 
 int main_loop(void)
 {
-    usleep(1*1000);
+    usleep(10*1000);
     
     //6CHN-AHD
     if(p_venc_ini->ch_num >= 6)
@@ -849,17 +882,25 @@ int main_loop(void)
     #if defined(__TEST_DIS__)
     gsf_mpp_img_dis_t dis;
     
+    sleep(10);
+    
     dis.bEnable = 0;
-    dis.enMode = HI_DIS_MODE_6_DOF_GME;
-    dis.enPdtType = 0;
+    //dis.enMode = HI_DIS_MODE_6_DOF_GME;
+    //dis.enPdtType = HI_DIS_PDT_TYPE_RECORDER;
+    dis.enMode = HI_DIS_MODE_GYRO;
+    dis.enPdtType = HI_DIS_PDT_TYPE_DV;
     gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
-    sleep(6);
+    printf("GSF_MPP_ISP_CTL_DIS bEnable: %d, enMode: %d, enPdtType: %d\n", dis.bEnable, dis.enMode, dis.enPdtType);
+    sleep(10);
     
     dis.bEnable = 1;
-    dis.enMode = HI_DIS_MODE_6_DOF_GME;
-    dis.enPdtType = 1;
+    //dis.enMode = HI_DIS_MODE_6_DOF_GME;
+    //dis.enPdtType = HI_DIS_PDT_TYPE_RECORDER;
+    dis.enMode = HI_DIS_MODE_GYRO;
+    dis.enPdtType = HI_DIS_PDT_TYPE_DV;
     gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
-    sleep(6);
+    printf("GSF_MPP_ISP_CTL_DIS bEnable: %d, enMode: %d, enPdtType: %d\n", dis.bEnable, dis.enMode, dis.enPdtType);
+    sleep(20);
     #endif
     
     {

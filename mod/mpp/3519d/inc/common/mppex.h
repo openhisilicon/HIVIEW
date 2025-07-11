@@ -25,6 +25,7 @@
  *  v SONY_IMX327_MIPI_2M_30FPS_12BIT
  *  v SONY_IMX327_2L_MIPI_2M_30FPS_12BIT
  *  v SONY_IMX678_MIPI_8M_30FPS_12BIT
+ *  v SONY_IMX678_MIPI_8M_30FPS_10BIT_WDR2TO1
  */
 
 #include "mpp.h"
@@ -78,4 +79,5 @@ typedef struct
   hi_rect crop;     // {x, y, width, height};
 }mppex_bt656_cfg_t;
 int mppex_comm_bt656_cfg(mppex_bt656_cfg_t *bt656);
+
 #endif //__mppex_h__

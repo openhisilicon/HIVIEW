@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
  */
 
 #include "sample_aidrc.h"
@@ -12,7 +12,7 @@
 
 static hi_vb_pool g_aidrc_out_vb_pool = HI_VB_INVALID_POOL_ID;
 static hi_vb_pool g_aidrc_in_vb_pool = HI_VB_INVALID_POOL_ID;
-static hi_char *g_model_file = "./model/aidrc_model.bin";
+static hi_char g_model_file[256] = {0}; 
 
 static hi_s32 sample_aidrc_set_attr(hi_vi_pipe vi_pipe, sample_aidrc_param *aidrc_param)
 {
@@ -78,6 +78,11 @@ unload_mem:
         sample_print("hi_mpi_aidrc_init error(%#x)\n", ret);
         return ret;
     }
+    
+  	//maohw
+  	strcat(g_model_file, sample_aiisp_dir_name(NULL));
+  	strcat(g_model_file, "/aidrc_model.bin");
+  	printf("%s => model_file:[%s]\n", __func__, g_model_file);
 
     model_info->mode = aidrc_param->mode;
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
  */
 
 #include "sample_aibnr.h"
@@ -19,14 +19,7 @@ typedef struct {
 
 static sample_aibnr_snap_thread_info g_snap_thread_info;
 static hi_vb_pool g_aibnr_vb_pool = HI_VB_INVALID_POOL_ID;
-
-//maohw
 static hi_char g_model_file[256] = {0};
-
-hi_void aibnr_dir_name(const hi_char *dir_name)
-{
-  snprintf_truncated_s(g_model_file, 256, "%s", dir_name);
-}
 
 static hi_s32 sample_aibnr_set_attr(hi_vi_pipe vi_pipe, sample_aibnr_param *aibnr_param)
 {
@@ -59,13 +52,6 @@ static hi_s32 sample_aibnr_load_model(hi_size in_size, hi_aibnr_model *model_inf
     hi_s32 ret;
 
     hi_aiisp_model *model = &model_info->model;
-
-	//maohw
-	strcat(g_model_file, "/aibnr_model_denoise_priority.bin");
-	//strcat(g_model_file, "/aibnr_model_denoise_priority_lite.bin");
-	//strcat(g_model_file, "/aibnr_model_detail_priority.bin");
-	//strcat(g_model_file, "/aibnr_model_detail_priority_lite.bin");
-    printf("%s => model_file:[%s]\n", __func__, g_model_file);
 
     if (model->mem_info.virt_addr == TD_NULL) {
         ret = sample_aiisp_load_mem((hi_aiisp_mem_info *)&(model->mem_info), g_model_file);
@@ -141,6 +127,14 @@ unload_cfg:
         sample_print("hi_mpi_aibnr_init error(%#x)\n", ret);
         return ret;
     }
+    
+  	//maohw
+  	strcat(g_model_file, sample_aiisp_dir_name(NULL));
+  	strcat(g_model_file, "/aibnr_model_denoise_priority.bin");
+  	//strcat(g_model_file, "/aibnr_model_denoise_priority_lite.bin");
+  	//strcat(g_model_file, "/aibnr_model_detail_priority.bin");
+  	//strcat(g_model_file, "/aibnr_model_detail_priority_lite.bin");
+    printf("%s => model_file:[%s]\n", __func__, g_model_file);
 
     ret = sample_aibnr_load(in_size, model_info, model_id, aibnr_param);
     if (ret != HI_SUCCESS) {

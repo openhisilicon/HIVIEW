@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
  */
 
 #include <signal.h>
@@ -44,6 +44,20 @@ static sample_comm_venc_chn_param g_venc_chn_param = {
     .type                 = HI_PT_H265,
     .rc_mode              = SAMPLE_RC_CBR,
 };
+
+
+//maohw
+hi_char* sample_aiisp_dir_name(const hi_char *dir_name)
+{
+  static hi_char model_file_path[256] = {0};
+  
+  if(dir_name)
+  {  
+    snprintf_truncated_s(model_file_path, 256, "%s", dir_name);
+  }
+  return model_file_path;
+}
+
 
 volatile sig_atomic_t g_sig_flag = 0;
 
@@ -102,7 +116,7 @@ hi_s32 sample_aiisp_load_mem(hi_aiisp_mem_info *mem, hi_char *model_file)
 
     /* Get model file size */
     sample_aiisp_check_exps_return((strlen(model_file) > PATH_MAX) || realpath(model_file, path) == HI_NULL);
-    fp = fopen(model_file, "rb");
+    fp = fopen(path, "rb");
     if (sample_aiisp_check_fp(fp, model_file) != HI_SUCCESS) {
         return HI_FAILURE;
     }
@@ -148,9 +162,7 @@ fail_1:
     mem->phys_addr = 0;
     mem->virt_addr = HI_NULL;
 fail_0:
-    if (fp != HI_NULL) {
-        fclose(fp);
-    }
+    (hi_void)fclose(fp);
     return HI_FAILURE;
 }
 
@@ -279,7 +291,7 @@ hi_s32 sample_aiisp_start_venc(hi_venc_chn venc_chn[], hi_u32 venc_chn_len, hi_u
     g_venc_chn_param.venc_size.height       = size->height;
     g_venc_chn_param.size = sample_comm_sys_get_pic_enum(size);
 
-    for (i = 0; i < (hi_s32)chn_num && i < venc_chn_len; i++) {
+    for (i = 0; i < (hi_s32)chn_num && i < (hi_s32)venc_chn_len; i++) {
         ret = sample_comm_venc_start(venc_chn[i], &g_venc_chn_param);
         if (ret != HI_SUCCESS) {
             goto exit;

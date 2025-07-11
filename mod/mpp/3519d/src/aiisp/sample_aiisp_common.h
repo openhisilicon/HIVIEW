@@ -1,5 +1,5 @@
 /*
-  Copyright (c), 2001-2022, Shenshu Tech. Co., Ltd.
+  Copyright (c), 2001-2024, Shenshu Tech. Co., Ltd.
  */
 
 #ifndef SAMPLE_AIISP_COMMON_H
@@ -21,6 +21,9 @@ do { \
         return HI_FAILURE; \
     } \
 } while (0) \
+
+hi_char* sample_aiisp_dir_name(const hi_char *dir_name);
+hi_s32 sample_aiisp_skip_vb(hi_s32 en);
 
 hi_void sample_aiisp_handle_sig(hi_s32 signo);
 hi_void sample_get_char(hi_char *s);

@@ -16,8 +16,12 @@
 #define BIG_STREAM_SIZE PIC_3840X2160
 #define SMALL_STREAM_SIZE PIC_1080P
 
-#define VI_VB_YUV_CNT (6*4) //maohw
-#define VPSS_VB_YUV_CNT (8*2) //maohw
+//#define VI_VB_YUV_CNT (6*4) //maohw
+//#define VPSS_VB_YUV_CNT (8*2) //maohw
+
+#define VI_VB_YUV_CNT (6*2) //maohw
+#define VPSS_VB_YUV_CNT (8*1) //maohw
+
 
 #define ENTER_ASCII 10
 
@@ -310,7 +314,7 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     }
 
     pic_buf_attr.width = size->width;
-    pic_buf_attr.height = size->height + 20; //for ahd;
+    pic_buf_attr.height = size->height + ((SENSOR0_TYPE == MIPI_YUV422_2M_30FPS_8BIT_6CH)?20:0); //for ahd;
     pic_buf_attr.align = HI_DEFAULT_ALIGN;
     pic_buf_attr.bit_width = HI_DATA_BIT_WIDTH_8;
     pic_buf_attr.pixel_format = format;
@@ -335,7 +339,8 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
                     (SENSOR0_TYPE == MIPI_YUV422_2M_30FPS_8BIT_6CH)?(VI_VB_YUV_CNT*2):
                     VI_VB_YUV_CNT;
     int vpss_vb_cnt = (SENSOR0_TYPE == SONY_IMX586_MIPI_48M_5FPS_12BIT)?6:
-                    VPSS_VB_YUV_CNT;
+                      (SENSOR0_TYPE == MIPI_YUV422_2M_30FPS_8BIT_6CH)?(VPSS_VB_YUV_CNT*2):
+                      VPSS_VB_YUV_CNT;
                     
     update_vb_attr(vb_attr, vi_size, HI_PIXEL_FORMAT_YUV_SEMIPLANAR_422, HI_COMPRESS_MODE_NONE, vi_vb_cnt);
 
@@ -351,7 +356,8 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         }
     }
 
-    vb_attr->supplement_config = HI_VB_SUPPLEMENT_JPEG_MASK | HI_VB_SUPPLEMENT_BNR_MOT_MASK;
+    vb_attr->supplement_config = HI_VB_SUPPLEMENT_JPEG_MASK | HI_VB_SUPPLEMENT_BNR_MOT_MASK 
+                                  | HI_VB_SUPPLEMENT_MOTION_DATA_MASK;
 }
 
 /*maohw static*/ hi_void get_default_vpss_chn_attr(hi_size *vi_size, hi_size enc_size[], hi_s32 len,
@@ -374,6 +380,7 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         vpss_chan_attr->output_size[i].height = enc_size[i].height;
         //vpss_chan_attr->compress_mode[i] = (i == 0) ? HI_COMPRESS_MODE_SEG_COMPACT : HI_COMPRESS_MODE_NONE;
         vpss_chan_attr->compress_mode[i] = HI_COMPRESS_MODE_NONE;
+        
         vpss_chan_attr->enable[i] = HI_TRUE;
         vpss_chan_attr->fmu_mode[i] = HI_FMU_MODE_OFF;
 
@@ -418,6 +425,11 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     //vpss_online 
     //ret = sample_comm_vi_set_vi_vpss_mode(HI_VI_ONLINE_VPSS_OFFLINE, HI_VI_AIISP_MODE_DEFAULT);
     
+    if(g_dis_enable) //maohw dis enable 3dnr pos;
+    {
+      hi_mpi_sys_set_3dnr_pos(HI_3DNR_POS_VPSS);
+    }
+    
     if (ret != HI_SUCCESS) {
         sample_print("sample_venc_sys_init failed!\n");
     }
@@ -434,7 +446,26 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         sample_print("sample_comm_vi_start_vi failed: 0x%x\n", ret);
         return ret;
     }
+    
+    if(0) //g_dis_enable maohw gyro dis
+    {
+        hi_vi_pipe vi_pipe = 0;
+        hi_isp_nr_attr isp_nr_attr = {0};
+        
+        sample_print("test gyro dis hi_mpi_isp_set_nr_attr(%d) \n", vi_pipe);
+        ret = hi_mpi_isp_get_nr_attr(vi_pipe, &isp_nr_attr);
+        if (ret != HI_SUCCESS) {
+            sample_print("get nr attr failed.ret:0x%x !\n", ret);
+            return HI_FAILURE;
+        }
 
+        isp_nr_attr.enable = HI_FALSE;
+        ret = hi_mpi_isp_set_nr_attr(vi_pipe, &isp_nr_attr);
+        if (ret != HI_SUCCESS) {
+            sample_print("set nr attr failed.ret:0x%x !\n", ret);
+            return HI_FAILURE;
+        }
+    }
     return HI_SUCCESS;
 }
 
@@ -450,6 +481,14 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     hi_vpss_grp_attr grp_attr = { 0 };
     sample_vpss_chn_attr vpss_chn_attr = {0};
 
+    if(g_dis_enable) //maohw dis enable;
+    {
+      hi_vpss_grp_cfg grp_cfg;
+      hi_mpi_vpss_get_grp_cfg(vpss_grp, &grp_cfg);
+      grp_cfg.is_dis_gyro_support = HI_TRUE;
+      hi_mpi_vpss_set_grp_cfg(vpss_grp, &grp_cfg);
+    }
+    
     grp_attr.max_width = vpss_chan_cfg->max_size.width;
     grp_attr.max_height = vpss_chan_cfg->max_size.height;
     grp_attr.dei_mode = HI_VPSS_DEI_MODE_OFF;
@@ -483,16 +522,23 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     if (ret != HI_SUCCESS) {
         sample_print("failed with %#x!\n", ret);
     }
-#if 0
+    
+  if(g_dis_enable) //maohw dis enable;
+  {
+
+    
+    hi_size vi_size;
     hi_gdc_param gdc_param = {0};
-    gdc_param.in_size.width  = 0;
-    gdc_param.in_size.height = 0;
+    
+    sample_comm_vi_get_size_by_sns_type(SENSOR0_TYPE, &vi_size);
+    gdc_param.in_size.width  = vi_size.width;
+    gdc_param.in_size.height = vi_size.height;
     gdc_param.cell_size = HI_LUT_CELL_SIZE_16;
     if (hi_mpi_vpss_set_grp_gdc_param(vpss_grp, &gdc_param) != HI_SUCCESS) 
     {
       printf("@@@@@@@@@@ hi_mpi_vpss_set_grp_gdc_param err, vpss_grp:%d\n", vpss_grp);
     }
-#endif
+  }
     return ret;
 }
 

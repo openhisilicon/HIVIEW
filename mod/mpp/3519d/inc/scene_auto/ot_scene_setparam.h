@@ -369,6 +369,7 @@ typedef struct {
     hi_u16 auto_black_delay_frame;
     hi_u16 auto_white_delay_frame;
     hi_u32 auto_exp_time_max;
+    hi_bool ae_auto_iris;
 } ot_scene_static_ae;
 
 typedef struct {
@@ -383,6 +384,7 @@ typedef struct {
     hi_u32 again[HI_ISP_AE_ROUTE_MAX_NODES];
     hi_u32 dgain[HI_ISP_AE_ROUTE_MAX_NODES];
     hi_u32 isp_dgain[HI_ISP_AE_ROUTE_MAX_NODES];
+    hi_u32 iris_fno[HI_ISP_AE_ROUTE_MAX_NODES];
 } ot_scene_static_ae_route_ex;
 
 typedef struct {

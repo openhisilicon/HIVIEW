@@ -650,7 +650,7 @@ static hi_u32 sample_comm_vi_get_pipe_num_by_sns_type(sample_sns_type sns_type)
     }
 }
 
-static hi_wdr_mode sample_comm_vi_get_wdr_mode_by_sns_type(sample_sns_type sns_type)
+/*maohw static*/ hi_wdr_mode sample_comm_vi_get_wdr_mode_by_sns_type(sample_sns_type sns_type)
 {
     switch (sns_type) {
         case OV_OS08A20_MIPI_8M_30FPS_12BIT:
