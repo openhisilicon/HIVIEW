@@ -36,7 +36,10 @@ int mppex_hook_vpss_bb(gsf_mpp_vpss_t *vpss);
 int mppex_hook_vpss_ee(gsf_mpp_vpss_t *vpss);
 int mppex_hook_venc_bb(gsf_mpp_venc_t *venc);
 int mppex_hook_venc_ee(gsf_mpp_venc_t *venc);
-int mppex_hook_vo(VO_INTF_SYNC_E sync);
+int mppex_hook_vo_bb(VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync);
+int mppex_hook_vo_ee(VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync);
+int mppex_hook_vodev_bb(VO_DEV VoDev, VO_PUB_ATTR_S *pstPubAttr);
+int mppex_hook_vodev_ee(VO_DEV VoDev, VO_PUB_ATTR_S *pstPubAttr);
 int mppex_hook_destroy();
 
 int mppex_uvc_get(int idx, VIDEO_FRAME_INFO_S *pstFrameInfo, int s32MilliSec);

@@ -70,7 +70,7 @@ static void* vdec_task(void *param)
   	  ret = gsf_mpp_vo_vsend(VOLAYER_HD0, 1, 0, frame_buf, &attr);
   	  printf("vsend ret:%d, video size:%d, pts:%llu\n", ret, attr.size, attr.pts);
   	  
-  	  usleep(30*1000);  //info.v.fps;
+  	  usleep(20*1000);  //info.v.fps;
     }
   }
   return NULL;

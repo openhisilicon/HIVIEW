@@ -46,7 +46,7 @@ static int req_recv(char *in, int isize, char *out, int *osize, int err)
 static int osd_recv(char *msg, int size, int err)
 {
   gsf_osd_act_t *act = ( gsf_osd_act_t *)msg;
-  gsf_rgn_canvas(0, 7, act);
+  gsf_rgn_canvas(0, APP_GUI_OSD_IDX, act);
   return 0;
 }
 
@@ -266,13 +266,12 @@ int main(int argc, char *argv[])
                       , NM_REP_MAX_WORKERS
                       , NM_REP_OSIZE_MAX
                       , req_recv);
-                      
+
     void* osd_pull = nm_pull_listen(GSF_IPC_OSD, osd_recv);
     
     void* sub = nm_sub_conn(GSF_PUB_SVP, sub_recv);
     printf("nm_sub_conn sub:%p\n", sub);
 
-    
     while(1)
     {
       main_loop();

@@ -487,6 +487,13 @@ void mpp_ini_3516d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       venc_ini->ch_num = 1; venc_ini->st_num = 1;
       VPSS_BIND_VI(0, 0, 0, 0, 1, 0, PIC_400P, PIC_400P);
     }
+    else if(strstr(cfg->snsname, "bt656"))
+    {
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 0; cfg->fps = 60;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_D1_PAL, PIC_CIF);
+    }
     else if(strstr(cfg->snsname, "yuv422"))
     {
       if(codec_ipc.vi.res == 8)
@@ -765,14 +772,41 @@ int vo_start()
     }
     
     // start vo;
-    //int mipi_800x1280 = (access("/app/mipi", 0)!= -1)?1:0;
-    //---- 800x640 -----//
-    //---- 800x640 -----//
-    int mipi_800x1280 = codec_ipc.vo.intf;
-    if(mipi_800x1280)
+    if(codec_ipc.vo.intf == 2 || codec_ipc.vo.intf == 3)
     {
+      if(codec_ipc.vo.intf == 2)
+      {
+  	    //PAL
+        gsf_mpp_vo_start(VODEV_HD0, VO_INTF_BT656, VO_OUTPUT_PAL, 0);
+        gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_PAL, 0);
+      }
+      else
+      {
+  	    //USER
+        gsf_mpp_vo_start(VODEV_HD0, VO_INTF_BT656, VO_OUTPUT_USER, 0);
+        gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
+      }
+      
+      //only win1 for bt656 input;
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      vo_ly_set(VO_LAYOUT_1MUX);
+      
+      gsf_mpp_vo_src_t src0 = {0, 0};
+      gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+      
+      vo_res_set(720, 576);
+    }  
+    else if(codec_ipc.vo.intf == 1)
+    {
+      //-- mipi_800x1280 --//
+      //---- 800x640 -----//
+      //---- 800x640 -----//
+    
       gsf_mpp_vo_start(VODEV_HD0, VO_INTF_MIPI, VO_OUTPUT_USER, 0);
       gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
+      
+      
+      #if 0 //Top-down layout win0 and win1;
       
       gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_2MUX, NULL);
       vo_ly_set(VO_LAYOUT_2MUX);
@@ -785,6 +819,15 @@ int vo_start()
       //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 0, ROTATION_90);
       //HI_MPI_VO_SetChnRotation(VOLAYER_HD0, 1, ROTATION_90);
       vo_res_set(800, 1280);
+      
+      #else //Rotation only win0;
+
+      gsf_mpp_vo_layout(VOLAYER_HD0, VO_LAYOUT_1MUX, NULL);
+      gsf_mpp_vo_src_t src0 = {0, 0};
+      gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
+      HI_MPI_VO_SetChnRotation(0, 0, ROTATION_90);
+      #endif
+      
     }
     else
     {
@@ -848,8 +891,8 @@ int vo_start()
     }
     return 0;
 }
-//test bt1120 user_pic;
-//#define __USER_PIC__ 
+
+//#define __USER_PIC__ //test bt1120 user_pic;
 
 int main_start(gsf_bsp_def_t *bsp_def)
 {
@@ -892,6 +935,7 @@ int main_start(gsf_bsp_def_t *bsp_def)
     }
     
     extern int vdec_start();
+
     if(vdec_start() < 0)
     {
       gsf_mpp_ao_bind(SAMPLE_AUDIO_INNER_AO_DEV, 0, SAMPLE_AUDIO_INNER_AI_DEV, 0);
@@ -903,7 +947,7 @@ int main_start(gsf_bsp_def_t *bsp_def)
     flip.bFlip = codec_ipc.vi.flip;
     flip.bMirror = codec_ipc.vi.flip;
     gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_FLIP, &flip);
-    
+
     return 0;
 }
 
@@ -1045,6 +1089,7 @@ int main_loop(void)
     gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_DIS, &dis);
     sleep(6);
     #endif
+    
     
     if(1) //dzoom;
     {

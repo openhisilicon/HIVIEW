@@ -23,6 +23,7 @@ extern "C" {
 
 #include "sample_comm.h"
 #include "hi_mipi_tx.h"
+#include "mppex.h"
 
 #define SAMPLE_VO_DEF_VALUE (-1)
 #define SAMPLE_VO_USE_DEFAULT_MIPI_TX 1
@@ -30,6 +31,12 @@ extern "C" {
 /*******************************
 * GLOBAL vars for mipi_tx
 *******************************/
+
+static VO_INTF_TYPE_E gIntfTyp = VO_INTF_HDMI;
+HI_S32 SAMPLE_COMM_VO_IntfTypSet(VO_INTF_TYPE_E type)
+{
+  return gIntfTyp = type;
+}
 
 combo_dev_cfg_t MIPI_TX_720X576_50_CONFIG =
 {
@@ -409,9 +416,18 @@ HI_S32 SAMPLE_COMM_VO_GetWH(VO_INTF_SYNC_E enIntfSync, HI_U32* pu32W, HI_U32* pu
             *pu32Frm = 30;
             break;
         case VO_OUTPUT_USER    : //maohw
-            *pu32W = 800;//720;
-            *pu32H = 1280;//576;
-            *pu32Frm = 60;//25;
+            if(gIntfTyp == VO_INTF_MIPI)
+            {
+              *pu32W = 800;//720;
+              *pu32H = 1280;//576;
+              *pu32Frm = 60;//25;
+            }
+            else
+            {
+              *pu32W = 720;
+              *pu32H = 576;
+              *pu32Frm = 25;
+            }
             break;
         default:
             SAMPLE_PRT("vo enIntfSync %d not support!\n", enIntfSync);
@@ -426,6 +442,8 @@ HI_S32 SAMPLE_COMM_VO_StartDev(VO_DEV VoDev, VO_PUB_ATTR_S* pstPubAttr)
 {
     HI_S32 s32Ret = HI_SUCCESS;
 
+    mppex_hook_vodev_bb(VoDev, pstPubAttr);
+
     s32Ret = HI_MPI_VO_SetPubAttr(VoDev, pstPubAttr);
     if (s32Ret != HI_SUCCESS)
     {
@@ -433,35 +451,7 @@ HI_S32 SAMPLE_COMM_VO_StartDev(VO_DEV VoDev, VO_PUB_ATTR_S* pstPubAttr)
         return HI_FAILURE;
     }
     
-    //maohw
-    if(pstPubAttr->enIntfSync == VO_OUTPUT_USER)
-    {
-      /* Fill user sync info */
-      VO_USER_INTFSYNC_INFO_S stUserInfo = {0};
-
-      /* USER SET Div INFOMATION */
-      //stUserInfo.bClkReverse = HI_TRUE;
-      /* USER SET INTFSYNC ATTR */
-      stUserInfo.stUserIntfSyncAttr.enClkSource = VO_CLK_SOURCE_PLL;
-
-      stUserInfo.u32PreDiv = 1;
-      stUserInfo.u32DevDiv = 1;
-      stUserInfo.stUserIntfSyncAttr.stUserSyncPll.u32Fbdiv = 67;
-      stUserInfo.stUserIntfSyncAttr.stUserSyncPll.u32Frac =   13534515;
-      stUserInfo.stUserIntfSyncAttr.stUserSyncPll.u32Refdiv = 2;
-      stUserInfo.stUserIntfSyncAttr.stUserSyncPll.u32Postdiv1 = 4;
-      stUserInfo.stUserIntfSyncAttr.stUserSyncPll.u32Postdiv2 = 3;
-   
-      /* Set user interface sync info */
-      s32Ret = HI_MPI_VO_SetUserIntfSyncInfo(VoDev, &stUserInfo);
-      if (s32Ret != HI_SUCCESS)
-      {
-        printf("Set user interface sync info failed with %x.\n",s32Ret);
-        return HI_FAILURE;
-      }
-     
-      s32Ret = HI_MPI_VO_SetDevFrameRate(VoDev, 60);
-    }
+    mppex_hook_vodev_ee(VoDev, pstPubAttr);
 
     s32Ret = HI_MPI_VO_Enable(VoDev);
     if (s32Ret != HI_SUCCESS)
@@ -4151,7 +4141,7 @@ static int __SAMPLE_PRIVATE_VO_InitScreen800x1280(HI_S32 fd)
   DSI_Single(fd,0x70,0x10);	//DC0,DC1
   DSI_Single(fd,0x71,0x13);	//DC2,DC3
   DSI_Single(fd,0x72,0x06);	//DC7
-  DSI_Single(fd,0x80,0x03);	//0x03:4-Lane£»0x02:3-Lane
+  DSI_Single(fd,0x80,0x03);	//0x03:4-Lane, 0x02:3-Lane
   //--- Page4  ----//
   DSI_Single(fd,0xE0,0x04);
   DSI_Single(fd,0x2D,0x03);

@@ -19,6 +19,7 @@ enum {
   LENS_TYPE_SONY,  // 1: sony-zoom
   LENS_TYPE_GPIO,  // 2: computar
   LENS_TYPE_HIVIEW,// 3: hiview-zoom
+  LENS_TYPE_HIVIEW_ELEC,// 4: hiview-elec-lens
 }; static int _lens_type = LENS_TYPE_UART;
 
 enum {
@@ -32,13 +33,14 @@ enum {
   IRCUT_CTL_LEVEL, // 1: [0_0 -> 1_1]
 }; static int _ircut_ctl  = IRCUT_CTL_EDGE;
 
+
 static gsf_lens_ini_t _ini;
-static pthread_t serial_tid;
-static int serial_fd = -1;
+static pthread_t serial_tid, af_tid;
+static int serial_fd = -1, last_cmd = GSF_LENS_STOP;
 static int _zoomValue = 0, _cdsValue = 0, _dayNight = 0; // 0: day,  1: night;
 static void* serial_task(void *parm);
-static int pelco_d_write(char *cmd, int size);
-static int af_zoom_value(int z);
+static int pelco_d_write(int cmd);
+static int ptz_zoom_value(int z);
 static int ptz_led_set(int stat);
 static int zoom2led(int z);
 
@@ -60,6 +62,57 @@ int flash_is_emmc()
   return ret;
 }
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+static int af_sock = -1;
+static int af_ctl(char *buf, int size)
+{
+  int ret = 0;
+  struct sockaddr_in to_addr;
+  memset(&to_addr, 0, sizeof(struct sockaddr_in));
+  to_addr.sin_family = AF_INET;
+  to_addr.sin_port = htons(3000);
+  to_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  
+  if(af_sock < 0)
+  {
+    af_sock = socket(PF_INET, SOCK_DGRAM, 0);
+    
+    struct timeval tv;
+  	tv.tv_sec  = 3;
+  	tv.tv_usec = 0;
+  	setsockopt(af_sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    setsockopt(af_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  }
+  
+  ret = sendto(af_sock, buf, size, 0, (struct sockaddr*)&to_addr, sizeof(to_addr));
+  printf("sendto ret:%d\n", ret);
+  return ret;
+}
+static void* af_task(void *parm)
+{
+  unsigned char recvbuf[7];
+  while (1) 
+  {
+    if(af_sock > 0)
+    {  
+      int ret = recvfrom(af_sock, recvbuf, sizeof(recvbuf), 0, NULL, NULL);
+      if(ret <= 0)
+      {
+        usleep(10*1000);
+      }
+      
+      //zoom_value;
+      if(recvbuf[0] == 0xAF && recvbuf[1] == 0x10 && recvbuf[2] == 0x0A)
+      {
+        ptz_zoom_value(recvbuf[3]);
+      }
+    }
+  }
+  return NULL;
+}
+
+
 int lens16x_lens_init(gsf_lens_ini_t *ini)
 {
   _ini = *ini;
@@ -67,8 +120,9 @@ int lens16x_lens_init(gsf_lens_ini_t *ini)
   _flash_emmc  = flash_is_emmc();
   _lens_type   = codec_ipc.lenscfg.lens;
   _ircut_type  = codec_ipc.lenscfg.ircut;
+  #if 1 //maohw
   _ircut_ctl   = (strstr(_ini.sns, "imx585") || strstr(_ini.sns, "imx482"))?IRCUT_CTL_LEVEL:IRCUT_CTL_EDGE;
-  
+  #endif
   printf("_sensor_flag:%d, _flash_emmc:%d, _lens_type:%d, _ircut_type:%d\n", _sensor_flag, _flash_emmc, _lens_type, _ircut_type);
     
   if(!_sensor_flag)
@@ -353,18 +407,6 @@ int lens16x_lens_start(int ch, char *ttyAMA)
 {
   if(_lens_type == LENS_TYPE_HIVIEW)
   {
-    af_ptz_fv_t fvcb = {
-      .get_vd = af_get_vd,
-      .get_value = af_get_value,
-    };
-    
-    af_ptz_cb_t ptzcb = {
-      .uart_write = pelco_d_write,
-      .zoom_value = af_zoom_value,
-    };
-    
-    af_ptz_init(&fvcb, &ptzcb);
-    //ptz;
     gsf_uart_open(ttyAMA, 115200);
   }  
   else if(_lens_type == LENS_TYPE_GPIO)
@@ -407,16 +449,21 @@ int lens16x_lens_start(int ch, char *ttyAMA)
     gsf_mpp_isp_ctl(0, GSF_MPP_ISP_CTL_IR, &ir);
   }
   
-  gsf_mpp_af_t af = {
-      .uargs = (void*)ch,
-      .cb = (_lens_type == LENS_TYPE_HIVIEW)?NULL:af_cb,
-  };
-  
-  if(ch < 0)
+  //if(0)
+  if(ch < 0 || _lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
+    printf("LENS_TYPE_HIVIEW DISABLE gsf_mpp_af_start()\n");
+    return pthread_create(&af_tid, NULL, af_task, (void*)NULL);
   	return 0;
   }
   
+  gsf_mpp_af_t af = {
+      .uargs = (void*)ch,
+      .cb = af_cb,
+  };
+  
+
+  printf("%s => gsf_mpp_af_start(%d)\n", __func__, ch);
   return gsf_mpp_af_start(&af);
 }
 
@@ -427,10 +474,14 @@ int lens16x_lens_stop(int ch)
   
   dzoom_plus = 0;
   
-  if(_lens_type == LENS_TYPE_HIVIEW)
+  if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
-    unsigned char buf[1] = {AF_PTZ_CMD_ZOOM_STOP};
-    af_ptz_ctl(buf, 1);
+    unsigned char zm_stop[]  = {0xAF, 0x10, 0x0A, 0x00};
+    unsigned char foc_stop[] = {0xAF, 0x10, 0x05, 0x00, 0x00};
+    unsigned char *buf = (last_cmd == GSF_LENS_FOCUS)?foc_stop:zm_stop;
+    af_ctl(buf, (last_cmd == GSF_LENS_FOCUS)?sizeof(foc_stop):sizeof(zm_stop));
+    printf("LENS_TYPE_HIVIEW  stop %s\n", (buf==foc_stop)?"FOCUS":"ZOOM");
+    last_cmd = GSF_LENS_STOP;
   }
   else if(_lens_type == LENS_TYPE_GPIO)
   {
@@ -456,17 +507,22 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
 {
   int ret = 0;
   
+  #if 0 //maohw
   if(strstr(_ini.sns, "imx585") || strstr(_ini.sns, "imx482"))
   {
     dzoom_plus = (dir)?1:-1;
     return 0;
   }
+  #endif
   
-  if(_lens_type == LENS_TYPE_HIVIEW)
+  if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
-    unsigned char buf[1];
-    buf[0] = (dir)?AF_PTZ_CMD_ZOOM_WIDE:AF_PTZ_CMD_ZOOM_TELE;
-    af_ptz_ctl(buf, 1);
+    unsigned char add[] = {0xAF, 0x10, 0x0A, 0x01};
+    unsigned char sub[] = {0xAF, 0x10, 0x0A, 0x02};
+    unsigned char *buf = (dir)?add:sub;
+    af_ctl(buf, sizeof(add));
+    last_cmd = GSF_LENS_ZOOM;
+    printf("LENS_TYPE_HIVIEW  start %s\n","ZOOM");
   }  
   else if(_lens_type == LENS_TYPE_GPIO)
   {
@@ -500,9 +556,21 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
 int lens16x_lens_focus(int ch, int dir, int speed)
 {
   int ret = 0;
-  if(_lens_type == LENS_TYPE_HIVIEW)
+  if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
-    ;
+    unsigned char add[] = {0xAF, 0x10, 0x05, 0x00, 0x4};
+    unsigned char sub[] = {0xAF, 0x10, 0x05, 0x01, 0x4};
+    
+    if(_lens_type == LENS_TYPE_HIVIEW_ELEC)
+    {
+      add[4] *= 16;
+      sub[4] *= 16;
+    }
+    
+    unsigned char *buf = (dir)?add:sub;
+    af_ctl(buf, sizeof(add));
+    last_cmd = GSF_LENS_FOCUS;
+    printf("LENS_TYPE_HIVIEW  start %s\n","FOCUS");
   }  
   else if(_lens_type == LENS_TYPE_GPIO)
   {
@@ -536,10 +604,10 @@ int lens16x_lens_focus(int ch, int dir, int speed)
 int lens16x_lens_cal(int ch)
 {
 	// lens calibration
-  if(_lens_type == LENS_TYPE_HIVIEW)
+  if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
-    unsigned char buf[1] = {AF_PTZ_CMD_LENS_CORRECT};
-    af_ptz_ctl(buf, 1);
+    unsigned char buf[] = {0xAF, 0x10, 0x04};
+    af_ctl(buf, sizeof(buf));
   }  
   else
   {
@@ -909,7 +977,7 @@ HEAD:
 
 static void* serial_task(void *parm)
 {
-  if(_lens_type == LENS_TYPE_HIVIEW)
+  if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
     return serial_task_ptz(parm);
   }
@@ -922,32 +990,19 @@ static void* serial_task(void *parm)
 
 int lens16x_lens_ptz(int ch, gsf_lens_t *lens)
 {
-  if(_lens_type != 3)
+  if(_lens_type != LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
     return 0;
     
-  unsigned char buf[4] = {0};
-  printf("cmd:%d\n", lens->cmd);
-  switch(lens->cmd)
-  { 
-    case GSF_PTZ_STOP:
-    {
-      buf[0] = AF_PTZ_CMD_STOP;
-      buf[1] = lens->cmd;
-      af_ptz_ctl(buf, 2);
-    }  
-    break;
-    case GSF_PTZ_UP:
-    case GSF_PTZ_DOWN:
-    case GSF_PTZ_LEFT:
-    case GSF_PTZ_RIGHT:
-    {
-      buf[0] = AF_PTZ_CMD_MOVE;
-      buf[1] = lens->cmd;
-      buf[2] = lens->arg1;
-      buf[3] = lens->arg2;
-      af_ptz_ctl(buf, 4);
-    }
-    break;
+  pelco_d_write(lens->cmd);
+
+  if(GSF_PTZ_STOP == lens->cmd)
+  {
+    usleep(10*1000);
+    
+    unsigned char zm_stop[]  = {0xAF, 0x01, 0x04, 0x00};
+    af_ctl(zm_stop, sizeof(zm_stop));
+    printf("LENS_TYPE_HIVIEW  stop %s\n", "PTZ");
+    last_cmd = GSF_LENS_STOP;
   }
   return 0;
 }
@@ -967,7 +1022,7 @@ static int zoom2led(int z)
 }
 
 
-static int af_zoom_value(int z)
+static int ptz_zoom_value(int z)
 {
   //printf("z: %d\n", z);
   _zoomValue = z;
@@ -979,10 +1034,9 @@ static int af_zoom_value(int z)
 }
 
 
-static int pelco_d_write(char *cmd, int size)
+static int pelco_d_write(int cmd)
 {
-  printf("cmd[%d], size:%d\n", cmd[0], size);
-  switch(cmd[0])
+  switch(cmd)
   {
     case GSF_PTZ_STOP:
     {

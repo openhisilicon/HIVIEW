@@ -112,6 +112,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = {
     {MIPI_YUVPKG_2M_60FPS_8BIT,                   "pkg422-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_2M_60FPS_8BIT,                    "bt1120-0-0-2-60", NULL,                NULL},
     {BT1120_YUV_1M_60FPS_8BIT,                    "bt1120-0-0-1-60", NULL,                NULL},
+    {BT656_YUV_0M_60FPS_8BIT,                     "bt656-0-0-0-60",  NULL,                NULL},
     {SONY_IMX385_MIPI_2M_30FPS_12BIT,           "imx385-0-0-2-30", "libsns_imx385.so", "stSnsImx385Obj"},
     {SONY_IMX482_MIPI_2M_30FPS_12BIT,           "imx482-0-0-2-30", "libsns_imx482.so", "stSnsImx482Obj"},
     {OV426_OV6946_DC_0M_30FPS_12BIT,            "ov426-0-0-0-30", "libsns_ov426.so", "stSnsOv426Obj"},
@@ -186,17 +187,23 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   char loadstr[256];
   if(strstr(cfg->snsname, "bt1120") || strstr(cfg->snsname, "ov426"))
     sprintf(loadstr, "%s/ko/load3516dv300 -i -yuv0 1", path); 
+  else if(strstr(cfg->snsname, "bt656"))
+    sprintf(loadstr, "%s/ko/load3516dv300 -i -yuv0 2", path); 
   else if(strstr(cfg->snsname, "imx385") || strstr(cfg->snsname, "imx482") || strstr(cfg->snsname, "imx585")) // 37.125Mclk && i2c;
     sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, "imx327");
   else
     sprintf(loadstr, "%s/ko/load3516dv300 -i -sensor0 %s", path, cfg->snsname);
 
+  //append sensor;
   for(i = 1; i < snscnt; i++)
   {
     sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
   }
   
-  if(cfg->second && cfg->snscnt == 1 && !strstr(cfg->snsname, "bt1120"))
+  //append second bt656;
+  if(cfg->second && cfg->snscnt == 1 
+    && !strstr(cfg->snsname, "bt1120")
+    && !strstr(cfg->snsname, "bt656"))
   {
     sprintf(loadstr, "%s -yuv0 2", loadstr);
   }
@@ -206,6 +213,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   
   SENSOR_TYPE = SENSOR0_TYPE = SENSOR1_TYPE = sns->type;
   
+  //parse second bt656 resolution;
   if(cfg->second && cfg->snscnt == 1)
   {
     SENSOR1_TYPE = (cfg->second == SECOND_BT656_PAL)?BT656_YUV_0M_60FPS_8BIT: //PAL
@@ -1711,6 +1719,8 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     PIC_SIZE_E enDispPicSize = PIC_1080P;
     SAMPLE_VO_CONFIG_S stVoConfig;
     
+    SAMPLE_COMM_VO_IntfTypSet(type);
+    
     HI_U32 u32VoFrmRate = 0;
     s32Ret = SAMPLE_COMM_VO_GetWH(sync, &stDispSize.u32Width,
                               &stDispSize.u32Height, &u32VoFrmRate);
@@ -1719,6 +1729,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
         SAMPLE_PRT("get vo width and height failed with %d!\n", s32Ret);
         return s32Ret;
     }
+    
     /************************************************
     step5:  start VO
     *************************************************/
@@ -1739,6 +1750,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.stImageSize.u32Height = stDispSize.u32Height;
     stVoConfig.enVoPartMode          = VO_PART_MODE_SINGLE;//VO_PART_MODE_MULTI;
 
+    mppex_hook_vo_bb(type, sync);
     
     s32Ret = SAMPLE_COMM_VO_StartVO(&stVoConfig);
     if(s32Ret != HI_SUCCESS)
@@ -1770,7 +1782,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
 
     SAMPLE_VDEC_INIT((sync==VO_OUTPUT_1080P60)?4:1);
 
-    mppex_hook_vo(sync);
+    mppex_hook_vo_ee(type, sync);
     
     return s32Ret;
 }
@@ -2104,14 +2116,15 @@ int gsf_mpp_vo_vsend(int volayer, int ch, int flag, char *data, gsf_mpp_frm_attr
   
   // send vdec;
   VDEC_STREAM_S stStream = {0};
-  stStream.u64PTS  = attr->pts;//0;
+  stStream.u64PTS  = attr->pts;// = 0;
   stStream.pu8Addr = data;
   stStream.u32Len  = attr->size;
   stStream.bEndOfFrame  = HI_TRUE;
   stStream.bEndOfStream = HI_FALSE;
   stStream.bDisplay = 1;
-  s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, 0);
-  //printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x\n", ch, s32Ret);
+  s32Ret = HI_MPI_VDEC_SendStream(ch, &stStream, flag);
+  if(s32Ret < 0)
+    printf("HI_MPI_VDEC_SendStream ch:%d, ret:0x%x, u64PTS:%llu\n", ch, s32Ret, stStream.u64PTS);
   return err;
 }
 
@@ -2123,6 +2136,7 @@ int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t
     _audio_init = 1;
     extern HI_S32 sample_audio_init();
     sample_audio_init();
+    printf("sample_audio_init\n");
   }
   
   HI_S32 s32Ret = 0;
@@ -2135,10 +2149,12 @@ int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t
     //reset;
     _attr = *attr;
     SAMPLE_AUDIO_AdecAo(attr);
+    printf("SAMPLE_AUDIO_AdecAo\n");
   }
   
   if(attr->size == 0)
   {
+    printf("HI_MPI_ADEC_SendEndOfStream\n");
     return HI_MPI_ADEC_SendEndOfStream(adch, HI_FALSE);
   }
   
@@ -2152,8 +2168,7 @@ int gsf_mpp_ao_asend(int aodev, int ch, int flag, char *data, gsf_mpp_frm_attr_t
   s32Ret = HI_MPI_ADEC_SendStream(adch, &stAudioStream, flag);
   if (HI_SUCCESS != s32Ret)
   {
-    printf("%s: HI_MPI_ADEC_SendStream(%d) failed \n", \
-           __FUNCTION__, adch, stAudioStream.u32Len);
+    printf("HI_MPI_ADEC_SendStream(adch:%d, flag:%d, u32Len:%d) failed s32Ret:0x%x\n", adch, flag, stAudioStream.u32Len, s32Ret);
   }
   else
   {
@@ -2222,6 +2237,23 @@ __err:
   }
   return -1;
 }
+
+
+//获取解码显示状态
+int gsf_mpp_vo_stat(int volayer, int ch, gsf_mpp_vo_stat_t *stat)
+{
+  int err = 0;
+  //HI_S32 HI_MPI_VO_QueryChnStat(VO_LAYER VoLayer, VO_CHN VoChn, VO_QUERY_STATUS_S *pstStatus);
+  return err;
+}
+//设置解码显示FPS
+int gsf_mpp_vo_setfps(int volayer, int ch, int fps)
+{
+  int err = 0;
+  // HI_S32 HI_MPI_VO_SetChnFrameRate(VO_LAYER VoLayer, VO_CHN VoChn, HI_S32 s32ChnFrmRate);
+  return err;
+}
+
 
 
 //清除解码显示BUFF

@@ -5,6 +5,9 @@
 #include "fw/libfont/inc/gsf_font_draw.h"
 #include "fw/libfont/inc/gsf_character_conv.h"
 
+//IDX 0~7, User-defined IDX function
+#define APP_GUI_OSD_IDX 7 
+
 
 #if defined(GSF_CPU_3519d)  || defined(GSF_CPU_3516c)
 #define FG_ALPHA_MAX 255
