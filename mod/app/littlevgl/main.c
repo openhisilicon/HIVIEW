@@ -284,18 +284,24 @@ static void zoom_hid_cb(struct input_event* in)
    {
     case 103:
       {
-        int ev = (in->value)?LV_EVENT_PRESSED:LV_EVENT_RELEASED;
-        //printf("%s => btn_zoomplus ev:%s\n", __func__, (ev==LV_EVENT_PRESSED)?"LV_EVENT_PRESSED":"LV_EVENT_RELEASED");
-        lv_btn_set_state(btn_zoomplus, (ev==LV_EVENT_PRESSED)?LV_BTN_STYLE_PR:LV_BTN_STYLE_REL);
-        lv_event_send(btn_zoomplus, ev, NULL);
+        int ev = (in->value == 1)?LV_EVENT_PRESSED:(in->value == 0)?LV_EVENT_RELEASED:LV_EVENT_PRESSING;
+        if(ev == LV_EVENT_PRESSED || ev == LV_EVENT_RELEASED)
+        { 
+          //printf("%s => value:%d, btn_zoomplus ev:%s\n", __func__, in->value, (ev==LV_EVENT_PRESSED)?"LV_EVENT_PRESSED":"LV_EVENT_RELEASED");
+          lv_btn_set_state(btn_zoomplus, (ev==LV_EVENT_PRESSED)?LV_BTN_STYLE_PR:LV_BTN_STYLE_REL);
+          lv_event_send(btn_zoomplus, ev, NULL);
+        }
       }
       break;
     case 108:
       {
-        int ev = (in->value)?LV_EVENT_PRESSED:LV_EVENT_RELEASED;
-        //printf("%s => btn_zoomminus ev:%s\n", __func__, (ev==LV_EVENT_PRESSED)?"LV_EVENT_PRESSED":"LV_EVENT_RELEASED");
-        lv_btn_set_state(btn_zoomminus, (ev==LV_EVENT_PRESSED)?LV_BTN_STYLE_PR:LV_BTN_STYLE_REL);
-        lv_event_send(btn_zoomminus, ev, NULL);
+        int ev = (in->value == 1)?LV_EVENT_PRESSED:(in->value == 0)?LV_EVENT_RELEASED:LV_EVENT_PRESSING;
+        if(ev == LV_EVENT_PRESSED || ev == LV_EVENT_RELEASED)
+        {    
+          //printf("%s => btn_zoomminus ev:%s\n", __func__, (ev==LV_EVENT_PRESSED)?"LV_EVENT_PRESSED":"LV_EVENT_RELEASED");
+          lv_btn_set_state(btn_zoomminus, (ev==LV_EVENT_PRESSED)?LV_BTN_STYLE_PR:LV_BTN_STYLE_REL);
+          lv_event_send(btn_zoomminus, ev, NULL);
+        }
       }
       break;
     case 105:
@@ -327,7 +333,6 @@ static void zoomplus_event_cb(lv_obj_t * btn, lv_event_t event)
     GSF_MSG_DEF(gsf_lens_t, lens, 2*1024);
     if(event == LV_EVENT_PRESSED)
     {
-      printf("%s => LV_EVENT_PRESSED\n", __func__);
       printf("%s => LV_EVENT_PRESSED\n", __func__);
       lens->cmd = GSF_LENS_ZOOM;
       lens->arg1 = 1; //++
@@ -489,7 +494,7 @@ static void* lvgl_main(void* p)
     #ifdef EXTRA_FREETYPE
       static char font_path[256];
       sprintf(font_path, "%s/cfg/arial.ttf", home_path);
-
+      
       /*Create a font*/
       static lv_ft_info_t info;
       info.name = font_path;

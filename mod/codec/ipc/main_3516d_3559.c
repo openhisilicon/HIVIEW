@@ -779,12 +779,16 @@ int vo_start()
   	    //PAL
         gsf_mpp_vo_start(VODEV_HD0, VO_INTF_BT656, VO_OUTPUT_PAL, 0);
         gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_PAL, 0);
+        
+        //USER
+        //gsf_mpp_vo_start(VODEV_HD0, VO_INTF_BT656, VO_OUTPUT_USER, 0);
+        //gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
       }
       else
       {
-  	    //USER
-        gsf_mpp_vo_start(VODEV_HD0, VO_INTF_BT656, VO_OUTPUT_USER, 0);
-        gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_USER, 0);
+  	    //NTSC
+        gsf_mpp_vo_start(VODEV_HD0, VO_INTF_BT656, VO_OUTPUT_NTSC, 0);
+        gsf_mpp_fb_start(VOFB_GUI, VO_OUTPUT_NTSC, 0);
       }
       
       //only win1 for bt656 input;
@@ -794,7 +798,10 @@ int vo_start()
       gsf_mpp_vo_src_t src0 = {0, 0};
       gsf_mpp_vo_bind(VOLAYER_HD0, 0, &src0);
       
-      vo_res_set(720, 576);
+      if(codec_ipc.vo.intf == 2)
+        vo_res_set(720, 576);
+      else 
+        vo_res_set(720, 480);
     }  
     else if(codec_ipc.vo.intf == 1)
     {
@@ -953,6 +960,9 @@ int main_start(gsf_bsp_def_t *bsp_def)
 
 
 int dzoom_plus = 0;
+int dzoom_cnt  = 0;
+int (*dzoom_wide_cb)(int ch,  int dir, int speed) = NULL;
+
 int main_loop(void)
 {
     usleep(10*1000);
@@ -1101,7 +1111,10 @@ int main_loop(void)
       static int MAX_H = 0;//2160;
       static int MIN_W = 0;//MAX_W/4;
       static int MIN_H = 0;//MAX_H/4;
-      static int cnt = 0, vpssGrp = 0;
+      static int vpssGrp = 0;
+      //static int dzoom_cnt = 0;
+      static int dzcnt[2] = {0};
+      
       if(!MAX_W)
       {
         VPSS_GRP_ATTR_S stVpssGrpAttr = {0};
@@ -1112,19 +1125,29 @@ int main_loop(void)
         MIN_H = MAX_H/3.0;
       }
       
+      dzcnt[0] = dzcnt[1];
+      dzcnt[1] = dzoom_cnt;
+      
       if(dzoom_plus > 0)
       {
-        if(cnt < ZOOM_STEPS-1)
-          cnt++;
+        if(dzoom_cnt < ZOOM_STEPS-1)
+          dzoom_cnt++; 
       }
       else if(dzoom_plus < 0)
       {
-        if(cnt > 0)
-          --cnt;
+        
+        if(dzoom_cnt > 0)
+          --dzoom_cnt;
+        
+        if(dzcnt[0] == 1 &&  dzcnt[1] == 0)
+        {
+          if(dzoom_wide_cb)
+            dzoom_wide_cb(0, 0, 0);
+        }  
       }
       if(dzoom_plus)
       {
-        int step = cnt%ZOOM_STEPS;
+        int step = dzoom_cnt%ZOOM_STEPS;
         VPSS_CROP_INFO_S stcrop;
         stcrop.bEnable = step?1:0;
         stcrop.enCropCoordinate = VPSS_CROP_ABS_COOR;

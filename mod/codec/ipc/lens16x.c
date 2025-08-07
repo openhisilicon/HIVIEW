@@ -10,6 +10,8 @@
 #define DEBUG 0
 #define SUM6(buf) do{buf[6] = (buf[1]+buf[2]+buf[3]+buf[4]+buf[5])&0xFF;}while(0)
 extern int dzoom_plus;
+extern int dzoom_cnt;
+extern int (*dzoom_wide_cb)(int ch,  int dir, int speed);
 
 static int _sensor_flag = 0;
 static int _flash_emmc = 0;
@@ -37,7 +39,7 @@ enum {
 static gsf_lens_ini_t _ini;
 static pthread_t serial_tid, af_tid;
 static int serial_fd = -1, last_cmd = GSF_LENS_STOP;
-static int _zoomValue = 0, _cdsValue = 0, _dayNight = 0; // 0: day,  1: night;
+static int _zoomValue = 0, _zoomDir = 0; _cdsValue = 0, _dayNight = 0; // 0: day,  1: night;
 static void* serial_task(void *parm);
 static int pelco_d_write(int cmd);
 static int ptz_zoom_value(int z);
@@ -91,11 +93,11 @@ static int af_ctl(char *buf, int size)
 }
 static void* af_task(void *parm)
 {
-  unsigned char recvbuf[7];
   while (1) 
   {
     if(af_sock > 0)
-    {  
+    {
+      unsigned char recvbuf[7] = {0};  
       int ret = recvfrom(af_sock, recvbuf, sizeof(recvbuf), 0, NULL, NULL);
       if(ret <= 0)
       {
@@ -105,7 +107,7 @@ static void* af_task(void *parm)
       //zoom_value;
       if(recvbuf[0] == 0xAF && recvbuf[1] == 0x10 && recvbuf[2] == 0x0A)
       {
-        ptz_zoom_value(recvbuf[3]);
+        ptz_zoom_value(recvbuf[3]*100 + recvbuf[4]);
       }
     }
   }
@@ -453,8 +455,8 @@ int lens16x_lens_start(int ch, char *ttyAMA)
   if(ch < 0 || _lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
     printf("LENS_TYPE_HIVIEW DISABLE gsf_mpp_af_start()\n");
+    dzoom_wide_cb = gsf_lens_zoom;
     return pthread_create(&af_tid, NULL, af_task, (void*)NULL);
-  	return 0;
   }
   
   gsf_mpp_af_t af = {
@@ -476,6 +478,12 @@ int lens16x_lens_stop(int ch)
   
   if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
+
+    if(dzoom_cnt > 0)
+    {
+      return 0;
+    }
+    
     unsigned char zm_stop[]  = {0xAF, 0x10, 0x0A, 0x00};
     unsigned char foc_stop[] = {0xAF, 0x10, 0x05, 0x00, 0x00};
     unsigned char *buf = (last_cmd == GSF_LENS_FOCUS)?foc_stop:zm_stop;
@@ -506,6 +514,7 @@ int lens16x_lens_stop(int ch)
 int lens16x_lens_zoom(int ch,  int dir, int speed)
 {
   int ret = 0;
+  _zoomDir = dir;
   
   #if 0 //maohw
   if(strstr(_ini.sns, "imx585") || strstr(_ini.sns, "imx482"))
@@ -517,13 +526,32 @@ int lens16x_lens_zoom(int ch,  int dir, int speed)
   
   if(_lens_type == LENS_TYPE_HIVIEW || _lens_type == LENS_TYPE_HIVIEW_ELEC)
   {
+    if(_zoomDir)
+    {
+      //++
+      if(_zoomValue > 6650)
+      {
+        dzoom_plus = 1;
+        return 0;
+      }
+    }
+    else 
+    {
+      //--
+      if(dzoom_cnt > 0)
+      {
+        dzoom_plus = -1;
+        return 0;
+      }
+    }
+    
     unsigned char add[] = {0xAF, 0x10, 0x0A, 0x01};
     unsigned char sub[] = {0xAF, 0x10, 0x0A, 0x02};
     unsigned char *buf = (dir)?add:sub;
     af_ctl(buf, sizeof(add));
     last_cmd = GSF_LENS_ZOOM;
     printf("LENS_TYPE_HIVIEW  start %s\n","ZOOM");
-  }  
+  } 
   else if(_lens_type == LENS_TYPE_GPIO)
   {
     if(dir)
@@ -1026,6 +1054,16 @@ static int ptz_zoom_value(int z)
 {
   //printf("z: %d\n", z);
   _zoomValue = z;
+  
+  if(_lens_type == LENS_TYPE_HIVIEW_ELEC)
+  {
+    if(_zoomDir  && _zoomValue > 6650)
+    {
+      //++
+      dzoom_plus = 1;
+    }
+  }
+  
   if(_dayNight)
   {
     zoom2led(_zoomValue);
