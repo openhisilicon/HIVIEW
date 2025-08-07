@@ -352,7 +352,7 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     return;
   }
   
-  if(strstr(cfg->snsname, "yuv422"))
+  if(strstr(cfg->snsname, "yuv422ahd"))
   {
     cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 30;
     
@@ -375,6 +375,30 @@ void mpp_ini_3519d(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
     }
     return;
   }
+  
+  if(strstr(cfg->snsname, "yuv422cam"))
+  {
+    cfg->lane = 0; cfg->wdr = 0; cfg->res = 2; cfg->fps = 60;
+    
+    rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+    venc_ini->ch_num = 1; venc_ini->st_num = 2;
+    
+    VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_1080P, PIC_640P);
+    if(cfg->snscnt > 1)
+    {
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, PIC_1080P, PIC_640P);
+        rgn_ini->ch_num++;
+        venc_ini->ch_num++;
+    }
+    else if(cfg->second)
+    {
+        rgn_ini->ch_num = venc_ini->ch_num = 2;
+        rgn_ini->st_num = venc_ini->st_num = 2;
+        VPSS_BIND_VI(1, 1, 0, 1, 1, 1, SECOND_HIRES(cfg->second), SECOND_LORES(cfg->second));
+    }
+    return;
+  }
+  
   
   
   if(strstr(cfg->snsname, "imx586"))

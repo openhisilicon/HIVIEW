@@ -1060,7 +1060,7 @@ static hi_s32 sample_comm_venc_h264_param_init(hi_venc_chn_attr *chn_attr, sampl
         sample_comm_venc_h264_cbr_param_init(chn_attr, gop, stats_time, frame_rate);
         if(1) //maohw
         {
-          chn_attr->rc_attr.h264_cbr.src_frame_rate = 30; //vi
+          chn_attr->rc_attr.h264_cbr.src_frame_rate = (frame_rate > 30)?frame_rate:30; //vi
           chn_attr->rc_attr.h264_cbr.dst_frame_rate = frame_rate;//target
           if(chn_param->bitrate > 0)
             chn_attr->rc_attr.h264_cbr.bit_rate = chn_param->bitrate;
@@ -1099,7 +1099,7 @@ static hi_s32 sample_comm_venc_h265_param_init(hi_venc_chn_attr *chn_attr, sampl
         sample_comm_venc_h265_cbr_param_init(chn_attr, gop, stats_time, frame_rate);
         if(1) //maohw
         {
-          chn_attr->rc_attr.h265_cbr.src_frame_rate = 30; //vi
+          chn_attr->rc_attr.h265_cbr.src_frame_rate = (frame_rate > 30)?frame_rate:30; //vi
           chn_attr->rc_attr.h265_cbr.dst_frame_rate = frame_rate;//target
           if(chn_param->bitrate > 0)
             chn_attr->rc_attr.h265_cbr.bit_rate = chn_param->bitrate;

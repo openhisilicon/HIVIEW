@@ -124,7 +124,7 @@ extern "C" {
 #define MIPI_TX_DEV_NAME "/dev/ot_mipi_tx"
 
 #define SAMPLE_FRAME_BUF_RATIO_MAX 100
-#define SAMPLE_FRAME_BUF_RATIO_MIN 70
+#define SAMPLE_FRAME_BUF_RATIO_MIN (70+15) //maohw
 
 #define minor_chn(vi_chn) ((vi_chn) + 1)
 

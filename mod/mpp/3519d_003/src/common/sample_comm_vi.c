@@ -1379,7 +1379,7 @@ static hi_s32 sample_comm_vi_register_sensor_lib(hi_vi_pipe vi_pipe, hi_u8 pipe_
     ret = sample_comm_isp_sensor_regiter_callback(vi_pipe, sns_type);
     if (ret != HI_SUCCESS) {
         printf("register sensor to ISP %d failed\n", vi_pipe);
-        return HI_FAILURE;
+        //maohw return HI_FAILURE;
     }
 
     if (pipe_index > 0) {
@@ -1391,7 +1391,7 @@ static hi_s32 sample_comm_vi_register_sensor_lib(hi_vi_pipe vi_pipe, hi_u8 pipe_
     ret = sample_comm_isp_bind_sns(vi_pipe, sns_type, bus_id);
     if (ret != HI_SUCCESS) {
         printf("register sensor bus id %u failed\n", bus_id);
-        goto exit0;
+        //maohw goto exit0;
     }
     if (sns_type == GST_412C_SLAVE_THERMO_T3_384_288_30FPS_14BIT) {
         ret = sample_comm_isp_thermo_lib_callback(vi_pipe);
@@ -1473,13 +1473,13 @@ static hi_s32 sample_comm_vi_start_one_pipe_isp(hi_vi_pipe vi_pipe, hi_u8 pipe_i
 
     ret = hi_mpi_isp_mem_init(vi_pipe);
     if (ret != HI_SUCCESS) {
-        printf("HI_MPI_ISP_MemInit failed with 0x%x!\n", ret);
+        printf("hi_mpi_isp_mem_init failed with 0x%x!\n", ret);
         goto exit0;
     }
 
     ret = hi_mpi_isp_set_pub_attr(vi_pipe, &vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr);
     if (ret != HI_SUCCESS) {
-        printf("HI_MPI_ISP_SetPubAttr(vi_pipe:%d, isp_pub_attr[%d,%d - %d,%d]) failed with 0x%x!\n"
+        printf("hi_mpi_isp_set_pub_attr(vi_pipe:%d, isp_pub_attr[%d,%d - %d,%d]) failed with 0x%x!\n"
               , vi_pipe
               , vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr.wnd_rect.x
               , vi_cfg->pipe_info[pipe_index].isp_info.isp_pub_attr.wnd_rect.y
@@ -1491,7 +1491,7 @@ static hi_s32 sample_comm_vi_start_one_pipe_isp(hi_vi_pipe vi_pipe, hi_u8 pipe_i
 
     ret = hi_mpi_isp_init(vi_pipe);
     if (ret != HI_SUCCESS) {
-        printf("HI_MPI_ISP_Init failed with 0x%x!\n", ret);
+        printf("hi_mpi_isp_init failed with 0x%x!\n", ret);
         return -1;
     }
 
@@ -1499,13 +1499,12 @@ static hi_s32 sample_comm_vi_start_one_pipe_isp(hi_vi_pipe vi_pipe, hi_u8 pipe_i
         (vi_cfg->pipe_info[pipe_index].isp_need_run == HI_TRUE)) {
         ret = sample_comm_isp_run(vi_pipe);
         if (ret != HI_SUCCESS) {
-            printf("ISP Run failed with 0x%x!\n", ret);
+            printf("sample_comm_isp_run failed with 0x%x!\n", ret);
             goto exit1;
         }
     }
 
     g_start_isp[vi_pipe] = HI_TRUE;
-
     return HI_SUCCESS;
 
 exit1:

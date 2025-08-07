@@ -82,7 +82,8 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1,"imx335-0-1-5-30",  "libsns_imx335.so",      "g_sns_imx335_obj"},
     {SONY_IMX327_MIPI_2M_30FPS_12BIT,        "imx327-0-0-2-30",  "libsns_imx327.so",      "g_sns_imx327_obj"},
     {SONY_IMX327_2L_MIPI_2M_30FPS_12BIT,     "imx327-2-0-2-30",  "libsns_imx327.so",      "g_sns_imx327_obj"},
-    {MIPI_YUV422_2M_30FPS_8BIT_6CH,          "yuv422-0-0-2-30",   NULL,                    NULL}, //mipi_ad_6ch
+    {MIPI_YUV422_2M_30FPS_8BIT_6CH,          "yuv422ahd-0-0-2-30",   NULL,                 NULL}, //mipi_ad_6ch
+    {MIPI_YUV422_2M_60FPS_8BIT,              "yuv422cam-0-0-2-60",   NULL,                 NULL}, //mipi_camera
     {SONY_IMX586_MIPI_48M_5FPS_12BIT,        "imx586-0-0-48-5",  "libsns_imx586.so",      "g_sns_imx586_obj"},
     {SONY_IMX586_MIPI_8M_30FPS_12BIT,        "imx586-0-0-8-30",  "libsns_imx586.so",      "g_sns_imx586_obj"},
     {SONY_IMX678_MIPI_8M_30FPS_12BIT,        "imx678-0-0-8-30",  "libsns_imx678.so",      "g_sns_imx678_obj"},
@@ -96,11 +97,11 @@ static SAMPLE_MPP_SENSOR_T* SAMPLE_MPP_SERSOR_GET(char* name)
   {
     if(libsns[i].name && strstr(libsns[i].name, name))
     {
-      printf("got name:%s\n", name);
+      printf("got name:[%s]\n", name);
       return &libsns[i];
     }
   }
-  printf("unknow name:%s\n", name);
+  printf("unknow name:[%s]\n", name);
   return NULL;
 }
 
@@ -137,6 +138,8 @@ hi_void sample_venc_handle_sig2(hi_s32 signo)
           sample_comm_venc_stop(dst_chn.chn_id);
         }  
       }  
+      
+      //stop snap channel;
       sample_comm_venc_stop(HI_VENC_MAX_CHN_NUM-2);
       
       extern hi_s32 sample_audio_ai_aenc_stop(gsf_mpp_aenc_t *aenc);
@@ -190,7 +193,7 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
     strncpy(snsname, "imx515", sizeof(snsname)-1);
   else if(strstr(cfg->snsname, "imx586"))             //24MHz
     strncpy(snsname, "os08a20", sizeof(snsname)-1);
-  else if(strstr(cfg->snsname, "yuv422"))
+  else if(strstr(cfg->snsname, "yuv422ahd") || strstr(cfg->snsname, "yuv422cam"))
     strncpy(snsname, "mipi_ad", sizeof(snsname)-1);
   else 
     strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
@@ -232,12 +235,12 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
       //you can add CUSTOM cfg for bt656 input;
       mppex_bt656_cfg_t bt656 = {
         .data_seq = HI_VI_DATA_SEQ_UYVY, //HI_VI_DATA_SEQ_YUYV
-        .width = 720,       // sensor-w: 720
-        .height = 288,      // sensor-h: 576
+        .width = 640,       // sensor-w: 720
+        .height = 512,      // sensor-h: 576
         .crop.x = 0,        // valid-x: (720-640)/2
         .crop.y = 0,        // valid-y: (576-512)/2
-        .crop.width = 720,  // valid-w: 640
-        .crop.height = 288, // valid-h: 512
+        .crop.width = 640,  // valid-w: 640
+        .crop.height = 512, // valid-h: 512
       };
       mppex_comm_bt656_cfg(&bt656);
     }
@@ -265,8 +268,8 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
         goto __err;
     }
   }
-  printf("%s => snsstr:%s, sensor_type:%d, load:%s\n"
-        , __func__, snsstr, SENSOR_TYPE, sns->lib?:"");
+  printf("%s => snsstr:%s, sensor0:%d, sensor1:%d(second:%d), load:%s\n"
+        , __func__, snsstr, SENSOR0_TYPE, SENSOR1_TYPE, cfg->second, sns->lib?:"");
   
   signal(SIGINT, sample_venc_handle_sig2);
   signal(SIGTERM, sample_venc_handle_sig2);
@@ -656,7 +659,7 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
   venc_create_param.size                      = venc->enSize; // BIG_STREAM_SIZE//SMALL_STREAM_SIZE
   venc_create_param.rc_mode                   = SAMPLE_RC_CBR;//venc->enRcMode;//SAMPLE_RC_CBR;
   venc_create_param.profile                   = 0;
-  venc_create_param.is_rcn_ref_share_buf      = HI_TRUE;
+  venc_create_param.is_rcn_ref_share_buf      = HI_FALSE;
   venc_create_param.frame_rate                = venc->u32FrameRate; /* 30 is a number */
   venc_create_param.gop                       = venc->u32Gop; /* 30 is a number */
   venc_create_param.bitrate                   = venc->u32BitRate;
@@ -814,6 +817,7 @@ int gsf_mpp_venc_snap(VENC_CHN VencChn, HI_U32 SnapCnt, int(*cb)(int i, VENC_STR
 {
   return sample_comm_venc_snap_processCB(VencChn, SnapCnt, cb, u);
 }
+
 int gsf_mpp_venc_snap4vpss(int VpssGrp, HI_U32 SnapCnt, int(*cb)(int i, VENC_STREAM_S* pstStream, void* u), void* u)
 {
   printf("gsf_mpp_vpss_get VpssGrp:%d, SnapCnt:%d\n", VpssGrp, SnapCnt);
