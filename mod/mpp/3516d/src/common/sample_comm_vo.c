@@ -1142,6 +1142,24 @@ HI_S32 SAMPLE_COMM_VO_StartVO(SAMPLE_VO_CONFIG_S *pstVoConfig)
     enDstDyRg      = pstVoConfig->enDstDynamicRange;
     enVoPartMode   = pstVoConfig->enVoPartMode;
 
+
+#if 1
+    VO_MOD_PARAM_S stModParam = {
+      .bTransparentTransmit = 0, .bExitDev = 1,
+      .bWbcBgBlackEn = 0, .bDevClkExtEn = 0, .bSaveBufMode = {1}
+      };
+    HI_MPI_VO_SetModParam(&stModParam);
+
+    //表示在时序一帧中垂直全部行数的倒数第u32Vtth行处上报垂直时序中断(顺数和倒数均从0开始)
+    //取值范围：高清设备为[240, 8191]，标清设备为[100,8191]
+    HI_MPI_VO_SetVtth(VoDev, 240);
+    
+    //门限值，表示在倒数第 u32Vtth 行有效像素行处上报垂直时序中断。
+    //取值范围：最小值为 2，最大值不能大于HI_MPI_VO_SetVtth 设置的值或默认值
+    HI_MPI_VO_SetVtth2(VoDev, 2);
+    
+#endif
+
     /********************************
     * Set and start VO device VoDev#.
     *********************************/
@@ -1202,7 +1220,7 @@ HI_S32 SAMPLE_COMM_VO_StartVO(SAMPLE_VO_CONFIG_S *pstVoConfig)
     }
     stLayerAttr.enDstDynamicRange     = pstVoConfig->enDstDynamicRange;
 
-    if (pstVoConfig->u32DisBufLen)
+    //if (pstVoConfig->u32DisBufLen)
     {
         s32Ret = HI_MPI_VO_SetDisplayBufLen(VoLayer, pstVoConfig->u32DisBufLen);
         if (HI_SUCCESS != s32Ret)
@@ -1212,6 +1230,7 @@ HI_S32 SAMPLE_COMM_VO_StartVO(SAMPLE_VO_CONFIG_S *pstVoConfig)
             return s32Ret;
         }
     }
+    
     if (VO_PART_MODE_MULTI == enVoPartMode)
     {
         s32Ret = HI_MPI_VO_SetVideoLayerPartitionMode(VoLayer, enVoPartMode);
@@ -1230,6 +1249,11 @@ HI_S32 SAMPLE_COMM_VO_StartVO(SAMPLE_VO_CONFIG_S *pstVoConfig)
         SAMPLE_COMM_VO_StopDev(VoDev);
         return s32Ret;
     }
+
+#if 1
+    //SINGLE 模式下显示门限取值范围为[2, 4]，默认门限为 3
+    HI_MPI_VO_SetChnRecvThreshold(VoLayer, 0, 2);
+#endif
 
     if(VO_INTF_MIPI == enVoIntfType)
     {

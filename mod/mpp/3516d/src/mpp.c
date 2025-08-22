@@ -1738,10 +1738,11 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     stVoConfig.enIntfSync            = sync;
     stVoConfig.enPicSize             = enDispPicSize; // unused;
     stVoConfig.u32BgColor            = COLOR_RGB_BLACK;//COLOR_RGB_BLUE;
-    stVoConfig.u32DisBufLen          = 3;
     stVoConfig.enDstDynamicRange     = DYNAMIC_RANGE_SDR8;
     stVoConfig.enVoMode              = VO_MODE_1MUX;
     stVoConfig.enPixFormat           = PIXEL_FORMAT_YVU_SEMIPLANAR_420; //422
+    //stVoConfig.enPixFormat           = PIXEL_FORMAT_YVU_SEMIPLANAR_422; //422
+    stVoConfig.u32DisBufLen          = (type == VO_INTF_BT656)?0:3;
     stVoConfig.stDispRect.s32X       = 0;
     stVoConfig.stDispRect.s32Y       = 0;
     stVoConfig.stDispRect.u32Width   = stDispSize.u32Width;

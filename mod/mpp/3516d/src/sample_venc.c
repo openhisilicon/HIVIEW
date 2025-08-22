@@ -311,7 +311,7 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
       //maohw pstViConfig->astViInfo[i].stDevInfo.enWDRMode = WDR_MODE_NONE;
 
       pstViConfig->astViInfo[i].stPipeInfo.enMastPipeMode = VI_OFFLINE_VPSS_OFFLINE;
-      pstViConfig->astViInfo[i].stChnInfo.enCompressMode  = COMPRESS_MODE_SEG;
+      pstViConfig->astViInfo[i].stChnInfo.enCompressMode  = (SENSOR0_TYPE == BT656_YUV_0M_60FPS_8BIT)?COMPRESS_MODE_NONE:COMPRESS_MODE_SEG;
       
       if(HI_TRUE == bLowDelay)
       {
@@ -390,13 +390,15 @@ HI_S32 SAMPLE_VENC_VI_Init( SAMPLE_VI_CONFIG_S *pstViConfig, HI_BOOL bLowDelay, 
 
 typedef struct {
   PIXEL_FORMAT_E enPixelFormat;
+  HI_BOOL bNrDisable;
 }vpss_grp_attr_t;
 
-vpss_grp_attr_t vpss_grp_attr[VPSS_MAX_GRP_NUM];
+static vpss_grp_attr_t vpss_grp_attr[VPSS_MAX_GRP_NUM] = {{0}};
 
-HI_S32 SAMPLE_VENC_VPSS_GrpAttr(VPSS_GRP VpssGrp, PIXEL_FORMAT_E enPixelFormat)
+HI_S32 SAMPLE_VENC_VPSS_GrpAttr(VPSS_GRP VpssGrp, PIXEL_FORMAT_E enPixelFormat, HI_BOOL bNrDisable)
 {
   vpss_grp_attr[VpssGrp].enPixelFormat = enPixelFormat;
+  vpss_grp_attr[VpssGrp].bNrDisable = bNrDisable;
   return 0;
 }
 
@@ -423,19 +425,19 @@ HI_S32 SAMPLE_VENC_VPSS_Init(VPSS_GRP VpssGrp, HI_BOOL* pabChnEnable, DYNAMIC_RA
         return s32Ret;
     }
 
-
     stVpssGrpAttr.enDynamicRange = enDynamicRange;
     stVpssGrpAttr.enPixelFormat  = vpss_grp_attr[VpssGrp].enPixelFormat?:enPixelFormat;//maohw;
     stVpssGrpAttr.u32MaxW        = stSnsSize.u32Width;
     stVpssGrpAttr.u32MaxH        = stSnsSize.u32Height;
-    stVpssGrpAttr.stFrameRate.s32SrcFrameRate = -1;
-    stVpssGrpAttr.stFrameRate.s32DstFrameRate = -1;
-    stVpssGrpAttr.bNrEn = HI_TRUE;
+    stVpssGrpAttr.stFrameRate.s32SrcFrameRate = -1; //50
+    stVpssGrpAttr.stFrameRate.s32DstFrameRate = -1; //25
+    stVpssGrpAttr.bNrEn = vpss_grp_attr[VpssGrp].bNrDisable?HI_FALSE:HI_TRUE;
     stVpssGrpAttr.stNrAttr.enNrType = VPSS_NR_TYPE_VIDEO;
     stVpssGrpAttr.stNrAttr.enNrMotionMode = NR_MOTION_MODE_NORMAL;
     stVpssGrpAttr.stNrAttr.enCompressMode = COMPRESS_MODE_FRAME;
 
-
+    //SAMPLE_PRT("stVpssGrpAttr.enPixelFormat:%d, bNrEn:%d\n", stVpssGrpAttr.enPixelFormat, stVpssGrpAttr.bNrEn);
+    
     for(i=0; i<VPSS_MAX_PHY_CHN_NUM; i++)
     {
         if(HI_TRUE == pabChnEnable[i])
