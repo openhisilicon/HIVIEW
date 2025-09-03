@@ -234,10 +234,10 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   if(cfg->second && cfg->snscnt == 1)
   {
     SENSOR1_TYPE = (cfg->second == 1)?BT1120_YUV422_2M_60FPS_8BIT:
-                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT: //GD
-                   (cfg->second == 3)?BT656_YUV422_0M_60FPS_8BIT: //GZ-656
-                   (cfg->second == 4)?SENSOR1_TYPE://sns0==sns1;  //USB-UVC
-                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //GZ
+                   (cfg->second == 2)?BT656_YUV422_0M_60FPS_8BIT: //GD-640x520
+                   (cfg->second == 3)?BT656_YUV422_0M_60FPS_8BIT: //GZ-720x576
+                   (cfg->second == 4)?SENSOR1_TYPE://sns0==sns1;  //UVC-
+                   (cfg->second == 5)?BT656_YUV422_0M_60FPS_8BIT: //640x512
                    (cfg->second == 9)?BT601_YUV422_0M_60FPS_8BIT:
                                       SENSOR1_TYPE;//sns0==sns1;
     if(cfg->second == 5) //CUSTOM
@@ -717,7 +717,11 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
         goto EXIT_VENC_H264_STOP;
     }
   }
-  
+  if(vpss_grp == 0)
+  {
+    extern hi_s32 sample_venc_set_debreath_effect(hi_venc_chn venc_chn, hi_bool enable);
+    sample_venc_set_debreath_effect(venc_chn, HI_TRUE);
+  }
   printf("%s => venc_chn:%d, type:%d, vpss_grp:%d, vpss_chn:%d\n", __func__, venc_chn, venc_create_param.type, vpss_grp, vpss_chn);
   
   return ret;
@@ -1095,8 +1099,9 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       all->sharpen.u16EdgeFreq    = shp_attr.manual_attr.edge_freq;   
       all->sharpen.u8DetailCtrl   = shp_attr.manual_attr.detail_ctrl; 
       
+      ot_vpss_grp grp = 0;
       hi_ldc_attr ldc_attr;
-      ret = hi_mpi_vpss_get_grp_ldc(0, &ldc_attr);
+      ret = hi_mpi_vpss_get_grp_ldc(grp, &ldc_attr);
       all->ldc.bEnable = ldc_attr.enable;
       all->ldc.s32DistortionRatio = ldc_attr.ldc_v1_attr.distortion_ratio;
 
@@ -1106,6 +1111,15 @@ int gsf_mpp_isp_ctl(int ViPipe, int id, void *args)
       all->ldci.u16BlcCtrl = ldci_attr.manual_attr.blc_ctrl;
       all->ldci.stHePosWgt_u8Wgt = ldci_attr.manual_attr.he_wgt.he_pos_wgt.wgt;
       all->ldci.stHeNegWgt_u8Mean = ldci_attr.manual_attr.he_wgt.he_neg_wgt.mean;
+
+      ot_vi_chn vi_chn = 0;
+      ot_dis_cfg dis_cfg = {0};
+      hi_mpi_vi_get_chn_dis_cfg(ViPipe, vi_chn, &dis_cfg);
+
+      ot_dis_attr dis_attr = {0};
+      hi_mpi_vi_get_chn_dis_attr(ViPipe, vi_chn, &dis_attr);
+      all->dis.bEnable = dis_attr.enable; //enable;
+      all->dis.enMode = dis_cfg.mode;     //ot_dis_mode;
 
       printf("all->scene.bEnable:%d\n", all->scene.bEnable);
     }

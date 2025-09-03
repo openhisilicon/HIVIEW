@@ -454,7 +454,7 @@ static hi_s32 scene_load_static_aidrc(const hi_char *module, ot_scene_static_aid
     ot_scenecomm_check_pointer_return(static_aidrc, HI_FAILURE);
     hi_s32 ret;
     hi_s32 get_value;
-
+    scene_load_int(module, "static_aidrc:enable", static_aidrc->enable, hi_bool);
     scene_load_int(module, "static_aidrc:tone_mapping_wgt_x", static_aidrc->tone_mapping_wgt_x, hi_u8);
     scene_load_int(module, "static_aidrc:detail_adjust_coef_x", static_aidrc->detail_adjust_coef_x, hi_u8);
     scene_load_int(module, "static_aidrc:blend_luma_max", static_aidrc->blend_luma_max, hi_u8);

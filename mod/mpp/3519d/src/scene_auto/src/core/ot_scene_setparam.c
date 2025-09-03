@@ -512,6 +512,7 @@ hi_s32 ot_scene_set_static_drc(hi_vi_pipe vi_pipe, hi_u8 index)
 }
 
 #ifdef CONFIG_SCENEAUTO_AIDRC_SUPPORT
+static td_bool g_aidrc_en = 0;
 hi_s32 ot_scene_set_static_aidrc(hi_vi_pipe vi_pipe, hi_u8 index)
 {
     ot_scenecomm_expr_true_return(index >= HI_SCENE_PIPETYPE_NUM, HI_FAILURE);
@@ -520,8 +521,16 @@ hi_s32 ot_scene_set_static_aidrc(hi_vi_pipe vi_pipe, hi_u8 index)
     }
 
     hi_s32 ret;
-    hi_aidrc_attr aidrc_attr;
+    g_aidrc_en = get_pipe_params()[index].static_aidrc.enable;
+    printf("\n @@@ vi_pipe:%d, static_aidrc.enable: %d @@@ \n", vi_pipe, g_aidrc_en);
+    if(g_aidrc_en == 0)
+    {
+      ret = hi_mpi_aidrc_disable(vi_pipe);
+      return HI_SUCCESS;
+    }
+    ret = hi_mpi_aidrc_enable(vi_pipe);
 
+    hi_aidrc_attr aidrc_attr;
     ret = hi_mpi_aidrc_get_attr(vi_pipe, &aidrc_attr);
     check_scene_ret(ret);
 
@@ -751,7 +760,8 @@ hi_s32 ot_scene_set_static_nr(hi_vi_pipe vi_pipe, hi_u8 index)
 
     ret = ot_scene_set_static_nr_post_snr(vi_pipe, index, &nr_attr);
     check_scene_ret(ret);
-
+    
+    printf("%s => vi_pipe:%d, nr_attr.enable:%d\n", __func__, vi_pipe, nr_attr.enable);
     ret = hi_mpi_isp_set_nr_attr(vi_pipe, &nr_attr);
     check_scene_ret(ret);
 
@@ -1457,6 +1467,11 @@ hi_s32 ot_scene_set_dynamic_aidrc(hi_vi_pipe vi_pipe, hi_u8 index, hi_u32 wdr_ra
     ot_scenecomm_expr_true_return(index >= HI_SCENE_PIPETYPE_NUM, HI_FAILURE);
     if (get_pipe_params()[index].module_state.dynamic_aidrc != HI_TRUE) {
         return HI_SUCCESS;
+    }
+    //maohw add;
+    if(g_aidrc_en == 0)
+    {  
+      return HI_SUCCESS;
     }
 
     hi_u32 iso_level;
@@ -2780,7 +2795,7 @@ hi_s32 ot_scene_set_dynamic_3dnr(hi_vi_pipe vi_pipe, hi_u32 iso, hi_u8 index, hi
     hi_u32 *thresh = (hi_u32 *)nrx_param->threed_nr_iso;
     iso_level = scene_get_level_ltoh_u32(iso, count, thresh);
     
-    //maohw printf("%s => iso:%d, thresh:%d, iso_level:%d\n", __func__, iso, *thresh, iso_level);
+    //printf("%s => iso:%d, thresh:%d, iso_level:%d\n", __func__, iso, *thresh, iso_level);
     
     if (iso_level == 0) {
         nrx_attr = nrx_param->threednr_value[0];

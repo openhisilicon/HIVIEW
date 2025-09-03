@@ -538,6 +538,7 @@ typedef struct {
 } ot_scene_static_drc;
 
 typedef struct {
+    hi_bool enable;
     td_u8 tone_mapping_wgt_x; /* RW; Range:[0x0, 0x80]; Local TM gain scaling coef */
     td_u8 detail_adjust_coef_x; /* RW; Range:[0x0, 0xF]; X filter detail adjust coefficient */
     td_u8 blend_luma_max; /* RW; Range:[0x0, 0xFF]; Luma-based filter blending weight control */

@@ -447,7 +447,7 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
         return ret;
     }
     
-    if(0) //g_dis_enable maohw gyro dis
+    if(1) //g_dis_enable maohw gyro dis
     {
         hi_vi_pipe vi_pipe = 0;
         hi_isp_nr_attr isp_nr_attr = {0};
@@ -525,7 +525,13 @@ static hi_void update_vb_attr(sample_venc_vb_attr *vb_attr, const hi_size *size,
     
   if(g_dis_enable) //maohw dis enable;
   {
-
+    if(vpss_grp == 0)
+    {  
+      ot_3dnr_attr attr = {0};
+      hi_mpi_vpss_get_grp_3dnr_attr(vpss_grp, &attr);
+      attr.enable = HI_TRUE;
+      hi_mpi_vpss_set_grp_3dnr_attr(vpss_grp, &attr);
+    }
     
     hi_size vi_size;
     hi_gdc_param gdc_param = {0};
@@ -1393,7 +1399,7 @@ EXIT_SYS_STOP:
     return ret;
 }
 
-static hi_s32 sample_venc_set_debreath_effect(hi_venc_chn venc_chn, hi_bool enable)
+/*maohw static*/ hi_s32 sample_venc_set_debreath_effect(hi_venc_chn venc_chn, hi_bool enable)
 {
     hi_s32 ret;
     hi_venc_debreath_effect debreath_effect;
