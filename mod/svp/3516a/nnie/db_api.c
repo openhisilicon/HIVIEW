@@ -320,7 +320,7 @@ db_hdl_t* db_open(char *db_file)
   {
     char bak_file[256] = {0};
     char _db_file[256] = {0};
-    strncpy(_db_file, db_file, sizeof(_db_file)-1);
+    snprintf(_db_file, sizeof(_db_file), "%s", db_file);
     snprintf(bak_file, sizeof(bak_file), "%s/face.bak", dirname(_db_file));
     if(access(bak_file, R_OK|W_OK) < 0)
     {
@@ -404,7 +404,7 @@ db_hdl_t* db_open(char *db_file)
   }
 
   new_db_hdl->db = conn;
-  strncpy(new_db_hdl->file, db_file, sizeof(new_db_hdl->file)-1);
+  snprintf(new_db_hdl->file, sizeof(new_db_hdl->file), "%s", db_file);
   new_db_hdl->file[sizeof(new_db_hdl->file)-1] = '\0';
   
   return new_db_hdl;
@@ -441,22 +441,22 @@ int db_instet(db_hdl_t *_db, db_row_t *_row)
   sqlite3* db = (sqlite3*)_db->db;
   sqlite3_stmt* stmt = NULL;
   
-  const char* insert_face = "INSERT INTO FACE VALUES(%llu,%u,'%s',%u,%u,'%s',:features)";
-  const char* insert_event = "INSERT INTO EVENT VALUES(%llu,%u,%u,%u,'%s','%s')";
+  const char* insert_face = "INSERT INTO FACE VALUES(%llu,%u,'%q',%u,%u,'%q',:features)";
+  const char* insert_event = "INSERT INTO EVENT VALUES(%llu,%u,%u,%u,'%q','%q')";
 
   
-  char sql[1024];
+  char *sql = NULL;
   
   if(_row->type == DB_FORM_FACE)
   {
       db_face_row_t *row = &_row->face;
-      sprintf(sql, insert_face, row->uuid, row->date, row->name, row->age
+      sql = sqlite3_mprintf(insert_face, row->uuid, row->date, row->name, row->age
               , row->gender, row->filepath);
   }
   else if(_row->type == DB_FORM_EVENT)
   {
       db_event_row_t *row = &_row->event;
-      sprintf(sql, insert_event, row->uuid, row->date, row->type, row->parm, row->data
+      sql = sqlite3_mprintf(insert_event, row->uuid, row->date, row->type, row->parm, row->data
               , row->filepath);
   }
   else
@@ -464,12 +464,15 @@ int db_instet(db_hdl_t *_db, db_row_t *_row)
       return -1;
   }
   
+  if(!sql) goto __error;
   printf("sql:[%s]\n", sql);
   
   if (sqlite3_prepare_v2(db, sql, strlen(sql), &stmt, NULL) != SQLITE_OK)
   {
+    sqlite3_free(sql);
     goto __error;
   }
+  sqlite3_free(sql);
   if(_row->type == DB_FORM_FACE)
   {
     db_face_row_t *row = &_row->face;
@@ -509,11 +512,11 @@ int db_delete(db_hdl_t *_db, DB_FORM_TYPE_E form, uint64_t uuid)
 
   if(form == DB_FORM_FACE)
   {
-    sprintf(sql, delete_face, uuid);
+    snprintf(sql, sizeof(sql), delete_face, uuid);
   }
   else if(form == DB_FORM_EVENT)
   {
-    sprintf(sql, delete_event, uuid);
+    snprintf(sql, sizeof(sql), delete_event, uuid);
   }
   else
   {
@@ -545,24 +548,24 @@ int db_update(db_hdl_t *_db, db_row_t *_row)
   sqlite3* db = (sqlite3*)_db->db;
   sqlite3_stmt* stmt = NULL;
 
-  const char* update_face = "UPDATE FACE SET date=%u, name='%s', age=%u"
-                          ", gender=%u, filepath='%s', features=:features WHERE uuid=%llu";
-  const char* update_event = "UPDATE EVENT SET date=%u, type=%u, parm=%u, data='%s'"
-                          ", filepath='%s' WHERE uuid=%llu";
+  const char* update_face = "UPDATE FACE SET date=%u, name='%q', age=%u"
+                          ", gender=%u, filepath='%q', features=:features WHERE uuid=%llu";
+  const char* update_event = "UPDATE EVENT SET date=%u, type=%u, parm=%u, data='%q'"
+                          ", filepath='%q' WHERE uuid=%llu";
 
   char sql[1024];
 
   if(_row->type == DB_FORM_FACE)
   {
       db_face_row_t *row = &_row->face;
-      sprintf(sql, update_face, row->date, row->name, row->age
+      sqlite3_snprintf(sizeof(sql), sql, update_face, row->date, row->name, row->age
               , row->gender, row->filepath, row->uuid);
   
   }
   else if(_row->type == DB_FORM_EVENT)
   {
       db_event_row_t *row = &_row->event;
-      sprintf(sql, update_event, row->date, row->type, row->parm, row->data
+      sqlite3_snprintf(sizeof(sql), sql, update_event, row->date, row->type, row->parm, row->data
               , row->filepath, row->uuid);
   }
   else
@@ -616,11 +619,11 @@ int db_select(db_hdl_t *_db, DB_FORM_TYPE_E form, uint32_t b, uint32_t e, DB_SEL
 
   if(form == DB_FORM_FACE)
   {
-    sprintf(sql, select_face, e, b);
+    snprintf(sql, sizeof(sql), select_face, e, b);
   }
   else if(form == DB_FORM_EVENT)
   {
-    sprintf(sql, select_event, e, b);
+    snprintf(sql, sizeof(sql), select_event, e, b);
   }
   else
   {
@@ -736,7 +739,7 @@ int db_test(char *db_file)
       char name[256] = {0};
       char filepath[256] = {0};
       char features[2048] = {0};
-      sprintf(filepath, "/tmp/%08d.jpeg", i);
+      snprintf(filepath, sizeof(filepath), "/tmp/%08d.jpeg", i);
       features[0] = i<<24; features[1] = i<<16; features[2] = i<<8; features[3] = i<<0;
       
       row.face.uuid = i;
