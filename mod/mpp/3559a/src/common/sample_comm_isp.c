@@ -194,6 +194,17 @@ ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX277_SLVS_2M_240FPS =
     0,
 };
 
+/* IMX546: Bayer order TBD (start with RGGB); SNS size may include optical black */
+ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX546_SLVS_8M_60FPS =
+{
+    {0, 0, 2840, 2840},
+    {2840, 2840},
+    60,
+    BAYER_RGGB,
+    WDR_MODE_NONE,
+    0,
+};
+
 
 HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR_S* pstPubAttr)
 {
@@ -258,6 +269,10 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
 
         case SONY_IMX277_SLVS_2M_240FPS_12BIT:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX277_SLVS_2M_240FPS, sizeof(ISP_PUB_ATTR_S));
+            break;
+
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
+            memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX546_SLVS_8M_60FPS, sizeof(ISP_PUB_ATTR_S));
             break;
 
         default:
@@ -538,6 +553,7 @@ static ISP_SNS_TYPE_E SAMPLE_COMM_GetSnsBusType(SAMPLE_SNS_TYPE_E enSnsType)
             enBusType = ISP_SNS_SSP_TYPE;
             break;
 
+        /* IMX546 FPGA path uses I2C @0x36; falls through to default I2C */
         default:
             enBusType = ISP_SNS_I2C_TYPE;
             break;
