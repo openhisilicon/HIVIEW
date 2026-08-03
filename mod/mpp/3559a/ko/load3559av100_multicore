@@ -214,7 +214,7 @@ load_usage()
 	echo "    -sensor0~7 sensor_name   config sensor type [default: imx334]"
 	echo "    -h                       help information"
 	echo -e "Notice: sensors which share one clock must be same!  sensor0 and sensor1 share clock0,sensor2 and sensor3 share clock1, sensor4 and sensor5 share clock2,sensor6 and sensor7 share clock3."
-	echo -e "Available sensors: imx334 imx477 imx377 imx299 imx290 imx290_slave imx277_slvs"
+	echo -e "Available sensors: imx334 imx477 imx377 imx299 imx290 imx290_slave imx277_slvs (imx546 uses imx277_slvs pinmux alias)"
 	echo -e "for example: ./load3559av100_multicore -i -sensor0 imx334 -sensor1 imx334 -sensor2 imx334 -sensor3 imx334 -sensor4 imx334 -sensor5 imx334 -sensor6 imx334 -sensor7 imx334\n"
 }
 
