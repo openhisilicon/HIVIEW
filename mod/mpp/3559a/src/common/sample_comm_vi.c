@@ -722,6 +722,27 @@ combo_dev_attr_t SLVS_6lane_CHN0_SENSOR_IMX277_12BIT_2M_NOWDR_ATTR =
     }
 };
 
+/* IMX546 SLVS 8ch @2840x2840 — lane_id / img_rect / sensor_valid_width need board confirm */
+combo_dev_attr_t SLVS_8lane_CHN0_SENSOR_IMX546_12BIT_8M_NOWDR_ATTR =
+{
+    .devno = 6,
+    .input_mode = INPUT_MODE_SLVS,
+    .data_rate = MIPI_DATA_RATE_X2,
+    .img_rect = {0, 0, 2840, 2840},
+
+    {
+        .slvs_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_WDR_MODE_NONE,
+            SLVS_LANE_RATE_HIGH,
+            2840,
+            {6, 4, 5, 0, 7, 2, 1, 3}, /* start from IMX277-8lane map; fix per schematic */
+            SLVS_ERR_CHECK_MODE_NONE
+        }
+    }
+};
+
 VI_DEV_ATTR_S DEV_ATTR_IMX477_12M_BASE =
 {
     VI_MODE_MIPI,
@@ -1046,6 +1067,40 @@ VI_DEV_ATTR_S DEV_ATTR_IMX277_SLVS_8M_BASE =
     DATA_RATE_X2
 };
 
+VI_DEV_ATTR_S DEV_ATTR_IMX546_SLVS_8M_BASE =
+{
+    VI_MODE_SLVS,
+    VI_WORK_MODE_1Multiplex,
+    {0xFFF00000,    0x0},
+    VI_SCAN_PROGRESSIVE,
+    {-1, -1, -1, -1},
+    VI_DATA_SEQ_YUYV,
+
+    {
+    VI_VSYNC_PULSE, VI_VSYNC_NEG_LOW, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
+    {0,            1280,        0,
+     0,            720,        0,
+     0,            0,            0}
+    },
+    VI_DATA_TYPE_RGB,
+    HI_FALSE,
+    {2840 , 2840},
+    {
+        {
+            {2840 , 2840},
+        },
+        {
+            VI_REPHASE_MODE_NONE,
+            VI_REPHASE_MODE_NONE
+        }
+    },
+    {
+        WDR_MODE_NONE,
+        2840
+    },
+    DATA_RATE_X2
+};
+
 VI_DEV_ATTR_S DEV_ATTR_IMX277_SLVS_12M_BASE =
 {
     VI_MODE_SLVS,
@@ -1236,6 +1291,24 @@ VI_PIPE_ATTR_S PIPE_ATTR_4000x3000_RAW12_420_3DNR_RFR =
     { -1, -1}
 };
 
+VI_PIPE_ATTR_S PIPE_ATTR_2840x2840_RAW12_420_3DNR_RFR =
+{
+    VI_PIPE_BYPASS_NONE, HI_FALSE,HI_FALSE,
+    2840, 2840,
+    PIXEL_FORMAT_RGB_BAYER_12BPP,
+    COMPRESS_MODE_LINE,
+    DATA_BITWIDTH_12,
+    HI_TRUE,
+    {
+        PIXEL_FORMAT_YVU_SEMIPLANAR_420,
+        DATA_BITWIDTH_10,
+        VI_NR_REF_FROM_RFR,
+        COMPRESS_MODE_NONE
+    },
+    HI_FALSE,
+    { -1, -1}
+};
+
 VI_CHN_ATTR_S CHN_ATTR_1920x1080_420_SDR8_LINEAR =
 {
     {1920, 1080},
@@ -1285,6 +1358,18 @@ static VI_CHN_ATTR_S CHN_ATTR_7680x4320_420_SDR8_LINEAR =
 };
 
 
+VI_CHN_ATTR_S CHN_ATTR_2840x2840_420_SDR8_LINEAR =
+{
+    {2840, 2840},
+    PIXEL_FORMAT_YVU_SEMIPLANAR_420,
+    DYNAMIC_RANGE_SDR8,
+    VIDEO_FORMAT_LINEAR,
+    COMPRESS_MODE_NONE,
+    0,      0,
+    0,
+    { -1, -1}
+};
+
 VI_CHN_ATTR_S CHN_ATTR_4000x3000_420_SDR8_LINEAR =
 {
     {4000, 3000},
@@ -1325,6 +1410,7 @@ static input_mode_t SAMPLE_COMM_VI_GetSnsInputMode(SAMPLE_SNS_TYPE_E enSnsType)
         case SONY_IMX277_SLVS_8M_60FPS_12BIT:
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
         case SONY_IMX277_SLVS_2M_240FPS_12BIT:
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
             enInputMode = INPUT_MODE_SLVS;
             break;
 
@@ -1960,6 +2046,10 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &SLVS_6lane_CHN0_SENSOR_IMX277_12BIT_8M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             break;
 
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
+            memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &SLVS_8lane_CHN0_SENSOR_IMX546_12BIT_8M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            break;
+
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &SLVS_6lane_CHN0_SENSOR_IMX277_12BIT_12M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
             break;
@@ -2293,6 +2383,10 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_DEV_ATTR_S
             memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX277_SLVS_8M_BASE, sizeof(VI_DEV_ATTR_S));
             break;
 
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
+            memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX546_SLVS_8M_BASE, sizeof(VI_DEV_ATTR_S));
+            break;
+
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
             memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX277_SLVS_12M_BASE, sizeof(VI_DEV_ATTR_S));
             break;
@@ -2360,6 +2454,10 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_3840x2160_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             break;
 
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
+            memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_2840x2840_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
+            break;
+
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_4000x3000_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             break;
@@ -2421,6 +2519,10 @@ HI_S32 SAMPLE_COMM_VI_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S
         case SONY_IMX277_SLVS_8M_30FPS_12BIT:
         case SONY_IMX277_SLVS_8M_60FPS_12BIT:
             memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_3840x2160_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
+            break;
+
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
+            memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_2840x2840_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
             break;
 
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
@@ -3964,6 +4066,10 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E* penS
             *penSize = PIC_3840x2160;
             break;
 
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
+            *penSize = PIC_2840x2840;
+            break;
+
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
             *penSize = PIC_4000x3000;
             break;
@@ -4021,6 +4127,7 @@ HI_S32 SAMPLE_COMM_VI_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu3
         case SONY_IMX477_MIPI_9M_60FPS_10BIT:
         case SONY_IMX477_MIPI_8M_60FPS_12BIT:
         case SONY_IMX277_SLVS_8M_60FPS_12BIT:
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
             *pu32FrameRate = 60;
             break;
 
@@ -4117,6 +4224,7 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
         case SONY_IMX277_SLVS_8M_60FPS_12BIT:
         case SONY_IMX277_SLVS_12M_30FPS_12BIT:
         case SONY_IMX277_SLVS_2M_240FPS_12BIT:
+        case SONY_IMX546_SLVS_8M_60FPS_12BIT:
         case COMSIS_SHARP8K_SLVDS_8K_30FPS_12BIT:
             if(0 == s32SnsIdx)
             {

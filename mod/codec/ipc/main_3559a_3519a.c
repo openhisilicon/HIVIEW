@@ -73,6 +73,7 @@ static int avs = 0; // codec_ipc.vi.avs;
 static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_7680x4320] = {0, 7680, 4320},
       [PIC_3840x2160] = {0, 3840, 2160},
+      [PIC_2840x2840] = {0, 2840, 2840},
       [PIC_2688x1520] = {0, 2688, 1520},
       [PIC_2592x1944] = {0, 2592, 1944},
       [PIC_2592x1536] = {0, 2592, 1536},
@@ -251,6 +252,22 @@ void mpp_ini_3559a(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
       VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_7680x4320, PIC_3840x2160);
     }
+    else if(strstr(cfg->snsname, "imx546"))
+    {
+      // imx546-0-0-8-60  SLVS 8ch, 2840x2840@60
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 60;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2840x2840, PIC_1080P);
+    }
+    else if(strstr(cfg->snsname, "imx277"))
+    {
+      // imx277-0-0-8-60
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 60;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840x2160, PIC_720P);
+    }
     else
     {
       // imx334-0-0-8-30
@@ -359,8 +376,8 @@ int mpp_start(gsf_bsp_def_t *def)
       clock_gettime(CLOCK_REALTIME, &_ts);
       HI_U64 u64PTSBase = _ts.tv_sec;
       u64PTSBase = _ts.tv_sec*1000000 + _ts.tv_nsec/1000;
-      int ret = HI_MPI_SYS_InitPTSBase(u64PTSBase);//½¨ÒéÔÚÃ½ÌåÒµÎñÃ»ÓÐÆô¶¯Ê±µ÷ÓÃÕâ¸ö½Ó¿Ú
-      //HI_S32 HI_MPI_SYS_SyncPTS(u64PTSBase);  //½¨ÒéÒ»ÃëÖÓ½øÐÐÒ»´ÎÊ±¼ä´ÁÎ¢µ÷;
+      int ret = HI_MPI_SYS_InitPTSBase(u64PTSBase);//??????ý?????û?????????????????
+      //HI_S32 HI_MPI_SYS_SyncPTS(u64PTSBase);  //??????????????????????;
       HI_U64 u64CurPTS;
       ret |= HI_MPI_SYS_GetCurPTS(&u64CurPTS);       
       printf("HI_MPI_SYS_InitPTSBase ret:%d, u64PTSBase:%llu, u64CurPTS:%llu\n", ret, u64PTSBase, u64CurPTS);

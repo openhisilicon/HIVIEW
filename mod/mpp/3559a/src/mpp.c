@@ -86,6 +86,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SAMPLE_SNS_TYPE_BUTT] = { /* name-lane-wdr-res
     {SONY_IMX277_SLVS_8M_60FPS_12BIT,        "imx277-0-0-8-60", "libsns_imx277_slvs.so", "stSnsImx277SlvsObj"},
     {SONY_IMX277_SLVS_12M_30FPS_12BIT,       "imx277-0-0-12-30", "libsns_imx277_slvs.so", "stSnsImx277SlvsObj"},
     {SONY_IMX277_SLVS_2M_240FPS_12BIT,       "imx277-0-0-2-240", "libsns_imx277_slvs.so", "stSnsImx277SlvsObj"},
+    {SONY_IMX546_SLVS_8M_60FPS_12BIT,        "imx546-0-0-8-60", "libsns_imx546_slvs.so", "stSnsImx546SlvsObj"},
     {SONY_IMX477_MIPI_12M_30FPS_12BIT,      "imx477-0-0-12-30", "libsns_imx477.so", "stSnsImx477Obj"},
     {SONY_IMX477_MIPI_9M_50FPS_10BIT,       "imx477-0-0-9-50", "libsns_imx477.so", "stSnsImx477Obj"},
     {SONY_IMX477_MIPI_9M_60FPS_10BIT,       "imx477-0-0-9-60", "libsns_imx477.so", "stSnsImx477Obj"},
@@ -132,12 +133,18 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   } 
   
   snscnt = cfg->snscnt;
+  /* sys_config.ko has no imx546 pinmux yet ? reuse imx277_slvs SLVS padmux temporarily */
+  const char *ko_sns = cfg->snsname;
+  if (strcmp(cfg->snsname, "imx546") == 0) {
+    ko_sns = "imx277_slvs";
+    printf("%s => KO pinmux alias imx546 -> imx277_slvs (update sys_config when board ready)\n", __func__);
+  }
   char loadstr[256];
-  sprintf(loadstr, "%s/ko/load3559av100_multicore -i -sensor0 %s", path, cfg->snsname);
+  sprintf(loadstr, "%s/ko/load3559av100_multicore -i -sensor0 %s", path, ko_sns);
   int i = 0;
   for(i = 1; i < snscnt; i++)
   {
-    sprintf(loadstr, "%s -sensor%d %s", loadstr, i, cfg->snsname);
+    sprintf(loadstr, "%s -sensor%d %s", loadstr, i, ko_sns);
   }
   printf("%s => loadstr: %s\n", __func__, loadstr);
   system(loadstr);
@@ -774,7 +781,7 @@ int gsf_mpp_rgn_bitmap(RGN_HANDLE Handle, BITMAP_S *bitmap)
 }
 
 
-//启动视频输出设备;
+//????????????;
 int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wbc)
 {
     HI_S32 i, s32Ret = HI_SUCCESS;
@@ -825,7 +832,7 @@ int gsf_mpp_vo_start(int vodev, VO_INTF_TYPE_E type, VO_INTF_SYNC_E sync, int wb
     return s32Ret;
 }
 
-//停止视频输出设备
+//??????????
 int gsf_mpp_vo_stop(int vodev)
 {
     vo_mng_t *vdev = &vo_mng[vodev];
@@ -843,7 +850,7 @@ int gsf_mpp_vo_stop(int vodev)
 }
 
 
-//创建图像层显示通道;
+//??????????????;
 int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 {
   int i = 0;
@@ -884,7 +891,7 @@ int gsf_mpp_vo_layout(int volayer, VO_LAYOUT_E layout, RECT_S *rect)
 }
 
 
-//发送视频数据到指定ch;
+//???????????????ch;
 int gsf_mpp_vo_vsend(int volayer, int ch, char *data, gsf_mpp_frm_attr_t *attr)
 {
   int err = 0;
@@ -1097,7 +1104,7 @@ int gsf_mpp_ao_bind(int aodev, int ch, int aidev, int aich)
   return -1;
 }
 
-//清除解码显示BUFF
+//??????????BUFF
 int gsf_mpp_vo_clear(int volayer, int ch)
 {
   int err = 0;
@@ -1261,9 +1268,9 @@ int gsf_mpp_fb_start(int vofb, VO_INTF_SYNC_E sync, int hide)
     }
     stAlpha.bAlphaEnable = HI_TRUE;
     stAlpha.bAlphaChannel = HI_FALSE;
-    stAlpha.u8Alpha0 = 0xff; // 当最高位为0时,选择该值作为Alpha
-    stAlpha.u8Alpha1 = 0x0; // 当最高位为1时,选择该值作为Alpha
-    stAlpha.u8GlobalAlpha = 0x0;//在Alpha通道使能时起作用
+    stAlpha.u8Alpha0 = 0xff; // ???????0?,????????Alpha
+    stAlpha.u8Alpha1 = 0x0; // ???????1?,????????Alpha
+    stAlpha.u8GlobalAlpha = 0x0;//??Alpha?????????????
     
     if (ioctl(fd, FBIOPUT_ALPHA_HIFB,  &stAlpha) < 0)
     {
