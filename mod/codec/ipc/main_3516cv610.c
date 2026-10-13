@@ -42,9 +42,9 @@ static int avs = 0; // codec_ipc.vi.avs;
           (w >= 7680)?PIC_7680x4320:\
           (w >= 3840)?PIC_3840x2160:\
           (w >= 2688 && h >= 1520)?PIC_2688x1520:\
-          (w >= 2560 && h >= 1440)?PIC_2560x1440:\
           (w >= 2592 && h >= 1944)?PIC_2592x1944:\
           (w >= 2592 && h >= 1520)?PIC_2592x1520:\
+          (w >= 2560 && h >= 1440)?PIC_2560x1440:\
           (w >= 1920)?PIC_1080P:\
           (w >= 1280)?PIC_720P: \
           (w >= 720 && h >= 576)?PIC_D1_PAL: \
@@ -59,9 +59,9 @@ static gsf_resolu_t __pic_wh[PIC_BUTT] = {
       [PIC_7680x4320] = {0, 7680, 4320},
       [PIC_3840x2160] = {0, 3840, 2160},
       [PIC_2688x1520] = {0, 2688, 1520},
-      [PIC_2560x1440] = {0, 2560, 1440},
       [PIC_2592x1944] = {0, 2592, 1944},
       [PIC_2592x1520] = {0, 2592, 1520},
+      [PIC_2560x1440] = {0, 2560, 1440},
       [PIC_1080P]     = {0, 1920, 1080},
       [PIC_720P]      = {0, 1280, 720},
       [PIC_D1_PAL]    = {0, 720, 576},
@@ -258,12 +258,20 @@ void mpp_ini_3516c(gsf_mpp_cfg_t *cfg, gsf_rgn_ini_t *rgn_ini, gsf_venc_ini_t *v
   {
     
     if(strstr(cfg->snsname, "imx415"))
-    {  
+    {
       // imx415-0-0-8-30
       cfg->lane = 0; cfg->wdr = 0; cfg->res = 8; cfg->fps = 30;
       rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
       venc_ini->ch_num = 1; venc_ini->st_num = 2;
       VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_3840X2160, PIC_360P);
+    }
+    else if(strstr(cfg->snsname, "imx335"))
+    {  
+      // imx335-0-0-5-30
+      cfg->lane = 0; cfg->wdr = 0; cfg->res = 5; cfg->fps = 30;
+      rgn_ini->ch_num = 1; rgn_ini->st_num = 2;
+      venc_ini->ch_num = 1; venc_ini->st_num = 2;
+      VPSS_BIND_VI(0, 0, 0, 0, 1, 1, PIC_2592X1944, PIC_640P);
     }
     else 
     {  

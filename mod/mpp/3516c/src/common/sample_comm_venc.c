@@ -1493,10 +1493,21 @@ static hi_s32 sample_comm_venc_channel_param_init(sample_comm_venc_chn_param *ch
     if (type == HI_PT_MJPEG || type == HI_PT_JPEG) {
         chn_attr->venc_attr.buf_size =
             HI_ALIGN_UP(venc_size.width, 16) * HI_ALIGN_UP(venc_size.height, 16) * 4 /4; /* 16 4 is a number */
+        #if 1
+        #warning "buf_size for 38x32board-4Mvenc+1Mvenc+4Ksnap"
+        chn_attr->venc_attr.buf_size = (chn_param->mini_buf_mode)?100*(32*1024):chn_attr->venc_attr.buf_size;
+        #else
+        chn_attr->venc_attr.buf_size = (chn_param->mini_buf_mode)?50*(32*1024):chn_attr->venc_attr.buf_size;
+        #endif    
     } else {
         chn_attr->venc_attr.buf_size =
             HI_ALIGN_UP(venc_size.width * venc_size.height * 3 / 4, 64); /*  3  4 64 is a number */
+            
+        //chn_attr->venc_attr.buf_size = (chn_param->mini_buf_mode)?10*(32*1024):chn_attr->venc_attr.buf_size;
+        chn_attr->venc_attr.buf_size = (chn_param->mini_buf_mode)?20*(32*1024):chn_attr->venc_attr.buf_size;  
     }
+    printf("mini_buf_mode: %d, buf_size:%d\n", chn_param->mini_buf_mode, chn_attr->venc_attr.buf_size);
+    
     chn_attr->venc_attr.profile = profile;
     chn_attr->venc_attr.is_by_frame = HI_TRUE; /* get stream mode is slice mode or frame mode? */
 

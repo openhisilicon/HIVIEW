@@ -55,6 +55,7 @@ hi_video_frame_info* mppex_comm_vpss_send_bb(int VpssGrp, int VpssGrpPipe, hi_vi
 int mppex_comm_uvc_get(int idx, ot_video_frame_info *pstFrameInfo, int s32MilliSec);
 int mppex_comm_uvc_rel(int idx, ot_video_frame_info *pstFrameInfo);
 
+int mppex_comm_venc_bb(sample_comm_venc_chn_param *venc_create_param);
 
 int mppex_hook_sns(gsf_mpp_cfg_t *cfg);
 int mppex_hook_destroy(void);

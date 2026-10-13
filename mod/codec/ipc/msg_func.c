@@ -61,6 +61,12 @@ static void msg_func_sdp(gsf_msg_t *req, int isize, gsf_msg_t *rsp, int *osize)
 {
   gsf_sdp_t *sdp = (gsf_sdp_t*)rsp->data;
   
+  if(req->ch >= GSF_CODEC_IPC_CHN || req->sid >= GSF_CODEC_VENC_NUM)
+  {
+   rsp->err  = -1;
+   return;
+  }
+  
   sdp->video_shmid = venc_mgr[req->ch*GSF_CODEC_VENC_NUM + req->sid].video_shmid;
   sdp->audio_shmid = audio_shmid;
   sdp->venc = codec_ipc.venc[req->sid];

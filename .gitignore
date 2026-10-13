@@ -1,0 +1,11 @@
+*.exe
+*.exe
+bin/3403/bsp.exe
+bin/3403/onvif.exe
+bin/3403/rec.exe
+bin/3403/rtmps.exe
+bin/3403/rtsps.exe
+bin/3403/sips.exe
+bin/3403/srts.exe
+bin/3403/svp.exe
+bin/3403/webs.exe

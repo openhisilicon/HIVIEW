@@ -59,13 +59,23 @@ static int ptz_led_set(int stat);
 
 #warning "3516cv610 lens is implemented"
 
+#define CDS_IN_INIT() do {\
+    if(_board_type == DMEB_QFN)\
+    {/*GPIO1_2*/ \
+      system("bspmm 0x11130040 0x0;echo 10 > /sys/class/gpio/export;echo in > /sys/class/gpio/gpio10/direction");\
+    } else \
+    {\
+      ;\
+    }\
+  }while(0)
+
 
 #define IRCUT0_INIT() do {\
     if(_board_type == DMEB_BGA)\
     {/*9-2, 9-3*/ \
       system("bspmm 0x17940058 0x0;bspmm 0x1794005C 0x0;echo 74 > /sys/class/gpio/export;echo 75 > /sys/class/gpio/export;");\
       system("echo low > /sys/class/gpio/gpio74/direction;echo low > /sys/class/gpio/gpio75/direction");\
-    } else \ 
+    } else \
     {/*7-7, 1-0*/ \
       system("bspmm 0x11130038 0x0;bspmm 0x1113003c 0x0;echo 63 > /sys/class/gpio/export;echo 8 > /sys/class/gpio/export;");\
       system("echo low > /sys/class/gpio/gpio63/direction;echo low > /sys/class/gpio/gpio8/direction");\
@@ -74,7 +84,7 @@ static int ptz_led_set(int stat);
 
 #define __IRCUT0_DAY(ctl) do {\
     if(_board_type == DMEB_BGA)\
-    {\  
+    {\
       if(ctl == IRCUT_CTL_LEVEL)\
         system("echo 0 > /sys/class/gpio/gpio74/value;echo 0 > /sys/class/gpio/gpio75/value;");\
       else \
@@ -90,7 +100,7 @@ static int ptz_led_set(int stat);
 
 #define __IRCUT0_NIGHT(ctl) do {\
     if(_board_type == DMEB_BGA)\
-    {\  
+    {\
       if(ctl == IRCUT_CTL_LEVEL)\
         system("echo 1 > /sys/class/gpio/gpio74/value;echo 1 > /sys/class/gpio/gpio75/value;");\
       else \
@@ -146,7 +156,7 @@ static int ptz_led_set(int stat);
 
 #define LAMP0_DAY() do {\
     if(_board_type == DMEB_BGA)\
-    {\  
+    {\
       system("echo 1 > /sys/class/gpio/gpio57/value");\
     } else \
     {\
@@ -156,7 +166,7 @@ static int ptz_led_set(int stat);
 
 #define LAMP0_NIGHT() do {\
     if(_board_type == DMEB_BGA)\
-    {\  
+    {\
       system("echo 0 > /sys/class/gpio/gpio57/value");\
     } else \
     {\
@@ -202,6 +212,8 @@ int lens610_lens_init(gsf_lens_ini_t *ini)
     //IRCUT && DAY
     return 0;
   } 
+  
+  CDS_IN_INIT();
     
   IRCUT0_INIT();
   IRCUT0_DAY(_ircut_ctl);
@@ -249,13 +261,13 @@ static int cds_cb(int ViPipe, void* uargs)
   } 
    
   int value = 0;
- 
-  FILE* fp = fopen("/sys/class/gpio/gpioXX/value", "rb+");
+  //CDS_IN GPIO1_2
+  FILE* fp = fopen("/sys/class/gpio/gpio10/value", "rb+");
   if(fp)
   {
     unsigned char buf[10] = {0};
     fread(buf, sizeof(char), sizeof(buf) - 1, fp);
-    value = (buf[0] == '0')?1:0;
+    value = (buf[0] == '0')?0:1;
     fclose(fp);
   }
   else 
@@ -263,7 +275,7 @@ static int cds_cb(int ViPipe, void* uargs)
     printf("err: open fp:%p\n", fp);
   }
 
-  printf("ViPipe:%d, CDS night:%d\n", ViPipe, value);
+  //printf("ViPipe:%d, CDS night:%d\n", ViPipe, value);
   return value;
 }
 
@@ -318,6 +330,7 @@ static int af_cb(HI_U32 Fv1, HI_U32 Fv2, HI_U32 Gain, void* uargs)
   buf[7] = _dayNight; //²ÊÉ«ÊÇ0 ºÚ°×ÊÇ1
 
   int ret = gsf_uart_write(0, buf, 8);
+  //printf("FV:%d\n", Fv);
   return 0;
 }
 
@@ -497,8 +510,13 @@ int lens610_lens_cal(int ch)
 
 int lens610_uart_open(int ch, char *ttyAMA, int baudrate)
 {
-  if(strstr(ttyAMA, "ttyAMAxx"))
-    ;//system("bspmm 0x0102600E0 2; bspmm 0x0102600E4 2;"); //UART3 MUX
+  if(strstr(ttyAMA, "ttyAMA2"))
+  {
+    if(_board_type == DMEB_QFN)
+      system("bspmm 0x11130000 0x1203; bspmm 0x11130004 0x1203;"); //UART2 MUX
+    else 
+      return -1;  
+  }
   else 
     return -1;
     

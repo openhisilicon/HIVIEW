@@ -75,6 +75,7 @@ static SAMPLE_MPP_SENSOR_T libsns[SNS_TYPE_BUTT] = {
     {SC500AI_MIPI_5M_30FPS_10BIT_WDR2TO1,     "sc500ai-0-1-5-30", "libsns_sc500ai.so",    "g_sns_sc500ai_obj"},
     {OV_OS04A10_MIPI_4M_30FPS_12BIT,          "os04a10-0-0-4-30", "libsns_os04a10.so",    "g_sns_os04a10_obj"},
     {SONY_IMX415_MIPI_8M_30FPS_12BIT,         "imx415-0-0-8-30",  "libsns_imx415.so",     "g_sns_imx415_obj"},
+    {SONY_IMX335_MIPI_5M_30FPS_12BIT,         "imx335-0-0-5-30",  "libsns_imx335.so",     "g_sns_imx335_obj"},
   };
 
 
@@ -180,11 +181,11 @@ int gsf_mpp_cfg_sns(char *path, gsf_mpp_cfg_t *cfg)
   }
   
   if(strstr(cfg->snsname, "os04a10"))
-    strncpy(snsname, "os04d10", sizeof(snsname)-1);
-  else if(strstr(cfg->snsname, "imx415")) //37M clk
-    strncpy(snsname, "mipi_ad", sizeof(snsname)-1);
+    strncpy(snsname, "os04d10", sizeof(snsname)-1); //24M clk
+  else if(strstr(cfg->snsname, "imx415") || strstr(cfg->snsname, "imx335")) 
+    strncpy(snsname, "mipi_ad", sizeof(snsname)-1); //37.125M clk
   else 
-    strncpy(snsname, cfg->snsname, sizeof(snsname)-1);
+    strncpy(snsname, cfg->snsname, sizeof(snsname)-1); //SC4336P 27M clk
   
   sprintf(loadstr, "%s/ko/load3516cv610/%s -i -sensor0 %s -board %d", path, script, snsname, board_type_20s);
   for(i = 1; i < snscnt; i++)
@@ -291,12 +292,12 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   {
     
     sample_comm_vi_get_default_vi_cfg(SENSOR0_TYPE, &vi_cfg[i]);
-    if(board_type_20s > 0 && SENSOR0_TYPE < 10) 
+    if(board_type_20s > 0 && SENSOR0_TYPE < 10) // 20s && 2lane sensor;
     {
       const hi_vi_dev vi_dev = (board_type_20s == 38)?1:0;
       const hi_vi_pipe vi_pipe = 0;
       
-      printf("board_type_20s = %d\n", board_type_20s);
+      printf("i:%d, board_type_20s = %d, 2lane sensor:%d\n", i, board_type_20s, SENSOR0_TYPE);
       sample_comm_vi_get_mipi_info_by_dev_id(SENSOR0_TYPE, vi_dev, &vi_cfg[i].mipi_info);
       vi_cfg[i].sns_info.bus_id = 0;
       vi_cfg[i].sns_info.sns_clk_src = 0;
@@ -306,6 +307,10 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
       vi_cfg[i].grp_info.grp_num = 1;
       vi_cfg[i].grp_info.fusion_grp[0] = 0;
       vi_cfg[i].grp_info.fusion_grp_attr[0].pipe_id[0] = vi_pipe;
+    }
+    else 
+    {
+      printf("i:%d, board_type_20s = %d, 4lane sensor:%d\n", i, board_type_20s, SENSOR0_TYPE);
     }
   }
   
@@ -320,11 +325,13 @@ int gsf_mpp_vi_start(gsf_mpp_vi_t *vi)
   vpss_param.vb_yuv_cnt[0] = 0;
   vpss_param.vb_yuv_cnt[1] = 4;
   vpss_param.vb_yuv_cnt[2] = 4;  
-  vpss_param.vpss_chn_depth = 1; 
+  vpss_param.vpss_chn_depth = 1; //depth会占用VB内存
   #endif
+
   
-  //vpss_param.vpss_chn_depth = 1; //depth会占用VB内存
-  
+  printf("\n vi_vpss_mode:%d, vi_pipe_depth:%d, vpss_chn_depth:%d\n"
+      , vpss_param.vi_vpss_mode, vpss_param.vi_pipe_depth, vpss_param.vpss_chn_depth);
+
   mppex_comm_vi_bb(snscnt, vi_cfg, &vpss_param);
   
   
@@ -439,7 +446,7 @@ extern int sample_af_main(gsf_mpp_af_t *af);
 
 int gsf_mpp_af_start(gsf_mpp_af_t *af)
 {
-  return 0;//sample_af_main(af);
+  return sample_af_main(af);
 }
 
 
@@ -607,6 +614,13 @@ int gsf_mpp_venc_start(gsf_mpp_venc_t *venc)
   venc_create_param.gop                       = venc->u32Gop; /* 30 is a number */
   venc_create_param.bitrate                   = venc->u32BitRate;
   
+  //if(board_type_20s == 32)
+  {  
+    venc_create_param.mini_buf_mode = 1;
+  }
+  
+  mppex_comm_venc_bb(&venc_create_param);
+
   /* encode h.264 */
   ret = sample_comm_venc_start(venc_chn, &venc_create_param);
   if (ret != HI_SUCCESS) {
